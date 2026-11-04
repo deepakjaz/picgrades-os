@@ -103,6 +103,17 @@ function health_() {
   };
 }
 
+/**
+ * Run once from the editor (select testEmail → Run) to give the script
+ * permission to send emails, and to check that email works.
+ * Sends a test email to the admin notify address from Settings.
+ */
+function testEmail() {
+  var to = String(getSettings_().adminNotifyEmail || Session.getEffectiveUser().getEmail());
+  sendEmail_(to, 'PicGrades OS test email', 'Email works', ['If you can read this, login codes will arrive too.'], 'test', '');
+  Logger.log('Test email sent to ' + to + '. Check the EmailLog tab for the result.');
+}
+
 /** Run once from the editor after importing: checks every tab exists. */
 function setupCheck() {
   var res = health_();
