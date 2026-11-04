@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PicGrades · Client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0E0E10;--bar:#121214;--card:#17171A;--line:#26262B;--line2:#34343A;--chip:#222226;--text:#F3F0EA;--soft:#CFCAC1;--mute:#A8A49C;--gold:#E9B44C;--gold2:#F5CF7E;--over:#FF9F43;--warm:#1B1A17;--warmline:#3A3426}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;padding-bottom:110px}
+h1,.serif{font-family:'Instrument Serif',serif;font-weight:400}
+a{color:var(--gold)}a:hover{color:var(--gold2)}
+button,input,textarea{font:inherit}
+input,textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40;border-radius:12px;padding:12px 14px;min-height:46px}
+input:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);background:var(--bar)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:14px;padding-bottom:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}.brand b{font-family:'Instrument Serif',serif;font-weight:400;font-size:28px}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mute);margin:0 0 6px}
+.gold{color:var(--gold)}
+.btn{background:var(--gold);color:#141413;border:0;border-radius:12px;padding:13px 20px;font-weight:600;cursor:pointer;min-height:48px}
+.btn:disabled{opacity:.6;cursor:wait}
+.ghost{background:transparent;color:var(--text);border:1px solid #3A3A40;border-radius:999px;padding:8px 16px;cursor:pointer;min-height:40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.tile p{margin:0}.tile .v{font-size:24px;font-weight:600;margin-top:4px}
+.row{display:flex;flex-wrap:wrap;gap:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--chip);color:var(--text);border:1px solid var(--line2);border-radius:999px;padding:9px 14px;cursor:pointer;min-height:42px}
+.chip[aria-pressed=true]{background:var(--gold);color:#141413;border-color:var(--gold);font-weight:600}
+.speed{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.speed .chip{border-radius:14px;min-height:56px;text-align:center}.speed small{display:block;font-size:12px;opacity:.85}
+.pill{font-size:12px;font-weight:600;letter-spacing:.5px;padding:6px 12px;border-radius:999px;white-space:nowrap}
+.p-done{background:#1E2A1F;color:#A8E6B4;border:1px solid #3F6B45}.p-hold{background:#2C1F12;color:#FFD9A8;border:1px solid #7A4E1E}
+.p-edit{background:#14233A;color:#A9CBFF;border:1px solid #2F5486}.p-rev{background:#2A2614;color:#F5DE8E;border:1px solid #6B5A22}
+.order{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.sum div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2E2B24;padding:9px 0}.sum span:first-child{color:var(--soft)}.sum span:last-child{font-weight:600;text-align:right}
+.note{background:#2C1F12;border:1px solid #7A4E1E;color:#FFD9A8;border-radius:12px;padding:12px;font-size:14px;margin:0}
+.err{color:#FFB4A8;font-size:14px;margin:0}
+.toast{margin-bottom:16px;background:#1E2A1F;border:1px solid #3F6B45;color:#CFF2D5;border-radius:12px;padding:12px 16px;margin-top:16px}
+.meter{height:10px;background:#2A2A2F;border-radius:999px;overflow:hidden}.meter div{height:10px;border-radius:999px}
+nav.dock{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(23,23,26,.94);border:1px solid var(--line2);border-radius:999px;padding:6px;display:flex;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+nav.dock button{white-space:nowrap;border:0;border-radius:999px;padding:10px 18px;font-weight:600;cursor:pointer;min-height:44px;background:transparent;color:var(--text)}
+nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
+.hidden{display:none!important}
+.muted{color:var(--mute)}
+.duebox{border-left:1px solid var(--line);padding-left:24px}
+@media (max-width:640px){.duebox{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}header .wrap{padding-top:10px;padding-bottom:10px}.big{font-size:56px!important}h1{font-size:38px!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="brand"><b>PicGrades</b><span class="eyebrow" style="margin:0">Client</span></div>
+  <div style="display:flex;gap:10px;align-items:center"><span id="who" class="muted" style="font-size:13px"></span><button id="logoutBtn" class="ghost hidden" type="button">Log out</button></div>
+</div></header>
+
+<main class="wrap" style="padding-top:28px">
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <!-- LOGIN -->
+  <section id="v-login" class="hidden">
+    <div class="row" style="align-items:stretch">
+      <div style="flex:1 1 380px;padding:20px 0">
+        <p class="eyebrow gold">Client login</p>
+        <h1 style="margin:0 0 14px;font-size:52px;line-height:1.05">Your editing balance, orders and deliveries in one place.</h1>
+        <p class="muted" style="max-width:460px;margin:0">Log in with your studio email. We send a 6-digit code — no password needed.</p>
+      </div>
+      <form id="loginForm" class="card" style="flex:1 1 340px;display:flex;flex-direction:column;gap:14px" novalidate>
+        <div id="step1"><label for="email">Studio email</label><input id="email" type="email" autocomplete="email" placeholder="you@studio.com" required></div>
+        <div id="step2" class="hidden"><p id="sentMsg" class="muted" style="margin:0 0 10px;font-size:14px"></p><label for="code">6-digit code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="letter-spacing:6px;font-size:20px"></div>
+        <p id="loginErr" class="err hidden" role="alert"></p>
+        <button id="loginBtn" class="btn" type="submit">Send login code</button>
+        <button id="backBtn" class="ghost hidden" type="button" style="border-radius:12px">Use another email</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="v-dash" class="hidden">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:22px">
+      <div><p id="dashEyebrow" class="eyebrow"></p><h1 id="dashName" style="margin:0;font-size:46px;line-height:1.05"></h1></div>
+      <button class="btn" type="button" data-go="order" style="border-radius:999px">+ Place new order</button>
+    </div>
+    <div id="noCompany" class="card hidden"><p style="margin:0">Your login works, but no studio account is linked yet. Please contact PicGrades.</p></div>
+    <div id="dashBody">
+      <div class="card row" style="gap:28px;margin-bottom:18px;border-radius:24px">
+        <div style="flex:2 1 340px;min-width:0">
+          <p class="muted" style="margin:0;font-size:13px">Image balance</p>
+          <p id="bal" class="serif big" style="margin:4px 0 0;font-size:72px;line-height:1"></p>
+          <p id="balNote" class="muted" style="margin:8px 0 16px"></p>
+          <div class="meter" role="img" id="meterBox"><div id="meter"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px" class="muted"><span id="usedLbl"></span><span id="boughtLbl"></span></div>
+        </div>
+        <div class="duebox" style="flex:1 1 240px;min-width:0">
+          <p class="muted" style="margin:0;font-size:13px">Amount due</p>
+          <p id="due" class="serif" style="margin:4px 0 10px;font-size:44px;line-height:1"></p>
+          <div id="dueLines" style="font-size:14px;color:var(--soft);display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+      </div>
+      <div id="tiles" class="grid" style="margin-bottom:26px"></div>
+      <h2 style="font-size:18px;margin:0 0 12px">Your orders</h2>
+      <div id="orders" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </section>
+
+  <!-- NEW ORDER -->
+  <section id="v-order" class="hidden">
+    <p id="orderEyebrow" class="eyebrow"></p>
+    <h1 style="margin:0 0 22px;font-size:46px;line-height:1.05">Send a catalog</h1>
+    <div id="blocked" class="card hidden"><p id="blockedMsg" style="margin:0"></p></div>
+    <form id="orderForm" class="row" style="align-items:flex-start;gap:22px" novalidate>
+      <div class="card" style="flex:999 1 500px;min-width:0;display:flex;flex-direction:column;gap:18px">
+        <div><label for="cat">Catalog name</label><input id="cat" placeholder="e.g. Riya + Karan Sangeet" required></div>
+        <div><label>Editing option</label><div id="opts" class="chips"></div></div>
+        <div class="row" style="gap:14px">
+          <div id="cullBox" style="flex:1 1 200px" class="hidden"><label for="cul">Images in the catalog (to cull)</label><input id="cul" inputmode="numeric"></div>
+          <div style="flex:1 1 200px"><label for="n" id="nLbl">Number of images</label><input id="n" inputmode="numeric"></div>
+          <div id="bwBox" style="flex:1 1 110px"><label for="bw">B&amp;W %</label><input id="bw" inputmode="numeric" value="0"></div>
+        </div>
+        <div id="speedBox"><label>Delivery speed (faster uses more quota)</label><div id="speeds" class="speed"></div></div>
+        <p id="cullOnlyNote" class="muted hidden" style="margin:0;font-size:13px">Culling only is always 72 hours and uses no editing quota.</p>
+        <div><label for="link">Catalog link (Drive / WeTransfer / Dropbox)</label><input id="link" placeholder="https://" required></div>
+        <div><label for="ref">Reference images link (optional)</label><input id="ref" placeholder="https://"></div>
+        <div><label for="note">Comments for the editor (optional)</label><textarea id="note" rows="3"></textarea></div>
+      </div>
+      <aside class="card" style="flex:1 1 300px;min-width:0;background:var(--warm);border-color:var(--warmline);display:flex;flex-direction:column;gap:12px">
+        <p class="eyebrow gold" style="margin:0">Live summary</p>
+        <div id="sum" class="sum"></div>
+        <p class="muted" style="margin:0;font-size:12px">*Final delivery date is set when the order is saved (busy periods can add 2 days).</p>
+        <button id="creditBtn" type="button" class="ghost hidden" aria-pressed="false" style="border-radius:12px"></button>
+        <p id="billNote" class="note hidden"></p>
+        <p id="orderErr" class="err hidden" role="alert"></p>
+        <button id="placeBtn" class="btn" type="submit">Place order</button>
+        <button class="ghost" type="button" data-go="dash" style="border-radius:12px">Cancel</button>
+      </aside>
+    </form>
+  </section>
+</main>
+
+<nav class="dock hidden" id="dock" aria-label="Main">
+  <button type="button" data-go="dash">Dashboard</button>
+  <button type="button" data-go="order">New order</button>
+</nav>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = (window.PG_CONFIG || {}).apiUrl;
+  var state = { token: null, data: null, view: 'login', f: { option: '', hours: 96, useCredits: false } };
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---- storage (may be unavailable) ----
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function save(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+
+  // ---- API ----
+  function api(action, body) {
+    var payload = Object.assign({ action: action, token: state.token }, body || {});
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.code === 'AUTH') { logoutLocal(); throw new Error(res.error); }
+        if (!res.ok) throw new Error(res.error || 'Something went wrong.');
+        return res;
+      });
+  }
+
+  // ---- formatting ----
+  function num(v) { return Number(v || 0).toLocaleString('en-IN'); }
+  function money(v, cur) { var n = Math.round((v || 0) * 100) / 100; return cur === 'USD' ? '$' + n.toLocaleString('en-US') : '₹' + n.toLocaleString('en-IN'); }
+  function dmy(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : '—'; }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); });
+    (kids || []).forEach(function (c) { e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function show(id, on) { $(id).classList.toggle('hidden', !on); }
+  function toast(msg) { $('toast').textContent = msg; show('toast', !!msg); }
+  function err(id, msg) { $(id).textContent = msg || ''; show(id, !!msg); }
+
+  // ---- views ----
+  function go(view) {
+    state.view = view;
+    ['login', 'dash', 'order'].forEach(function (v) { show('v-' + v, v === view); });
+    show('dock', view !== 'login'); show('logoutBtn', view !== 'login');
+    document.querySelectorAll('nav.dock button').forEach(function (b) { b.setAttribute('aria-current', b.dataset.go === view ? 'page' : 'false'); });
+    if (view === 'order') renderOrder();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { toast(''); go(b.dataset.go); }); });
+
+  // ---- login ----
+  var loginStep = 1;
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault(); err('loginErr', '');
+    var btn = $('loginBtn'); btn.disabled = true;
+    var email = $('email').value.trim();
+    var p = loginStep === 1 ? api('requestCode', { email: email }) : api('verifyCode', { email: email, code: $('code').value.trim() });
+    p.then(function (res) {
+      if (loginStep === 1) {
+        loginStep = 2; $('sentMsg').textContent = res.message; show('step2', true); show('backBtn', true);
+        $('email').readOnly = true; btn.textContent = 'Log in'; $('code').focus();
+      } else {
+        state.token = res.token; save('pg_token', res.token); resetLogin(); refresh().then(function () { go('dash'); });
+      }
+    }).catch(function (x) { err('loginErr', x.message); }).then(function () { btn.disabled = false; });
+  });
+  $('backBtn').addEventListener('click', resetLogin);
+  function resetLogin() { loginStep = 1; show('step2', false); show('backBtn', false); $('email').readOnly = false; $('code').value = ''; $('loginBtn').textContent = 'Send login code'; err('loginErr', ''); }
+  $('logoutBtn').addEventListener('click', function () { api('logout').catch(function () {}); logoutLocal(); });
+  function logoutLocal() { state.token = null; state.data = null; save('pg_token', null); $('who').textContent = ''; go('login'); }
+
+  // ---- dashboard ----
+  function refresh() { return api('me').then(function (res) { state.data = res; renderDash(); }); }
+
+  function pillClass(st) { st = (st || '').toLowerCase(); return st.indexOf('completed') > -1 ? 'p-done' : st.indexOf('hold') > -1 ? 'p-hold' : st.indexOf('editing') > -1 ? 'p-edit' : 'p-rev'; }
+
+  function renderDash() {
+    var d = state.data, c = d.company;
+    $('who').textContent = d.user.name || d.user.email;
+    show('noCompany', !c); show('dashBody', !!c);
+    $('dashName').textContent = c ? c.companyName : (d.user.companyName || 'Welcome');
+    if (!c) return;
+    $('dashEyebrow').textContent = 'Dashboard · ' + c.packageType + ' package · ' + c.currency;
+    var b = c.balance;
+    $('bal').textContent = (b < 0 ? '−' : '') + num(Math.abs(b));
+    $('bal').style.color = b < 0 ? 'var(--over)' : c.lowBalance ? '#F5DE8E' : 'var(--text)';
+    $('balNote').textContent = b < 0 ? num(c.overQuota) + ' images over your prepaid quota — billed at ' + money(c.perImageRate, c.currency) + ' each.'
+      : c.lowBalance ? 'Low balance: please top up soon to keep ordering.' : 'Images left from your prepaid quota.';
+    var pct = c.totalQuota > 0 ? Math.min(100, Math.round(c.usedQuota / c.totalQuota * 100)) : (c.usedQuota > 0 ? 100 : 0);
+    $('meter').style.width = pct + '%'; $('meter').style.background = b < 0 ? 'var(--over)' : 'var(--gold)';
+    $('meterBox').setAttribute('aria-label', 'Used ' + pct + ' percent of bought quota');
+    $('usedLbl').textContent = 'Used ' + num(c.usedQuota); $('boughtLbl').textContent = 'Bought ' + num(c.totalQuota);
+    $('due').textContent = money(c.totalDue, c.currency);
+    $('dueLines').replaceChildren(
+      el('span', { text: 'Editing over quota: ' + money(c.editingDue, c.currency) }),
+      el('span', { text: 'Culling (' + num(c.totalImagesCulled) + ' images): ' + money(c.cullingDue, c.currency) }),
+      el('span', { text: 'Rates: ' + money(c.perImageRate, c.currency) + ' / image · ' + money(c.cullingRate, c.currency) + ' culling' }));
+    var tiles = [['Bought quota', num(c.totalQuota)], ['Used', num(c.usedQuota)], ['Balance', (b < 0 ? '−' : '') + num(Math.abs(b))], ['Images culled', num(c.totalImagesCulled)], ['Bonus credits', c.creditsEnabled ? num(c.credits) : 'Off']];
+    $('tiles').replaceChildren.apply($('tiles'), tiles.map(function (t) { return el('div', { class: 'tile' }, [el('p', { class: 'muted', text: t[0], style: 'font-size:13px' }), el('p', { class: 'v', text: t[1] })]); }));
+    var list = d.orders.slice(0, 20).map(function (o) {
+      var imgs = o.cullingImages > 0 ? num(o.numberOfImages) + ' of ' + num(o.cullingImages) + ' culled' : num(o.numberOfImages) + ' images';
+      var kids = [
+        el('div', { style: 'flex:2 1 230px;min-width:0' }, [el('p', { style: 'margin:0;font-weight:600', text: o.catalogName }), el('p', { class: 'muted', style: 'margin:2px 0 0;font-size:13px', text: (o.editingOptions || '—') + ' · ' + imgs })]),
+        el('div', { style: 'flex:1 1 150px;font-size:13px;color:var(--soft)' }, ['Placed ' + dmy(o.placedAt), el('br'), 'Delivery ' + dmy(o.deliveryDue) + ' · ' + o.hours + 'h']),
+        el('span', { class: 'pill ' + pillClass(o.status), text: (o.status || '').toUpperCase() })
+      ];
+      if (o.lrFilesLink) kids.push(el('a', { href: o.lrFilesLink, target: '_blank', rel: 'noopener', style: 'font-weight:600;text-decoration:none;padding:10px 14px;border:1px solid #5A4A26;border-radius:10px', text: 'Download LR files' }));
+      return el('div', { class: 'order' }, kids);
+    });
+    if (!list.length) list = [el('p', { class: 'muted', text: 'No orders yet.' })];
+    $('orders').replaceChildren.apply($('orders'), list);
+  }
+
+  // ---- new order ----
+  function rules() { return state.data.rules; }
+  function mult(h) { var s = rules().speeds.filter(function (x) { return x.hours === h; })[0]; return s ? s.multiplier : 1; }
+
+  function renderOrder() {
+    var d = state.data; if (!d) return;
+    var c = d.company, form = d.orderForm;
+    $('orderEyebrow').textContent = 'New order · ' + (c ? c.companyName : '');
+    var can = c && form && form.canOrder;
+    show('blocked', !can); show('orderForm', !!can);
+    if (!can) { $('blockedMsg').textContent = form ? form.blockedReason : 'No studio account linked. Please contact PicGrades.'; return; }
+    if (form.options.indexOf(state.f.option) < 0) state.f.option = form.options[0];
+    $('opts').replaceChildren.apply($('opts'), form.options.map(function (o) {
+      var b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(o === state.f.option), text: o });
+      b.addEventListener('click', function () { state.f.option = o; renderOrder(); });
+      return b;
+    }));
+    var cullOnly = state.f.option === 'Culling', hasCull = state.f.option.indexOf('Culling') > -1;
+    show('cullBox', hasCull); show('bwBox', !cullOnly); show('speedBox', !cullOnly); show('cullOnlyNote', cullOnly);
+    $('nLbl').textContent = hasCull ? (cullOnly ? 'Images to keep after culling' : 'Images to cull & edit') : 'Number of images';
+    $('speeds').replaceChildren.apply($('speeds'), rules().speeds.map(function (s) {
+      var b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(s.hours === state.f.hours) }, [el('b', { text: s.hours + ' hrs' }), el('small', { text: s.multiplier + '× quota' })]);
+      b.addEventListener('click', function () { state.f.hours = s.hours; renderOrder(); });
+      return b;
+    }));
+    calc();
+  }
+
+  function calc() {
+    var c = state.data.company, form = state.data.orderForm, r = rules();
+    var opt = state.f.option, cullOnly = opt === 'Culling', hasCull = opt.indexOf('Culling') > -1;
+    var n = parseInt($('n').value, 10) || 0, cul = parseInt($('cul').value, 10) || 0;
+    var hrs = cullOnly ? r.cullingOnlyHours : state.f.hours;
+    var quota = cullOnly ? 0 : Math.ceil(n * mult(hrs));
+    var canCredit = c.creditsEnabled && c.credits > 0 && !cullOnly;
+    var credits = state.f.useCredits && canCredit ? Math.min(c.credits, n, quota) : 0;
+    var net = Math.max(0, quota - credits), after = c.balance - net;
+    var newBill = Math.max(0, net - Math.max(0, c.balance));
+    var days = hrs / 24 + (opt === 'Culling + Color Correction' ? r.cullingExtraDays : 0);
+    var due = new Date(Date.now() + days * 86400000);
+    var rows = [['Images', cullOnly ? num(n) + ' kept of ' + num(cul) : num(n)], ['Speed', hrs + ' hrs · ' + mult(hrs) + '×'],
+      ['Quota this order uses', num(net) + (credits ? ' (−' + num(credits) + ' credits)' : '')]];
+    if (hasCull) rows.push(['Culling cost', money(cul * c.cullingRate, c.currency)]);
+    rows.push(['Balance after', (after < 0 ? '−' : '') + num(Math.abs(after))], ['Estimated delivery*', due.toLocaleDateString('en-GB')]);
+    if (c.packageType === 'CUSTOM' && c.creditsEnabled && n >= r.creditBonusMinImages) rows.push(['Bonus earned', '+' + r.creditBonusPoints + ' credits']);
+    $('sum').replaceChildren.apply($('sum'), rows.map(function (x) { return el('div', {}, [el('span', { text: x[0] }), el('span', { text: x[1] })]); }));
+    show('creditBtn', canCredit);
+    $('creditBtn').textContent = state.f.useCredits ? 'Credits applied (' + num(credits) + ') — remove' : 'Use my ' + num(c.credits) + ' bonus credits';
+    $('creditBtn').setAttribute('aria-pressed', String(!!state.f.useCredits));
+    var note = '';
+    if (form.maxImages !== undefined && net > form.maxImages) note = 'This needs ' + num(net) + ' images of balance; you have ' + num(form.maxImages) + '.';
+    else if (newBill > 0) note = num(newBill) + ' images go past your balance and will be billed: ' + money(newBill * c.perImageRate, c.currency) + ' (' + money(c.perImageRate, c.currency) + ' each).';
+    $('billNote').textContent = note; show('billNote', !!note);
+  }
+  ['n', 'cul', 'bw'].forEach(function (id) { $(id).addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); calc(); }); });
+  $('creditBtn').addEventListener('click', function () { state.f.useCredits = !state.f.useCredits; calc(); });
+
+  $('orderForm').addEventListener('submit', function (e) {
+    e.preventDefault(); err('orderErr', '');
+    var btn = $('placeBtn'); btn.disabled = true; btn.textContent = 'Placing order…';
+    api('placeOrder', { order: {
+      option: state.f.option, catalogName: $('cat').value, images: $('n').value, cullingImages: $('cul').value,
+      hours: state.f.hours, bwPercent: $('bw').value, catalogLink: $('link').value, referenceLinks: $('ref').value,
+      comments: $('note').value, useCredits: state.f.useCredits
+    } }).then(function (res) {
+      ['cat', 'n', 'cul', 'link', 'ref', 'note'].forEach(function (id) { $(id).value = ''; }); $('bw').value = '0';
+      state.f.useCredits = false;
+      return refresh().then(function () { go('dash'); toast('Order placed: ' + res.order.catalogName + ' · used ' + num(res.order.quotaUsed) + ' quota. A confirmation email is on its way.'); });
+    }).catch(function (x) { err('orderErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Place order'; });
+  });
+
+  // ---- start ----
+  if (!API) { document.body.insertAdjacentHTML('afterbegin', '<p class="err" style="padding:12px">Missing apiUrl in config.js</p>'); }
+  state.token = load('pg_token');
+  if (state.token) { refresh().then(function () { go('dash'); }).catch(function () { go('login'); }); } else { go('login'); }
+})();
+</script>
+</body>
+</html>
