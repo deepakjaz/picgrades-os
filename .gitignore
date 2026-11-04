@@ -1,0 +1,8 @@
+# Client data never goes in git
+*.xlsx
+*.csv
+data/
+raw/
+.DS_Store
+node_modules/
+.vercel
