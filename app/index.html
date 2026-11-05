@@ -47,6 +47,9 @@ header .wrap{display:flex;justify-content:space-between;align-items:center;gap:1
 nav.dock{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(23,23,26,.94);border:1px solid var(--line2);border-radius:999px;padding:6px;display:flex;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 nav.dock button{white-space:nowrap;border:0;border-radius:999px;padding:10px 18px;font-weight:600;cursor:pointer;min-height:44px;background:transparent;color:var(--text)}
 nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
+.act{display:flex;flex-wrap:wrap;gap:8px;width:100%;align-items:center}
+.mini{background:var(--chip);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:40px;font-size:13px}
+.mini.warn{border-color:#7A4E1E;color:#FFD9A8}
 .hidden{display:none!important}
 .muted{color:var(--mute)}
 .duebox{border-left:1px solid var(--line);padding-left:24px}
@@ -56,7 +59,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
 <body>
 <header><div class="wrap">
   <div class="brand"><b>PicGrades</b><span class="eyebrow" style="margin:0">Client</span></div>
-  <div style="display:flex;gap:10px;align-items:center"><span id="who" class="muted" style="font-size:13px"></span><button id="logoutBtn" class="ghost hidden" type="button">Log out</button></div>
+  <div style="display:flex;gap:10px;align-items:center"><a id="adminLink" href="admin.html" class="hidden" style="font-size:13px;font-weight:600">Admin</a><span id="who" class="muted" style="font-size:13px"></span><button id="logoutBtn" class="ghost hidden" type="button">Log out</button></div>
 </div></header>
 
 <main class="wrap" style="padding-top:28px">
@@ -111,7 +114,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   <!-- NEW ORDER -->
   <section id="v-order" class="hidden">
     <p id="orderEyebrow" class="eyebrow"></p>
-    <h1 style="margin:0 0 22px;font-size:46px;line-height:1.05">Send a catalog</h1>
+    <h1 id="orderTitle" style="margin:0 0 22px;font-size:46px;line-height:1.05">Send a catalog</h1>
     <div id="blocked" class="card hidden"><p id="blockedMsg" style="margin:0"></p></div>
     <form id="orderForm" class="row" style="align-items:flex-start;gap:22px" novalidate>
       <div class="card" style="flex:999 1 500px;min-width:0;display:flex;flex-direction:column;gap:18px">
@@ -194,7 +197,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     if (view === 'order') renderOrder();
     window.scrollTo(0, 0);
   }
-  document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { toast(''); go(b.dataset.go); }); });
+  document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { toast(''); if (state.editing) stopEdit(); go(b.dataset.go); }); });
 
   // ---- login ----
   var loginStep = 1;
@@ -225,6 +228,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   function renderDash() {
     var d = state.data, c = d.company;
     $('who').textContent = d.user.name || d.user.email;
+    show('adminLink', d.user.role === 'admin' || d.user.role === 'editor');
     show('noCompany', !c); show('dashBody', !!c);
     $('dashName').textContent = c ? c.companyName : (d.user.companyName || 'Welcome');
     if (!c) return;
@@ -253,10 +257,58 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
         el('span', { class: 'pill ' + pillClass(o.status), text: (o.status || '').toUpperCase() })
       ];
       if (o.lrFilesLink) kids.push(el('a', { href: o.lrFilesLink, target: '_blank', rel: 'noopener', style: 'font-weight:600;text-decoration:none;padding:10px 14px;border:1px solid #5A4A26;border-radius:10px', text: 'Download LR files' }));
+      var act = orderActions(o);
+      if (act) kids.push(act);
       return el('div', { class: 'order' }, kids);
     });
     if (!list.length) list = [el('p', { class: 'muted', text: 'No orders yet.' })];
     $('orders').replaceChildren.apply($('orders'), list);
+  }
+
+  // ---- order actions: edit / cancel / hold / resume ----
+  function hhmm(s) { var m = /(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(s || ''); return m ? m[3] + '/' + m[2] + ' ' + m[4] + ':' + m[5] : ''; }
+  function orderActions(o) {
+    if (!o.canEdit && !o.canHold && !o.canResume && !o.holdReason) return null;
+    var box = el('div', { class: 'act' });
+    if (/hold/i.test(o.status) && o.holdReason) box.appendChild(el('span', { class: 'muted', style: 'font-size:13px;flex:1 1 100%', text: 'On hold: ' + o.holdReason }));
+    if (o.canEdit) {
+      var eb = el('button', { type: 'button', class: 'mini', text: 'Edit' });
+      eb.addEventListener('click', function () { startEdit(o); });
+      var cb = el('button', { type: 'button', class: 'mini warn', text: 'Cancel order' });
+      cb.addEventListener('click', function () {
+        if (cb.dataset.sure !== '1') { cb.dataset.sure = '1'; cb.textContent = 'Tap again to cancel'; return; }
+        cb.disabled = true; api('cancelOrder', { orderId: o.orderId }).then(function () { return refresh(); }).then(function () { toast('Order cancelled. ' + num(o.quotaUsed) + ' images returned to your balance.'); }).catch(function (x) { toast(x.message); cb.disabled = false; });
+      });
+      box.appendChild(eb); box.appendChild(cb);
+      box.appendChild(el('span', { class: 'muted', style: 'font-size:12px', text: 'You can edit or cancel until ' + hhmm(o.editUntil) }));
+    }
+    if (o.canHold) {
+      var hb = el('button', { type: 'button', class: 'mini', text: 'Put on hold' });
+      var hin = el('input', { placeholder: 'Reason (e.g. sending more photos)', class: 'hidden', style: 'flex:1 1 220px;min-height:40px;padding:8px 12px' });
+      hb.addEventListener('click', function () {
+        if (hin.classList.contains('hidden')) { hin.classList.remove('hidden'); hb.textContent = 'Confirm hold'; hin.focus(); return; }
+        hb.disabled = true; api('holdOrder', { orderId: o.orderId, reason: hin.value }).then(function () { return refresh(); }).then(function () { toast('Order on hold. The delivery date moves forward while it is paused.'); }).catch(function (x) { toast(x.message); hb.disabled = false; });
+      });
+      box.appendChild(hin); box.appendChild(hb);
+    }
+    if (o.canResume) {
+      var rb = el('button', { type: 'button', class: 'mini', text: 'Resume order' });
+      rb.addEventListener('click', function () { rb.disabled = true; api('resumeOrder', { orderId: o.orderId }).then(function () { return refresh(); }).then(function () { toast('Order resumed. New delivery date updated.'); }).catch(function (x) { toast(x.message); rb.disabled = false; }); });
+      box.appendChild(rb);
+    }
+    return box.childNodes.length ? box : null;
+  }
+
+  function startEdit(o) {
+    state.editing = o;
+    state.f.option = o.editingOptions; state.f.hours = o.hours; state.f.useCredits = o.creditsRedeemed > 0;
+    $('cat').value = o.catalogName; $('n').value = o.numberOfImages; $('cul').value = o.cullingImages || '';
+    $('bw').value = String(o.bwPercent || '0').replace(/\D/g, '') || '0'; $('link').value = o.catalogLink; $('ref').value = o.referenceLinks; $('note').value = o.comments;
+    go('order');
+  }
+  function stopEdit() {
+    state.editing = null; state.f.useCredits = false;
+    ['cat', 'n', 'cul', 'link', 'ref', 'note'].forEach(function (id) { $(id).value = ''; }); $('bw').value = '0';
   }
 
   // ---- new order ----
@@ -266,8 +318,11 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   function renderOrder() {
     var d = state.data; if (!d) return;
     var c = d.company, form = d.orderForm;
-    $('orderEyebrow').textContent = 'New order · ' + (c ? c.companyName : '');
-    var can = c && form && form.canOrder;
+    var ed = state.editing;
+    $('orderEyebrow').textContent = (ed ? 'Edit order · ' : 'New order · ') + (c ? c.companyName : '');
+    $('orderTitle').textContent = ed ? 'Edit your order' : 'Send a catalog';
+    $('placeBtn').textContent = ed ? 'Save changes' : 'Place order';
+    var can = c && form && (form.canOrder || (ed && form.options.length));
     show('blocked', !can); show('orderForm', !!can);
     if (!can) { $('blockedMsg').textContent = form ? form.blockedReason : 'No studio account linked. Please contact PicGrades.'; return; }
     if (form.options.indexOf(state.f.option) < 0) state.f.option = form.options[0];
@@ -288,7 +343,10 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   }
 
   function calc() {
-    var c = state.data.company, form = state.data.orderForm, r = rules();
+    var c0 = state.data.company, form = state.data.orderForm, r = rules(), ed = state.editing;
+    // While editing, the order's own quota and credits count as available again.
+    var c = ed ? Object.assign({}, c0, { balance: c0.balance + ed.quotaUsed, credits: c0.credits + ed.creditsRedeemed }) : c0;
+    if (ed && form.maxImages !== undefined) form = Object.assign({}, form, { maxImages: form.maxImages + ed.quotaUsed });
     var opt = state.f.option, cullOnly = opt === 'Culling', hasCull = opt.indexOf('Culling') > -1;
     var n = parseInt($('n').value, 10) || 0, cul = parseInt($('cul').value, 10) || 0;
     var hrs = cullOnly ? r.cullingOnlyHours : state.f.hours;
@@ -319,15 +377,15 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   $('orderForm').addEventListener('submit', function (e) {
     e.preventDefault(); err('orderErr', '');
     var btn = $('placeBtn'); btn.disabled = true; btn.textContent = 'Placing order…';
-    api('placeOrder', { order: {
+    var ed = state.editing;
+    api(ed ? 'editOrder' : 'placeOrder', { orderId: ed ? ed.orderId : undefined, order: {
       option: state.f.option, catalogName: $('cat').value, images: $('n').value, cullingImages: $('cul').value,
       hours: state.f.hours, bwPercent: $('bw').value, catalogLink: $('link').value, referenceLinks: $('ref').value,
       comments: $('note').value, useCredits: state.f.useCredits
     } }).then(function (res) {
-      ['cat', 'n', 'cul', 'link', 'ref', 'note'].forEach(function (id) { $(id).value = ''; }); $('bw').value = '0';
-      state.f.useCredits = false;
-      return refresh().then(function () { go('dash'); toast('Order placed: ' + res.order.catalogName + ' · used ' + num(res.order.quotaUsed) + ' quota. A confirmation email is on its way.'); });
-    }).catch(function (x) { err('orderErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Place order'; });
+      stopEdit();
+      return refresh().then(function () { go('dash'); toast((ed ? 'Order updated: ' : 'Order placed: ') + res.order.catalogName + ' · uses ' + num(res.order.quotaUsed) + ' quota.' + (ed ? '' : ' A confirmation email is on its way.')); });
+    }).catch(function (x) { err('orderErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = state.editing ? 'Save changes' : 'Place order'; });
   });
 
   // ---- start ----

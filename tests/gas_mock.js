@@ -16,7 +16,10 @@ global.Session = { getScriptTimeZone: () => 'Asia/Kolkata' };
 global.Utilities = {
   getUuid: () => crypto.randomUUID(), DigestAlgorithm: { SHA_256: 'sha256' },
   computeDigest: (a, s) => Array.from(crypto.createHash('sha256').update(s).digest()).map(b => b > 127 ? b - 256 : b),
-  formatDate: (d) => { const x = new Date(d.getTime() + 330 * 60000); return `${x.getUTCFullYear()}-${pad(x.getUTCMonth() + 1)}-${pad(x.getUTCDate())} ${pad(x.getUTCHours())}:${pad(x.getUTCMinutes())}:${pad(x.getUTCSeconds())}`; },
+  formatDate: (d, tz, f) => { const x = new Date(d.getTime() + 330 * 60000);
+    const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const t = { yyyy: x.getUTCFullYear(), yy: String(x.getUTCFullYear()).slice(2), MMM: M[x.getUTCMonth()], MM: pad(x.getUTCMonth() + 1), dd: pad(x.getUTCDate()), HH: pad(x.getUTCHours()), mm: pad(x.getUTCMinutes()), ss: pad(x.getUTCSeconds()) };
+    return (f || 'yyyy-MM-dd HH:mm:ss').replace(/yyyy|yy|MMM|MM|dd|HH|mm|ss/g, k => t[k]); },
   parseDate: (s) => new Date(s.replace(' ', 'T') + '+05:30')
 };
 const props = {}; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
@@ -24,4 +27,6 @@ global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }
 global.MailApp = { sendEmail: m => mail.push(m) };
 global.console = console;
 eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;');
-module.exports = { call: (action, p) => JSON.parse(doPost({ postData: { contents: JSON.stringify(Object.assign({ action }, p || {})) } }).s), DB, mail };
+global.__clock = 0; const RealDate = Date;
+global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(RealDate.now() + global.__clock); } static now() { return RealDate.now() + global.__clock; } };
+module.exports = { advance: h => { global.__clock += h * 3600000; }, call: (action, p) => JSON.parse(doPost({ postData: { contents: JSON.stringify(Object.assign({ action }, p || {})) } }).s), DB, mail };
