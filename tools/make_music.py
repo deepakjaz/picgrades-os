@@ -111,10 +111,106 @@ def wav(path, x):
     with wave.open(path, 'wb') as w:
         w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(d.tobytes())
 
-if __name__ == '__main__':
+if __name__ == '__main__' and len(sys.argv) == 2:
     out = sys.argv[1]; meta = {}
     for slug, title, bpm, sa, lead in [('kasavu-morning', 'Kasavu Morning (veena)', 84, 146.83, 'veena'),
                                        ('temple-procession', 'Temple Procession (nadaswaram)', 104, 155.56, 'reed')]:
         x, m = track(slug, bpm, sa, 64, lead); wav(f'{out}/{slug}.wav', x); m['title'] = title; meta[slug] = m
+        print(slug, 'peak', round(float(np.abs(x).max()), 3), 'rms', round(float(np.sqrt((x ** 2).mean())), 3))
+    json.dump(meta, open(f'{out}/meta.json', 'w'), indent=1)
+
+
+# ---------------------------------------------------------------------------------------------
+# Energetic tracks for the newer reel templates (party / festival / travel). Also fully ours.
+def lp(x, k):  # simple low-pass (moving average)
+    k = max(1, int(k)); return np.convolve(x, np.ones(k) / k, 'same')
+
+def kick(dur=0.35):
+    n = int(dur * SR); t = np.arange(n) / SR
+    f = 50 + 110 * np.exp(-t * 28); ph = 2 * np.pi * np.cumsum(f) / SR
+    return np.sin(ph) * env(n, 0.001, 0.12)
+
+def noise_hit(dur, decay, smooth=1, hp=False):
+    n = int(dur * SR); x = rng.uniform(-1, 1, n)
+    if hp: x = x - lp(x, 6)
+    elif smooth > 1: x = lp(x, smooth)
+    return x * env(n, 0.001, decay)
+
+def saw(freq, dur, detune=0.004, voices=3):
+    n = int(dur * SR); t = np.arange(n) / SR; out = np.zeros(n)
+    for v in range(voices):
+        f = freq * (1 + detune * (v - (voices - 1) / 2))
+        out += 2 * ((t * f + rng.uniform()) % 1) - 1
+    return out / voices
+
+def dhol_bass(dur=0.4):
+    n = int(dur * SR); t = np.arange(n) / SR
+    f = 70 + 60 * np.exp(-t * 18); ph = 2 * np.pi * np.cumsum(f) / SR
+    return (np.sin(ph) + 0.3 * np.sin(2 * ph)) * env(n, 0.002, 0.14)
+
+def dhol_tilli(dur=0.2):
+    n = int(dur * SR); t = np.arange(n) / SR
+    tone = np.sin(2 * np.pi * 420 * t) * 0.5 + np.sin(2 * np.pi * 690 * t) * 0.3
+    return (tone + noise_hit(dur, 0.02, hp=True)[:n] * 0.6) * env(n, 0.001, 0.05)
+
+def master(mix, seconds):
+    n = len(mix); tt = np.arange(n) / SR
+    mix *= np.minimum(1, tt / 0.6) * np.minimum(1, (seconds - tt) / 2.5).clip(0, 1)
+    mix = np.tanh(mix * 1.6) / np.tanh(1.6)
+    mix /= max(1e-9, np.abs(mix).max()) / 0.88
+    return np.stack([mix, np.roll(mix, int(SR * 0.009)) * 0.97], 1)
+
+def party(seconds=64, bpm=124, root=110.0):
+    beat = 60 / bpm; n = int(seconds * SR); mix = np.zeros(n); nb = int(seconds / beat)
+    prog = [0, -4, 3, -2]  # i - VI - III - VII (minor feel)
+    for b in range(nb):
+        t = b * beat; bar = b // 4; ch = root * 2 ** (prog[bar % 4] / 12)
+        if b >= 4: add(mix, kick() * 0.9, t)
+        if b >= 4 and b % 2 == 1: add(mix, noise_hit(0.25, 0.06, smooth=3) * 0.35, t)          # clap
+        if b >= 8: add(mix, noise_hit(0.08, 0.015, hp=True) * 0.18, t + beat / 2)               # off-beat hat
+        if b >= 8: add(mix, lp(saw(ch / 2, beat * 0.45, 0.002, 2), 18) * 0.35 * env(int(beat * 0.45 * SR), 0.003, 0.12), t + beat / 2)  # bass
+        if b % 4 == 0:
+            pad = sum(lp(saw(ch * 2 ** (iv / 12), beat * 4, 0.006), 30) for iv in (0, 3, 7)) / 3
+            add(mix, pad * 0.18 * env(int(beat * 4 * SR), 0.05, beat * 3), t)
+        if b >= 16 and b % 8 in (0, 3, 6): add(mix, dhol_bass() * 0.45, t)                      # a little dhol
+        if b >= 16 and b % 2 == 0: add(mix, dhol_tilli() * 0.25, t + beat * 0.75)
+        if b % 16 == 15: add(mix, noise_hit(beat, beat * 0.9, hp=True) * np.linspace(0, .25, int(beat * SR)), t)  # riser
+    return master(mix, seconds), {'bpm': bpm, 'beat0': 0.0, 'seconds': seconds}
+
+def festival(seconds=64, bpm=118, sa=146.83):
+    beat = 60 / bpm; n = int(seconds * SR); mix = np.zeros(n); nb = int(seconds / beat)
+    # bhangra chaal in 8ths: D . . t D . t .
+    chaal = 'D..tD.t.'
+    for e in range(nb * 2):
+        t = e * beat / 2; c = chaal[e % 8]
+        if c == 'D': add(mix, dhol_bass() * 0.8, t)
+        if c == 't': add(mix, dhol_tilli() * 0.6, t)
+        if e >= 16 and e % 2 == 1: add(mix, noise_hit(0.06, 0.012, hp=True) * 0.15, t)  # chimta-ish
+    for b in range(0, nb, 4): add(mix, tanpura(sa, beat * 4) * 0.7, b * beat)
+    scale = [0, 2, 4, 5, 7, 9, 11, 12]
+    phrase = [(4, 1), (5, .5), (4, .5), (2, 1), (0, 1), (2, .5), (4, .5), (5, 1), (7, 2), (5, 1), (4, 1), (2, 2)]
+    t = beat * 8
+    while t < seconds - beat * 4:
+        for d, ln in phrase:
+            add(mix, reed(sa * 2 ** (scale[d % 8] / 12), beat * ln * 0.92) * 0.8, t); t += beat * ln
+        t += beat * 2
+    return master(mix, seconds), {'bpm': bpm, 'beat0': 0.0, 'seconds': seconds}
+
+def travel(seconds=64, bpm=100, root=196.0):
+    beat = 60 / bpm; n = int(seconds * SR); mix = np.zeros(n); nb = int(seconds / beat)
+    chords = [(0, 4, 7), (7, 11, 14), (9, 12, 16), (5, 9, 12)]  # I V vi IV
+    for b in range(nb):
+        t = b * beat; ch = chords[(b // 4) % 4]
+        for k, iv in enumerate(ch):  # strum
+            add(mix, ks_pluck(root * 2 ** (iv / 12), beat * 1.4, bright=0.45, decay=0.995) * 0.35, t + k * 0.018)
+        if b % 2 == 0 and b >= 4: add(mix, kick() * 0.5, t)
+        if b >= 4: add(mix, noise_hit(0.1, 0.03, smooth=2) * 0.12, t + beat / 2)  # shaker
+        if b >= 8 and b % 4 == 2: add(mix, noise_hit(0.2, 0.05, smooth=3) * 0.25, t)  # snare-ish
+    return master(mix, seconds), {'bpm': bpm, 'beat0': 0.0, 'seconds': seconds}
+
+if __name__ == '__main__' and len(sys.argv) > 2 and sys.argv[2] == 'energetic':
+    out = sys.argv[1]; meta = json.load(open(f'{out}/meta.json')) if __import__('os').path.exists(f'{out}/meta.json') else {}
+    for slug, title, fn in [('cocktail-night', 'Cocktail Night (party)', party), ('dhol-festival', 'Dhol Festival (bhangra)', festival), ('road-trip', 'Road Trip (acoustic)', travel)]:
+        x, m = fn(); wav(f'{out}/{slug}.wav', x); m['title'] = title; meta[slug] = m
         print(slug, 'peak', round(float(np.abs(x).max()), 3), 'rms', round(float(np.sqrt((x ** 2).mean())), 3))
     json.dump(meta, open(f'{out}/meta.json', 'w'), indent=1)
