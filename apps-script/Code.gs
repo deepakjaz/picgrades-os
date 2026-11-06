@@ -51,7 +51,28 @@ var PUBLIC_ROUTES = {
 var USER_ROUTES = {
   logout: logout_,
   me: me_,
-  placeOrder: placeOrder_
+  placeOrder: placeOrder_,
+  editOrder: editOrder_,
+  cancelOrder: cancelOrder_,
+  holdOrder: holdOrder_,
+  resumeOrder: resumeOrder_
+};
+
+// Admin or editor (order queue + delivery)
+var EDITOR_ROUTES = {
+  queue: queue_,
+  setStatus: setStatus_,
+  completeOrder: completeOrder_
+};
+
+// Admin only (money + studios)
+var ADMIN_ROUTES = {
+  adminOverview: adminOverview_,
+  adminCompany: adminCompany_,
+  recordPayment: recordPayment_,
+  adjustQuota: adjustQuota_,
+  addCredits: addCredits_,
+  updateCompany: updateCompany_
 };
 
 function route_(action, params) {
@@ -60,10 +81,14 @@ function route_(action, params) {
     var out;
     if (PUBLIC_ROUTES[action]) {
       out = PUBLIC_ROUTES[action](params);
-    } else if (USER_ROUTES[action]) {
+    } else if (USER_ROUTES[action] || EDITOR_ROUTES[action] || ADMIN_ROUTES[action]) {
       var user = authUser_(params.token);
       if (!user) return { ok: false, error: 'Please log in again.', code: 'AUTH' };
-      out = USER_ROUTES[action](params, user);
+      var role = String(user.role || 'client').toLowerCase();
+      if (ADMIN_ROUTES[action] && role !== 'admin') return { ok: false, error: 'Admins only.', code: 'ROLE' };
+      if (EDITOR_ROUTES[action] && role !== 'admin' && role !== 'editor') return { ok: false, error: 'Editors only.', code: 'ROLE' };
+      var fn = USER_ROUTES[action] || EDITOR_ROUTES[action] || ADMIN_ROUTES[action];
+      out = fn(params, user);
     } else {
       return { ok: false, error: 'Unknown action: ' + action };
     }
@@ -95,12 +120,23 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step2',
+    version: 'step3',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
     settings: getSettings_()
   };
+}
+
+/**
+ * Run once from the editor (select testEmail → Run) to give the script
+ * permission to send emails, and to check that email works.
+ * Sends a test email to the admin notify address from Settings.
+ */
+function testEmail() {
+  var to = String(getSettings_().adminNotifyEmail || Session.getEffectiveUser().getEmail());
+  sendEmail_(to, 'PicGrades OS test email', 'Email works', ['If you can read this, login codes will arrive too.'], 'test', '');
+  Logger.log('Test email sent to ' + to + '. Check the EmailLog tab for the result.');
 }
 
 /** Run once from the editor after importing: checks every tab exists. */
@@ -216,7 +252,7 @@ function hash_(s) {
 function me_(p, user) {
   var s = getSettings_();
   var company = findCompany_(user.companyName);
-  var orders = companyOrders_(user.companyName).slice(0, 50).map(publicOrder_);
+  var orders = companyOrders_(user.companyName).slice(0, 50).map(function (o) { return publicOrder_(o, s, user); });
   var out = { user: publicUser_(user), company: null, orders: orders, rules: publicRules_(s) };
   if (company) {
     out.company = publicCompany_(company, s);
@@ -230,6 +266,7 @@ function placeOrder_(p, user) {
   lock.waitLock(20000);
   try {
     var s = getSettings_();
+    ensureOrderColumns_();
     var company = findCompany_(user.companyName);
     if (!company) return { ok: false, error: 'No company account found. Please contact PicGrades.' };
     var form = orderForm_(company, s);
@@ -249,7 +286,7 @@ function placeOrder_(p, user) {
       creditsRedeemed: calc.creditsUsed, quotaUsed: calc.quotaUsed, perImageRate: company.perImageRate,
       cullingRate: company.cullingRate, catalogLink: String(o.catalogLink || '').trim(),
       referenceLinks: String(o.referenceLinks || '').trim(), comments: String(o.comments || '').trim(),
-      lrFilesLink: '', completedAt: '', source: 'vercel', wixId: ''
+      lrFilesLink: '', completedAt: '', source: 'vercel', wixId: '', creditsEarned: calc.creditsEarned, pausedHours: 0
     };
     appendRow_('Orders', row);
 
@@ -265,7 +302,7 @@ function placeOrder_(p, user) {
 
     var after = companyNumbers_(Object.assign({}, company, patch));
     orderEmails_(row, company, before, after, s);
-    return { order: publicOrder_(row), company: publicCompany_(Object.assign({}, company, patch), s) };
+    return { order: publicOrder_(row, s, user), company: publicCompany_(Object.assign({}, company, patch), s) };
   } finally {
     lock.releaseLock();
   }
@@ -306,14 +343,22 @@ function publicCompany_(c, s) {
   };
 }
 
-function publicOrder_(o) {
-  return {
+function publicOrder_(o, s, user) {
+  var out = {
     orderId: o.orderId, placedAt: fmt_(parseDate_(o.placedAt)), deliveryDue: o.deliveryDue ? fmt_(parseDate_(o.deliveryDue)) : '',
     hours: Number(o.hours || 0), status: o.status, catalogName: o.catalogName,
     numberOfImages: Number(o.numberOfImages || 0), cullingImages: Number(o.cullingImages || 0),
     editingOptions: o.editingOptions, quotaUsed: Number(o.quotaUsed || 0), creditsRedeemed: Number(o.creditsRedeemed || 0),
-    lrFilesLink: o.lrFilesLink || '', source: o.source
+    bwPercent: o.bwPercent, catalogLink: o.catalogLink || '', referenceLinks: o.referenceLinks || '', comments: o.comments || '',
+    lrFilesLink: o.lrFilesLink || '', source: o.source, holdReason: o.holdReason || '', heldBy: o.heldBy || '',
+    companyName: o.companyName, fullName: o.fullName, email: o.email
   };
+  if (s && user) {
+    var f = orderFlags_(o, s, user);
+    out.canEdit = f.canEdit; out.editUntil = f.editUntil ? fmt_(f.editUntil) : '';
+    out.canHold = f.canHold; out.canResume = f.canResume;
+  }
+  return out;
 }
 
 function publicRules_(s) {
@@ -351,7 +396,7 @@ function orderForm_(c, s) {
 }
 
 /** Server-side order maths. Never trusts numbers sent by the browser. */
-function calcOrder_(c, o, s, existingOrders) {
+function calcOrder_(c, o, s, existingOrders, baseDate) {
   var form = orderForm_(c, s);
   var option = String(o.option || '').trim();
   if (form.options.indexOf(option) < 0) return { error: 'Choose an editing option.' };
@@ -381,13 +426,15 @@ function calcOrder_(c, o, s, existingOrders) {
   var creditsEarned = (String(c.packageType) === 'CUSTOM' && isTrue_(c.creditsEnabled) && images >= Number(s.creditBonusMinImages || 1500)) ? Number(s.creditBonusPoints || 100) : 0;
 
   // Busy shift: if the studio already has many open images, start after their latest open order + N days.
-  var base = new Date();
+  var base = baseDate ? new Date(baseDate.getTime()) : new Date();
+  var start = new Date(base.getTime());
   var open = existingOrders.filter(function (x) { return String(x.status).toLowerCase().indexOf('completed') < 0; });
   var openImages = open.reduce(function (t, x) { return t + Number(x.numberOfImages || 0); }, 0);
   if (open.length && openImages >= Number(s.busyShiftImages || 2000)) {
     var latest = open.reduce(function (m, x) { var d = parseDate_(x.placedAt); return d > m ? d : m; }, new Date(0));
     var shifted = new Date(latest.getTime() + Number(s.busyShiftDays || 2) * 86400000);
     if (shifted > base) base = shifted;
+    else if (shifted < start) base = start;
   }
   var extraDays = option === 'Culling + Color Correction' ? Number(s.cullingExtraDays || 3) : 0;
   var deliveryDue = new Date(base.getTime() + hours * 3600000 + extraDays * 86400000);
@@ -407,6 +454,375 @@ function nextOrderId_() {
     if (m) max = Math.max(max, Number(m[1]));
   });
   return 'PG' + ('00000' + (max + 1)).slice(-5);
+}
+
+// =====================================================================
+// 5b. Order lifecycle: edit, cancel, hold, resume (client + staff)
+// =====================================================================
+
+var ORDER_EXTRA_COLUMNS = ['creditsEarned', 'holdReason', 'heldAt', 'heldBy', 'prevStatus', 'pausedHours', 'editedAt', 'cancelledAt', 'galleryLink'];
+var EDIT_WINDOW_DEFAULT = { 96: 24, 72: 16, 48: 8, 24: 4 };
+
+function ensureOrderColumns_() { ensureColumns_('Orders', ORDER_EXTRA_COLUMNS); }
+
+function isStaff_(user) { var r = String(user.role || '').toLowerCase(); return r === 'admin' || r === 'editor'; }
+function statusKey_(st) {
+  st = String(st || '').toLowerCase();
+  if (st.indexOf('cancel') > -1) return 'cancelled';
+  if (st.indexOf('completed') > -1) return 'completed';
+  if (st.indexOf('hold') > -1) return 'hold';
+  if (st.indexOf('editing') > -1) return 'editing';
+  return 'review';
+}
+
+/** Hours after placing during which the client may edit or cancel (by delivery speed). */
+function editWindowHours_(hours, s) {
+  var v = Number(s['editWindow.' + hours]);
+  return v > 0 ? v : (EDIT_WINDOW_DEFAULT[hours] || 24);
+}
+
+function orderFlags_(o, s, user) {
+  var key = statusKey_(o.status);
+  var own = normEmail_(o.email) === normEmail_(user.email) || String(o.companyName).trim().toLowerCase() === String(user.companyName).trim().toLowerCase();
+  var until = new Date(parseDate_(o.placedAt).getTime() + editWindowHours_(Number(o.hours || 96), s) * 3600000);
+  var canEdit = own && key === 'review' && !o.lrFilesLink && new Date() < until;
+  var canHold = (own || isStaff_(user)) && (key === 'review' || key === 'editing');
+  var canResume = key === 'hold' && (isStaff_(user) || (own && normEmail_(o.heldBy) === normEmail_(user.email)));
+  return { canEdit: canEdit, editUntil: canEdit ? until : null, canHold: canHold, canResume: canResume };
+}
+
+/** Load an order the user may act on. Staff may load any order. */
+function loadOrder_(orderId, user) {
+  var o = readTable_('Orders').filter(function (x) { return String(x.orderId) === String(orderId); })[0];
+  if (!o) throw new Error('Order not found.');
+  if (!isStaff_(user) && String(o.companyName).trim().toLowerCase() !== String(user.companyName).trim().toLowerCase()) throw new Error('Order not found.');
+  return o;
+}
+
+function earnedFor_(o) { return Number(o.creditsEarned || 0); }
+
+function editOrder_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    ensureOrderColumns_();
+    var s = getSettings_();
+    var o = loadOrder_(p.orderId, user);
+    if (!orderFlags_(o, s, user).canEdit) return { ok: false, error: 'This order can no longer be edited.' };
+    var company = findCompany_(o.companyName);
+    // Give back the old order first, then check the new one against that balance.
+    var base = Object.assign({}, company, {
+      usedQuota: Number(company.usedQuota || 0) - Number(o.quotaUsed || 0),
+      totalImagesCulled: Number(company.totalImagesCulled || 0) - Number(o.cullingImages || 0),
+      credits: Number(company.credits || 0) + Number(o.creditsRedeemed || 0) - earnedFor_(o)
+    });
+    var others = companyOrders_(o.companyName).filter(function (x) { return x.orderId !== o.orderId; });
+    var calc = calcOrder_(base, p.order || {}, s, others, parseDate_(o.placedAt));
+    if (calc.error) return { ok: false, error: calc.error };
+    var q = p.order || {};
+    var patch = {
+      catalogName: calc.catalogName, editingOptions: calc.option, numberOfImages: calc.images, cullingImages: calc.cullingImages,
+      hours: calc.hours, deliveryDue: fmt_(calc.deliveryDue), bwPercent: calc.bw, creditsRedeemed: calc.creditsUsed,
+      quotaUsed: calc.quotaUsed, creditsEarned: calc.creditsEarned, catalogLink: String(q.catalogLink || '').trim(),
+      referenceLinks: String(q.referenceLinks || '').trim(), comments: String(q.comments || '').trim(), editedAt: fmt_(new Date())
+    };
+    updateRowByNumber_('Orders', o._row, patch);
+    var cPatch = {
+      usedQuota: base.usedQuota + calc.quotaUsed,
+      totalImagesCulled: base.totalImagesCulled + calc.cullingImages,
+      credits: base.credits - calc.creditsUsed + calc.creditsEarned
+    };
+    updateRowByNumber_('Companies', company._row, cPatch);
+    logCreditChange_(o, Number(o.creditsRedeemed || 0), earnedFor_(o), calc.creditsUsed, calc.creditsEarned, 'edited');
+    var updated = Object.assign({}, o, patch);
+    var adm = String(s.adminNotifyEmail || '').trim();
+    if (adm) sendEmail_(adm, 'Order edited by ' + o.companyName + ': ' + patch.catalogName, 'Order edited',
+      ['Order ' + o.orderId + ' was changed by ' + esc_(user.email) + '.',
+       'Images: ' + o.numberOfImages + ' → ' + patch.numberOfImages, 'Editing: ' + esc_(o.editingOptions) + ' → ' + esc_(patch.editingOptions),
+       'Speed: ' + o.hours + 'h → ' + patch.hours + 'h', 'Quota used: ' + o.quotaUsed + ' → ' + patch.quotaUsed,
+       'New delivery: ' + esc_(patch.deliveryDue)], 'order-edited', o.orderId);
+    return { order: publicOrder_(updated, s, user), company: publicCompany_(Object.assign({}, company, cPatch), s) };
+  } finally { lock.releaseLock(); }
+}
+
+function cancelOrder_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    ensureOrderColumns_();
+    var s = getSettings_();
+    var o = loadOrder_(p.orderId, user);
+    if (!orderFlags_(o, s, user).canEdit) return { ok: false, error: 'This order can no longer be cancelled.' };
+    var company = findCompany_(o.companyName);
+    var cPatch = {
+      usedQuota: Number(company.usedQuota || 0) - Number(o.quotaUsed || 0),
+      totalImagesCulled: Number(company.totalImagesCulled || 0) - Number(o.cullingImages || 0),
+      credits: Number(company.credits || 0) + Number(o.creditsRedeemed || 0) - earnedFor_(o)
+    };
+    updateRowByNumber_('Companies', company._row, cPatch);
+    updateRowByNumber_('Orders', o._row, { status: 'Cancelled', cancelledAt: fmt_(new Date()), prevStatus: o.status });
+    logCreditChange_(o, Number(o.creditsRedeemed || 0), earnedFor_(o), 0, 0, 'cancelled');
+    var msg = ['Order <b>' + esc_(o.catalogName) + '</b> (' + o.orderId + ') was cancelled.', o.quotaUsed + ' images of quota were returned to the balance.'];
+    sendEmail_(o.email, 'Order cancelled: ' + o.catalogName, 'Order cancelled', msg, 'order-cancelled', o.orderId);
+    var adm = String(s.adminNotifyEmail || '').trim();
+    if (adm) sendEmail_(adm, 'Order cancelled by ' + o.companyName + ': ' + o.catalogName, 'Order cancelled', msg, 'order-cancelled', o.orderId);
+    return { cancelled: true, company: publicCompany_(Object.assign({}, company, cPatch), s) };
+  } finally { lock.releaseLock(); }
+}
+
+/** Write CreditLog lines for the difference between old and new credit use. */
+function logCreditChange_(o, oldUsed, oldEarned, newUsed, newEarned, why) {
+  var now = fmt_(new Date());
+  var back = oldUsed - newUsed;
+  if (back > 0) appendRow_('CreditLog', { date: now, companyName: o.companyName, type: 'CREDITED', points: back, title: 'Credits returned (order ' + why + '): ' + o.catalogName, method: 'AUTOMATIC', relatedWixOrderId: o.orderId });
+  if (back < 0) appendRow_('CreditLog', { date: now, companyName: o.companyName, type: 'DEBITED', points: -back, title: 'Credits redeemed (order ' + why + '): ' + o.catalogName, method: 'AUTOMATIC', relatedWixOrderId: o.orderId });
+  var lost = oldEarned - newEarned;
+  if (lost > 0) appendRow_('CreditLog', { date: now, companyName: o.companyName, type: 'DEBITED', points: lost, title: 'Bonus removed (order ' + why + '): ' + o.catalogName, method: 'AUTOMATIC', relatedWixOrderId: o.orderId });
+  if (lost < 0) appendRow_('CreditLog', { date: now, companyName: o.companyName, type: 'CREDITED', points: -lost, title: 'Bonus credits earned (order ' + why + '): ' + o.catalogName, method: 'AUTOMATIC', relatedWixOrderId: o.orderId });
+}
+
+function holdOrder_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    ensureOrderColumns_();
+    var s = getSettings_();
+    var o = loadOrder_(p.orderId, user);
+    if (!orderFlags_(o, s, user).canHold) return { ok: false, error: 'This order cannot be put on hold now.' };
+    var reason = String(p.reason || '').trim();
+    if (!reason) return { ok: false, error: 'Please add a reason for the hold.' };
+    var patch = { status: 'On Hold', prevStatus: o.status, holdReason: reason, heldAt: fmt_(new Date()), heldBy: normEmail_(user.email) };
+    updateRowByNumber_('Orders', o._row, patch);
+    var who = isStaff_(user) ? 'PicGrades' : esc_(user.name || user.email);
+    var lines = ['Order <b>' + esc_(o.catalogName) + '</b> is on hold.', 'Reason: ' + esc_(reason), 'Put on hold by: ' + who,
+      'The delivery date moves forward by the time the order stays on hold.'];
+    sendEmail_(o.email, 'Catalog order ' + o.catalogName + ' on HOLD', 'Order on hold', lines, 'order-hold', o.orderId);
+    var adm = String(s.adminNotifyEmail || '').trim();
+    if (adm && !isStaff_(user)) sendEmail_(adm, 'Client put order on hold: ' + o.catalogName, 'Order on hold · ' + esc_(o.companyName), lines, 'order-hold', o.orderId);
+    return { order: publicOrder_(Object.assign({}, o, patch), s, user) };
+  } finally { lock.releaseLock(); }
+}
+
+function resumeOrder_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    ensureOrderColumns_();
+    var s = getSettings_();
+    var o = loadOrder_(p.orderId, user);
+    if (!orderFlags_(o, s, user).canResume) return { ok: false, error: 'Only PicGrades or the person who put it on hold can resume it.' };
+    var now = new Date();
+    var pausedMs = Math.max(0, now - parseDate_(o.heldAt));
+    var due = o.deliveryDue ? new Date(parseDate_(o.deliveryDue).getTime() + pausedMs) : '';
+    var back = o.prevStatus && statusKey_(o.prevStatus) !== 'hold' ? o.prevStatus : 'Under Review';
+    var patch = { status: back, deliveryDue: due ? fmt_(due) : '', heldAt: '', pausedHours: round2_(Number(o.pausedHours || 0) + pausedMs / 3600000) };
+    updateRowByNumber_('Orders', o._row, patch);
+    var lines = ['Order <b>' + esc_(o.catalogName) + '</b> is back in progress (' + esc_(back) + ').', 'New expected delivery: ' + esc_(patch.deliveryDue)];
+    sendEmail_(o.email, 'Catalog order update: ' + o.catalogName, 'Order resumed', lines, 'order-resume', o.orderId);
+    var adm = String(s.adminNotifyEmail || '').trim();
+    if (adm && !isStaff_(user)) sendEmail_(adm, 'Client resumed order: ' + o.catalogName, 'Order resumed · ' + esc_(o.companyName), lines, 'order-resume', o.orderId);
+    return { order: publicOrder_(Object.assign({}, o, patch), s, user) };
+  } finally { lock.releaseLock(); }
+}
+
+// =====================================================================
+// 5c. Editor: queue, status, delivery
+// =====================================================================
+
+function queue_(p, user) {
+  var s = getSettings_();
+  var all = readTable_('Orders');
+  var open = all.filter(function (o) { var k = statusKey_(o.status); return k === 'review' || k === 'editing' || k === 'hold'; })
+    .sort(function (a, b) { return parseDate_(a.deliveryDue || a.placedAt) - parseDate_(b.deliveryDue || b.placedAt); });
+  var done = all.filter(function (o) { return statusKey_(o.status) === 'completed'; })
+    .sort(function (a, b) { return parseDate_(b.completedAt || b.placedAt) - parseDate_(a.completedAt || a.placedAt); }).slice(0, 20);
+  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }) };
+}
+
+var STATUS_SUBJECT = {
+  review: 'Catalog under review: ', editing: 'Editing in progress: ', hold: 'Catalog order on HOLD: '
+};
+
+function setStatus_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    ensureOrderColumns_();
+    var s = getSettings_();
+    var o = loadOrder_(p.orderId, user);
+    var to = String(p.status || '');
+    if (['Under Review', 'Editing'].indexOf(to) < 0) return { ok: false, error: 'Use Hold or Complete for those steps.' };
+    var k = statusKey_(o.status);
+    if (k === 'completed' || k === 'cancelled') return { ok: false, error: 'This order is already ' + o.status + '.' };
+    if (k === 'hold') return { ok: false, error: 'Resume the order first.' };
+    updateRowByNumber_('Orders', o._row, { status: to });
+    sendEmail_(o.email, STATUS_SUBJECT[statusKey_(to)] + o.catalogName, to === 'Editing' ? 'Editing in progress' : 'Under review',
+      ['Your order <b>' + esc_(o.catalogName) + '</b> is now: <b>' + esc_(to) + '</b>.', 'Expected delivery: ' + esc_(o.deliveryDue || '—')], 'order-status', o.orderId);
+    return { order: publicOrder_(Object.assign({}, o, { status: to }), s, user) };
+  } finally { lock.releaseLock(); }
+}
+
+function completeOrder_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    ensureOrderColumns_();
+    var s = getSettings_();
+    var o = loadOrder_(p.orderId, user);
+    var link = String(p.lrFilesLink || '').trim();
+    if (!/^https?:\/\/\S+$/i.test(link)) return { ok: false, error: 'Paste a full link starting with https://' };
+    var k = statusKey_(o.status);
+    if (k === 'cancelled') return { ok: false, error: 'This order was cancelled.' };
+    var patch = { status: 'Order Completed', lrFilesLink: link, completedAt: fmt_(new Date()), heldAt: '' };
+    updateRowByNumber_('Orders', o._row, patch);
+    var note = String(p.note || '').trim();
+    sendEmail_(o.email, 'Catalog order for ' + o.catalogName + ' is complete!', 'Your order is ready',
+      ['Dear ' + esc_(o.fullName || '') + ',', 'Your catalog <b>' + esc_(o.catalogName) + '</b> is complete.',
+       '<a href="' + esc_(link) + '" style="display:inline-block;background:#E9B44C;color:#141413;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Download LR files</a>']
+        .concat(note ? ['Note from the editor: ' + esc_(note)] : []), 'order-complete', o.orderId);
+    return { order: publicOrder_(Object.assign({}, o, patch), s, user), resent: k === 'completed' };
+  } finally { lock.releaseLock(); }
+}
+
+// =====================================================================
+// 5d. Admin: overview, studios, payments
+// =====================================================================
+
+function adminOverview_(p, user) {
+  var s = getSettings_();
+  var companies = readTable_('Companies');
+  var orders = readTable_('Orders').filter(function (o) { return statusKey_(o.status) !== 'cancelled'; });
+  var byCo = {};
+  orders.forEach(function (o) {
+    var k = String(o.companyName).trim().toLowerCase();
+    var x = byCo[k] || (byCo[k] = { orders: 0, open: 0, last: '' });
+    x.orders++;
+    var st = statusKey_(o.status); if (st !== 'completed') x.open++;
+    if (String(o.placedAt) > x.last) x.last = String(o.placedAt);
+  });
+  var rows = companies.map(function (c) {
+    var pc = publicCompany_(c, s), x = byCo[String(c.companyName).trim().toLowerCase()] || { orders: 0, open: 0, last: '' };
+    pc.orders = x.orders; pc.openOrders = x.open; pc.lastOrder = x.last; pc.status = c.status || 'Active'; pc.adminEmail = c.adminEmail;
+    return pc;
+  }).sort(function (a, b) { return String(b.lastOrder).localeCompare(String(a.lastOrder)); });
+  // Images received per month, last 12 months
+  var months = [];
+  var now = new Date();
+  for (var i = 11; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: Utilities.formatDate(d, tz_(), 'yyyy-MM'), label: Utilities.formatDate(d, tz_(), 'MMM yy'), images: 0, orders: 0 });
+  }
+  var idx = {}; months.forEach(function (m, n) { idx[m.key] = n; });
+  orders.forEach(function (o) { var k = String(o.placedAt).slice(0, 7); if (idx[k] !== undefined) { months[idx[k]].images += Number(o.numberOfImages || 0); months[idx[k]].orders++; } });
+  var due = { INR: 0, USD: 0 };
+  rows.forEach(function (r) { due[r.currency === 'USD' ? 'USD' : 'INR'] += r.totalDue; });
+  var openCount = orders.filter(function (o) { return statusKey_(o.status) !== 'completed'; }).length;
+  var payments = readTable_('Payments').sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); }).slice(0, 15);
+  return {
+    totals: { studios: rows.length, openOrders: openCount, dueINR: round2_(due.INR), dueUSD: round2_(due.USD),
+      imagesThisMonth: months[11].images, overQuotaStudios: rows.filter(function (r) { return r.balance < 0; }).length },
+    months: months, companies: rows, payments: payments.map(stripRow_)
+  };
+}
+
+function adminCompany_(p, user) {
+  var s = getSettings_();
+  var c = findCompany_(p.companyName);
+  if (!c) return { ok: false, error: 'Studio not found.' };
+  var key = String(c.companyName).trim().toLowerCase();
+  var users = readTable_('Users').filter(function (u) { return String(u.companyName).trim().toLowerCase() === key; }).map(stripRow_);
+  return {
+    company: Object.assign(publicCompany_(c, s), { adminEmail: c.adminEmail, contactName: c.contactName, phone: c.phone, status: c.status || 'Active' }),
+    orders: companyOrders_(c.companyName).slice(0, 100).map(function (o) { return publicOrder_(o, s, user); }),
+    payments: readTable_('Payments').filter(function (x) { return String(x.companyName).trim().toLowerCase() === key; }).reverse().map(stripRow_),
+    credits: readTable_('CreditLog').filter(function (x) { return String(x.companyName).trim().toLowerCase() === key; }).reverse().slice(0, 50).map(stripRow_),
+    users: users
+  };
+}
+
+function recordPayment_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = getSettings_();
+    var c = findCompany_(p.companyName);
+    if (!c) return { ok: false, error: 'Studio not found.' };
+    var amount = Number(p.amount), rate = Number(p.rate);
+    if (!(amount > 0)) return { ok: false, error: 'Enter the amount received.' };
+    if (!(rate > 0)) return { ok: false, error: 'Enter the rate per image.' };
+    var method = String(p.method || '').trim() || 'UPI';
+    var images = Math.floor(amount / rate + 1e-9);
+    var date = /^\d{4}-\d{2}-\d{2}$/.test(String(p.date || '')) ? p.date + ' 12:00:00' : fmt_(new Date());
+    var pay = { paymentId: 'PAY' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss'), date: date, companyName: c.companyName,
+      amount: amount, currency: c.currency || 'INR', method: method, ratePerImage: rate, imagesAdded: images,
+      note: String(p.note || '').trim(), recordedBy: normEmail_(user.email) };
+    appendRow_('Payments', pay);
+    var patch = { totalQuota: Number(c.totalQuota || 0) + images };
+    if (p.updateRate) patch.perImageRate = rate;
+    updateRowByNumber_('Companies', c._row, patch);
+    var after = publicCompany_(Object.assign({}, c, patch), s);
+    if (p.sendReceipt !== false && c.adminEmail) {
+      sendEmail_(c.adminEmail, 'Payment received: ' + money_(amount, pay.currency), 'Payment received',
+        ['Thank you. We received <b>' + money_(amount, pay.currency) + '</b> (' + esc_(method) + ').',
+         'Added to your balance: <b>' + images + ' images</b> at ' + money_(rate, pay.currency) + ' per image.',
+         'New balance: ' + after.balance + ' images.'], 'payment', pay.paymentId);
+    }
+    return { payment: pay, company: after };
+  } finally { lock.releaseLock(); }
+}
+
+/** Manual correction of images (+ or −) with a note, logged in Payments as an Adjustment. */
+function adjustQuota_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = getSettings_();
+    var c = findCompany_(p.companyName);
+    if (!c) return { ok: false, error: 'Studio not found.' };
+    var images = parseInt(p.images, 10);
+    if (!images) return { ok: false, error: 'Enter images to add (or a minus number to remove).' };
+    var note = String(p.note || '').trim();
+    if (!note) return { ok: false, error: 'Add a note so the change is clear later.' };
+    appendRow_('Payments', { paymentId: 'ADJ' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss'), date: fmt_(new Date()), companyName: c.companyName,
+      amount: 0, currency: c.currency || 'INR', method: 'Adjustment', ratePerImage: '', imagesAdded: images, note: note, recordedBy: normEmail_(user.email) });
+    var patch = { totalQuota: Number(c.totalQuota || 0) + images };
+    updateRowByNumber_('Companies', c._row, patch);
+    return { company: publicCompany_(Object.assign({}, c, patch), s) };
+  } finally { lock.releaseLock(); }
+}
+
+function addCredits_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var s = getSettings_();
+    var c = findCompany_(p.companyName);
+    if (!c) return { ok: false, error: 'Studio not found.' };
+    var pts = parseInt(p.points, 10), title = String(p.title || '').trim();
+    if (!pts) return { ok: false, error: 'Enter credit points (minus to remove).' };
+    if (!title) return { ok: false, error: 'Add a title.' };
+    appendRow_('CreditLog', { date: fmt_(new Date()), companyName: c.companyName, type: pts > 0 ? 'CREDITED' : 'DEBITED', points: Math.abs(pts), title: title, method: 'MANUAL', relatedWixOrderId: '' });
+    var patch = { credits: Number(c.credits || 0) + pts };
+    updateRowByNumber_('Companies', c._row, patch);
+    return { company: publicCompany_(Object.assign({}, c, patch), s) };
+  } finally { lock.releaseLock(); }
+}
+
+var COMPANY_EDITABLE = ['packageType', 'currency', 'perImageRate', 'cullingRate', 'creditsEnabled', 'status', 'adminEmail', 'contactName', 'phone'];
+
+function updateCompany_(p, user) {
+  var s = getSettings_();
+  var c = findCompany_(p.companyName);
+  if (!c) return { ok: false, error: 'Studio not found.' };
+  var patch = {};
+  Object.keys(p.patch || {}).forEach(function (k) { if (COMPANY_EDITABLE.indexOf(k) > -1) patch[k] = p.patch[k]; });
+  ['perImageRate', 'cullingRate'].forEach(function (k) { if (k in patch) { patch[k] = Number(patch[k]); if (!(patch[k] >= 0)) throw new Error(k + ' must be a number.'); } });
+  if ('creditsEnabled' in patch) patch.creditsEnabled = isTrue_(patch.creditsEnabled);
+  if (!Object.keys(patch).length) return { ok: false, error: 'Nothing to change.' };
+  updateRowByNumber_('Companies', c._row, patch);
+  return { company: publicCompany_(Object.assign({}, c, patch), s) };
+}
+
+function stripRow_(r) { var o = Object.assign({}, r); delete o._row; return o; }
+function money_(v, cur) { return (cur === 'USD' ? '$' : '₹') + round2_(Number(v || 0)); }
+
+/** Add any missing header columns to a tab (keeps old sheets working). */
+function ensureColumns_(name, cols) {
+  var sh = sheet_(name);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  var missing = cols.filter(function (c) { return head.indexOf(c) < 0; });
+  missing.forEach(function (c, i) { sh.getRange(1, head.length + i + 1).setValue(c); });
 }
 
 // =====================================================================

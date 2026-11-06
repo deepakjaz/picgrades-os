@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PicGrades · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0E0E10;--bar:#121214;--card:#17171A;--line:#26262B;--line2:#34343A;--chip:#222226;--text:#F3F0EA;--soft:#CFCAC1;--mute:#A8A49C;--gold:#E9B44C;--over:#FF9F43;--warm:#1B1A17;--warmline:#3A3426}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;padding-bottom:110px}
+h1,.serif{font-family:'Instrument Serif',serif;font-weight:400}
+a{color:var(--gold)}
+button,input,select,textarea{font:inherit}
+input,select,textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40;border-radius:12px;padding:10px 12px;min-height:44px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:5px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);background:var(--bar)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:14px;padding-bottom:14px;flex-wrap:wrap}
+.brand b{font-family:'Instrument Serif',serif;font-weight:400;font-size:28px}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mute);margin:0 0 6px}
+.gold{color:var(--gold)}.muted{color:var(--mute)}
+.btn{background:var(--gold);color:#141413;border:0;border-radius:12px;padding:11px 18px;font-weight:600;cursor:pointer;min-height:44px}
+.btn:disabled,.mini:disabled{opacity:.6;cursor:wait}
+.ghost{background:transparent;color:var(--text);border:1px solid #3A3A40;border-radius:999px;padding:8px 16px;cursor:pointer;min-height:40px}
+.mini{background:var(--chip);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:40px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}
+.warmcard{background:var(--warm);border:1px solid var(--warmline);border-radius:20px;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}.tile p{margin:0}.tile .v{font-size:24px;font-weight:600;margin-top:4px}
+.row{display:flex;flex-wrap:wrap;gap:20px}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:820px}
+th{text-align:left;color:var(--mute);font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:500;padding:12px 10px;position:sticky;top:0;background:var(--card)}
+td{padding:10px;border-top:1px solid var(--line)}td.n,th.n{text-align:right;white-space:nowrap}
+tr.sel td{background:#201E19}
+.pill{font-size:12px;font-weight:600;letter-spacing:.5px;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.p-done{background:#1E2A1F;color:#A8E6B4;border:1px solid #3F6B45}.p-hold{background:#2C1F12;color:#FFD9A8;border:1px solid #7A4E1E}
+.p-edit{background:#14233A;color:#A9CBFF;border:1px solid #2F5486}.p-rev{background:#2A2614;color:#F5DE8E;border:1px solid #6B5A22}.p-can{background:#222;color:#aaa;border:1px solid #444}
+.bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end;height:180px;margin-top:10px}
+.bars div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px}
+.bars span.b{width:100%;background:var(--gold);border-radius:6px 6px 2px 2px;min-height:2px}
+.bars small{font-size:11px;color:var(--mute);white-space:nowrap}
+.qitem{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:8px}
+.toast{background:#1E2A1F;border:1px solid #3F6B45;color:#CFF2D5;border-radius:12px;padding:12px 16px;margin-bottom:16px}
+.toast.bad{background:#2C1414;border-color:#7A2E2E;color:#FFC9C2}
+.err{color:#FFB4A8;font-size:14px;margin:0}
+nav.dock{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(23,23,26,.94);border:1px solid var(--line2);border-radius:999px;padding:6px;display:flex;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+nav.dock button{white-space:nowrap;border:0;border-radius:999px;padding:10px 16px;font-weight:600;cursor:pointer;min-height:44px;background:transparent;color:var(--text)}
+nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="brand"><b>PicGrades</b> <span class="eyebrow gold" style="margin:0">Admin</span></div>
+  <div style="display:flex;gap:10px;align-items:center"><a href="index.html" style="font-size:13px">Client view</a><span id="who" class="muted" style="font-size:13px"></span><button id="logoutBtn" class="ghost hidden" type="button">Log out</button></div>
+</div></header>
+
+<main class="wrap" style="padding-top:26px">
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <section id="v-login" class="hidden">
+    <form id="loginForm" class="card" style="max-width:420px;margin:40px auto;display:flex;flex-direction:column;gap:12px" novalidate>
+      <p class="eyebrow gold" style="margin:0">Admin / editor login</p>
+      <div><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
+      <div id="step2" class="hidden"><label for="code">6-digit code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="letter-spacing:6px;font-size:20px"></div>
+      <p id="loginErr" class="err hidden" role="alert"></p>
+      <button id="loginBtn" class="btn" type="submit">Send login code</button>
+    </form>
+  </section>
+
+  <!-- OVERVIEW -->
+  <section id="v-overview" class="hidden">
+    <h1 style="margin:0 0 18px;font-size:44px;line-height:1.05">Studio overview</h1>
+    <div id="totals" class="grid" style="margin-bottom:18px"></div>
+    <div class="card" style="margin-bottom:22px">
+      <p class="eyebrow" style="margin:0">Images received per month</p>
+      <div id="bars" class="bars" role="img" aria-label="Images received per month, last 12 months"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <h2 style="font-size:18px;margin:0">Studios</h2>
+      <input id="filter" placeholder="Search studio…" style="max-width:260px">
+    </div>
+    <div class="tablebox"><table>
+      <thead><tr><th>Studio</th><th>Package</th><th class="n">Rate</th><th class="n">Bought</th><th class="n">Used</th><th class="n">Balance</th><th class="n">Due</th><th class="n">Orders</th><th>Last order</th><th><span class="hidden">Open</span></th></tr></thead>
+      <tbody id="studios"></tbody>
+    </table></div>
+  </section>
+
+  <!-- STUDIO DETAIL -->
+  <section id="v-studio" class="hidden">
+    <button class="ghost" type="button" data-go="overview" style="margin-bottom:14px">← All studios</button>
+    <p id="sEyebrow" class="eyebrow"></p>
+    <h1 id="sName" style="margin:0 0 16px;font-size:44px;line-height:1.05"></h1>
+    <div id="sTiles" class="grid" style="margin-bottom:20px"></div>
+    <div class="row" style="align-items:flex-start">
+      <div style="flex:999 1 520px;min-width:0;display:flex;flex-direction:column;gap:18px">
+        <div><h2 style="font-size:18px;margin:0 0 10px">Orders</h2><div class="tablebox"><table><thead><tr><th>Placed</th><th>Catalog</th><th class="n">Images</th><th>Option</th><th>Status</th><th>Due</th></tr></thead><tbody id="sOrders"></tbody></table></div></div>
+        <div><h2 style="font-size:18px;margin:0 0 10px">Payments &amp; adjustments</h2><div class="tablebox"><table><thead><tr><th>Date</th><th>Method</th><th class="n">Amount</th><th class="n">Rate</th><th class="n">Images</th><th>Note</th><th>By</th></tr></thead><tbody id="sPays"></tbody></table></div></div>
+        <div><h2 style="font-size:18px;margin:0 0 10px">Bonus credits</h2><div class="tablebox"><table><thead><tr><th>Date</th><th>Type</th><th class="n">Points</th><th>Title</th></tr></thead><tbody id="sCredits"></tbody></table></div></div>
+      </div>
+      <aside style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <form id="payForm" class="warmcard" style="display:flex;flex-direction:column;gap:10px" novalidate>
+          <p class="eyebrow gold" style="margin:0">Record payment</p>
+          <div class="row" style="gap:10px"><div style="flex:2 1 0"><label for="pAmt">Amount received</label><input id="pAmt" inputmode="decimal" placeholder="20000"></div><div style="flex:1 1 0"><label for="pRate">Rate / image</label><input id="pRate" inputmode="decimal"></div></div>
+          <div class="row" style="gap:10px"><div style="flex:1 1 0"><label for="pMethod">Method</label><select id="pMethod"><option>UPI</option><option>Cash</option><option>Cash Deposit</option><option>Bank Transfer</option><option>Razorpay</option><option>Other</option></select></div><div style="flex:1 1 0"><label for="pDate">Date</label><input id="pDate" type="date"></div></div>
+          <div><label for="pNote">Note (optional)</label><input id="pNote"></div>
+          <label style="display:flex;gap:8px;align-items:center;margin:0"><input id="pUpdateRate" type="checkbox" style="width:auto;min-height:0"> Also make this the studio's new rate</label>
+          <label style="display:flex;gap:8px;align-items:center;margin:0"><input id="pReceipt" type="checkbox" checked style="width:auto;min-height:0"> Email a receipt to the studio</label>
+          <p id="payPreview" style="margin:0;font-weight:600"></p>
+          <button class="btn" type="submit">Save payment · add images</button>
+        </form>
+        <form id="adjForm" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+          <p class="eyebrow" style="margin:0">Correct images (+ / −)</p>
+          <div class="row" style="gap:10px"><div style="flex:1 1 0"><label for="aImg">Images</label><input id="aImg" inputmode="numeric" placeholder="-150"></div><div style="flex:2 1 0"><label for="aNote">Reason</label><input id="aNote" placeholder="e.g. opening balance fix"></div></div>
+          <button class="mini" type="submit">Save correction</button>
+        </form>
+        <form id="credForm" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+          <p class="eyebrow" style="margin:0">Bonus credits (+ / −)</p>
+          <div class="row" style="gap:10px"><div style="flex:1 1 0"><label for="cPts">Points</label><input id="cPts" inputmode="numeric" placeholder="100"></div><div style="flex:2 1 0"><label for="cTitle">Title</label><input id="cTitle" placeholder="e.g. Festive bonus"></div></div>
+          <button class="mini" type="submit">Save credits</button>
+        </form>
+        <form id="coForm" class="card" style="display:flex;flex-direction:column;gap:10px" novalidate>
+          <p class="eyebrow" style="margin:0">Studio settings</p>
+          <div class="row" style="gap:10px"><div style="flex:1 1 0"><label for="eRate">Rate / image</label><input id="eRate" inputmode="decimal"></div><div style="flex:1 1 0"><label for="eCull">Culling rate</label><input id="eCull" inputmode="decimal"></div></div>
+          <div class="row" style="gap:10px"><div style="flex:1 1 0"><label for="ePkg">Package</label><input id="ePkg"></div><div style="flex:1 1 0"><label for="eCur">Currency</label><select id="eCur"><option>INR</option><option>USD</option></select></div></div>
+          <label style="display:flex;gap:8px;align-items:center;margin:0"><input id="eCredits" type="checkbox" style="width:auto;min-height:0"> Bonus credits enabled</label>
+          <button class="mini" type="submit">Save settings</button>
+        </form>
+      </aside>
+    </div>
+  </section>
+
+  <!-- QUEUE / EDITOR -->
+  <section id="v-queue" class="hidden">
+    <h1 style="margin:0 0 6px;font-size:44px;line-height:1.05">Order queue</h1>
+    <p class="muted" style="margin:0 0 18px">Soonest delivery first. Paste the LR link to complete an order — the client gets the email right away.</p>
+    <div class="row" style="align-items:flex-start">
+      <div class="card" style="flex:999 1 560px;min-width:0"><p class="eyebrow" style="margin:0">Open orders</p><div id="qOpen"></div></div>
+      <div class="card" style="flex:1 1 300px;min-width:0"><p class="eyebrow" style="margin:0">Recently completed</p><div id="qDone"></div></div>
+    </div>
+  </section>
+</main>
+
+<nav class="dock hidden" id="dock" aria-label="Main">
+  <button type="button" data-go="overview" data-admin>Overview</button>
+  <button type="button" data-go="queue">Order queue</button>
+</nav>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = (window.PG_CONFIG || {}).apiUrl;
+  var S = { token: null, role: null, view: 'login', overview: null, studio: null, studioName: null };
+  var $ = function (id) { return document.getElementById(id); };
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function save(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+  function api(action, body) {
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, token: S.token }, body || {})) })
+      .then(function (r) { return r.json(); })
+      .then(function (res) { if (res.code === 'AUTH') { logoutLocal(); throw new Error(res.error); } if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; });
+  }
+  function num(v) { return Number(v || 0).toLocaleString('en-IN'); }
+  function money(v, cur) { var n = Math.round((v || 0) * 100) / 100; return cur === 'USD' ? '$' + n.toLocaleString('en-US') : '₹' + n.toLocaleString('en-IN'); }
+  function dmy(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : '—'; }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); });
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c); });
+    return e;
+  }
+  function fill(id, nodes) { $(id).replaceChildren.apply($(id), nodes); }
+  function show(id, on) { $(id).classList.toggle('hidden', !on); }
+  function toast(msg, bad) { $('toast').textContent = msg || ''; $('toast').classList.toggle('bad', !!bad); show('toast', !!msg); if (msg) window.scrollTo(0, 0); }
+  function pill(st) { st = String(st || ''); var k = st.toLowerCase(); var c = k.indexOf('cancel') > -1 ? 'p-can' : k.indexOf('completed') > -1 ? 'p-done' : k.indexOf('hold') > -1 ? 'p-hold' : k.indexOf('editing') > -1 ? 'p-edit' : 'p-rev'; return el('span', { class: 'pill ' + c, text: st.toUpperCase() }); }
+  function td(v, cls) { return el('td', cls ? { class: cls } : {}, [v]); }
+  function busy(btn, p) { btn.disabled = true; return p.then(function (x) { btn.disabled = false; return x; }, function (e) { btn.disabled = false; throw e; }); }
+
+  function go(v) {
+    S.view = v;
+    ['login', 'overview', 'studio', 'queue'].forEach(function (x) { show('v-' + x, x === v); });
+    show('dock', v !== 'login'); show('logoutBtn', v !== 'login');
+    document.querySelectorAll('nav.dock button').forEach(function (b) { b.setAttribute('aria-current', b.dataset.go === v || (v === 'studio' && b.dataset.go === 'overview') ? 'page' : 'false'); });
+    if (v === 'overview') loadOverview();
+    if (v === 'queue') loadQueue();
+  }
+  document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { toast(''); go(b.dataset.go); }); });
+
+  // ---- login (same email-code login as clients; staff only) ----
+  var step = 1;
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault(); $('loginErr').classList.add('hidden');
+    var email = $('email').value.trim(), btn = $('loginBtn');
+    busy(btn, step === 1 ? api('requestCode', { email: email }) : api('verifyCode', { email: email, code: $('code').value.trim() })).then(function (res) {
+      if (step === 1) { step = 2; show('step2', true); btn.textContent = 'Log in'; $('email').readOnly = true; $('code').focus(); return; }
+      if (res.user.role !== 'admin' && res.user.role !== 'editor') { $('loginErr').textContent = 'This login is not an admin or editor account.'; show('loginErr', true); return; }
+      S.token = res.token; save('pg_token', res.token); startStaff(res.user);
+    }).catch(function (x) { $('loginErr').textContent = x.message; show('loginErr', true); });
+  });
+  $('logoutBtn').addEventListener('click', function () { api('logout').catch(function () {}); logoutLocal(); });
+  function logoutLocal() { S.token = null; save('pg_token', null); step = 1; show('step2', false); $('email').readOnly = false; $('loginBtn').textContent = 'Send login code'; $('who').textContent = ''; go('login'); }
+  function startStaff(user) {
+    S.role = user.role; $('who').textContent = user.name || user.email;
+    document.querySelectorAll('[data-admin]').forEach(function (b) { b.classList.toggle('hidden', user.role !== 'admin'); });
+    go(user.role === 'admin' ? 'overview' : 'queue');
+  }
+
+  // ---- overview ----
+  function loadOverview() {
+    api('adminOverview').then(function (res) { S.overview = res; renderOverview(); }).catch(function (x) { toast(x.message, true); });
+  }
+  function renderOverview() {
+    var o = S.overview, t = o.totals;
+    fill('totals', [['Studios', num(t.studios)], ['Open orders', num(t.openOrders)], ['Images this month', num(t.imagesThisMonth)], ['Due (INR)', money(t.dueINR, 'INR')], ['Due (USD)', money(t.dueUSD, 'USD')], ['Studios over quota', num(t.overQuotaStudios)]]
+      .map(function (x) { return el('div', { class: 'tile' }, [el('p', { class: 'muted', style: 'font-size:13px', text: x[0] }), el('p', { class: 'v', text: x[1] })]); }));
+    var max = Math.max.apply(null, o.months.map(function (m) { return m.images; }).concat([1]));
+    fill('bars', o.months.map(function (m) {
+      return el('div', { title: m.label + ': ' + num(m.images) + ' images, ' + m.orders + ' orders' }, [el('small', { text: m.images ? num(m.images) : '' }), el('span', { class: 'b', style: 'height:' + Math.round(m.images / max * 140) + 'px' }), el('small', { text: m.label })]);
+    }));
+    renderStudios();
+  }
+  $('filter').addEventListener('input', renderStudios);
+  function renderStudios() {
+    if (!S.overview) return;
+    var q = $('filter').value.trim().toLowerCase();
+    fill('studios', S.overview.companies.filter(function (c) { return !q || c.companyName.toLowerCase().indexOf(q) > -1; }).map(function (c) {
+      var open = el('button', { type: 'button', class: 'mini', text: 'Open' });
+      open.addEventListener('click', function () { openStudio(c.companyName); });
+      var bal = el('td', { class: 'n', style: 'font-weight:600;color:' + (c.balance < 0 ? 'var(--over)' : 'var(--text)') }, [(c.balance < 0 ? '−' : '') + num(Math.abs(c.balance))]);
+      return el('tr', {}, [td(el('b', { text: c.companyName })), td(c.packageType), td(money(c.perImageRate, c.currency), 'n'), td(num(c.totalQuota), 'n'), td(num(c.usedQuota), 'n'), bal,
+        td(c.totalDue ? money(c.totalDue, c.currency) : '—', 'n'), td(num(c.orders) + (c.openOrders ? ' (' + c.openOrders + ' open)' : ''), 'n'), td(dmy(c.lastOrder)), td(open)]);
+    }));
+  }
+
+  // ---- studio detail ----
+  function openStudio(name) { S.studioName = name; go('studio'); loadStudio(); }
+  function loadStudio() {
+    return api('adminCompany', { companyName: S.studioName }).then(function (res) { S.studio = res; renderStudio(); }).catch(function (x) { toast(x.message, true); });
+  }
+  function renderStudio() {
+    var d = S.studio, c = d.company;
+    $('sEyebrow').textContent = c.packageType + ' · ' + c.currency + ' · ' + (c.adminEmail || '') + (c.phone ? ' · ' + c.phone : '');
+    $('sName').textContent = c.companyName;
+    fill('sTiles', [['Bought', num(c.totalQuota)], ['Used', num(c.usedQuota)], ['Balance', (c.balance < 0 ? '−' : '') + num(Math.abs(c.balance))], ['Amount due', money(c.totalDue, c.currency)], ['Culled', num(c.totalImagesCulled)], ['Credits', c.creditsEnabled ? num(c.credits) : 'Off']]
+      .map(function (x) { return el('div', { class: 'tile' }, [el('p', { class: 'muted', style: 'font-size:13px', text: x[0] }), el('p', { class: 'v', text: x[1], style: x[0] === 'Balance' && c.balance < 0 ? 'color:var(--over)' : '' })]); }));
+    fill('sOrders', d.orders.length ? d.orders.map(function (o) { return el('tr', {}, [td(dmy(o.placedAt)), td(o.catalogName), td(num(o.numberOfImages), 'n'), td(o.editingOptions), td(pill(o.status)), td(dmy(o.deliveryDue))]); }) : [el('tr', {}, [el('td', { colspan: '6', class: 'muted', text: 'No orders.' })])]);
+    fill('sPays', d.payments.length ? d.payments.map(function (p) { return el('tr', {}, [td(dmy(p.date)), td(p.method), td(p.amount ? money(p.amount, p.currency) : '—', 'n'), td(p.ratePerImage ? money(p.ratePerImage, p.currency) : '—', 'n'), td((p.imagesAdded > 0 ? '+' : '') + num(p.imagesAdded), 'n'), td(p.note || ''), td(p.recordedBy || '')]); }) : [el('tr', {}, [el('td', { colspan: '7', class: 'muted', text: 'No payments recorded in the new system yet.' })])]);
+    fill('sCredits', d.credits.length ? d.credits.map(function (x) { return el('tr', {}, [td(x.date), td(x.type), td(num(x.points), 'n'), td(x.title)]); }) : [el('tr', {}, [el('td', { colspan: '4', class: 'muted', text: 'No credit history.' })])]);
+    $('pRate').value = c.perImageRate; $('pAmt').value = ''; $('pNote').value = ''; $('pUpdateRate').checked = false;
+    $('pDate').value = new Date().toISOString().slice(0, 10); payPreview();
+    $('eRate').value = c.perImageRate; $('eCull').value = c.cullingRate; $('ePkg').value = c.packageType; $('eCur').value = c.currency; $('eCredits').checked = c.creditsEnabled;
+  }
+  function payPreview() {
+    var a = parseFloat($('pAmt').value) || 0, r = parseFloat($('pRate').value) || 0, cur = S.studio ? S.studio.company.currency : 'INR';
+    $('payPreview').textContent = a > 0 && r > 0 ? 'Adds ' + num(Math.floor(a / r + 1e-9)) + ' images  (' + money(a, cur) + ' ÷ ' + money(r, cur) + ')' : 'Images = amount ÷ rate';
+  }
+  ['pAmt', 'pRate'].forEach(function (id) { $(id).addEventListener('input', payPreview); });
+  function submitter(formId, action, body, okMsg) {
+    $(formId).addEventListener('submit', function (e) {
+      e.preventDefault(); var btn = $(formId).querySelector('button[type=submit]');
+      busy(btn, api(action, Object.assign({ companyName: S.studioName }, body()))).then(function (res) { toast(okMsg(res)); return loadStudio(); }).catch(function (x) { toast(x.message, true); });
+    });
+  }
+  submitter('payForm', 'recordPayment', function () { return { amount: $('pAmt').value, rate: $('pRate').value, method: $('pMethod').value, date: $('pDate').value, note: $('pNote').value, updateRate: $('pUpdateRate').checked, sendReceipt: $('pReceipt').checked }; },
+    function (r) { return 'Payment saved: +' + num(r.payment.imagesAdded) + ' images. New balance ' + num(r.company.balance) + '.'; });
+  submitter('adjForm', 'adjustQuota', function () { return { images: $('aImg').value, note: $('aNote').value }; }, function (r) { $('aImg').value = ''; $('aNote').value = ''; return 'Correction saved. New balance ' + num(r.company.balance) + '.'; });
+  submitter('credForm', 'addCredits', function () { return { points: $('cPts').value, title: $('cTitle').value }; }, function (r) { $('cPts').value = ''; $('cTitle').value = ''; return 'Credits saved. Now ' + num(r.company.credits) + '.'; });
+  submitter('coForm', 'updateCompany', function () { return { patch: { perImageRate: $('eRate').value, cullingRate: $('eCull').value, packageType: $('ePkg').value.trim(), currency: $('eCur').value, creditsEnabled: $('eCredits').checked } }; }, function () { return 'Studio settings saved.'; });
+
+  // ---- queue / editor ----
+  function loadQueue() { api('queue').then(function (res) { renderQueue(res); }).catch(function (x) { toast(x.message, true); }); }
+  function act(label, fn, cls) { var b = el('button', { type: 'button', class: cls || 'mini', text: label }); b.addEventListener('click', function () { busy(b, fn(b)).then(function (m) { if (m) toast(m); loadQueue(); }).catch(function (x) { toast(x.message, true); }); }); return b; }
+  function renderQueue(res) {
+    fill('qOpen', res.open.length ? res.open.map(function (o) {
+      var k = String(o.status).toLowerCase();
+      var head = el('div', { style: 'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [el('b', { text: o.catalogName }), pill(o.status)]);
+      var late = o.deliveryDue && new Date(o.deliveryDue.replace(' ', 'T')) < new Date() && k.indexOf('hold') < 0;
+      if (late) head.appendChild(el('span', { class: 'pill p-hold', text: 'OVERDUE' }));
+      var meta = el('span', { class: 'muted', style: 'font-size:13px', text: o.companyName + ' · ' + num(o.numberOfImages) + ' imgs' + (o.cullingImages ? ' (cull ' + num(o.cullingImages) + ')' : '') + ' · ' + (o.editingOptions || '') + ' · ' + o.hours + 'h · due ' + dmy(o.deliveryDue) + ' ' + String(o.deliveryDue).slice(11, 16) });
+      var links = el('span', { style: 'font-size:13px;display:flex;gap:12px;flex-wrap:wrap' }, [o.catalogLink ? el('a', { href: o.catalogLink, target: '_blank', rel: 'noopener', text: 'Catalog link' }) : null, o.referenceLinks && /^https?:/.test(o.referenceLinks) ? el('a', { href: o.referenceLinks, target: '_blank', rel: 'noopener', text: 'References' }) : null, o.comments ? el('span', { class: 'muted', text: '“' + o.comments + '”' }) : null, o.holdReason && k.indexOf('hold') > -1 ? el('span', { style: 'color:#FFD9A8', text: 'Hold: ' + o.holdReason }) : null]);
+      var lr = el('input', { placeholder: 'Paste LR files link (https://…)', style: 'flex:2 1 240px;min-height:40px' });
+      var note = el('input', { placeholder: 'Note to client (optional)', style: 'flex:1 1 160px;min-height:40px' });
+      var reason = el('input', { placeholder: 'Hold reason', class: 'hidden', style: 'flex:1 1 180px;min-height:40px' });
+      var btns = el('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;align-items:center' });
+      if (k.indexOf('hold') > -1) btns.appendChild(act('Resume', function () { return api('resumeOrder', { orderId: o.orderId }).then(function () { return 'Resumed: ' + o.catalogName; }); }));
+      else {
+        if (k.indexOf('editing') < 0) btns.appendChild(act('Start editing', function () { return api('setStatus', { orderId: o.orderId, status: 'Editing' }).then(function () { return 'Editing: ' + o.catalogName + ' (client emailed)'; }); }));
+        btns.appendChild(reason);
+        btns.appendChild(act('Put on hold', function (b) { if (reason.classList.contains('hidden')) { reason.classList.remove('hidden'); reason.focus(); b.textContent = 'Confirm hold'; return Promise.resolve(''); } return api('holdOrder', { orderId: o.orderId, reason: reason.value }).then(function () { return 'On hold: ' + o.catalogName + ' (client emailed)'; }); }));
+      }
+      var done = el('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' }, [lr, note, act('Complete + email client', function () { return api('completeOrder', { orderId: o.orderId, lrFilesLink: lr.value, note: note.value }).then(function () { return 'Completed: ' + o.catalogName + ' — client emailed the LR link.'; }); }, 'btn')]);
+      return el('div', { class: 'qitem' }, [head, meta, links, btns, done]);
+    }) : [el('p', { class: 'muted', text: 'No open orders. 🎉'.replace(' 🎉', '') })]);
+    fill('qDone', res.recentDone.map(function (o) { return el('div', { class: 'qitem' }, [el('b', { text: o.catalogName }), el('span', { class: 'muted', style: 'font-size:13px', text: o.companyName + ' · ' + num(o.numberOfImages) + ' imgs' }), o.lrFilesLink ? el('a', { href: o.lrFilesLink, target: '_blank', rel: 'noopener', style: 'font-size:13px', text: 'LR link' }) : null]); }));
+  }
+
+  // ---- start ----
+  S.token = load('pg_token');
+  if (S.token) api('me').then(function (res) { if (res.user.role === 'admin' || res.user.role === 'editor') startStaff(res.user); else { toast('This account is not an admin or editor.', true); go('login'); } }).catch(function () { go('login'); });
+  else go('login');
+})();
+</script>
+</body>
+</html>
