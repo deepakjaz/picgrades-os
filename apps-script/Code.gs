@@ -49,7 +49,8 @@ var PUBLIC_ROUTES = {
   likePhoto: likePhoto_,
   getNotes: getNotes_,
   addNote: addNote_,
-  getFaces: getFaces_
+  getFaces: getFaces_,
+  photoData: photoData_
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -130,7 +131,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step6-hub',
+    version: 'step8-reels',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
@@ -1144,6 +1145,28 @@ function facesProxy_(p, user) {
     } catch (e) {}
     if (!blob) { try { blob = DriveApp.getFileById(id).getBlob(); } catch (e) {} }
     if (blob) out[id] = 'data:' + (blob.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(blob.getBytes());
+  });
+  return { images: out };
+}
+
+/** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.
+ *  Only photos of a published gallery; at most 4 per call and 150 per device per hour. */
+function photoData_(p) {
+  var g = findGallery_(p.g);
+  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  var device = String(p.device || '').slice(0, 40);
+  if (device.length < 8) return { ok: false, error: 'Missing details.' };
+  var m = loadManifest_(g), ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
+  var want = (p.ids || []).slice(0, 4).filter(function (id) { return ids[id]; });
+  var cache = CacheService.getScriptCache(), key = 'pd:' + g.galleryId + ':' + device, used = Number(cache.get(key) || 0);
+  if (used + want.length > 150) return { ok: false, error: 'Too many photos for now. Please try again in an hour.' };
+  cache.put(key, String(used + want.length), 3600);
+  var out = {};
+  want.forEach(function (id) {
+    try {
+      var r = UrlFetchApp.fetch('https://lh3.googleusercontent.com/d/' + id + '=w1080', { muteHttpExceptions: true, followRedirects: true });
+      if (r.getResponseCode() === 200) out[id] = 'data:' + (r.getBlob().getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(r.getBlob().getBytes());
+    } catch (e) {}
   });
   return { images: out };
 }

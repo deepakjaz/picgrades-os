@@ -1237,6 +1237,42 @@ s = s.replace("</body>", r"""<script>
 </script>
 </body>""", 1)
 
+# ===================== Reel maker entry points (2026-11-07) =====================
+rep('''  <button type="button" class="pgv-ic" id="pgvInfo" aria-label="Photo details">''', '''  <button type="button" class="pgv-ic" id="pgvReel" aria-label="Make a reel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10 12 5 3-5 3z"/></svg></button>
+  <button type="button" class="pgv-ic" id="pgvInfo" aria-label="Photo details">''')
+rep('''    <button type="button" class="mk-btn-peach" id="fmOpen">See your photos</button>''', '''    <button type="button" class="mk-btn-peach" id="fmOpen">See your photos</button>
+    <button type="button" class="fm-upload fm-reel" id="fmReel">Make a reel of your photos</button>''')
+s = s.replace('''    <div class="pgh-sec"><div class="pgh-head"><h3>Events</h3>''', '''    <button type="button" class="pg-findme pgh-reel" id="pghReel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10 12 5 3-5 3z"/></svg><span>Make a reel · music &amp; your photos</span></button>
+    <div class="pgh-sec"><div class="pgh-head"><h3>Events</h3>''', 1)
+assert 'id="pghReel"' in s
+rep('.pgm-empty{', r'''.fm-reel{width:100%;justify-content:center;margin-top:8px}
+.pgh-reel{background:var(--bg-box);color:var(--ink);margin-left:0}
+.pgh-wrap .pg-findme{width:100%;justify-content:center;margin:0 0 10px}
+.pgm-empty{''')
+assert s.count("</body>") == 1
+s = s.replace("</body>", r"""<script>
+let pgReelLoad = null;
+function pgOpenReel(photos) {
+  photos = (photos || []).filter(Boolean);
+  if (!photos.length) { showToast('No photos to make a reel'); return; }
+  if (!pgReelLoad) pgReelLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/reel.js'; s.onload = res; s.onerror = () => { pgReelLoad = null; rej(new Error('Could not open the reel maker. Check the internet.')); }; document.head.appendChild(s); });
+  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi }))
+    .catch(e => showToast(e.message));
+}
+document.getElementById('pgvReel').addEventListener('click', () => pgOpenReel(MOMENTS.map(m => ({ id: m.id }))));
+document.getElementById('fmReel').addEventListener('click', () => {
+  const set = (GALLERY.personal || []).find(e => e.name === 'Your photos') || (GALLERY.personal || [])[0];
+  document.getElementById('fmClose').click();
+  pgOpenReel(set ? set.photos : []);
+});
+document.getElementById('pghReel').addEventListener('click', () => {
+  const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
+  while (pick.length < 24 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 24) pick.push(p.shift()); });
+  pgOpenReel(pick.length ? pick : (GALLERY.root || []));
+});
+</script>
+</body>""", 1)
+
 s = s.replace('aria-label="Memory Rooms" title="Rooms"', 'aria-label="Notes and blessings" title="Notes"')
 import collections; left=[s[m.start()-60:m.start()+30] for m in re.finditer('(?i)demo', s)]; print('demo left:', left)
 open(out, 'w', encoding='utf-8').write(s)
