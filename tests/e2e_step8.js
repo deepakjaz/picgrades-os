@@ -36,12 +36,23 @@ const srv = http.createServer((req, res) => {
     console.log(mode, '| reel opened:', await pg.locator('.rl-th').count(), 'photos |', await pg.textContent('.rl-wrap .rl-lbl:nth-of-type(1)'), '| music:', (await pg.locator('.rl-chip').allTextContents()).slice(0, 3).join(' / '), '|', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'));
     await pg.screenshot({ path: '/tmp/s8_reel_' + mode + '.png' });
     if (mode === 'server') { await ctx.close(); continue; }
+    // every style: frames from the title, the photos and a transition
+    for (const st of await pg.evaluate(() => PGReel.styles)) {
+      await pg.locator('.rl-chip', { hasText: { south: 'South', soft: 'Soft', dynamic: 'Dynamic', travel: 'Travel', festival: 'Festival', party: 'Party' }[st] }).first().click();
+      await pg.waitForTimeout(150);
+      const shots = [];
+      for (const t of [2.2, 4.1, 5.3, 6.6, 8.2, 10.4]) { await pg.evaluate(t => PGReel.frame(t), t); shots.push(await pg.$eval('.rl-stage canvas', c => c.toDataURL('image/jpeg', 0.6))); }
+      fs.writeFileSync('/tmp/s9_' + st + '.json', JSON.stringify(shots));
+      console.log('style', st, '|', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'), '| music:', await pg.textContent('.rl-chip.on >> nth=1'));
+    }
+    await pg.locator('.rl-chip', { hasText: 'Party' }).first().click();
+    console.log('nav hidden while reel open:', !(await pg.isVisible('.tkg-global-nav')));
     await pg.click('.rl-play'); await pg.waitForTimeout(3200); await pg.screenshot({ path: '/tmp/s8_preview_title.png' });
     await pg.waitForTimeout(2500); await pg.screenshot({ path: '/tmp/s8_preview_photo.png' });
     await pg.locator('.rl-chip', { hasText: '15 s' }).click();
     await pg.locator('.rl-th').nth(2).click(); console.log('after removing one:', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'));
     const t0 = Date.now(); await pg.click('.rl-go');
-    await pg.waitForTimeout(7000); await pg.screenshot({ path: '/tmp/s8_making.png' });
+    await pg.waitForTimeout(7000); await pg.screenshot({ path: '/tmp/s8_making.png' }); console.log('status on preview:', await pg.isVisible('.rl-status.on'), await pg.textContent('.rl-status span'));
     await pg.waitForSelector('.rl-stage video', { timeout: 60000 });
     console.log('made in', Math.round((Date.now() - t0) / 1000), 's |', await pg.textContent('.rl-msg'));
     const info = await pg.evaluate(() => new Promise(res => { const v = document.querySelector('.rl-stage video'); const go = () => res([v.videoWidth, v.videoHeight, Math.round(v.duration * 10) / 10]); if (v.readyState >= 1 && isFinite(v.duration)) go(); else { v.onloadedmetadata = go; setTimeout(go, 4000); } }));

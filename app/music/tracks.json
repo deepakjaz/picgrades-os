@@ -21,6 +21,39 @@
    "region": "south",
    "credit": "",
    "licence": "PicGrades original (made in-house)"
+  },
+  {
+   "id": "cocktail-night",
+   "title": "Cocktail Night (party)",
+   "file": "/app/music/cocktail-night.mp3",
+   "bpm": 124,
+   "beat0": 0.0,
+   "seconds": 64,
+   "region": "any",
+   "credit": "",
+   "licence": "PicGrades original (made in-house)"
+  },
+  {
+   "id": "dhol-festival",
+   "title": "Dhol Festival (bhangra)",
+   "file": "/app/music/dhol-festival.mp3",
+   "bpm": 118,
+   "beat0": 0.0,
+   "seconds": 64,
+   "region": "any",
+   "credit": "",
+   "licence": "PicGrades original (made in-house)"
+  },
+  {
+   "id": "road-trip",
+   "title": "Road Trip (acoustic)",
+   "file": "/app/music/road-trip.mp3",
+   "bpm": 100,
+   "beat0": 0.0,
+   "seconds": 64,
+   "region": "any",
+   "credit": "",
+   "licence": "PicGrades original (made in-house)"
   }
  ]
 }
