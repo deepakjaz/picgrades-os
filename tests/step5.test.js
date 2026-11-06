@@ -47,6 +47,12 @@ call('setGallery', { token: admin, orderId: ord.orderId, folderUrl: W });
 r = call('facesStatus', { token: admin, g: gid });
 assert(r.gallery.status === 'Needs update' && r.photos.length === 6, 'new photo after refresh → Needs update');
 assert(call('getGallery', { g: gid }).gallery.faceSearch === true, 'Find me still works while update is pending');
+// reel maker photo proxy (public, rate-limited)
+r = call('photoData', { g: gid, device: 'dev-reel-0001', ids: ['P1', 'NOPE', 'P3', 'P4', 'P2'] });
+assert(r.ok && Object.keys(r.images).length === 3 && r.images.P1 && !r.images.NOPE && !r.images.P2, 'photoData: gallery photos only, max 4 asked');
+assert(!call('photoData', { g: gid, ids: ['P1'] }).ok, 'photoData needs a device id');
+let lim = null; for (let i = 0; i < 60 && !lim; i++) { const x = call('photoData', { g: gid, device: 'dev-reel-0002', ids: ['P1', 'P3', 'P4', 'P1'] }); if (!x.ok) lim = x; }
+assert(lim && /Too many/.test(lim.error), 'photoData limited per device per hour');
 // send
 assert(!call('sendGallery', { token: admin, g: gid, to: 'not-an-email' }).ok, 'bad email rejected');
 const before = mail.length;

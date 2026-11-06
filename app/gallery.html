@@ -1086,6 +1086,9 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 html.pg-dark,body.pgv-on,body.pgm-on{background:#0b0908}
 html.ios-app #view-moments,html.ios-app #view-root.active{bottom:auto;height:var(--pg-full-h,100dvh)}
 html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-stage{height:var(--pg-full-h,100dvh)}
+.fm-reel{width:100%;justify-content:center;margin-top:8px}
+.pgh-reel{background:var(--bg-box);color:var(--ink);margin-left:0}
+.pgh-wrap .pg-findme{width:100%;justify-content:center;margin:0 0 10px}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>
@@ -1178,6 +1181,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
   <button type="button" class="pgv-ic" id="pgvShare" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
   <button type="button" class="pgv-ic" id="pgvSave" aria-label="Download photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
   <button type="button" class="pgv-ic" id="pgvZoom" aria-label="Zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 8.5v5M8.5 11h5"/></svg></button>
+  <button type="button" class="pgv-ic" id="pgvReel" aria-label="Make a reel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10 12 5 3-5 3z"/></svg></button>
   <button type="button" class="pgv-ic" id="pgvInfo" aria-label="Photo details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg></button>
 </div>
 
@@ -1213,6 +1217,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
     <div class="pgh-stats" id="pghStats"></div>
     <div class="pgh-install hidden" id="pghInstall"><div><b>Keep this gallery as an app</b><span id="pghInstallTxt">Opens full screen, straight from your home screen.</span></div><button type="button" class="mk-btn-peach" id="pghInstallBtn">Install</button></div>
     <button type="button" class="pg-findme hidden" data-findme><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me · see all your photos</span></button>
+    <button type="button" class="pg-findme pgh-reel" id="pghReel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10 12 5 3-5 3z"/></svg><span>Make a reel · music &amp; your photos</span></button>
     <div class="pgh-sec"><div class="pgh-head"><h3>Events</h3><button type="button" class="pgh-more" data-goto="gallery">All galleries →</button></div><div class="pgh-row" id="pghEvents"></div></div>
     <div class="pgh-sec hidden" id="pghLovedSec"><div class="pgh-head"><h3>Most loved</h3></div><div class="pgh-row pgh-row-sm" id="pghLoved"></div></div>
     <div class="pgh-sec hidden" id="pghNotesSec"><div class="pgh-head"><h3>Recent notes</h3><button type="button" class="pgh-more" data-goto="rooms">All notes →</button></div><div class="pgh-notes" id="pghNotes"></div></div>
@@ -1315,6 +1320,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
   <div class="fm-result hidden" id="fmResult">
     <div class="fm-thumbs" id="fmThumbs"></div>
     <button type="button" class="mk-btn-peach" id="fmOpen">See your photos</button>
+    <button type="button" class="fm-upload fm-reel" id="fmReel">Make a reel of your photos</button>
     <button type="button" class="fm-link" id="fmAgain">Try another photo</button>
   </div>
 </div>
@@ -2601,6 +2607,27 @@ async function pgDownload(m) {
   }
   size(); window.addEventListener('resize', size); window.addEventListener('orientationchange', () => setTimeout(size, 300));
 })();
+</script>
+<script>
+let pgReelLoad = null;
+function pgOpenReel(photos) {
+  photos = (photos || []).filter(Boolean);
+  if (!photos.length) { showToast('No photos to make a reel'); return; }
+  if (!pgReelLoad) pgReelLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/reel.js'; s.onload = res; s.onerror = () => { pgReelLoad = null; rej(new Error('Could not open the reel maker. Check the internet.')); }; document.head.appendChild(s); });
+  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi }))
+    .catch(e => showToast(e.message));
+}
+document.getElementById('pgvReel').addEventListener('click', () => pgOpenReel(MOMENTS.map(m => ({ id: m.id }))));
+document.getElementById('fmReel').addEventListener('click', () => {
+  const set = (GALLERY.personal || []).find(e => e.name === 'Your photos') || (GALLERY.personal || [])[0];
+  document.getElementById('fmClose').click();
+  pgOpenReel(set ? set.photos : []);
+});
+document.getElementById('pghReel').addEventListener('click', () => {
+  const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
+  while (pick.length < 24 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 24) pick.push(p.shift()); });
+  pgOpenReel(pick.length ? pick : (GALLERY.root || []));
+});
 </script>
 </body>
 </html>
