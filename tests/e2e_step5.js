@@ -62,7 +62,7 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/s5_moments_findme.png' });
   await pg.click('.pgm-findme'); await pg.waitForTimeout(300);
   await pg.screenshot({ path: '/tmp/s5_sheet.png' });
-  await pg.setInputFiles('#fmFile', '/tmp/selfie.jpg');
+  await pg.setInputFiles('#fmFile', '/tmp/selfie.jpg'); await pg.waitForTimeout(60); console.log('searching card shown:', await pg.isVisible('#fmBusy'), '|', await pg.textContent('#fmBusyStep')); await pg.screenshot({ path: '/tmp/s10_busy.png' });
   await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });
   console.log('upload result:', await pg.textContent('#fmStatus'), '|', await pg.textContent('#fmOpen'));
   await pg.screenshot({ path: '/tmp/s5_result.png' });

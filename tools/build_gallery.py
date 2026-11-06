@@ -583,6 +583,7 @@ rep('<div class="pg-toast" id="pgToast"></div>', r'''<div class="overlay-backdro
     <label class="fm-upload">Choose a photo<input type="file" accept="image/*" id="fmFile" hidden></label>
   </div>
   <button type="button" class="mk-btn-peach fm-shoot hidden" id="fmShoot" disabled>Take selfie</button>
+  <div class="fm-busy hidden" id="fmBusy" role="status" aria-live="polite"><i class="fm-spin"></i><div><b id="fmBusyTitle">Searching your photos</b><span id="fmBusyStep">Reading your face…</span></div></div>
   <p class="fm-status" id="fmStatus" aria-live="polite"></p>
   <div class="fm-result hidden" id="fmResult">
     <div class="fm-thumbs" id="fmThumbs"></div>
@@ -615,6 +616,12 @@ rep('.pgm-empty{', r'''/* couple monogram (replaces the red stamp) */
 .fm-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .fm-upload{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:600 .75rem/1 var(--font-mono);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 .fm-shoot{width:100%;margin-top:4px}
+.fm-busy{display:flex;align-items:center;gap:14px;background:var(--bg-box);border:1px solid var(--border-hairline);border-radius:16px;padding:14px 16px;margin:6px 0 4px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.fm-sheet .fm-busy.hidden{display:none!important}
+.fm-busy b{display:block;font:600 .9rem/1.2 var(--font-sans);color:var(--ink)}
+.fm-busy span{display:block;font:500 .72rem/1.3 var(--font-mono);color:var(--ink-faint);margin-top:3px}
+.fm-spin{flex:none;width:26px;height:26px;border-radius:50%;border:3px solid var(--border-hairline);border-top-color:var(--ink);animation:fmspin .8s linear infinite}
+@keyframes fmspin{to{transform:rotate(360deg)}}
 .fm-status{font-size:.8rem;color:var(--ink);margin:12px 0 0;min-height:1em}
 .fm-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px 0 12px}
 .fm-thumbs img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg-box)}
@@ -681,13 +688,20 @@ function pgMonogram() {
     stopCam(); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden');
     findIn(c);
   }
+  // a small card shows what is happening; we let the screen paint before the heavy face work starts
+  const busy = (on, step) => { $('fmBusy').classList.toggle('hidden', !on); if (step) $('fmBusyStep').textContent = step; };
+  const paint = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 30))));
   function findIn(input) {
-    status('Looking for you in ' + (FLAT ? new Set(FLAT.map(x => x.pid)).size : 'all the') + ' photos…');
-    return prepare().then(() => PGFaces.detect(input, 0.5)).then(found => {
-      if (!found.length) { reset(); status('No face found. Use a clear, front-facing photo in good light.'); return; }
-      const me = found.sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height)[0];
-      showResult(PGFaces.match(me.descriptor, FLAT), found.length > 1);
-    }).catch(e => { reset(); status(e.message); });
+    status(''); $('fmActions').classList.add('hidden'); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden');
+    busy(true, 'Getting face search ready…');
+    return paint().then(prepare).then(() => { busy(true, 'Reading your face…'); return paint(); }).then(() => PGFaces.detect(input, 0.5)).then(found => {
+      if (!found.length) { busy(false); reset(); status('No face found. Use a clear, front-facing photo in good light.'); return; }
+      busy(true, 'Matching with ' + new Set(FLAT.map(x => x.pid)).size + ' photos…');
+      return paint().then(() => {
+        const me = found.sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height)[0];
+        const m = PGFaces.match(me.descriptor, FLAT); busy(false); showResult(m, found.length > 1);
+      });
+    }).catch(e => { busy(false); reset(); status(e.message); });
   }
   function photoIndex() {
     const map = {}, order = [];
