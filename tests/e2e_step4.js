@@ -4,8 +4,8 @@ const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..');
 const W = 'WEDDINGFOLDER1234567890';
 DRIVE.folders[W] = { name: 'Aarav_Kavya_2026', access: 'ANYONE_WITH_LINK' };
-[['fR', '00_Root_Moment'], ['fH', 'Haldi'], ['fW', 'Wedding']].forEach(([id, n]) => { DRIVE.folders[id] = { name: n, parent: W }; });
-let k = 0; [['fR', 3], ['fH', 4], ['fW', 5]].forEach(([p, n]) => { for (let i = 0; i < n; i++) DRIVE.files['IMG' + (k++)] = { name: 'img' + i + '.jpg', parent: p, mime: 'image/jpeg' }; });
+[['fR', '00_Root_Moment'], ['fH', 'Haldi'], ['fW', 'Wedding'], ['fM', 'Mehendi'], ['fS', 'Sangeet'], ['fC', 'Cocktail'], ['fRe', 'Reception']].forEach(([id, n]) => { DRIVE.folders[id] = { name: n, parent: W }; });
+let k = 0; [['fR', 3], ['fH', 4], ['fW', 5], ['fM', 2], ['fS', 2], ['fC', 2], ['fRe', 2]].forEach(([p, n]) => { for (let i = 0; i < n; i++) DRIVE.files['IMG' + (k++)] = { name: 'img' + i + '.jpg', parent: p, mime: 'image/jpeg' }; });
 function login(email) { call('requestCode', { email }); const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]; return call('verifyCode', { email, code }).token; }
 const admin = login('adcmediaa@gmail.com');
 const ord = call('queue', { token: admin }).recentDone[0];
@@ -47,11 +47,39 @@ const srv = http.createServer((req, res) => {
     await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(400);
     console.log(vp.name, '| collections:', await pg.locator('.pg-collection').count(), (await pg.locator('.pg-collection h3').allTextContents()).join(','));
     await pg.screenshot({ path: '/tmp/s4_collections_' + vp.name + '.png' });
-    await pg.locator('.pg-collection').nth(1).click(); await pg.waitForTimeout(500);
-    console.log(vp.name, '| viewer:', await pg.isVisible('#view-root'), await pg.textContent('#pgSetLabel'), await pg.textContent('#mkCounterText'), '| fit:', await pg.$eval('#mkImgA', e => getComputedStyle(e).objectFit), '| gallery nav active:', await pg.locator('.tkg-nav-item[data-nav=gallery].active').count());
+    // collections page must scroll so the last collection (Cocktail) can be reached
+    await pg.mouse.move(vp.width / 2, vp.height / 2); await pg.mouse.wheel(0, 2000); await pg.waitForTimeout(500);
+    console.log(vp.name, '| collections page scrolled to:', await pg.evaluate(() => scrollY), '| Cocktail visible:', await pg.locator('.pg-collection', { hasText: 'Cocktail' }).isVisible());
+    await pg.screenshot({ path: '/tmp/s4_collections_scrolled_' + vp.name + '.png' });
+    await pg.locator('.pg-collection', { hasText: 'Wedding' }).click(); await pg.waitForTimeout(600);
+    const sheetHidden = await pg.$eval('#mkEditorialSheet', e => e.getBoundingClientRect().top >= innerHeight - 2);
+    console.log(vp.name, '| viewer full screen:', await pg.$eval('#mkPhotoHero', e => Math.round(e.getBoundingClientRect().height)) === vp.height, '| text hidden:', sheetHidden, '| nav hidden:', !(await pg.isVisible('.tkg-global-nav')), '| counter:', await pg.textContent('#pgvCount'), '| fit:', await pg.$eval('#mkImgA', e => getComputedStyle(e).objectFit));
     await pg.screenshot({ path: '/tmp/s4_viewer_' + vp.name + '.png' });
-    await pg.locator('.mk-thumb-item').nth(1).click(); await pg.waitForTimeout(500); await pg.screenshot({ path: '/tmp/s4_viewer2_' + vp.name + '.png' });
-    await pg.click('#mkViewProjectBtn'); await pg.waitForTimeout(300); console.log(vp.name, '| back to collections:', await pg.isVisible('#view-gallery'));
+    if (vp.name === 'mobile') {
+      const swipe = async (y1, y2) => { await pg.evaluate(([a, b]) => { const h = document.getElementById('mkPhotoHero'); const t = (y) => [new Touch({ identifier: 1, target: h, clientX: 180, clientY: y })]; h.dispatchEvent(new TouchEvent('touchstart', { touches: t(a), changedTouches: t(a), bubbles: true, cancelable: true })); h.dispatchEvent(new TouchEvent('touchmove', { touches: t(b), changedTouches: t(b), bubbles: true, cancelable: true })); h.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: t(b), bubbles: true, cancelable: true })); }, [y1, y2]); await pg.waitForTimeout(500); };
+      await swipe(600, 300); console.log('swipe up ->', await pg.textContent('#pgvCount'));
+      await swipe(600, 300); console.log('swipe up ->', await pg.textContent('#pgvCount'));
+      await swipe(300, 600); console.log('swipe down ->', await pg.textContent('#pgvCount'));
+      await pg.screenshot({ path: '/tmp/s4_viewer2_mobile.png' });
+    } else {
+      await pg.mouse.move(500, 400); await pg.mouse.wheel(0, 120); await pg.waitForTimeout(600); console.log('wheel down ->', await pg.textContent('#pgvCount'));
+      await pg.mouse.wheel(0, 120); await pg.waitForTimeout(600); console.log('wheel down ->', await pg.textContent('#pgvCount'));
+      await pg.mouse.wheel(0, -120); await pg.waitForTimeout(600); console.log('wheel up ->', await pg.textContent('#pgvCount'));
+      await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(500); console.log('arrow down ->', await pg.textContent('#pgvCount'));
+    }
+    await pg.waitForTimeout(800);
+    // single tap hides controls, tap again shows
+    await pg.mouse.click(vp.width / 3, vp.height / 2); await pg.waitForTimeout(500);
+    console.log(vp.name, '| tap -> clean:', await pg.evaluate(() => document.body.classList.contains('pgv-clean')));
+    await pg.screenshot({ path: '/tmp/s4_viewer_clean_' + vp.name + '.png' });
+    await pg.mouse.click(vp.width / 3, vp.height / 2); await pg.waitForTimeout(500);
+    // info sheet
+    await pg.click('#pgvInfo'); await pg.waitForTimeout(450);
+    console.log(vp.name, '| info open:', await pg.$eval('#mkEditorialSheet', e => e.getBoundingClientRect().top < innerHeight - 50));
+    await pg.screenshot({ path: '/tmp/s4_viewer_info_' + vp.name + '.png' });
+    await pg.click('#pgvInfoClose'); await pg.waitForTimeout(350);
+    await pg.click('#pgvLike'); await pg.waitForTimeout(300); console.log(vp.name, '| like in viewer:', await pg.locator('#pgvLike.liked').count(), await pg.textContent('#pgvLikeCount'));
+    await pg.click('#pgvBack'); await pg.waitForTimeout(300); console.log(vp.name, '| back to collections:', await pg.isVisible('#view-gallery'), '| nav back:', await pg.isVisible('.tkg-global-nav'));
     await ctx.close();
   }
   console.log('page errors:', errors);

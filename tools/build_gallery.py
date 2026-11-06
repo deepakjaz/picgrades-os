@@ -426,6 +426,158 @@ selectMomentDirectly(0, false);""", """// Initialise with live data
   }).catch(err => { bootMsg.textContent = err.message; });
 })();""")
 
+# ===================== Full-screen collection viewer (2026-11-06) =====================
+# Collection photos open full screen: no text on top of the photo, swipe/scroll up = next photo,
+# down = previous. Details live in an (i) sheet. Tap = hide/show controls, double-tap = heart.
+rep('<div class="mk-photo-hero" id="mkPhotoHero">', '<div class="mk-photo-hero" id="mkPhotoHero">\n      <div class="pgv-blur" id="pgvBlur"></div>')
+rep('<section class="mk-editorial-sheet" id="mkEditorialSheet" aria-live="polite">', '<section class="mk-editorial-sheet" id="mkEditorialSheet" aria-live="polite">\n      <button type="button" class="pgv-sheet-close" id="pgvInfoClose" aria-label="Close details">×</button>')
+rep('<!-- ==================== ROOT MOMENT: TKG MOMENTS REELS ==================== -->', r'''<div class="pgv-top" id="pgvTop">
+  <button type="button" class="pgv-ic" id="pgvBack" aria-label="All collections"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <div class="pgv-count" id="pgvCount"></div>
+</div>
+<div class="pgv-bar" id="pgvBar">
+  <button type="button" class="pgv-ic pgv-like" id="pgvLike" aria-label="Like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span id="pgvLikeCount"></span></button>
+  <button type="button" class="pgv-ic" id="pgvNote" aria-label="Notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><span id="pgvNoteCount"></span></button>
+  <button type="button" class="pgv-ic" id="pgvShare" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
+  <button type="button" class="pgv-ic" id="pgvInfo" aria-label="Photo details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg></button>
+</div>
+
+<!-- ==================== ROOT MOMENT: TKG MOMENTS REELS ==================== -->''')
+
+# the Gemini "scroll through the photo into its story" engine is replaced by full-screen navigation
+rep('(function initReelsMomentBoundaryScroll() {', '(function initReelsMomentBoundaryScroll() {\n  return; // replaced by full-screen viewer navigation (pgViewerNav)')
+
+rep('.pgm-empty{', r'''/* page scroll fix: body must not be its own scroll box (it blocked scrolling on the collections page) */
+body{overflow-x:visible!important}
+html{overflow-x:hidden}
+/* ===== Full-screen collection viewer ===== */
+body.pgv-on{overflow:hidden}
+body.pgv-on .mk-header,body.pgv-on .tkg-global-nav{display:none!important}
+#view-root.active{position:fixed;inset:0;z-index:5;background:#0b0908;overflow:hidden}
+#view-root .mk-root-stage{max-width:none;margin:0;padding:0;height:100vh;height:100dvh;min-height:0}
+#view-root .mk-photo-hero{position:absolute;inset:0;width:100%;height:100%;background:transparent;touch-action:none;cursor:pointer;overflow:hidden}
+#view-root .mk-photo-fade-top,#view-root .mk-photo-fade-bottom,#view-root .mk-counter-pill,#view-root .mk-next-moment-cue,#view-root #mkViewProjectBtn,#view-root .mk-show-more-btn{display:none!important}
+#view-root .mk-photo-layer{z-index:1}
+.pgv-blur{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(32px) brightness(.42) saturate(1.1);transform:scale(1.12);z-index:0}
+#view-root .mk-filmstrip-rail{top:calc(64px + env(safe-area-inset-top,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));transition:opacity .25s ease}
+.pgv-top,.pgv-bar{display:none;position:fixed;left:0;right:0;z-index:95;transition:opacity .25s ease}
+body.pgv-on .pgv-top,body.pgv-on .pgv-bar{display:flex}
+.pgv-top{top:0;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 22px;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent);pointer-events:none}
+.pgv-bar{bottom:0;align-items:center;gap:10px;padding:22px 16px calc(env(safe-area-inset-bottom,0px) + 16px);background:linear-gradient(to top,rgba(0,0,0,.55),transparent);pointer-events:none}
+.pgv-ic{pointer-events:auto;height:42px;min-width:42px;padding:0 10px;border-radius:21px;border:1px solid rgba(255,255,255,.18);background:rgba(20,16,14,.42);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font:700 12px/1 var(--font-sans)}
+.pgv-ic svg{width:22px;height:22px}
+.pgv-ic span:empty{display:none}
+.pgv-like.liked{color:#FF1744}.pgv-like.liked svg{fill:currentColor}
+.pgv-count{color:rgba(255,255,255,.8);font:500 11px/1 var(--font-mono);letter-spacing:.1em;padding-right:calc(var(--rail-width) + var(--rail-right-gap))}
+body.pgv-clean .pgv-top,body.pgv-clean .pgv-bar,body.pgv-clean #view-root .mk-filmstrip-rail{opacity:0;pointer-events:none}
+body.pgv-clean .pgv-top *,body.pgv-clean .pgv-bar *{pointer-events:none}
+#view-root .mk-editorial-sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:640px;max-height:72vh;max-height:72dvh;overflow-y:auto;padding:28px 22px calc(26px + env(safe-area-inset-bottom,0px));background:var(--bg-cream);transform:translateY(105%);transition:transform .3s cubic-bezier(.22,1,.36,1);z-index:120;box-shadow:0 -12px 40px rgba(0,0,0,.35)}
+body.pgv-info #view-root .mk-editorial-sheet{transform:none}
+body.pgv-info #view-root .mk-filmstrip-rail,body.pgv-info .pgv-top,body.pgv-info .pgv-bar{opacity:0;pointer-events:none}
+body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
+.pgv-sheet-close{position:absolute;top:10px;right:12px;width:34px;height:34px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font-size:20px;line-height:1;cursor:pointer}
+.pgv-pop{position:fixed;width:110px;height:110px;margin:-55px 0 0 -55px;color:#FF1744;z-index:130;pointer-events:none;animation:pgmPop .8s ease forwards;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+.pgm-empty{''')
+
+assert s.count("</body>") == 1
+s = s.replace("</body>", r"""<script>
+(function pgViewerNav() {
+  const view = document.getElementById('view-root'), hero = document.getElementById('mkPhotoHero'), body = document.body;
+  const blur = document.getElementById('pgvBlur'), countEl = document.getElementById('pgvCount');
+  const likeEl = document.getElementById('pgvLike'), likeCountEl2 = document.getElementById('pgvLikeCount'), noteCountEl2 = document.getElementById('pgvNoteCount');
+  const isOn = () => view.classList.contains('active') && !document.querySelector('.reg-overlay.show') && !body.classList.contains('pgv-info');
+
+  const _apply = applyActiveMoment;
+  applyActiveMoment = function (idx) {
+    _apply(idx);
+    const m = MOMENTS[activeIdx]; if (!m) return;
+    countEl.textContent = (activeIdx + 1) + ' / ' + MOMENTS.length;
+    blur.style.backgroundImage = 'url("' + m.photoUrl + '")';
+    pgvSync();
+  };
+  function pgvSync() {
+    const m = MOMENTS[activeIdx]; if (!m || !GALLERY) return;
+    likeEl.classList.toggle('liked', !!(GALLERY.mine || {})[m.id]);
+    likeCountEl2.textContent = (GALLERY.likes || {})[m.id] || '';
+    noteCountEl2.textContent = (GALLERY.notes || {})[m.id] || '';
+  }
+  const _sync = syncCounts;
+  syncCounts = function (id) { _sync(id); pgvSync(); };
+  const _switch = switchView;
+  switchView = function (key) {
+    _switch(key);
+    body.classList.toggle('pgv-on', key === 'root');
+    if (key !== 'root') body.classList.remove('pgv-info', 'pgv-clean');
+  };
+
+  function go(d) {
+    if (!MOMENTS.length) return;
+    const t = activeIdx + d;
+    if (t < 0) { showToast('First photo of ' + CURRENT_SET); return; }
+    if (t >= MOMENTS.length) { showToast('Last photo of ' + CURRENT_SET); return; }
+    advanceMomentFromMainStage(d);
+  }
+  // mouse wheel / trackpad: down = next, up = previous
+  let acc = 0, lockUntil = 0, accTimer = null;
+  view.addEventListener('wheel', (e) => {
+    if (!isOn()) return;
+    if (e.target.closest('.mk-filmstrip-rail, .mk-editorial-sheet')) return;
+    e.preventDefault();
+    if (Date.now() < lockUntil) return;
+    acc += e.deltaY; clearTimeout(accTimer); accTimer = setTimeout(() => { acc = 0; }, 200);
+    if (Math.abs(acc) >= 40) { go(acc > 0 ? 1 : -1); acc = 0; lockUntil = Date.now() + 450; }
+  }, { passive: false });
+
+  // touch: swipe up = next, swipe down = previous (left/right also works); tap = hide/show controls; double-tap = heart
+  let sx = null, sy = 0, lastTouch = 0, lastTap = 0, tapTimer = null;
+  function tap(x, y) {
+    if (body.classList.contains('pgv-info')) { body.classList.remove('pgv-info'); return; }
+    const now = Date.now();
+    if (now - lastTap < 320) {
+      clearTimeout(tapTimer); lastTap = 0;
+      const m = MOMENTS[activeIdx];
+      if (m) {
+        if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m);
+        const p = document.createElement('div'); p.className = 'pgv-pop'; p.style.left = x + 'px'; p.style.top = y + 'px';
+        p.innerHTML = ICON_POP; document.body.appendChild(p); setTimeout(() => p.remove(), 850);
+      }
+      return;
+    }
+    lastTap = now;
+    tapTimer = setTimeout(() => body.classList.toggle('pgv-clean'), 320);
+  }
+  hero.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+  hero.addEventListener('touchmove', (e) => { if (sx !== null) e.preventDefault(); }, { passive: false });
+  hero.addEventListener('touchend', (e) => {
+    if (sx === null) return;
+    lastTouch = Date.now();
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; sx = null;
+    if (!isOn() && !body.classList.contains('pgv-info')) return;
+    if (Math.abs(dy) > 45 && Math.abs(dy) >= Math.abs(dx)) { if (isOn()) go(dy < 0 ? 1 : -1); return; }
+    if (Math.abs(dx) > 45) { if (isOn()) go(dx < 0 ? 1 : -1); return; }
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) tap(t.clientX, t.clientY);
+  }, { passive: true });
+  hero.addEventListener('click', (e) => { if (Date.now() - lastTouch < 700) return; tap(e.clientX, e.clientY); });
+
+  window.addEventListener('keydown', (e) => {
+    if (!view.classList.contains('active')) return;
+    if (e.key === 'Escape') { if (body.classList.contains('pgv-info')) body.classList.remove('pgv-info'); else switchView('gallery'); return; }
+    if (!isOn()) return;
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(1); }
+    else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
+  });
+
+  document.getElementById('pgvBack').addEventListener('click', () => switchView('gallery'));
+  likeEl.addEventListener('click', () => { const m = MOMENTS[activeIdx]; if (m) pgToggleLike(m); });
+  document.getElementById('pgvNote').addEventListener('click', () => document.getElementById('mkCommentBtn').click());
+  document.getElementById('pgvShare').addEventListener('click', pgShare);
+  document.getElementById('pgvInfo').addEventListener('click', () => body.classList.add('pgv-info'));
+  document.getElementById('pgvInfoClose').addEventListener('click', () => body.classList.remove('pgv-info'));
+  if (view.classList.contains('active')) body.classList.add('pgv-on');
+})();
+</script>
+</body>""", 1)
+
 import collections; left=[s[m.start()-60:m.start()+30] for m in re.finditer('(?i)demo', s)]; print('demo left:', left)
 open(out, 'w', encoding='utf-8').write(s)
 print('ok', len(s))
