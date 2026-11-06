@@ -15,7 +15,8 @@ def rep(old, new, count=1):
 # ---- title, header, stamp ----
 s = re.sub(r'<title>.*?</title>', '<title>PicGrades · Wedding Gallery</title>', s, count=1, flags=re.S)
 rep('<span>Aarav &amp; Kavya</span>', '<span id="pgCoupleTitle">Wedding Gallery</span>')
-rep('<span>結婚</span>\n      <span>27</span>', '<span>結婚</span>\n      <span id="pgStampYear"></span>')
+rep('<span>結婚</span>\n      <span>27</span>', '<span class="pg-mono" id="pgMono"></span>')
+rep('<button type="button" class="mk-stamp-badge" id="stampThemeBtn" title="Toggle Light/Dark">', '<button type="button" class="mk-stamp-badge" id="stampThemeBtn" title="Light / dark" aria-label="Couple monogram · switch light or dark">')
 
 # ---- root moment demo copy ----
 rep('<h1 class="mk-editorial-title" id="mkTitle">The First Shower of Marigolds (2027)</h1>', '<h1 class="mk-editorial-title" id="mkTitle"></h1>')
@@ -32,7 +33,7 @@ rep('<div class="mk-counter-num" id="mkCounterText">1/12</div>', '<div class="mk
 # ---- galleries view ----
 rep('<div class="pg-module-eyebrow">Full Archive · Demo Preview</div>', '<div class="pg-module-eyebrow" id="pgGalleryEyebrow">Full Archive</div>')
 rep('<p class="pg-module-sub">Tap any photograph below to open it directly inside the Root Moment filmstrip viewer. Scroll down this page to watch the TKG dock curl into its compact circle.</p>',
-    '<p class="pg-module-sub">Every event of the day. Open a collection to see all its photos.</p>')
+    '<p class="pg-module-sub">Every event of the day. Open a collection to see all its photos.</p>\n    <button type="button" class="pg-findme hidden" data-findme><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me · see all your photos</span></button>')
 
 rep('<div class="pg-gallery-masonry" id="pgGalleryMasonry"></div>', '<div id="pgGalleryMasonry"></div>')
 
@@ -47,7 +48,7 @@ rep('<main class="pg-view active" id="view-root">', '<main class="pg-view" id="v
 # TKG Moments reels view (Root Moment)
 rep('<!-- ==================== VIEW 2: EVENT GALLERIES ==================== -->', '''<!-- ==================== ROOT MOMENT: TKG MOMENTS REELS ==================== -->
 <section class="pg-view active" id="view-moments" aria-label="Root Moment">
-  <div class="pgm-head"><div><div class="pgm-head-title" id="pgmTitle"></div><div class="pgm-head-sub" id="pgmSub">Root Moment</div></div></div>
+  <div class="pgm-head"><div><div class="pgm-head-title" id="pgmTitle"></div><div class="pgm-head-sub" id="pgmSub">Root Moment</div></div><button type="button" class="pgm-findme hidden" data-findme aria-label="Find me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me</span></button></div>
   <div class="pgm-feed" id="pgmFeed"></div>
 </section>
 
@@ -163,7 +164,7 @@ function buildRootSet() {
 }
 function useSet(name) {
   CURRENT_SET = name;
-  const ev = GALLERY.events.find(e => e.name === name) || GALLERY.events[0];
+  const ev = (GALLERY.personal || []).concat(GALLERY.events).find(e => e.name === name) || GALLERY.events[0];
   MOMENTS = ev ? ev.photos.map((p, i) => pgMoment(p, ev.name, i + 1, ev.photos.length)) : [];
   CURRENT_SET = ev ? ev.name : '';
   activeIdx = -1;
@@ -196,7 +197,7 @@ function renderGalleries() {
   const wrap = document.getElementById('pgGalleryMasonry');
   wrap.innerHTML = '';
   wrap.className = 'pg-collections';
-  (GALLERY.events || []).forEach((ev) => {
+  (GALLERY.personal || []).concat(GALLERY.events || []).forEach((ev) => {
     const card = document.createElement('button');
     card.type = 'button'; card.className = 'pg-collection';
     card.setAttribute('aria-label', 'Open ' + ev.name + ' collection, ' + ev.photos.length + ' photos');
@@ -405,7 +406,7 @@ selectMomentDirectly(0, false);""", """// Initialise with live data
     const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;
     document.title = GALLERY.title + ' · PicGrades';
     document.getElementById('pgCoupleTitle').textContent = GALLERY.title;
-    document.getElementById('pgStampYear').textContent = (GALLERY.eventDate || '').slice(2, 4) || String(new Date().getFullYear()).slice(2);
+    pgMonogram();
     const dateTxt = pgDate(GALLERY.eventDate);
     document.getElementById('pgHubEyebrow').textContent = GALLERY.title + (dateTxt ? ' · ' + dateTxt : '');
     document.getElementById('pgHubTitle').textContent = 'Wedding Hub';
@@ -574,6 +575,167 @@ s = s.replace("</body>", r"""<script>
   document.getElementById('pgvInfo').addEventListener('click', () => body.classList.add('pgv-info'));
   document.getElementById('pgvInfoClose').addEventListener('click', () => body.classList.remove('pgv-info'));
   if (view.classList.contains('active')) body.classList.add('pgv-on');
+})();
+</script>
+</body>""", 1)
+
+# ===================== Find me (face search) + couple monogram (2026-11-06) =====================
+s = s.replace("card.type = 'button'; card.className = 'pg-collection';", "card.type = 'button'; card.className = 'pg-collection' + (ev.personal ? ' is-personal' : '');", 1)
+rep('<div class="pg-toast" id="pgToast"></div>', r'''<div class="overlay-backdrop" id="fmBackdrop"></div>
+<div class="reg-overlay fm-sheet" id="fmSheet" role="dialog" aria-modal="true" aria-labelledby="fmTitle">
+  <button type="button" class="pgv-sheet-close" id="fmClose" aria-label="Close">×</button>
+  <h3 class="fm-title" id="fmTitle">Find your photos</h3>
+  <p class="fm-sub">Take a selfie or choose a photo of yourself. It stays on your phone — nothing is uploaded.</p>
+  <div class="fm-cam hidden" id="fmCam"><video id="fmVideo" playsinline muted autoplay></video><canvas id="fmOverlay"></canvas><span class="fm-hint" id="fmHint">Look at the camera</span></div>
+  <div class="fm-actions" id="fmActions">
+    <button type="button" class="mk-btn-peach" id="fmCamBtn">Use camera</button>
+    <label class="fm-upload">Choose a photo<input type="file" accept="image/*" id="fmFile" hidden></label>
+  </div>
+  <button type="button" class="mk-btn-peach fm-shoot hidden" id="fmShoot" disabled>Take selfie</button>
+  <p class="fm-status" id="fmStatus" aria-live="polite"></p>
+  <div class="fm-result hidden" id="fmResult">
+    <div class="fm-thumbs" id="fmThumbs"></div>
+    <button type="button" class="mk-btn-peach" id="fmOpen">See your photos</button>
+    <button type="button" class="fm-link" id="fmAgain">Try another photo</button>
+  </div>
+</div>
+<div class="pg-toast" id="pgToast"></div>''')
+
+rep('.pgm-empty{', r'''/* couple monogram (replaces the red stamp) */
+.mk-stamp-badge{width:44px;height:44px;border-radius:50%;background:var(--bg-box);color:var(--ink);border:1px solid var(--border-hairline);outline:none;box-shadow:none;padding:0;overflow:hidden}
+.pg-mono{font-family:var(--font-serif);font-weight:400;font-size:15px;letter-spacing:.02em;line-height:1}
+.pg-mono img{width:44px;height:44px;object-fit:cover;display:block}
+/* Find me */
+.pg-findme{margin:4px 0 22px;display:inline-flex;align-items:center;gap:10px;min-height:46px;padding:10px 18px;border:1px solid var(--ink);background:var(--ink);color:var(--bg-cream);font:600 .8rem/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.pg-findme svg,.pgm-findme svg{width:20px;height:20px;flex:none}
+.pgm-head{align-items:flex-start}
+.pgm-findme{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(255,255,255,.3);background:rgba(20,16,14,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font:700 12px/1 var(--font-sans);cursor:pointer}
+.pg-findme.hidden,.pgm-findme.hidden{display:none}
+.pg-collection.is-personal .pg-cover{outline:2px solid var(--ink);outline-offset:3px}
+.pg-collection.is-personal small::after{content:' · only on this phone'}
+.fm-sheet{max-width:520px}
+.fm-sheet .hidden{display:none!important}
+.fm-title{font-family:var(--font-serif);font-weight:400;font-size:1.9rem;margin:8px 40px 4px 0}
+.fm-sub{font-size:.78rem;color:var(--ink-faint);margin:0 0 14px;line-height:1.5}
+.fm-cam{position:relative;width:100%;aspect-ratio:3/4;max-height:52vh;background:#000;overflow:hidden;margin-bottom:12px}
+.fm-cam video,.fm-cam canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.fm-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;font:600 12px/1 var(--font-sans);padding:8px 12px;border-radius:14px;white-space:nowrap}
+.fm-hint.ok{background:#1f6f43}
+.fm-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.fm-upload{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:600 .75rem/1 var(--font-mono);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.fm-shoot{width:100%;margin-top:4px}
+.fm-status{font-size:.8rem;color:var(--ink);margin:12px 0 0;min-height:1em}
+.fm-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:10px 0 12px}
+.fm-thumbs img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg-box)}
+.fm-result .mk-btn-peach{width:100%}
+.fm-link{display:block;margin:10px auto 0;background:none;border:0;color:var(--ink-faint);text-decoration:underline;font:inherit;font-size:.75rem;cursor:pointer;min-height:36px}
+.pgm-empty{''')
+
+assert s.count("</body>") == 1
+s = s.replace("</body>", r"""<script>
+function pgMonogram() {
+  const el = document.getElementById('pgMono'); if (!el || !GALLERY) return;
+  if (GALLERY.logoUrl) { el.innerHTML = '<img alt="" src="' + pgEsc(GALLERY.logoUrl) + '">'; return; }
+  const parts = String(GALLERY.title || '').split(/\s*(?:&|\band\b|\+|\/|,|·)\s*/i).map(x => x.trim()).filter(Boolean);
+  el.textContent = parts.length >= 2 ? parts[0][0].toUpperCase() + '&' + parts[1][0].toUpperCase() : String(GALLERY.title || 'PG').slice(0, 2).toUpperCase();
+}
+(function pgFindMe() {
+  const $ = (id) => document.getElementById(id);
+  let FLAT = null, stream = null, loopTimer = null, coreReady = null, lastResult = null;
+  const sheet = $('fmSheet'), back = $('fmBackdrop'), video = $('fmVideo'), overlay = $('fmOverlay');
+  function status(t) { $('fmStatus').textContent = t || ''; }
+  function loadCore() {
+    if (!coreReady) coreReady = new Promise((res, rej) => { if (window.PGFaces) return res(); const s = document.createElement('script'); s.src = '/app/faces-core.js'; s.onload = res; s.onerror = () => { coreReady = null; rej(new Error('Could not load face search. Check the internet and try again.')); }; document.head.appendChild(s); });
+    return coreReady;
+  }
+  function prepare() {
+    status('Getting face search ready… the first time takes a few seconds.');
+    return loadCore().then(() => Promise.all([PGFaces.load(), FLAT ? null : pgApi('getFaces').then(r => { FLAT = PGFaces.flatten(r.faces); })])).then(() => status(''));
+  }
+  function reset() { $('fmResult').classList.add('hidden'); $('fmActions').classList.remove('hidden'); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden'); status(''); }
+  function open() { reset(); back.classList.add('show'); sheet.classList.add('show'); prepare().catch(e => status(e.message)); }
+  function close() { stopCam(); back.classList.remove('show'); sheet.classList.remove('show'); }
+  function stopCam() { clearTimeout(loopTimer); loopTimer = null; if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } video.srcObject = null; }
+
+  function startCam() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { status('This browser cannot use the camera here. Choose a photo instead.'); return; }
+    status('Allow the camera when your phone asks.');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } }, audio: false }).then(s => {
+      stream = s; video.srcObject = s; $('fmCam').classList.remove('hidden'); $('fmActions').classList.add('hidden'); $('fmShoot').classList.remove('hidden'); status('');
+      return video.play().catch(() => {});
+    }).then(() => prepare()).then(loop).catch(e => {
+      stopCam(); reset();
+      status(e && e.name === 'NotAllowedError' ? 'Camera permission was blocked. Choose a photo instead (or allow the camera in your browser settings).' : (e && e.message) || 'The camera could not start. Choose a photo instead.');
+    });
+  }
+  function loop() {
+    if (!stream) return;
+    const w = video.videoWidth, h = video.videoHeight;
+    if (!w) { loopTimer = setTimeout(loop, 250); return; }
+    PGFaces.locate(video, 0.5).then(list => {
+      if (!stream) return;
+      overlay.width = w; overlay.height = h;
+      const ctx = overlay.getContext('2d'); ctx.clearRect(0, 0, w, h);
+      const big = list.sort((a, b) => b.box.width - a.box.width)[0];
+      const ok = big && big.box.width > w * 0.18;
+      if (big) { ctx.strokeStyle = ok ? '#3ddc84' : '#ffffff'; ctx.lineWidth = Math.max(3, w / 160); const b = big.box; ctx.strokeRect(b.x, b.y, b.width, b.height); }
+      $('fmHint').textContent = ok ? 'Face found ✓ Tap “Take selfie”' : big ? 'Come a little closer' : 'Look at the camera';
+      $('fmHint').classList.toggle('ok', !!ok); $('fmShoot').disabled = !ok;
+      loopTimer = setTimeout(loop, 300);
+    }).catch(() => { loopTimer = setTimeout(loop, 600); });
+  }
+  function shoot() {
+    if (!stream || !video.videoWidth) return;
+    const c = document.createElement('canvas'); c.width = video.videoWidth; c.height = video.videoHeight; c.getContext('2d').drawImage(video, 0, 0);
+    stopCam(); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden');
+    findIn(c);
+  }
+  function findIn(input) {
+    status('Looking for you in ' + (FLAT ? new Set(FLAT.map(x => x.pid)).size : 'all the') + ' photos…');
+    return prepare().then(() => PGFaces.detect(input, 0.5)).then(found => {
+      if (!found.length) { reset(); status('No face found. Use a clear, front-facing photo in good light.'); return; }
+      const me = found.sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height)[0];
+      showResult(PGFaces.match(me.descriptor, FLAT), found.length > 1);
+    }).catch(e => { reset(); status(e.message); });
+  }
+  function photoIndex() {
+    const map = {}, order = [];
+    (GALLERY.events || []).concat([{ name: 'Root Moment', photos: GALLERY.root || [] }]).forEach(ev => ev.photos.forEach(p => { if (!map[p.id]) { map[p.id] = p; order.push(p.id); } }));
+    return { map, order };
+  }
+  function showResult(m, several) {
+    const idx = photoIndex(), inOrder = (ids) => { const set = new Set(ids); return idx.order.filter(id => set.has(id)).map(id => idx.map[id]); };
+    const sure = inOrder(m.sure), maybe = inOrder(m.maybe);
+    GALLERY.personal = [];
+    if (sure.length) GALLERY.personal.push({ name: 'Your photos', photos: sure, personal: true });
+    if (maybe.length) GALLERY.personal.push({ name: 'Maybe you', photos: maybe, personal: true });
+    renderGalleries();
+    lastResult = sure.length ? 'Your photos' : maybe.length ? 'Maybe you' : null;
+    $('fmActions').classList.add('hidden');
+    if (!lastResult) { $('fmResult').classList.remove('hidden'); $('fmThumbs').innerHTML = ''; $('fmOpen').classList.add('hidden'); status('We could not find you in this gallery. Try a clearer, front-facing photo in good light.'); return; }
+    $('fmOpen').classList.remove('hidden');
+    status((sure.length ? sure.length + ' photo' + (sure.length === 1 ? '' : 's') + ' of you' : 'No sure matches') + (maybe.length ? ' · ' + maybe.length + ' maybe you' : '') + (several ? ' (we used the biggest face in your photo)' : ''));
+    $('fmThumbs').innerHTML = '';
+    (sure.length ? sure : maybe).slice(0, 8).forEach(p => { const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.src = pgImg(p.id, 300); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.id, 300); }; $('fmThumbs').appendChild(im); });
+    $('fmOpen').textContent = sure.length ? (sure.length === 1 ? 'See your photo' : 'See your ' + sure.length + ' photos') : (maybe.length === 1 ? 'See the possible photo' : 'See ' + maybe.length + ' possible photos');
+    $('fmResult').classList.remove('hidden');
+  }
+  $('fmCamBtn').addEventListener('click', startCam);
+  $('fmShoot').addEventListener('click', shoot);
+  $('fmFile').addEventListener('change', function () {
+    const f = this.files[0]; this.value = ''; if (!f) return;
+    const url = URL.createObjectURL(f), im = new Image();
+    im.onload = () => { findIn(im).then(() => URL.revokeObjectURL(url)); };
+    im.onerror = () => { status('That file could not be opened. Choose a JPG or PNG photo.'); URL.revokeObjectURL(url); };
+    im.src = url;
+  });
+  $('fmOpen').addEventListener('click', () => { if (!lastResult) return; close(); openCollection(lastResult, 0); });
+  $('fmAgain').addEventListener('click', reset);
+  $('fmClose').addEventListener('click', close);
+  back.addEventListener('click', close);
+  document.querySelectorAll('[data-findme]').forEach(b => b.addEventListener('click', open));
+  const _render = renderGalleries;
+  renderGalleries = function () { _render(); document.querySelectorAll('[data-findme]').forEach(b => b.classList.toggle('hidden', !(GALLERY && GALLERY.faceSearch))); };
 })();
 </script>
 </body>""", 1)

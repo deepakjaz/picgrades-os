@@ -277,9 +277,12 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   function galleryUrl(id) { return location.origin + '/g/' + id; }
   function galleryBox(o) {
     var box = el('details', { style: 'font-size:13px' });
-    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);min-height:32px', text: o.galleryId ? 'Gallery published · update' : 'Publish gallery' }));
+    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);min-height:32px', text: o.galleryId ? 'Gallery published · faces & send to client' : 'Publish gallery' }));
     var inner = el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-top:8px' });
-    if (o.galleryId) inner.appendChild(el('a', { href: galleryUrl(o.galleryId), target: '_blank', rel: 'noopener', text: galleryUrl(o.galleryId) }));
+    if (o.galleryId) {
+      inner.appendChild(el('a', { href: galleryUrl(o.galleryId), target: '_blank', rel: 'noopener', text: galleryUrl(o.galleryId) }));
+      inner.appendChild(el('a', { href: '/app/faces.html?g=' + encodeURIComponent(o.galleryId), target: '_blank', rel: 'noopener', class: 'mini', style: 'text-decoration:none;align-self:flex-start', text: 'Read faces (Find me) & send to client →' }));
+    }
     var folder = el('input', { placeholder: 'Google Drive folder link (shared: Anyone with the link)', style: 'min-height:40px' });
     var title = el('input', { placeholder: 'Couple names, e.g. Aarav & Kavya', style: 'min-height:40px' });
     var date = el('input', { type: 'date', style: 'min-height:40px', 'aria-label': 'Wedding date' });
