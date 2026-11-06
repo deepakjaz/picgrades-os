@@ -55,6 +55,7 @@ var PUBLIC_ROUTES = {
   saveSet: saveSet_,
   getSet: getSet_,
   uploadMoment: uploadMoment_,
+  savePost: savePost_,
   myPosts: myPosts_,
   coupleQueue: coupleQueue_,
   couplePost: couplePost_,
@@ -139,7 +140,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step11-open',
+    version: 'step12-posts',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
@@ -856,6 +857,7 @@ var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'tex
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
 var ROOT_FOLDER_RE = /^0*_?root[ _-]*moments?$/i;
 var GUEST_FOLDER_NAME = '01_Guest_Moments';
+var POSTS_FOLDER_NAME = '02_Posts_Albums';
 
 function ensureTab_(name, cols) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -899,7 +901,7 @@ function scanWeddingFolder_(folderId) {
   var events = [], root = [], subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
-    if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME) continue; // guest uploads are shown only after approval
+    if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME || sf.getName() === POSTS_FOLDER_NAME) continue; // guest uploads are shown only after approval
     var photos = listImages_(sf);
     if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
@@ -1265,6 +1267,44 @@ function uploadMoment_(p) {
       caption: String(p.caption || '').slice(0, 300), fileId: file.getId(), mime: mime, type: isVideo ? 'video' : 'photo', status: 'review', reviewedAt: '' });
   } finally { lock.releaseLock(); }
   return { postId: postId, status: 'review' };
+}
+
+function subFolder_(g, name) {
+  var parent;
+  try { parent = DriveApp.getFolderById(g.folderId); } catch (e) { throw new Error('The wedding folder cannot be opened by PicGrades.'); }
+  var it = parent.getFoldersByName(name);
+  try { return it.hasNext() ? it.next() : parent.createFolder(name); }
+  catch (e) { throw new Error('Saving is not switched on for this wedding yet (PicGrades needs edit access to the wedding folder).'); }
+}
+
+/** Public: save a post / album made in the gallery (up to 10 slide images). The couple and the photographer
+ *  post straight away; anyone else needs name + phone and the couple's approval (like uploads). */
+function savePost_(p) {
+  var g = publishedGallery_(p.g), who = null, status = 'review';
+  if (p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey)) { who = { guestId: 'couple', name: g.title, phone: '' }; status = 'approved'; }
+  if (!who && p.token) {
+    var u = authUser_(p.token);
+    if (u) { try { loadOrder_(g.orderId, u); who = { guestId: 'staff:' + u.email, name: g.companyName || 'Photographer', phone: '' }; status = 'approved'; } catch (e) {} }
+  }
+  if (!who) who = guestFor_(g, p);
+  var slides = (p.slides || []).slice(0, 10);
+  if (!slides.length) return { ok: false, error: 'Nothing to save.' };
+  var total = slides.reduce(function (t, x) { return t + String(x || '').length; }, 0);
+  if (total * 0.75 > 30 * 1024 * 1024) return { ok: false, error: 'This post is too big. Try fewer slides.' };
+  var folder = subFolder_(g, POSTS_FOLDER_NAME), postId = 'alb_' + randomId_(10), ids = [];
+  slides.forEach(function (d, i) {
+    var data = String(d).replace(/^data:[^,]*,/, '');
+    var f = folder.createFile(Utilities.newBlob(Utilities.base64Decode(data), 'image/jpeg', postId + '_' + (i + 1) + '.jpg'));
+    try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+    ids.push(f.getId());
+  });
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    ensureTab_('GuestPosts', POST_COLUMNS);
+    appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: who.guestId, name: who.name, phone: who.phone || '',
+      caption: String(p.caption || '').slice(0, 300), fileId: ids.join(','), mime: 'image/jpeg', type: 'album', status: status, reviewedAt: status === 'approved' ? fmt_(new Date()) : '' });
+  } finally { lock.releaseLock(); }
+  return { postId: postId, status: status, slides: ids.length };
 }
 
 /** Public (guest): my uploads and their status, plus the couple's thank-you note once approved. */
