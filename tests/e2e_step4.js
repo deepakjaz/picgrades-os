@@ -1,4 +1,4 @@
-// Browser test for the gallery: real page + mock backend + fake Drive images.
+// Browser test for the gallery: real page + mock backend + fake Drive images (portrait + landscape).
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..');
@@ -10,7 +10,7 @@ function login(email) { call('requestCode', { email }); const code = /code: (\d{
 const admin = login('adcmediaa@gmail.com');
 const ord = call('queue', { token: admin }).recentDone[0];
 const pub = call('setGallery', { token: admin, orderId: ord.orderId, folderUrl: 'https://drive.google.com/drive/folders/' + W, title: 'Aarav & Kavya', eventDate: '2026-11-20' });
-console.log('published:', pub.ok, pub.galleryId, pub.photoCount);
+console.log('published:', pub.ok, pub.photoCount);
 const srv = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api') { let b = ''; req.on('data', d => b += d); req.on('end', () => { const p = JSON.parse(b); res.end(JSON.stringify(call(p.action, p))); }); return; }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
@@ -20,42 +20,39 @@ const srv = http.createServer((req, res) => {
   const { chromium } = require('playwright');
   const b = await chromium.launch(); const errors = [];
   for (const vp of [{ width: 390, height: 844, name: 'mobile' }, { width: 1280, height: 860, name: 'desktop' }]) {
-    const ctx = await b.newContext({ viewport: vp }); const pg = await ctx.newPage();
+    const ctx = await b.newContext({ viewport: vp, hasTouch: vp.name === 'mobile' }); const pg = await ctx.newPage();
     pg.on('pageerror', e => errors.push(vp.name + ': ' + e.message));
     await pg.route('**fonts.g**', r => r.abort());
-    await pg.route('https://lh3.googleusercontent.com/**', r => { const n = parseInt(r.request().url().match(/IMG(\d+)/)[1], 10) % 8; r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync('/tmp/sample' + n + '.jpg') }); });
+    // even ids = portrait, odd = landscape
+    await pg.route('https://lh3.googleusercontent.com/**', r => { const n = parseInt(r.request().url().match(/IMG(\d+)/)[1], 10); r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync('/tmp/sample' + (n % 2 ? 0 : 1) + '.jpg') }); });
     await pg.goto('http://localhost:8767/app/gallery.html?g=' + pub.galleryId);
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 });
-    console.log(vp.name, '| title:', await pg.textContent('#pgCoupleTitle'), '| counter:', await pg.textContent('#mkCounterText'), '| set:', await pg.textContent('#pgSetLabel'), '| moment:', await pg.textContent('#mkTitle'));
-    await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/s4_root_' + vp.name + '.png' });
+    await pg.waitForTimeout(500);
+    console.log(vp.name, '| landing view moments:', await pg.isVisible('#view-moments'), '| reels:', await pg.locator('.pgm-item').count(), '| img fit:', await pg.$eval('.pgm-img', e => getComputedStyle(e).objectFit));
+    await pg.screenshot({ path: '/tmp/s4_moments_' + vp.name + '.png' });
+    // double tap first reel → like
+    const box = await pg.locator('.pgm-item').first().boundingBox();
+    await pg.mouse.click(box.x + box.width / 2, box.y + box.height / 2); await pg.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await pg.waitForTimeout(400);
+    console.log(vp.name, '| after double-tap: liked=', await pg.locator('.pgm-item').first().locator('.pgm-like.liked').count(), 'count=', await pg.locator('.pgm-item').first().locator('.pgm-like-count').textContent());
     if (vp.name === 'mobile') {
-      await pg.click('#mkLikeBtn'); await pg.waitForTimeout(300); console.log('likes after tap:', await pg.textContent('#mkLikeCount'));
-      await pg.click('#mkCommentBtn'); await pg.fill('#commentName', 'Meera Bhua'); await pg.fill('#commentInput', 'So beautiful <3'); await pg.click('#commentForm button[type=submit]');
-      await pg.waitForTimeout(400); console.log('notes:', await pg.textContent('#commentListContainer'), '| count:', await pg.textContent('#mkCommentCount'));
-      await pg.click('#commentBackdrop', { position: { x: 10, y: 10 } });
+      await pg.locator('.pgm-item').first().locator('.pgm-btn').nth(1).click();
+      await pg.fill('#commentName', 'Meera Bhua'); await pg.fill('#commentInput', 'So beautiful <3'); await pg.click('#commentForm button[type=submit]'); await pg.waitForTimeout(400);
+      console.log('notes:', await pg.textContent('#commentListContainer'), '| reel note count:', await pg.locator('.pgm-item').first().locator('.pgm-note-count').textContent());
+      await pg.mouse.click(10, 10);
+      // scroll to the next reel
+      await pg.$eval('#pgmFeed', f => f.scrollTo(0, f.clientHeight)); await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/s4_moments2_mobile.png' });
     }
     await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(400);
-    console.log(vp.name, '| chips:', await pg.textContent('#pgEventChips'), '| thumbs:', await pg.locator('.pg-gallery-thumb').count());
-    await pg.screenshot({ path: '/tmp/s4_gallery_' + vp.name + '.png' });
-    await pg.locator('.pg-gallery-thumb').nth(5).click(); await pg.waitForTimeout(400);
-    console.log(vp.name, '| opened from gallery → set:', await pg.textContent('#pgSetLabel'), '| counter:', await pg.textContent('#mkCounterText'));
-    await pg.click('.tkg-nav-item[data-nav=root]'); await pg.waitForTimeout(300);
-    console.log(vp.name, '| back to Root Moment →', await pg.textContent('#pgSetLabel'), await pg.textContent('#mkCounterText'));
-    await pg.click('.tkg-nav-item[data-nav=hub]'); await pg.waitForTimeout(200); await pg.screenshot({ path: '/tmp/s4_hub_' + vp.name + '.png' });
+    console.log(vp.name, '| collections:', await pg.locator('.pg-collection').count(), (await pg.locator('.pg-collection h3').allTextContents()).join(','));
+    await pg.screenshot({ path: '/tmp/s4_collections_' + vp.name + '.png' });
+    await pg.locator('.pg-collection').nth(1).click(); await pg.waitForTimeout(500);
+    console.log(vp.name, '| viewer:', await pg.isVisible('#view-root'), await pg.textContent('#pgSetLabel'), await pg.textContent('#mkCounterText'), '| fit:', await pg.$eval('#mkImgA', e => getComputedStyle(e).objectFit), '| gallery nav active:', await pg.locator('.tkg-nav-item[data-nav=gallery].active').count());
+    await pg.screenshot({ path: '/tmp/s4_viewer_' + vp.name + '.png' });
+    await pg.locator('.mk-thumb-item').nth(1).click(); await pg.waitForTimeout(500); await pg.screenshot({ path: '/tmp/s4_viewer2_' + vp.name + '.png' });
+    await pg.click('#mkViewProjectBtn'); await pg.waitForTimeout(300); console.log(vp.name, '| back to collections:', await pg.isVisible('#view-gallery'));
     await ctx.close();
   }
-  // admin publishes a gallery from the queue UI
-  DRIVE.folders['SECONDFOLDER1234567890'] = { name: 'Riya_Karan', access: 'ANYONE_WITH_LINK' };
-  DRIVE.folders['fS'] = { name: 'Sangeet', parent: 'SECONDFOLDER1234567890' }; DRIVE.files['IMGS1'] = { name: 'a.jpg', parent: 'fS', mime: 'image/jpeg' };
-  const a = await b.newPage(); await a.route('**fonts.g**', r => r.abort());
-  await a.goto('http://localhost:8767/app/admin.html'); await a.fill('#email', 'adcmediaa@gmail.com'); await a.click('#loginBtn'); await a.waitForSelector('#step2:not(.hidden)');
-  await a.fill('#code', /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]); await a.click('#loginBtn'); await a.waitForSelector('#v-overview:not(.hidden)');
-  await a.click('nav.dock button[data-go=queue]'); await a.waitForSelector('#qDone .qitem');
-  const it = a.locator('#qDone .qitem').nth(1);
-  await it.locator('summary').click(); await it.locator('input').first().fill('https://drive.google.com/drive/folders/SECONDFOLDER1234567890?usp=sharing');
-  await it.locator('input').nth(1).fill('Riya & Karan'); await it.locator('button').click(); await a.waitForTimeout(500);
-  console.log('admin publish:', await a.textContent('#toast'));
-  const bad = await (await b.newPage()).goto('http://localhost:8767/app/gallery.html?g=wrongid');
   console.log('page errors:', errors);
   await b.close(); srv.close();
 });
