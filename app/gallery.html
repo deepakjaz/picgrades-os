@@ -1010,6 +1010,49 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 .fm-thumbs img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg-box)}
 .fm-result .mk-btn-peach{width:100%}
 .fm-link{display:block;margin:10px auto 0;background:none;border:0;color:var(--ink-faint);text-decoration:underline;font:inherit;font-size:.75rem;cursor:pointer;min-height:36px}
+/* ===== Hub ===== */
+.pgh-hero{position:relative;width:100%;height:72vh;height:72dvh;min-height:420px;overflow:hidden;background:#0b0908;cursor:pointer}
+.pgh-hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:0;transform:scale(1.06);transition:opacity 1.2s ease,transform 7s ease-out}
+.pgh-hero-img.is-on{opacity:1;transform:scale(1)}
+.pgh-hero-scrim{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 28%,transparent 50%,rgba(0,0,0,.72) 100%)}
+.pgh-hero-text{position:absolute;left:0;right:0;bottom:0;padding:0 20px 26px;color:#fff;max-width:880px;margin:0 auto}
+.pgh-eyebrow{font:500 .68rem/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-bottom:8px}
+.pgh-title{font-family:var(--font-serif);font-weight:400;font-size:clamp(2.4rem,9vw,4rem);line-height:1;margin:0 0 10px}
+.pgh-now{font:500 .72rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;opacity:.9;min-height:1em;transition:opacity .4s}
+.pgh-wrap{padding-top:22px}
+.pgh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-hairline);border:1px solid var(--border-hairline);margin-bottom:18px}
+.pgh-stats div{background:var(--bg-box);padding:12px 8px;text-align:center}
+.pgh-stats b{display:block;font-family:var(--font-serif);font-weight:400;font-size:1.6rem;line-height:1.1}
+.pgh-stats span{font:500 .6rem/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+.pgh-sec{margin-top:26px}
+.pgh-sec.hidden{display:none}
+.pgh-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.pgh-head h3{font-family:var(--font-serif);font-weight:400;font-size:1.6rem;margin:0}
+.pgh-more{background:none;border:0;color:var(--ink-soft);font:500 .7rem/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;min-height:36px;padding:0}
+.pgh-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,44%);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;scrollbar-width:none;margin:0 -18px;padding-left:18px;padding-right:18px}
+.pgh-row::-webkit-scrollbar{display:none}
+@media (min-width:700px){.pgh-row{grid-auto-columns:minmax(180px,23%)}}
+.pgh-row-sm{grid-auto-columns:minmax(110px,32%)}
+@media (min-width:700px){.pgh-row-sm{grid-auto-columns:minmax(120px,15%)}}
+.pgh-tile{scroll-snap-align:start;display:block;background:none;border:0;padding:0;text-align:left;color:var(--ink);cursor:pointer;font:inherit}
+.pgh-tile .pg-cover{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--bg-box);border:1px solid var(--border-hairline)}
+.pgh-row-sm .pgh-tile .pg-cover{aspect-ratio:1}
+.pgh-tile h4{font-family:var(--font-serif);font-weight:400;font-size:1.2rem;margin:8px 0 0}
+.pgh-tile small{font:500 .62rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+.pgh-heart{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.55);color:#fff;font:700 11px/1 var(--font-sans);padding:5px 7px;border-radius:12px}
+.pg-cover .pg-rot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity 1s ease}
+.pg-cover .pg-rot.is-on{opacity:1}
+.pgh-notes{display:flex;flex-direction:column;gap:1px;background:var(--border-hairline);border:1px solid var(--border-hairline)}
+.pgh-note{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:start;background:var(--bg-box);padding:12px;border:0;text-align:left;color:var(--ink);cursor:pointer;font:inherit;width:100%}
+.pgh-note img{width:56px;height:56px;object-fit:cover;background:var(--bg-cream)}
+.pgh-note b{font:600 .8rem/1.2 var(--font-sans)}
+.pgh-note p{margin:4px 0 0;font-size:.82rem;line-height:1.45;color:var(--ink-soft);word-break:break-word}
+.pgh-note small{display:block;margin-top:4px;font:500 .6rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+.pgh-empty{background:var(--bg-box);padding:16px;font-size:.8rem;color:var(--ink-soft)}
+.pgh-studio{display:flex;align-items:center;gap:10px;width:100%;background:var(--bg-box);border:1px solid var(--border-hairline);padding:16px;color:var(--ink);cursor:pointer;font:inherit;text-align:left}
+.pgh-studio span{font:500 .65rem/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+.pgh-studio b{font-family:var(--font-serif);font-weight:400;font-size:1.3rem;flex:1}
+.pgh-studio em{font-style:normal}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>
@@ -1121,46 +1164,32 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 
 <!-- ==================== VIEW 3: CLIENT WEDDING HUB ==================== -->
 <section class="pg-view" id="view-hub">
-  <div class="pg-module-wrap">
-    <div class="pg-module-eyebrow" id="pgHubEyebrow"></div>
-    <h2 class="pg-module-title" id="pgHubTitle">Wedding Hub</h2>
-    <p class="pg-module-sub">Your wedding in one place: the Root Moment story, every event gallery, and notes from family and friends.</p>
-    <div class="pg-grid-cards">
-      <div class="pg-card">
-        <h3>Root Moment</h3>
-        <p id="pgHubRootText">The photographer's chosen highlights, one full moment at a time.</p>
-        <button type="button" class="mk-btn-peach" data-goto="moments">Open Root Moment →</button>
-      </div>
-      <div class="pg-card">
-        <h3>Event Galleries</h3>
-        <p id="pgHubEventsText">Full collections from every event.</p>
-        <button type="button" class="mk-btn-peach" data-goto="gallery">Browse Galleries →</button>
-      </div>
-      <div class="pg-card">
-        <h3>Memory Rooms</h3>
-        <p>Private spaces where each side of the family adds its own memories. Coming soon.</p>
-        <button type="button" class="mk-btn-peach" data-goto="rooms">About Rooms →</button>
-      </div>
+  <div class="pgh-hero" id="pghHero" role="button" tabindex="0" aria-label="Open this photo">
+    <img class="pgh-hero-img is-on" id="pghHeroA" alt=""><img class="pgh-hero-img" id="pghHeroB" alt="">
+    <div class="pgh-hero-scrim"></div>
+    <div class="pgh-hero-text">
+      <div class="pgh-eyebrow" id="pgHubEyebrow"></div>
+      <h2 class="pgh-title" id="pgHubTitle">Wedding Hub</h2>
+      <div class="pgh-now" id="pghNow"></div>
     </div>
+  </div>
+  <div class="pg-module-wrap pgh-wrap">
+    <div class="pgh-stats" id="pghStats"></div>
+    <button type="button" class="pg-findme hidden" data-findme><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me · see all your photos</span></button>
+    <div class="pgh-sec"><div class="pgh-head"><h3>Events</h3><button type="button" class="pgh-more" data-goto="gallery">All galleries →</button></div><div class="pgh-row" id="pghEvents"></div></div>
+    <div class="pgh-sec hidden" id="pghLovedSec"><div class="pgh-head"><h3>Most loved</h3></div><div class="pgh-row pgh-row-sm" id="pghLoved"></div></div>
+    <div class="pgh-sec hidden" id="pghNotesSec"><div class="pgh-head"><h3>Recent notes</h3><button type="button" class="pgh-more" data-goto="rooms">All notes →</button></div><div class="pgh-notes" id="pghNotes"></div></div>
+    <div class="pgh-sec"><button type="button" class="pgh-studio" data-goto="studio"><span>Photographed by</span><b id="pghStudio"></b><em>→</em></button></div>
   </div>
 </section>
 
 <!-- ==================== VIEW 4: MEMORY ROOMS ==================== -->
 <section class="pg-view" id="view-rooms">
   <div class="pg-module-wrap">
-    <div class="pg-module-eyebrow">Coming soon</div>
-    <h2 class="pg-module-title">Memory Rooms</h2>
-    <p class="pg-module-sub">Memory Rooms will let the bride's and groom's families add their own photos and stories, each in a private room. We will open them in a later update.</p>
-    <div class="pg-grid-cards">
-      <div class="pg-card">
-        <h3>Bride's Family Courtyard</h3>
-        <p>Blessings, behind-the-scenes clips, and elder stories from the bride's side.</p>
-      </div>
-      <div class="pg-card">
-        <h3>Groom's Baraat Archive</h3>
-        <p>Candid memories and rehearsal notes contributed by friends and cousins.</p>
-      </div>
-    </div>
+    <div class="pg-module-eyebrow">Notes &amp; blessings</div>
+    <h2 class="pg-module-title">From family &amp; friends</h2>
+    <p class="pg-module-sub">Every note left on the photos. Open any photo and tap the note icon to add yours.</p>
+    <div class="pgh-notes" id="pgWall"></div>
   </div>
 </section>
 
@@ -1221,7 +1250,7 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
       <text x="20" y="24" text-anchor="middle" fill="#FAC646" font-family="Cormorant Garamond, Georgia, serif" font-weight="700" font-size="13">PG</text>
     </svg>
   </a>
-  <a href="#rooms" class="tkg-nav-item" data-nav="rooms" aria-label="Memory Rooms" title="Rooms">
+  <a href="#rooms" class="tkg-nav-item" data-nav="rooms" aria-label="Notes and blessings" title="Notes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h8"/><path d="M8 13h5"/>
     </svg>
@@ -1386,11 +1415,7 @@ function renderGalleries() {
     card.type = 'button'; card.className = 'pg-collection' + (ev.personal ? ' is-personal' : '');
     card.setAttribute('aria-label', 'Open ' + ev.name + ' collection, ' + ev.photos.length + ' photos');
     const cover = document.createElement('div'); cover.className = 'pg-cover';
-    const im = document.createElement('img');
-    const c = ev.photos[0];
-    im.src = pgImg(c.id, 720); im.alt = ''; im.loading = 'lazy';
-    im.onerror = function () { this.onerror = null; this.src = pgImgFallback(c.id, 720); };
-    cover.appendChild(im);
+    pgRotCover(cover, ev.photos);
     const h = document.createElement('h3'); h.textContent = ev.name;
     const sm = document.createElement('small'); sm.textContent = ev.photos.length + ' photos';
     card.appendChild(cover); card.appendChild(h); card.appendChild(sm);
@@ -1882,6 +1907,8 @@ document.getElementById('commentForm').addEventListener('submit', (e) => {
     inp.value = '';
     GALLERY.notes[m.id] = (GALLERY.notes[m.id] || 0) + 1;
     syncCounts(m.id);
+    (GALLERY.recentNotes = GALLERY.recentNotes || []).unshift({ photoId: m.id, name: name, text: val, at: '' });
+    if (window.pgRenderNotes) pgRenderNotes();
     showToast('Note added');
     return pgApi('getNotes', { photoId: m.id }).then(res => renderNotes(res.notes));
   }).catch(err => showToast(err.message)).finally(() => { btn.disabled = false; });
@@ -1979,8 +2006,6 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     const dateTxt = pgDate(GALLERY.eventDate);
     document.getElementById('pgHubEyebrow').textContent = GALLERY.title + (dateTxt ? ' · ' + dateTxt : '');
     document.getElementById('pgHubTitle').textContent = 'Wedding Hub';
-    document.getElementById('pgHubRootText').textContent = ((GALLERY.root || []).length || Math.min(12, (GALLERY.events || []).length)) + ' chosen moments from the photographer, one full photo at a time.';
-    document.getElementById('pgHubEventsText').textContent = (GALLERY.events || []).map(e => e.name).join(' · ') + ' — ' + total + ' photos in all.';
     document.getElementById('pgGalleryEyebrow').textContent = GALLERY.title + ' · ' + total + ' photos';
     document.getElementById('pgStudioName').textContent = GALLERY.studio || 'Your photographer';
     document.getElementById('pgStudioSub').textContent = 'Photographed by ' + (GALLERY.studio || 'your photographer') + ' · edited and delivered with PicGrades.';
@@ -1989,6 +2014,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     ROOT_SET = buildRootSet();
     renderGalleries();
     renderMoments();
+    pgRenderHub();
     if ((GALLERY.events || []).length) useSet(GALLERY.events[0].name);
     const startView = (location.hash || '').replace('#', '');
     switchView(['gallery', 'hub', 'rooms', 'studio'].indexOf(startView) > -1 ? startView : 'moments');
@@ -2197,6 +2223,134 @@ function pgMonogram() {
   const _render = renderGalleries;
   renderGalleries = function () { _render(); document.querySelectorAll('[data-findme]').forEach(b => b.classList.toggle('hidden', !(GALLERY && GALLERY.faceSearch))); };
 })();
+</script>
+<script>
+// ---- shuffling covers: every visit starts on a random photo, then softly changes every few seconds ----
+const PG_ROT = [];
+function pgPick(list) { return list[Math.floor(Math.random() * list.length)]; }
+function pgShuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function pgRotCover(cover, photos, w) {
+  w = w || 720;
+  const a = document.createElement('img'), b = document.createElement('img');
+  a.className = 'pg-rot is-on'; b.className = 'pg-rot'; a.alt = b.alt = '';
+  const first = pgPick(photos);
+  a.src = pgImg(first.id, w); a.onerror = function () { this.onerror = null; this.src = pgImgFallback(first.id, w); };
+  cover.appendChild(a); cover.appendChild(b);
+  if (photos.length > 1) PG_ROT.push({ cover, photos, w, cur: first.id, layers: [a, b], on: 0 });
+}
+function pgRotStep() {
+  if (document.hidden) return;
+  const live = PG_ROT.filter(r => r.cover.isConnected && r.cover.offsetParent !== null);
+  for (let i = PG_ROT.length - 1; i >= 0; i--) if (!PG_ROT[i].cover.isConnected) PG_ROT.splice(i, 1);
+  if (!live.length) return;
+  const r = pgPick(live);
+  let p = pgPick(r.photos); if (p.id === r.cur) p = pgPick(r.photos);
+  const next = r.layers[1 - r.on], cur = r.layers[r.on];
+  next.onload = () => { next.classList.add('is-on'); cur.classList.remove('is-on'); r.on = 1 - r.on; r.cur = p.id; };
+  next.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.id, r.w); };
+  next.src = pgImg(p.id, r.w);
+}
+setInterval(pgRotStep, 2600);
+
+// Root Moment: keep the photographer's own 00_Root_Moment order; with no folder, a fresh mix from every event each visit
+buildRootSet = function () {
+  let list = GALLERY.root || [];
+  if (!list.length) {
+    const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos));
+    list = [];
+    for (let round = 0; list.length < 12 && pools.some(p => p.length); round++) pools.forEach(p => { if (p.length && list.length < 12) list.push(p.shift()); });
+  }
+  return list.map((p, i) => pgMoment(p, 'Root Moment', i + 1, list.length));
+};
+
+function pgAllPhotos() {
+  const out = [], seen = {};
+  (GALLERY.events || []).forEach(ev => ev.photos.forEach((p, i) => { if (!seen[p.id]) { seen[p.id] = 1; out.push({ p, ev: ev.name, i }); } }));
+  (GALLERY.root || []).forEach((p) => { if (!seen[p.id]) { seen[p.id] = 1; out.push({ p, ev: null, i: 0 }); } });
+  return out;
+}
+function pgOpenPhoto(id) {
+  const ev = (GALLERY.events || []).find(e => e.photos.some(p => p.id === id));
+  if (ev) { openCollection(ev.name, ev.photos.findIndex(p => p.id === id)); return; }
+  switchView('moments');
+  const item = document.querySelector('.pgm-item[data-pid="' + id + '"]');
+  if (item) requestAnimationFrame(() => item.scrollIntoView({ behavior: 'auto' }));
+}
+function pgAgo(at) {
+  if (!at) return 'just now';
+  const t = new Date(String(at).replace(' ', 'T') + '+05:30').getTime(), s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 90) return 'just now'; if (s < 3600) return Math.round(s / 60) + ' min ago'; if (s < 86400) return Math.round(s / 3600) + ' h ago';
+  if (s < 86400 * 30) return Math.round(s / 86400) + ' days ago';
+  return pgDate(String(at));
+}
+function pgNoteEl(n) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'pgh-note';
+  const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.src = pgImg(n.photoId, 200); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(n.photoId, 200); };
+  const box = document.createElement('div');
+  box.innerHTML = '<b>' + pgEsc(n.name) + '</b><p>' + pgEsc(n.text) + '</p><small>' + pgEsc(pgAgo(n.at)) + '</small>';
+  b.appendChild(im); b.appendChild(box);
+  b.addEventListener('click', () => pgOpenPhoto(n.photoId));
+  return b;
+}
+function pgRenderNotes() {
+  const list = GALLERY.recentNotes || [];
+  const hub = document.getElementById('pghNotes'), wall = document.getElementById('pgWall');
+  hub.replaceChildren(...list.slice(0, 4).map(pgNoteEl));
+  document.getElementById('pghNotesSec').classList.toggle('hidden', !list.length);
+  if (list.length) wall.replaceChildren(...list.map(pgNoteEl));
+  else { const e = document.createElement('div'); e.className = 'pgh-empty'; e.textContent = 'No notes yet. Open any photo and tap the note icon to leave the first blessing.'; wall.replaceChildren(e); }
+}
+let pgHeroTimer = null;
+function pgRenderHub() {
+  const all = pgAllPhotos();
+  const likes = GALLERY.likes || {}, notesN = GALLERY.notes || {};
+  const totalLikes = Object.values(likes).reduce((t, v) => t + v, 0), totalNotes = Object.values(notesN).reduce((t, v) => t + v, 0);
+  const stat = (v, l) => '<div><b>' + Number(v).toLocaleString('en-IN') + '</b><span>' + l + '</span></div>';
+  document.getElementById('pghStats').innerHTML = stat(all.length, 'Photos') + stat((GALLERY.events || []).length, 'Events') + stat(totalLikes, 'Hearts') + stat(totalNotes, 'Notes');
+  document.getElementById('pghStudio').textContent = GALLERY.studio || 'Your photographer';
+  document.getElementById('pgHubTitle').textContent = GALLERY.title || 'Wedding Hub';
+  document.getElementById('pgHubEyebrow').textContent = 'Wedding Hub' + (pgDate(GALLERY.eventDate) ? ' · ' + pgDate(GALLERY.eventDate) : '');
+  // events row (each tile keeps changing its photo)
+  const row = document.getElementById('pghEvents'); row.innerHTML = '';
+  (GALLERY.events || []).forEach(ev => {
+    const t = document.createElement('button'); t.type = 'button'; t.className = 'pgh-tile';
+    const c = document.createElement('div'); c.className = 'pg-cover'; pgRotCover(c, ev.photos, 600);
+    t.appendChild(c);
+    const h = document.createElement('h4'); h.textContent = ev.name; const sm = document.createElement('small'); sm.textContent = ev.photos.length + ' photos';
+    t.appendChild(h); t.appendChild(sm);
+    t.addEventListener('click', () => openCollection(ev.name, 0));
+    row.appendChild(t);
+  });
+  // most loved
+  const loved = all.filter(x => likes[x.p.id]).sort((a, b) => likes[b.p.id] - likes[a.p.id]).slice(0, 10);
+  const lr = document.getElementById('pghLoved'); lr.innerHTML = '';
+  loved.forEach(x => {
+    const t = document.createElement('button'); t.type = 'button'; t.className = 'pgh-tile';
+    const c = document.createElement('div'); c.className = 'pg-cover';
+    const im = document.createElement('img'); im.className = 'pg-rot is-on'; im.alt = ''; im.loading = 'lazy'; im.src = pgImg(x.p.id, 400); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(x.p.id, 400); };
+    const hb = document.createElement('span'); hb.className = 'pgh-heart'; hb.textContent = '♥ ' + likes[x.p.id];
+    c.appendChild(im); c.appendChild(hb); t.appendChild(c);
+    t.addEventListener('click', () => pgOpenPhoto(x.p.id));
+    lr.appendChild(t);
+  });
+  document.getElementById('pghLovedSec').classList.toggle('hidden', !loved.length);
+  pgRenderNotes();
+  // hero slideshow: highlights from every event, always changing
+  const hero = pgShuffle(all).slice(0, 40), A = document.getElementById('pghHeroA'), B = document.getElementById('pghHeroB'), now = document.getElementById('pghNow');
+  let k = 0, on = A, cur = hero[0];
+  function show(x, layer) { layer.onerror = function () { this.onerror = null; this.src = pgImgFallback(x.p.id, 1600); }; layer.src = pgImg(x.p.id, 1600); }
+  if (hero.length) { show(hero[0], A); now.textContent = hero[0].ev || 'Root Moment'; }
+  clearInterval(pgHeroTimer);
+  if (hero.length > 1) pgHeroTimer = setInterval(() => {
+    if (document.hidden || !document.getElementById('view-hub').classList.contains('active')) return;
+    k = (k + 1) % hero.length; const x = hero[k], off = on === A ? B : A;
+    off.onload = () => { off.classList.add('is-on'); on.classList.remove('is-on'); on = off; cur = x; now.textContent = x.ev || 'Root Moment'; };
+    show(x, off);
+  }, 4500);
+  const heroEl = document.getElementById('pghHero');
+  heroEl.onclick = () => { if (cur) pgOpenPhoto(cur.p.id); };
+  heroEl.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && cur) { e.preventDefault(); pgOpenPhoto(cur.p.id); } };
+}
 </script>
 </body>
 </html>

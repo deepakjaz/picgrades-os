@@ -130,7 +130,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step5-faces',
+    version: 'step6-hub',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
@@ -984,12 +984,14 @@ function getGallery_(p) {
   var m = loadManifest_(g);
   ensureTab_('MomentNotes', NOTE_COLUMNS);
   var device = String(p.device || '').slice(0, 40);
-  var likes = {}, notes = {}, mine = {};
+  var likes = {}, notes = {}, mine = {}, recent = [];
   readTable_('MomentNotes').forEach(function (n) {
     if (String(n.galleryId) !== g.galleryId || n.status === 'hidden') return;
     if (n.type === 'like') { likes[n.photoId] = (likes[n.photoId] || 0) + 1; if (device && n.device === device) mine[n.photoId] = true; }
-    if (n.type === 'note') notes[n.photoId] = (notes[n.photoId] || 0) + 1;
+    if (n.type === 'note') { notes[n.photoId] = (notes[n.photoId] || 0) + 1; recent.push({ photoId: n.photoId, name: n.name, text: n.text, at: n.at }); }
   });
+  recent.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+  m.recentNotes = recent.slice(0, 30);
   m.galleryId = g.galleryId;
   m.likes = likes; m.notes = notes; m.mine = mine;
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
