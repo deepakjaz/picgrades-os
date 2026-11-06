@@ -1119,9 +1119,10 @@ async function pgDownload(m) {
     feed.scrollTo({ top: i * h, behavior: smooth ? 'smooth' : 'auto' });
   }
   const userOnStrip = () => Date.now() - stripTouchAt < 900;
-  let stripTouchAt = 0;
-  ['touchstart', 'touchmove', 'pointerdown', 'wheel'].forEach(ev => stripScroller.addEventListener(ev, () => { stripTouchAt = Date.now(); }, { passive: true }));
-  stripScroller.addEventListener('scroll', () => { if (!isProgrammaticStripScroll) stripTouchAt = Date.now(); }, { passive: true });
+  let stripTouchAt = 0, stripFingerAt = 0;
+  ['touchstart', 'touchmove', 'pointerdown', 'wheel'].forEach(ev => stripScroller.addEventListener(ev, () => { stripTouchAt = stripFingerAt = Date.now(); }, { passive: true }));
+  // the glide after the finger lifts still counts as the guest using the filmstrip (only if a finger touched it just before)
+  stripScroller.addEventListener('scroll', () => { if (Date.now() - stripFingerAt < 2500) stripTouchAt = Date.now(); }, { passive: true });
   const _useSet = useSet;
   useSet = function (name) { _useSet(name); build(); };
   const _apply = applyActiveMoment;
