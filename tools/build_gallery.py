@@ -1087,7 +1087,9 @@ async function pgDownload(m) {
 // ---------- viewer feed: one photo per screen; swipe/scroll moves the whole photo, like the filmstrip ----------
 (function pgViewerFeed() {
   const feed = document.getElementById('pgvFeed'), view = document.getElementById('view-root');
-  let items = [], feedIdx = 0, fromFeed = false, scrollTimer = null;
+  let items = [], feedIdx = 0, fromFeed = false, scrollTimer = null, lockUntil = 0;
+  // While the app moves the photos itself (filmstrip, arrows, thumbnails), the feed's own scroll events are ignored,
+  // so the filmstrip and the big photo never pull each other back.
   function build() {
     feed.innerHTML = ''; feedIdx = 0;
     items = MOMENTS.map((m, i) => {
@@ -1112,8 +1114,15 @@ async function pgDownload(m) {
   window.pgvZoomReset = () => !!(cur() && cur().z && cur().z.reset());
   function scrollToIdx(i, smooth) {
     const h = feed.clientHeight; if (!h) return;
+    if (Math.abs(feed.scrollTop - i * h) < 2) return;
+    lockUntil = Date.now() + (smooth ? 700 : 250);
     feed.scrollTo({ top: i * h, behavior: smooth ? 'smooth' : 'auto' });
   }
+  const userOnStrip = () => Date.now() - stripTouchAt < 900;
+  let stripTouchAt = 0, stripFingerAt = 0;
+  ['touchstart', 'touchmove', 'pointerdown', 'wheel'].forEach(ev => stripScroller.addEventListener(ev, () => { stripTouchAt = stripFingerAt = Date.now(); }, { passive: true }));
+  // the glide after the finger lifts still counts as the guest using the filmstrip (only if a finger touched it just before)
+  stripScroller.addEventListener('scroll', () => { if (Date.now() - stripFingerAt < 2500) stripTouchAt = Date.now(); }, { passive: true });
   const _useSet = useSet;
   useSet = function (name) { _useSet(name); build(); };
   const _apply = applyActiveMoment;
@@ -1123,21 +1132,23 @@ async function pgDownload(m) {
     const target = activeIdx, near = Math.abs(target - feedIdx) <= 1;
     items.forEach(it => it.z && it.z.reset());
     feedIdx = target; load(target);
-    requestAnimationFrame(() => scrollToIdx(target, near && view.classList.contains('active')));
+    // from the filmstrip: jump straight to the photo (no slow slide that could be read as the guest scrolling back)
+    requestAnimationFrame(() => scrollToIdx(target, near && !userOnStrip() && view.classList.contains('active')));
   };
-  feed.addEventListener('scroll', () => {
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      const h = feed.clientHeight; if (!h || !items.length) return;
-      const i = Math.max(0, Math.min(items.length - 1, Math.round(feed.scrollTop / h)));
-      load(i);
-      if (i !== activeIdx) {
-        items.forEach((it, k) => { if (k !== i && it.z) it.z.reset(); });
-        feedIdx = i; fromFeed = true;
-        try { selectMomentDirectly(i, true); } finally { fromFeed = false; }
-      }
-    }, 90);
-  }, { passive: true });
+  function waitMs() { const now = Date.now(); return Math.max(120, lockUntil - now + 60, userOnStrip() ? stripTouchAt + 960 - now : 0); }
+  function settle() {
+    if (Date.now() < lockUntil || userOnStrip()) { scrollTimer = setTimeout(settle, waitMs()); return; }
+    const h = feed.clientHeight; if (!h || !items.length) return;
+    if (Math.abs(feed.scrollTop / h - Math.round(feed.scrollTop / h)) > 0.08) return; // still moving between photos
+    const i = Math.max(0, Math.min(items.length - 1, Math.round(feed.scrollTop / h)));
+    load(i);
+    if (i !== activeIdx) {
+      items.forEach((it, k) => { if (k !== i && it.z) it.z.reset(); });
+      feedIdx = i; fromFeed = true;
+      try { selectMomentDirectly(i, true); } finally { fromFeed = false; }
+    }
+  }
+  feed.addEventListener('scroll', () => { clearTimeout(scrollTimer); scrollTimer = setTimeout(settle, waitMs()); }, { passive: true });
   window.addEventListener('resize', () => { if (items.length) scrollToIdx(feedIdx, false); });
   // buttons
   document.getElementById('pgvSave').addEventListener('click', () => pgDownload(MOMENTS[activeIdx]));
