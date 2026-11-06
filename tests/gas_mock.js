@@ -33,8 +33,10 @@ global.Utilities = {
     const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const t = { yyyy: x.getUTCFullYear(), yy: String(x.getUTCFullYear()).slice(2), MMM: M[x.getUTCMonth()], MM: pad(x.getUTCMonth() + 1), dd: pad(x.getUTCDate()), HH: pad(x.getUTCHours()), mm: pad(x.getUTCMinutes()), ss: pad(x.getUTCSeconds()) };
     return (f || 'yyyy-MM-dd HH:mm:ss').replace(/yyyy|yy|MMM|MM|dd|HH|mm|ss/g, k => t[k]); },
-  parseDate: (s) => new Date(s.replace(' ', 'T') + '+05:30')
+  parseDate: (s) => new Date(s.replace(' ', 'T') + '+05:30'),
+  base64Encode: (b) => Buffer.from(b).toString('base64')
 };
+global.UrlFetchApp = { fetch: (url) => { const id = (/\/d\/([^=]+)/.exec(url) || [])[1]; if (global.__fetchFail) throw new Error('blocked'); return { getResponseCode: () => 200, getBlob: () => ({ getContentType: () => 'image/jpeg', getBytes: () => Array.from(global.__fetchBytes ? global.__fetchBytes(id) : Buffer.from('img:' + id)) }) }; } };
 const props = {}; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
 global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
 global.MailApp = { sendEmail: m => mail.push(m) };

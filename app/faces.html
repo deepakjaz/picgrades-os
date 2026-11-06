@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PicGrades · Face reading</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0E0E10;--card:#17171A;--line:#26262B;--line2:#34343A;--chip:#222226;--text:#F3F0EA;--mute:#A8A49C;--gold:#E9B44C}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;padding:0 0 60px}
+h1,h2,.serif{font-family:'Instrument Serif',serif;font-weight:400}
+h1{font-size:34px;margin:0}h2{font-size:24px;margin:0 0 8px}
+a{color:var(--gold)}
+.wrap{max-width:980px;margin:0 auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;margin-top:16px}
+.muted{color:var(--mute)}.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mute);margin:0 0 6px}
+.btn{background:var(--gold);color:#141413;border:0;border-radius:12px;padding:11px 18px;font-weight:600;cursor:pointer;min-height:44px;font:inherit;font-weight:600}
+.btn:disabled,.mini:disabled{opacity:.55;cursor:not-allowed}
+.mini{background:var(--chip);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:8px 14px;cursor:pointer;min-height:42px;font:inherit;font-size:14px}
+input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40;border-radius:12px;padding:10px 12px;min-height:44px;font:inherit}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.tile{background:#121214;border:1px solid var(--line);border-radius:14px;padding:12px 14px}.tile p{margin:0}.tile .v{font-size:22px;font-weight:600}
+.bar{height:12px;background:#222226;border-radius:999px;overflow:hidden;margin:14px 0 6px}.bar span{display:block;height:100%;width:0;background:var(--gold);transition:width .3s}
+.pill{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;white-space:nowrap;display:inline-block}
+.p-ready{background:#1E2A1F;color:#A8E6B4;border:1px solid #3F6B45}.p-read{background:#14233A;color:#A9CBFF;border:1px solid #2F5486}.p-wait{background:#2A2614;color:#F5DE8E;border:1px solid #6B5A22}.p-late{background:#2C1414;color:#FFC9C2;border:1px solid #7A2E2E}
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px;margin-top:12px}
+.person{text-align:center;font-size:12px;color:var(--mute)}.person i{display:block;width:76px;height:76px;border-radius:50%;margin:0 auto 6px;background-color:#222;border:2px solid var(--line2)}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-top:10px}.thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#222}
+.msg{margin:10px 0 0;font-size:14px}.bad{color:#FFB4A8}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">PicGrades · Face reading</p>
+  <h1 id="title">Loading…</h1>
+  <p class="muted" id="sub"></p>
+  <p class="msg bad hidden" id="err"></p>
+
+  <section class="card hidden" id="readCard">
+    <div class="row" style="justify-content:space-between">
+      <h2>1 · Read faces</h2>
+      <span class="pill p-wait" id="statusPill">Not started</span>
+    </div>
+    <p class="muted" style="margin:0">Reads every photo twice: pass 1 finds the clear faces, pass 2 looks again more closely for small, side and back-row faces. Keep this tab open and the computer awake. If it stops, press Continue — it carries on from where it stopped.</p>
+    <div class="bar"><span id="barFill"></span></div>
+    <p class="muted" style="margin:0;font-size:14px" id="progressText"></p>
+    <div class="tiles">
+      <div class="tile"><p class="muted">Photos read</p><p class="v" id="tRead">0</p></div>
+      <div class="tile"><p class="muted">Faces found</p><p class="v" id="tFaces">0</p></div>
+      <div class="tile"><p class="muted">Time left</p><p class="v" id="tEta">—</p></div>
+      <div class="tile"><p class="muted">Send to client by</p><p class="v" id="tDue" style="font-size:16px;margin-top:8px">—</p></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="startBtn" type="button">Start reading faces</button>
+      <button class="mini hidden" id="pauseBtn" type="button">Pause</button>
+      <span class="muted" style="font-size:13px" id="engine"></span>
+    </div>
+  </section>
+
+  <section class="card hidden" id="peopleCard">
+    <h2>2 · Check the result</h2>
+    <p class="muted" style="margin:0">People found in this wedding (only you see this). Test with your own photo or selfie to see what a guest gets from “Find me”.</p>
+    <div class="people" id="people"></div>
+    <div class="row" style="margin-top:16px">
+      <label class="mini" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">Test with a photo / selfie<input type="file" accept="image/*" id="testFile" class="hidden"></label>
+      <span class="muted" style="font-size:14px" id="testMsg"></span>
+    </div>
+    <div class="thumbs" id="testThumbs"></div>
+  </section>
+
+  <section class="card hidden" id="sendCard">
+    <h2>3 · Send to client</h2>
+    <p class="muted" style="margin:0 0 10px">Emails the gallery link. Gallery: <a id="galLink" target="_blank" rel="noopener"></a></p>
+    <div class="row"><input id="sendTo" type="email" placeholder="client@email.com" style="flex:1 1 260px" aria-label="Client email"><button class="btn" id="sendBtn" type="button">Send to client</button></div>
+    <p class="msg muted" id="sendMsg"></p>
+  </section>
+</div>
+
+<script src="/app/config.js"></script>
+<script src="/app/faces-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = (window.PG_CONFIG || {}).apiUrl;
+  var GID = new URLSearchParams(location.search).get('g') || '';
+  var token = null; try { token = localStorage.getItem('pg_token'); } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+  var S = { photos: [], faces: null, gallery: null, running: false, stop: false, proxy: false, wake: null };
+  var BATCH_SAVE = 16;
+
+  function api(action, body) {
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, token: token, g: GID }, body || {})) })
+      .then(function (r) { return r.json(); }).then(function (res) { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; });
+  }
+  function fail(msg) { $('err').textContent = msg; $('err').classList.remove('hidden'); }
+  function img(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+  function dmyhm(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(s || ''); return m ? m[3] + '/' + m[2] + ' ' + m[4] + ':' + m[5] : '—'; }
+  function minutes(ms) { var m = Math.round(ms / 60000); return m < 1 ? '< 1 min' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; }
+
+  if (!token) { $('title').textContent = 'Please log in first'; fail('Open the Admin page, log in, then come back to this link.'); return; }
+  if (!GID) { $('title').textContent = 'No gallery'; fail('This link is missing the gallery id.'); return; }
+
+  function counts() {
+    var f = S.faces, read = 0, faces = 0, p2 = 0;
+    S.photos.forEach(function (p) { var ps = f.pass[p.id]; if (ps) read++; if (ps === 2) p2++; if (f.photos[p.id]) faces += f.photos[p.id].f.length; });
+    return { read: read, p2: p2, faces: faces, total: S.photos.length };
+  }
+  function paint(extra) {
+    var c = counts(), g = S.gallery, st = g.status || '';
+    var work = c.total * 2, doneWork = c.read + c.p2;
+    $('barFill').style.width = Math.round(doneWork / Math.max(1, work) * 100) + '%';
+    $('tRead').textContent = c.read + ' / ' + c.total + (c.p2 ? ' · pass 2: ' + c.p2 : '');
+    $('tFaces').textContent = c.faces.toLocaleString('en-IN');
+    var late = g.dueAt && !g.sentAt && new Date(g.dueAt.replace(' ', 'T')) < new Date();
+    $('tDue').textContent = g.sentAt ? 'Sent ' + dmyhm(g.sentAt) : (g.dueAt ? dmyhm(g.dueAt) + (late ? ' · late' : '') : 'after order is completed');
+    var pill = $('statusPill');
+    var label = S.running ? 'Reading…' : st === 'Ready' ? 'Ready' : st === 'Needs update' ? 'New photos to read' : c.read ? 'Paused' : 'Not started';
+    pill.textContent = label; pill.className = 'pill ' + (label === 'Ready' ? 'p-ready' : S.running ? 'p-read' : late ? 'p-late' : 'p-wait');
+    $('progressText').textContent = extra || (st === 'Ready' ? 'All photos read in 2 passes. Find me is switched on in the gallery.' : '');
+    var complete = c.p2 >= c.total && c.total > 0;
+    $('startBtn').textContent = complete ? 'Read again' : c.read ? 'Continue' : 'Start reading faces';
+    $('startBtn').classList.toggle('hidden', S.running);
+    $('pauseBtn').classList.toggle('hidden', !S.running);
+    $('peopleCard').classList.toggle('hidden', !c.faces || S.running);
+    $('sendCard').classList.toggle('hidden', S.running);
+  }
+
+  // ---- loading photos for reading (direct from Drive; falls back to the server proxy when the browser blocks it) ----
+  function loadDirect(id, w) {
+    return new Promise(function (res, rej) {
+      var im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = function () {
+        try { var c = document.createElement('canvas'); c.width = c.height = 2; c.getContext('2d').drawImage(im, 0, 0, 2, 2); c.getContext('2d').getImageData(0, 0, 1, 1); res(im); }
+        catch (e) { rej(new Error('blocked')); }
+      };
+      im.onerror = function () { rej(new Error('load')); };
+      im.src = img(id, w);
+    });
+  }
+  function fromData(src) { return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = rej; im.src = src; }); }
+  function loadBatch(ids, w) {
+    if (S.proxy) return api('facesProxy', { ids: ids }).then(function (r) {
+      return Promise.all(ids.map(function (id) { return r.images[id] ? fromData(r.images[id]).catch(function () { return null; }) : null; }));
+    });
+    return Promise.all(ids.map(function (id) { return loadDirect(id, w).then(function (x) { return x; }, function (e) { return e; }); })).then(function (list) {
+      if (list.some(function (x) { return x instanceof Error && x.message === 'blocked'; }) || list.every(function (x) { return x instanceof Error; })) {
+        S.proxy = true; $('engine').textContent += ' · photos via server';
+        return loadBatch(ids, w);
+      }
+      return list.map(function (x) { return x instanceof Error ? null : x; });
+    });
+  }
+
+  function save(batch, pass, done) {
+    if (!Object.keys(batch).length && !done) return Promise.resolve();
+    return api('saveFaces', { pass: pass, photos: batch, done: !!done }).then(function (r) { S.gallery.status = r.status; S.gallery.faceCount = r.faceCount; });
+  }
+
+  function runPass(pass) {
+    var f = S.faces, todo = S.photos.filter(function (p) { return pass === 1 ? !f.pass[p.id] : (f.pass[p.id] || 0) < 2; });
+    var opts = pass === 1 ? { w: 1280, conf: 0.5, minPx: 28 } : { w: 2048, conf: 0.32, minPx: 20 };
+    var i = 0, pending = {}, t0 = Date.now(), doneHere = 0;
+    function step() {
+      if (S.stop) return save(pending, pass).then(function () { pending = {}; throw new Error('paused'); });
+      if (i >= todo.length) return save(pending, pass).then(function () { pending = {}; });
+      var chunk = todo.slice(i, i + 4); i += chunk.length;
+      return loadBatch(chunk.map(function (p) { return p.id; }), opts.w).then(function (imgs) {
+        return chunk.reduce(function (pr, p, k) {
+          return pr.then(function () {
+            var im = imgs[k];
+            if (!im) { f.pass[p.id] = Math.max(pass, f.pass[p.id] || 0); pending[p.id] = f.photos[p.id] || { w: 1, h: 1, f: [] }; return; }
+            return PGFaces.detect(im, opts.conf).then(function (found) {
+              var e = PGFaces.toEntry(found, im.naturalWidth, im.naturalHeight, opts.minPx);
+              e = pass === 2 ? PGFaces.mergeEntry(f.photos[p.id], e) : e;
+              f.photos[p.id] = e; f.pass[p.id] = Math.max(pass, f.pass[p.id] || 0); pending[p.id] = e;
+            });
+          });
+        }, Promise.resolve());
+      }).then(function () {
+        doneHere += chunk.length;
+        var c = counts(), left = (todo.length - i) + (pass === 1 ? c.total : 0);
+        var per = (Date.now() - t0) / doneHere;
+        $('tEta').textContent = minutes(per * left * (pass === 1 ? 1 : 1));
+        paint('Pass ' + pass + ' of 2 · photo ' + Math.min(i, todo.length) + ' of ' + todo.length);
+        if (Object.keys(pending).length >= BATCH_SAVE) { var b = pending; pending = {}; return save(b, pass); }
+      }).then(step);
+    }
+    return step();
+  }
+
+  function start() {
+    if (S.running) return;
+    S.running = true; S.stop = false; $('err').classList.add('hidden'); paint('Getting face reading ready…');
+    var c = counts();
+    if (c.p2 >= c.total) { S.faces.pass = {}; } // "Read again": start fresh
+    if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { S.wake = w; }).catch(function () {});
+    PGFaces.load().then(function (backend) {
+      $('engine').textContent = backend === 'webgl' ? 'Using the graphics card (fast)' : 'Using the processor (slow — try Chrome on a laptop)';
+      return runPass(1);
+    }).then(function () { return runPass(2); }).then(function () {
+      return save({}, 2, true);
+    }).then(function () {
+      S.running = false; $('tEta').textContent = 'Done'; paint(); showPeople();
+    }).catch(function (e) {
+      S.running = false; paint(e.message === 'paused' ? 'Paused. Press Continue to carry on.' : '');
+      if (e.message !== 'paused') fail(e.message + ' — press Continue to try again.');
+    }).then(function () { if (S.wake) { S.wake.release().catch(function () {}); S.wake = null; } });
+  }
+  $('startBtn').addEventListener('click', start);
+  $('pauseBtn').addEventListener('click', function () { S.stop = true; $('pauseBtn').disabled = true; setTimeout(function () { $('pauseBtn').disabled = false; }, 1500); });
+  window.addEventListener('beforeunload', function (e) { if (S.running) { e.preventDefault(); e.returnValue = ''; } });
+
+  var FLAT = null;
+  function showPeople() {
+    FLAT = PGFaces.flatten(S.faces);
+    var groups = PGFaces.cluster(FLAT, 2).slice(0, 60);
+    $('people').replaceChildren.apply($('people'), groups.length ? groups.map(function (gr) {
+      var d = document.createElement('div'); d.className = 'person';
+      var i = document.createElement('i'); i.setAttribute('style', PGFaces.cropStyle(gr.cover, 76, img(gr.cover.pid, 800)));
+      d.appendChild(i); d.appendChild(document.createTextNode(gr.photos.length + ' photos'));
+      return d;
+    }) : [Object.assign(document.createElement('p'), { className: 'muted', style: 'grid-column:1/-1;margin:0', textContent: 'No person found in 2 or more photos yet.' })]);
+  }
+
+  $('testFile').addEventListener('change', function () {
+    var file = this.files[0]; if (!file) return;
+    $('testMsg').textContent = 'Reading your photo…'; $('testThumbs').innerHTML = '';
+    var url = URL.createObjectURL(file);
+    Promise.all([PGFaces.load(), fromData(url)]).then(function (r) { return PGFaces.detect(r[1], 0.5); }).then(function (found) {
+      URL.revokeObjectURL(url);
+      if (!found.length) { $('testMsg').textContent = 'No face found in that photo. Try a clear, front-facing one.'; return; }
+      var me = found.sort(function (a, b) { return b.box.width * b.box.height - a.box.width * a.box.height; })[0];
+      if (!FLAT) FLAT = PGFaces.flatten(S.faces);
+      var m = PGFaces.match(me.descriptor, FLAT);
+      $('testMsg').textContent = m.sure.length + (m.sure.length === 1 ? ' photo' : ' photos') + ' found' + (m.maybe.length ? ' + ' + m.maybe.length + ' maybe' : '') + (found.length > 1 ? ' (used the biggest face in your photo)' : '');
+      m.sure.concat(m.maybe).slice(0, 60).forEach(function (pid) { var t = document.createElement('img'); t.src = img(pid, 300); t.loading = 'lazy'; t.alt = ''; $('testThumbs').appendChild(t); });
+    }).catch(function (e) { $('testMsg').textContent = e.message; });
+    this.value = '';
+  });
+
+  $('sendBtn').addEventListener('click', function () {
+    var b = this, c = counts();
+    if (S.gallery.status !== 'Ready' && !confirm('Face reading is not finished, so Find me will not work yet. Send anyway?')) return;
+    b.disabled = true; $('sendMsg').textContent = 'Sending…';
+    api('sendGallery', { to: $('sendTo').value }).then(function (r) {
+      S.gallery.sentAt = r.sentAt; S.gallery.sentTo = r.sentTo; $('sendMsg').textContent = 'Sent to ' + r.sentTo + ' at ' + dmyhm(r.sentAt) + '.'; paint();
+    }).catch(function (e) { $('sendMsg').textContent = e.message; }).then(function () { b.disabled = false; });
+    void c;
+  });
+
+  api('facesStatus').then(function (r) {
+    S.gallery = r.gallery; S.photos = r.photos; S.faces = r.faces;
+    $('title').textContent = r.gallery.title;
+    $('sub').textContent = r.gallery.studio + ' · ' + r.photos.length + ' photos' + (r.gallery.catalogName ? ' · order ' + r.gallery.catalogName : '');
+    var url = location.origin + '/g/' + r.gallery.galleryId; $('galLink').href = url; $('galLink').textContent = url;
+    $('sendTo').value = r.gallery.sentTo || r.gallery.clientEmail || '';
+    if (r.gallery.sentAt) $('sendMsg').textContent = 'Last sent to ' + r.gallery.sentTo + ' at ' + dmyhm(r.gallery.sentAt) + '.';
+    ['readCard'].forEach(function (id) { $(id).classList.remove('hidden'); });
+    paint(); if (counts().faces) showPeople();
+  }).catch(function (e) { $('title').textContent = 'Face reading'; fail(e.message); });
+})();
+</script>
+</body>
+</html>

@@ -48,7 +48,8 @@ var PUBLIC_ROUTES = {
   getGallery: getGallery_,
   likePhoto: likePhoto_,
   getNotes: getNotes_,
-  addNote: addNote_
+  addNote: addNote_,
+  getFaces: getFaces_
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -60,7 +61,11 @@ var USER_ROUTES = {
   cancelOrder: cancelOrder_,
   holdOrder: holdOrder_,
   resumeOrder: resumeOrder_,
-  setGallery: setGallery_
+  setGallery: setGallery_,
+  facesStatus: facesStatus_,
+  saveFaces: saveFaces_,
+  facesProxy: facesProxy_,
+  sendGallery: sendGallery_
 };
 
 // Admin or editor (order queue + delivery)
@@ -125,7 +130,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step4',
+    version: 'step5-faces',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
@@ -835,7 +840,8 @@ function ensureColumns_(name, cols) {
 // =====================================================================
 
 var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDate', 'folderId', 'folderUrl', 'manifestFileId',
-  'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy'];
+  'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
+  'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo'];
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
 var ROOT_FOLDER_RE = /^0*_?root[ _-]*moments?$/i;
@@ -945,6 +951,11 @@ function setGallery_(p, user) {
       gid = randomId_(12);
       appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email) }, row));
     }
+    if (existing && existing.facesFileId) {
+      var known = readFacesFile_(existing).pass, ids = allPhotoIds_(manifest);
+      var missing = ids.filter(function (id) { return !known[id]; }).length;
+      if (missing) updateRowByNumber_('Galleries', existing._row, { facesStatus: 'Needs update' });
+    }
     CacheService.getScriptCache().remove('gal:' + gid);
     updateRowByNumber_('Orders', o._row, { galleryLink: gid });
     return { galleryId: gid, photoCount: scan.photoCount, rootCount: scan.root.length,
@@ -981,6 +992,7 @@ function getGallery_(p) {
   });
   m.galleryId = g.galleryId;
   m.likes = likes; m.notes = notes; m.mine = mine;
+  m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
   return { gallery: m };
 }
 
@@ -1029,9 +1041,140 @@ function addNote_(p) {
   } finally { lock.releaseLock(); }
 }
 
+// =====================================================================
+// 6b. Face reading (runs in the admin's browser; results stored here) + send to client
+// =====================================================================
+// Faces file (JSON in the gallery data folder):
+//   { v:1, scale:250, pass:{photoId:1|2}, photos:{photoId:{w,h,f:[[x,y,w,h], 'base64 int8 x128'], ...]}} }
+// Boxes are 0..1000 of the photo size. Descriptor values are multiplied by `scale` and stored as int8.
+
+var FACE_DUE_HOURS = 5;
+
+function emptyFaces_() { return { v: 1, scale: 250, pass: {}, photos: {} }; }
+
+function readFacesFile_(g) {
+  if (!g.facesFileId) return emptyFaces_();
+  try { var f = JSON.parse(DriveApp.getFileById(g.facesFileId).getBlob().getDataAsString()); f.pass = f.pass || {}; f.photos = f.photos || {}; return f; }
+  catch (e) { return emptyFaces_(); }
+}
+
+function allPhotoIds_(m) {
+  var seen = {}, out = [];
+  var add = function (p) { if (!seen[p.id]) { seen[p.id] = true; out.push(p.id); } };
+  (m.root || []).forEach(add);
+  (m.events || []).forEach(function (e) { e.photos.forEach(add); });
+  return out;
+}
+
+function staffGallery_(gid, user) {
+  var g = findGallery_(gid);
+  if (!g) throw new Error('Gallery not found.');
+  var o = loadOrder_(g.orderId, user); // clients only reach their own studio's galleries
+  return { g: g, o: o };
+}
+
+/** Logged in: what the face-reading page needs (photo list, progress, faces so far, due time). */
+function facesStatus_(p, user) {
+  var x = staffGallery_(p.g, user), g = x.g, o = x.o, m = loadManifest_(g), f = readFacesFile_(g);
+  var photos = [], seen = {};
+  (m.root || []).forEach(function (ph) { if (!seen[ph.id]) { seen[ph.id] = 1; photos.push({ id: ph.id, set: 'Root Moment' }); } });
+  (m.events || []).forEach(function (e) { e.photos.forEach(function (ph) { if (!seen[ph.id]) { seen[ph.id] = 1; photos.push({ id: ph.id, set: e.name }); } }); });
+  var done = parseDate_(o.completedAt);
+  var due = done.getTime() > 0 ? fmt_(new Date(done.getTime() + FACE_DUE_HOURS * 3600000)) : '';
+  return {
+    gallery: { galleryId: g.galleryId, title: g.title, studio: g.companyName, catalogName: o.catalogName,
+      status: g.facesStatus || '', faceCount: Number(g.faceCount || 0), sentAt: g.sentAt || '', sentTo: g.sentTo || '',
+      dueAt: due, clientEmail: o.email || '' },
+    photos: photos, faces: f
+  };
+}
+
+function validFaceEntry_(v) {
+  if (!v || typeof v !== 'object' || !(v.w > 0) || !(v.h > 0) || !Array.isArray(v.f) || v.f.length > 80) return false;
+  return v.f.every(function (fc) {
+    return Array.isArray(fc) && Array.isArray(fc[0]) && fc[0].length === 4 && fc[0].every(function (n) { return typeof n === 'number' && n >= -50 && n <= 1050; }) &&
+      typeof fc[1] === 'string' && /^[A-Za-z0-9+/=]{170,176}$/.test(fc[1]);
+  });
+}
+
+/** Logged in: store the faces read for a batch of photos. done=true marks the gallery Ready. */
+function saveFaces_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    ensureTab_('Galleries', GALLERY_COLUMNS);
+    var x = staffGallery_(p.g, user), g = x.g, m = loadManifest_(g);
+    var ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
+    var pass = Number(p.pass) === 2 ? 2 : 1, batch = p.photos || {}, keys = Object.keys(batch);
+    if (keys.length > 60) return { ok: false, error: 'Too many photos in one batch.' };
+    var f = readFacesFile_(g);
+    for (var i = 0; i < keys.length; i++) {
+      var id = keys[i];
+      if (!ids[id]) return { ok: false, error: 'Photo is not part of this gallery: ' + id };
+      if (!validFaceEntry_(batch[id])) return { ok: false, error: 'Face data looks wrong for photo ' + id };
+      f.photos[id] = { w: Math.round(batch[id].w), h: Math.round(batch[id].h), f: batch[id].f };
+      f.pass[id] = Math.max(pass, Number(f.pass[id] || 0));
+    }
+    var json = JSON.stringify(f), fileId = g.facesFileId;
+    if (fileId) { try { DriveApp.getFileById(fileId).setContent(json); } catch (e) { fileId = ''; } }
+    if (!fileId) fileId = manifestFolder_().createFile('faces-' + g.galleryId + '.json', json, 'application/json').getId();
+    var faceCount = Object.keys(f.photos).reduce(function (t, k) { return t + f.photos[k].f.length; }, 0);
+    var read = Object.keys(f.pass).filter(function (k) { return ids[k]; }).length;
+    var total = Object.keys(ids).length;
+    var status = p.done && read >= total ? 'Ready' : 'Reading';
+    var patch = { facesFileId: fileId, faceCount: faceCount, facesPhotos: read, facesStatus: status, updatedAt: fmt_(new Date()) };
+    if (status === 'Ready') patch.facesAt = fmt_(new Date());
+    updateRowByNumber_('Galleries', g._row, patch);
+    return { status: status, faceCount: faceCount, photosRead: read, photosTotal: total };
+  } finally { lock.releaseLock(); }
+}
+
+/** Logged in: photo bytes for face reading when the browser cannot read Drive images directly. */
+function facesProxy_(p, user) {
+  var x = staffGallery_(p.g, user), m = loadManifest_(x.g);
+  var ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
+  var want = (p.ids || []).slice(0, 4), out = {};
+  want.forEach(function (id) {
+    if (!ids[id]) return;
+    var blob = null;
+    try {
+      var r = UrlFetchApp.fetch('https://lh3.googleusercontent.com/d/' + id + '=w1600', { muteHttpExceptions: true, followRedirects: true });
+      if (r.getResponseCode() === 200) blob = r.getBlob();
+    } catch (e) {}
+    if (!blob) { try { blob = DriveApp.getFileById(id).getBlob(); } catch (e) {} }
+    if (blob) out[id] = 'data:' + (blob.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(blob.getBytes());
+  });
+  return { images: out };
+}
+
+/** Public: faces of a gallery for "Find me" (the selfie never leaves the guest's phone). */
+function getFaces_(p) {
+  var g = findGallery_(p.g);
+  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  if (g.facesStatus !== 'Ready' && g.facesStatus !== 'Needs update') return { ok: false, error: 'Face search is not ready for this gallery yet.' };
+  var f = readFacesFile_(g);
+  return { faces: { scale: f.scale, photos: f.photos } };
+}
+
+/** Logged in: email the gallery link to the client (you press "Send to client"). */
+function sendGallery_(p, user) {
+  var x = staffGallery_(p.g, user), g = x.g, s = getSettings_();
+  var to = normEmail_(p.to);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return { ok: false, error: 'Enter a valid email address.' };
+  var url = String(s.siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '') + '/g/' + g.galleryId;
+  sendEmail_(to, 'Your wedding gallery is ready · ' + g.title, esc_(g.title),
+    ['Your photos from <b>' + esc_(g.companyName) + '</b> are ready to view.',
+     '<a href="' + esc_(url) + '" style="display:inline-block;background:#E9B44C;color:#141413;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open the gallery</a>',
+     'Tip: tap <b>Find me</b> in the gallery and take a selfie to see every photo you are in.',
+     '<span style="color:#777">' + esc_(url) + '</span>'], 'gallery-send', g.galleryId);
+  var at = fmt_(new Date());
+  updateRowByNumber_('Galleries', g._row, { sentAt: at, sentTo: to });
+  return { sentAt: at, sentTo: to, url: url };
+}
+
 /** Run once from the editor (select authorizeDrive → Run) so the script may read Drive folders. */
 function authorizeDrive() {
   Logger.log('Drive access OK. Gallery data folder: ' + manifestFolder_().getName());
+  try { UrlFetchApp.fetch('https://lh3.googleusercontent.com/', { muteHttpExceptions: true }); Logger.log('Photo fetch access OK.'); } catch (e) { Logger.log('Photo fetch: ' + e); }
 }
 
 // =====================================================================

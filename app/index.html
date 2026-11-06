@@ -310,6 +310,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
       var cp = el('button', { type: 'button', class: 'mini', text: 'Copy link for the couple' });
       cp.addEventListener('click', function () { if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast('Gallery link copied.'); }); });
       inner.appendChild(cp);
+      inner.appendChild(el('a', { href: '/app/faces.html?g=' + encodeURIComponent(o.galleryId), target: '_blank', rel: 'noopener', class: 'mini', style: 'text-decoration:none;display:inline-flex;align-items:center', text: 'Read faces (Find me) & send to client →' }));
     }
     inner.appendChild(el('p', { class: 'muted', style: 'margin:0;flex:1 1 100%;font-size:13px', text: 'Publish from Lightroom to a Google Drive folder (one subfolder per event + 00_Root_Moment), share it as "Anyone with the link", then paste the folder link.' }));
     var folder = el('input', { placeholder: 'Google Drive folder link', style: 'flex:2 1 260px;min-height:40px;padding:8px 12px' });
