@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en" data-tkg-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>PicGrades · Wedding Gallery</title>
+<meta name="theme-color" content="#F6EFEA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1. EXACT WIX REFERENCE PALETTE & TYPOGRAPHY (Preserved Unchanged)
+   ========================================================================== */
+:root {
+  --bg-cream: #F6EFEA;
+  --bg-cream-rgb: 246, 239, 234;
+  --bg-box: #EFE5DC;
+  --ink: #1E1916;
+  --ink-soft: #4A423B;
+  --ink-faint: #8C8077;
+  --border-hairline: #D5C7BC;
+  --stamp-red: #C8281E;
+  --cta-peach: #F7B186;
+  --cta-peach-ink: #1E1916;
+  --accent-terracotta: #B8431D;
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Right-edge floating filmstrip geometry (Preserved Unchanged) */
+  --rail-right-gap: 10px;
+  --rail-width: 72px;
+  --thumb-inactive-w: 44px;
+  --thumb-inactive-h: 54px;
+  --thumb-near-w: 52px;
+  --thumb-near-h: 64px;
+  --thumb-active-w: 64px;
+  --thumb-active-h: 78px;
+}
+
+html[data-tkg-theme="dark"] {
+  --bg-cream: #12100E;
+  --bg-cream-rgb: 18, 16, 14;
+  --bg-box: #1C1916;
+  --ink: #F4EFEA;
+  --ink-soft: #C4B9AF;
+  --ink-faint: #7D736A;
+  --border-hairline: #332D28;
+  --cta-peach: #D98A5C;
+  --cta-peach-ink: #12100E;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--bg-cream);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+/* ==========================================================================
+   2. TOP HEADER BAR (Matches "[ ≡ | Mia Kwan — Photography ]" + Red Stamp)
+   ========================================================================== */
+.mk-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 12px 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.mk-brand-box {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--bg-box);
+  border: 1px solid var(--border-hairline);
+  height: 38px;
+  box-shadow: 0 4px 14px rgba(30, 25, 22, 0.05);
+}
+
+.mk-menu-trigger {
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border-hairline);
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.mk-brand-title {
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.mk-brand-dash {
+  display: inline-block;
+  width: 18px;
+  height: 1px;
+  background: var(--ink);
+  vertical-align: middle;
+}
+
+.mk-right-cluster {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mk-stamp-badge {
+  width: 38px;
+  height: 46px;
+  background: var(--stamp-red);
+  color: #FFFFFF;
+  border: 1.5px solid #FFFFFF;
+  outline: 1px solid var(--stamp-red);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 12px rgba(200, 40, 30, 0.22);
+  cursor: pointer;
+}
+
+.mk-stamp-badge span {
+  display: block;
+}
+
+/* ==========================================================================
+   3. VIEWS CONTAINER
+   ========================================================================== */
+.pg-view {
+  display: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.pg-view.active {
+  display: block;
+}
+
+/* ==========================================================================
+   4. ROOT MOMENT — UNIFIED REELS-STYLE MOMENT SCROLL
+      The photograph (.mk-photo-hero) and its story/metadata (.mk-editorial-sheet)
+      scroll together as ONE unified vertical experience.
+      - Scrolling down first moves through the photo into its story & metadata.
+      - Continuing to scroll past the bottom of the moment transitions the
+        entire stage to the next moment!
+   ========================================================================== */
+.mk-root-stage {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px));
+  transition: opacity 0.22s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.mk-root-stage.is-transitioning-next {
+  animation: mkMomentSlideNext 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mk-root-stage.is-transitioning-prev {
+  animation: mkMomentSlidePrev 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes mkMomentSlideNext {
+  0% { opacity: 0.35; transform: translateY(26px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mkMomentSlidePrev {
+  0% { opacity: 0.35; transform: translateY(-26px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Main Photograph Hero:
+   No longer uses touch-action: none or premature swipe hijacking.
+   Scrolls naturally with the document so the photo and its story move as one! */
+.mk-photo-hero {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  height: 70dvh;
+  overflow: hidden;
+  z-index: 1;
+  background: var(--bg-cream);
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.mk-photo-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  opacity: 0;
+  transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+
+.mk-photo-layer.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.mk-photo-fade-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 84px;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--bg-cream-rgb), 0.72) 0%,
+    rgba(var(--bg-cream-rgb), 0) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mk-photo-fade-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 44%;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--bg-cream-rgb), 0) 0%,
+    rgba(var(--bg-cream-rgb), 0.68) 58%,
+    rgba(var(--bg-cream-rgb), 0.96) 86%,
+    var(--bg-cream) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mk-editorial-sheet {
+  position: relative;
+  z-index: 10;
+  margin-top: -92px;
+  padding: 0 calc(var(--rail-width) + 22px) 28px 18px;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--bg-cream-rgb), 0) 0px,
+    var(--bg-cream) 64px,
+    var(--bg-cream) 100%
+  );
+}
+
+.mk-editorial-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2.05rem, 6.6vw, 3.1rem);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.mk-editorial-story {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.68;
+  color: var(--ink-soft);
+  max-width: 54ch;
+}
+
+.mk-show-more-btn {
+  display: inline-block;
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.mk-meta-details {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  row-gap: 10px;
+  column-gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+
+.mk-meta-label {
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+
+.mk-meta-value {
+  color: var(--ink);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.mk-actions-wrap {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mk-btn-peach {
+  padding: 10px 18px;
+  background: var(--cta-peach);
+  color: var(--cta-peach-ink);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 500;
+  border: 1px solid rgba(30, 25, 22, 0.12);
+  transition: transform 0.12s ease, opacity 0.15s ease;
+}
+
+.mk-btn-peach:active {
+  transform: scale(0.97);
+}
+
+.mk-social-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-box);
+  border: 1px solid var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--ink);
+  transition: transform 0.12s ease, border-color 0.15s ease;
+}
+
+.mk-social-pill:active {
+  transform: scale(0.96);
+}
+
+.mk-social-pill svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
+}
+
+.mk-social-pill.is-liked {
+  border-color: var(--accent-terracotta);
+  color: var(--accent-terracotta);
+}
+
+.mk-social-pill.is-liked svg {
+  fill: var(--accent-terracotta);
+  stroke: var(--accent-terracotta);
+}
+
+/* Subtle boundary handoff cue at the bottom of the current moment's story */
+.mk-next-moment-cue {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   5. RIGHT-EDGE FLOATING VERTICAL FILMSTRIP (Preserved Unchanged)
+   ========================================================================== */
+.mk-filmstrip-rail {
+  position: fixed;
+  top: 66px;
+  right: var(--rail-right-gap);
+  bottom: 84px;
+  width: var(--rail-width);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.mk-filmstrip-scroller {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-top: calc(42vh - (var(--thumb-active-h) / 2));
+  padding-bottom: calc(42vh - (var(--thumb-active-h) / 2));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.mk-filmstrip-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.mk-thumb-item {
+  position: relative;
+  width: var(--thumb-inactive-w);
+  height: var(--thumb-inactive-h);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-box);
+  border: 1px solid rgba(30, 25, 22, 0.08);
+  opacity: 0.42;
+  filter: sepia(0.28) contrast(0.92) brightness(1.04);
+  transition: width 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+              height 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 0.22s ease,
+              filter 0.22s ease,
+              box-shadow 0.22s ease;
+  cursor: pointer;
+}
+
+.mk-thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.mk-thumb-item.is-near {
+  width: var(--thumb-near-w);
+  height: var(--thumb-near-h);
+  opacity: 0.65;
+  filter: sepia(0.14) contrast(0.96);
+}
+
+.mk-thumb-item.is-active {
+  width: var(--thumb-active-w);
+  height: var(--thumb-active-h);
+  opacity: 1;
+  filter: none;
+  border-color: rgba(30, 25, 22, 0.28);
+  box-shadow: 0 6px 18px rgba(30, 25, 22, 0.16);
+}
+
+/* ==========================================================================
+   6. FLOATING COUNTER BAR (Preserved Unchanged)
+   ========================================================================== */
+.mk-counter-pill {
+  position: fixed;
+  left: 50%;
+  bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 85;
+  display: inline-flex;
+  align-items: stretch;
+  height: 32px;
+  background: var(--bg-box);
+  border: 1px solid var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink);
+  box-shadow: 0 4px 14px rgba(30, 25, 22, 0.08);
+  transition: bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+
+body:has(.tkg-global-nav.scrolled) .mk-counter-pill {
+  bottom: calc(126px + env(safe-area-inset-bottom, 0px));
+}
+
+.mk-counter-btn {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.mk-counter-btn:first-child {
+  border-right: 1px solid var(--border-hairline);
+}
+
+.mk-counter-btn:last-child {
+  border-left: 1px solid var(--border-hairline);
+}
+
+.mk-counter-num {
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+/* ==========================================================================
+   7. DESKTOP RESPONSIVE ADAPTATION
+   ========================================================================== */
+@media (min-width: 820px) {
+  :root {
+    --rail-right-gap: 24px;
+    --rail-width: 96px;
+    --thumb-inactive-w: 56px;
+    --thumb-inactive-h: 68px;
+    --thumb-near-w: 68px;
+    --thumb-near-h: 82px;
+    --thumb-active-w: 86px;
+    --thumb-active-h: 104px;
+  }
+
+  .mk-header {
+    padding: 18px 28px;
+  }
+
+  .mk-root-stage {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 72px 140px 160px 28px;
+  }
+
+  .mk-photo-hero {
+    height: 74vh;
+    border-radius: 4px;
+  }
+
+  .mk-editorial-sheet {
+    margin-top: -80px;
+    padding: 0 24px 36px 24px;
+  }
+}
+
+/* ==========================================================================
+   8. SURROUNDING DESTINATION MODULES (Gallery, Hub, Rooms, Studio)
+   ========================================================================== */
+.pg-module-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 74px 18px calc(130px + env(safe-area-inset-bottom, 0px));
+}
+
+.pg-module-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+
+.pg-module-title {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+
+.pg-module-sub {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin-bottom: 24px;
+}
+
+.pg-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.pg-card {
+  background: var(--bg-box);
+  border: 1px solid var(--border-hairline);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pg-card h3 {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.pg-card p {
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.pg-gallery-masonry {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .pg-gallery-masonry {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.pg-gallery-thumb {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: var(--bg-box);
+  border: 1px solid var(--border-hairline);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.pg-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pg-gallery-thumb span {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: var(--bg-box);
+  border: 1px solid var(--border-hairline);
+  padding: 2px 6px;
+  font-size: 0.65rem;
+}
+
+/* ==========================================================================
+   9. COMMENTS & MENU SHEETS (.reg-overlay / .overlay-backdrop from TKG)
+   ========================================================================== */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 25, 22, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 150;
+}
+
+.overlay-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.reg-overlay {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, calc(100% + 60px));
+  width: 100%;
+  max-width: 480px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: var(--bg-cream);
+  border-top: 1px solid var(--border-hairline);
+  padding: 12px 20px calc(28px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -10px 40px rgba(30, 25, 22, 0.22);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 160;
+}
+
+.reg-overlay.show {
+  transform: translate(-50%, 0);
+}
+
+.reg-overlay-handle {
+  width: 38px;
+  height: 3px;
+  background: var(--border-hairline);
+  margin: 4px auto 14px;
+}
+
+.mk-comment-item {
+  padding: 10px 12px;
+  background: var(--bg-box);
+  border: 1px solid var(--border-hairline);
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+}
+
+/* ==========================================================================
+   10. EXACT TKG FLOATING GLASS PILL NAVIGATION (COPIED VERBATIM FROM
+       deepakjaz/tkg-customer-os/blob/main/index.html)
+   ========================================================================== */
+.tkg-global-nav {
+  position: fixed !important;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(320px, calc(100vw - 32px)) !important;
+  height: 46px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+  box-sizing: border-box !important;
+  z-index: 99999 !important;
+  opacity: 1 !important;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease,
+              background-color 0.3s ease,
+              width 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 0.45s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.tkg-global-nav.hidden { display: none !important; }
+
+.tkg-global-nav.scrolled {
+  transform: translateX(-50%) !important;
+  width: 104px !important;
+  height: 104px !important;
+  border-radius: 9999px !important;
+  opacity: 0.94 !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+}
+
+[data-tkg-theme="dark"] .tkg-global-nav,
+.theme-dark .tkg-global-nav,
+body.dark-mode .tkg-global-nav {
+  background: rgba(18, 18, 18, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-tkg-theme="dark"] .tkg-global-nav.scrolled,
+.theme-dark .tkg-global-nav.scrolled,
+body.dark-mode .tkg-global-nav.scrolled {
+  background: rgba(18, 18, 18, 0.62) !important;
+}
+
+.tkg-nav-item {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 32px !important;
+  border-radius: 9999px !important;
+  color: rgba(0, 0, 0, 0.55) !important;
+  text-decoration: none !important;
+  transition: background-color 0.2s ease, color 0.2s ease,
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.45s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tkg-nav-item:nth-child(1) { transform: translate(calc(-50% - 104px), -50%) !important; }
+.tkg-nav-item:nth-child(2) { transform: translate(calc(-50% - 52px), -50%) !important; }
+.tkg-nav-item:nth-child(3) { transform: translate(-50%, -50%) !important; }
+.tkg-nav-item:nth-child(4) { transform: translate(calc(-50% + 52px), -50%) !important; }
+.tkg-nav-item:nth-child(5) { transform: translate(calc(-50% + 104px), -50%) !important; }
+
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(1) { transform: translate(calc(-50% - 36px), -50%) !important; }
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(2) { transform: translate(-50%, calc(-50% - 36px)) !important; }
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(3) { transform: translate(-50%, -50%) !important; }
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(4) { transform: translate(-50%, calc(-50% + 36px)) !important; }
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(5) { transform: translate(calc(-50% + 36px), -50%) !important; }
+
+.tkg-global-nav.scrolled .tkg-nav-item {
+  width: 30px !important;
+  height: 26px !important;
+}
+
+.tkg-nav-item svg {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2 !important;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.tkg-global-nav.scrolled .tkg-nav-item svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.tkg-nav-item.active {
+  color: #B8431D !important;
+  background: rgba(250, 198, 70, 0.25) !important;
+}
+
+[data-tkg-theme="dark"] .tkg-nav-item,
+.theme-dark .tkg-nav-item,
+body.dark-mode .tkg-nav-item {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+[data-tkg-theme="dark"] .tkg-nav-item.active,
+.theme-dark .tkg-nav-item.active,
+body.dark-mode .tkg-nav-item.active {
+  color: #FAC646 !important;
+  background: rgba(250, 198, 70, 0.22) !important;
+}
+
+.tkg-nav-hub {
+  width: 52px !important;
+  height: 44px !important;
+}
+.tkg-global-nav.scrolled .tkg-nav-hub {
+  width: 52px !important;
+  height: 44px !important;
+}
+.tkg-hub-badge-svg {
+  width: 34px !important;
+  height: 34px !important;
+  filter: drop-shadow(0 0 4px rgba(250, 198, 70, 0.55));
+}
+
+.tkg-moments-icon-stack {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tkg-global-nav.scrolled .tkg-moments-icon-stack { width: 14px; height: 14px; }
+.tkg-moments-icon-stack svg {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  stroke-width: 2 !important;
+  transition: opacity 0.5s ease !important;
+}
+.tkg-icon-camera { opacity: 1; }
+.tkg-icon-recorder { opacity: 0; }
+.tkg-nav-moments.tkg-swap .tkg-icon-camera { opacity: 0; }
+.tkg-nav-moments.tkg-swap .tkg-icon-recorder { opacity: 1; }
+
+body:has(.reg-overlay.show) .tkg-global-nav,
+body:has(.overlay-backdrop.show) .tkg-global-nav,
+body:has(.reg-overlay.show) .mk-counter-pill {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.pg-toast {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translate(-50%, -10px);
+  background: var(--ink);
+  color: var(--bg-cream);
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 300;
+  max-width: 90vw;
+  text-align: center;
+}
+.pg-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.mk-photo-layer{object-fit:contain!important;object-position:center center!important}
+.pg-collections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (min-width:640px){.pg-collections{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pg-collection{display:block;width:100%;text-align:left;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;font:inherit}
+.pg-collection .pg-cover{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--bg-box);border:1px solid var(--border-hairline)}
+.pg-collection .pg-cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+.pg-collection:hover .pg-cover img{transform:scale(1.03)}
+.pg-collection h3{font-family:var(--font-serif);font-weight:400;font-size:1.5rem;margin:10px 0 2px}
+.pg-collection small{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.08em;color:var(--ink-faint);text-transform:uppercase}
+.pg-boot{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--bg-cream);color:var(--ink);font-family:var(--font-mono);font-size:.8rem;text-align:center;padding:24px}
+.pg-boot h1{font-family:var(--font-serif);font-weight:400;font-size:2rem;margin:0}
+.pg-boot.hide{display:none}
+.mk-meta-label.is-empty,.mk-meta-value.is-empty{display:none}
+#mkLikeBtn.is-liked svg{fill:currentColor}
+/* ===== Root Moment = TKG Moments reels (same layout as TKG moments.html) ===== */
+body.pgm-on .mk-header{display:none}
+#view-moments{position:fixed;inset:0;z-index:5;background:#000}
+.pgm-head{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:linear-gradient(to bottom,rgba(0,0,0,.85) 0%,rgba(0,0,0,.4) 70%,transparent 100%);z-index:40;pointer-events:none}
+.pgm-head-title{color:#fff;font-family:var(--font-serif);font-size:22px;letter-spacing:-.2px}
+.pgm-head-sub{color:rgba(255,255,255,.7);font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.pgm-feed{height:100vh;height:100dvh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;max-width:560px;margin:0 auto}
+.pgm-feed::-webkit-scrollbar{display:none}
+.pgm-item{height:100vh;height:100dvh;width:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;overflow:hidden;background:#000;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.pgm-blur{position:absolute;inset:-24px;background-size:cover;background-position:center;filter:blur(28px) brightness(.55) saturate(1.1);transform:scale(1.15);z-index:0}
+.pgm-img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+.pgm-scrim{position:absolute;left:0;right:0;bottom:0;padding:60px 84px calc(110px + env(safe-area-inset-bottom,0px)) 16px;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.4) 50%,transparent 100%);z-index:12;pointer-events:none;color:#fff}
+.pgm-name{font-family:var(--font-sans);font-size:14px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.pgm-meta{color:rgba(255,255,255,.75);font-size:12px;margin-top:4px;font-family:var(--font-mono);letter-spacing:.04em}
+.pgm-actions{position:absolute;right:14px;bottom:210px;display:flex;flex-direction:column;gap:14px;z-index:20}
+.pgm-btn{position:relative;width:44px;min-height:44px;background:none;border:0;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;filter:drop-shadow(0 2px 5px rgba(0,0,0,.8));transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.pgm-btn svg{width:28px;height:28px}
+.pgm-btn:active{transform:scale(.85)}
+.pgm-btn span{font-family:var(--font-sans);font-size:12px;font-weight:700;margin-top:2px}
+.pgm-btn .icon-fill{display:none}.pgm-btn.liked .icon-outline{display:none}.pgm-btn.liked .icon-fill{display:block}
+.pgm-btn.liked{color:#FF1744}
+.pgm-pop{position:absolute;left:50%;top:50%;width:110px;height:110px;margin:-55px 0 0 -55px;color:#FF1744;z-index:30;pointer-events:none;animation:pgmPop .8s ease forwards;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+@keyframes pgmPop{0%{transform:scale(.2);opacity:0}25%{transform:scale(1.15);opacity:1}55%{transform:scale(.95);opacity:1}100%{transform:scale(1.25);opacity:0}}
+.pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- ==================== TOP HEADER ==================== -->
+<header class="mk-header">
+  <div class="mk-brand-box">
+    <button type="button" class="mk-menu-trigger" id="mkMenuBtn" aria-label="Menu">≡</button>
+    <div class="mk-brand-title">
+      <span id="pgCoupleTitle">Wedding Gallery</span>
+      <span class="mk-brand-dash" aria-hidden="true"></span>
+      <span>PicGrades</span>
+    </div>
+  </div>
+  <div class="mk-right-cluster">
+    <button type="button" class="mk-stamp-badge" id="stampThemeBtn" title="Toggle Light/Dark">
+      <span>結婚</span>
+      <span id="pgStampYear"></span>
+    </button>
+  </div>
+</header>
+
+<!-- ==================== VIEW 1: ROOT MOMENT ==================== -->
+<main class="pg-view" id="view-root">
+  <div class="mk-root-stage" id="mkRootStage">
+    <div class="mk-photo-hero" id="mkPhotoHero">
+      <img class="mk-photo-layer is-visible" id="mkImgA" src="" alt="">
+      <img class="mk-photo-layer" id="mkImgB" src="" alt="">
+      <div class="mk-photo-fade-top"></div>
+      <div class="mk-photo-fade-bottom"></div>
+    </div>
+
+    <section class="mk-editorial-sheet" id="mkEditorialSheet" aria-live="polite">
+      <h1 class="mk-editorial-title" id="mkTitle"></h1>
+      <p class="mk-editorial-story" id="mkStory"></p>
+      <button type="button" class="mk-show-more-btn" id="mkShowMoreBtn">Show More</button>
+
+      <div class="mk-meta-details" id="mkMetaTable">
+        <div class="mk-meta-label">DATE</div><div class="mk-meta-value" id="mkMetaDate"></div>
+        <div class="mk-meta-label">COUPLE</div><div class="mk-meta-value" id="mkMetaCouple"></div>
+        <div class="mk-meta-label">CEREMONY</div><div class="mk-meta-value" id="mkMetaCategory"></div>
+        <div class="mk-meta-label">CAMERA</div><div class="mk-meta-value" id="mkMetaCamera"></div>
+        <div class="mk-meta-label">LENS / GRADE</div><div class="mk-meta-value" id="mkMetaLens"></div>
+      </div>
+
+      <div class="mk-actions-wrap">
+        <button type="button" class="mk-btn-peach" id="mkViewProjectBtn">← All collections</button>
+        <button type="button" class="mk-social-pill" id="mkLikeBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span id="mkLikeCount">0</span>
+        </button>
+        <button type="button" class="mk-social-pill" id="mkCommentBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span id="mkCommentCount">0</span>
+        </button>
+        <button type="button" class="mk-social-pill" id="mkShareBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span>Share</span>
+        </button>
+      </div>
+
+      <div class="mk-next-moment-cue" id="mkNextMomentCue">
+        <span id="mkNextMomentLabel"></span>
+        <span id="pgSetLabel"></span>
+      </div>
+    </section>
+  </div>
+
+  <aside class="mk-filmstrip-rail" aria-label="Vertical Filmstrip">
+    <div class="mk-filmstrip-scroller" id="mkFilmstripScroller" tabindex="0" role="listbox"></div>
+  </aside>
+
+  <div class="mk-counter-pill" id="mkCounterPill">
+    <button type="button" class="mk-counter-btn" id="mkPrevOrTopBtn" title="Previous Moment / Top">↑</button>
+    <div class="mk-counter-num" id="mkCounterText"></div>
+    <button type="button" class="mk-counter-btn" id="mkQuickCurlBtn" title="Toggle TKG Dock Curl">◎</button>
+  </div>
+</main>
+
+<!-- ==================== ROOT MOMENT: TKG MOMENTS REELS ==================== -->
+<section class="pg-view active" id="view-moments" aria-label="Root Moment">
+  <div class="pgm-head"><div><div class="pgm-head-title" id="pgmTitle"></div><div class="pgm-head-sub" id="pgmSub">Root Moment</div></div></div>
+  <div class="pgm-feed" id="pgmFeed"></div>
+</section>
+
+<!-- ==================== VIEW 2: EVENT GALLERIES ==================== -->
+<section class="pg-view" id="view-gallery">
+  <div class="pg-module-wrap">
+    <div class="pg-module-eyebrow" id="pgGalleryEyebrow">Full Archive</div>
+    <h2 class="pg-module-title">Wedding Galleries</h2>
+    <p class="pg-module-sub">Every event of the day. Open a collection to see all its photos.</p>
+    <div id="pgGalleryMasonry"></div>
+  </div>
+</section>
+
+<!-- ==================== VIEW 3: CLIENT WEDDING HUB ==================== -->
+<section class="pg-view" id="view-hub">
+  <div class="pg-module-wrap">
+    <div class="pg-module-eyebrow" id="pgHubEyebrow"></div>
+    <h2 class="pg-module-title" id="pgHubTitle">Wedding Hub</h2>
+    <p class="pg-module-sub">Your wedding in one place: the Root Moment story, every event gallery, and notes from family and friends.</p>
+    <div class="pg-grid-cards">
+      <div class="pg-card">
+        <h3>Root Moment</h3>
+        <p id="pgHubRootText">The photographer's chosen highlights, one full moment at a time.</p>
+        <button type="button" class="mk-btn-peach" data-goto="moments">Open Root Moment →</button>
+      </div>
+      <div class="pg-card">
+        <h3>Event Galleries</h3>
+        <p id="pgHubEventsText">Full collections from every event.</p>
+        <button type="button" class="mk-btn-peach" data-goto="gallery">Browse Galleries →</button>
+      </div>
+      <div class="pg-card">
+        <h3>Memory Rooms</h3>
+        <p>Private spaces where each side of the family adds its own memories. Coming soon.</p>
+        <button type="button" class="mk-btn-peach" data-goto="rooms">About Rooms →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== VIEW 4: MEMORY ROOMS ==================== -->
+<section class="pg-view" id="view-rooms">
+  <div class="pg-module-wrap">
+    <div class="pg-module-eyebrow">Coming soon</div>
+    <h2 class="pg-module-title">Memory Rooms</h2>
+    <p class="pg-module-sub">Memory Rooms will let the bride's and groom's families add their own photos and stories, each in a private room. We will open them in a later update.</p>
+    <div class="pg-grid-cards">
+      <div class="pg-card">
+        <h3>Bride's Family Courtyard</h3>
+        <p>Blessings, behind-the-scenes clips, and elder stories from the bride's side.</p>
+      </div>
+      <div class="pg-card">
+        <h3>Groom's Baraat Archive</h3>
+        <p>Candid memories and rehearsal notes contributed by friends and cousins.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== VIEW 5: PHOTOGRAPHER STUDIO ==================== -->
+<section class="pg-view" id="view-studio">
+  <div class="pg-module-wrap">
+    <div class="pg-module-eyebrow">Photographed by</div>
+    <h2 class="pg-module-title" id="pgStudioName"></h2>
+    <p class="pg-module-sub" id="pgStudioSub"></p>
+    <div class="pg-grid-cards">
+      <div class="pg-card">
+        <h3 id="pgStudioProject"></h3>
+        <p id="pgStudioStats"></p>
+        <button type="button" class="mk-btn-peach" data-goto="moments">Open Root Moment →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COMMENTS SHEET ==================== -->
+<div class="overlay-backdrop" id="commentBackdrop"></div>
+<div class="reg-overlay" id="commentSheet">
+  <div class="reg-overlay-handle"></div>
+  <h3 style="font-family:var(--font-serif); font-size:1.5rem; font-weight:400;" id="commentSheetHeading">Moment Notes</h3>
+  <p style="font-size:0.72rem; color:var(--ink-faint); margin:4px 0 12px;">Leave a blessing or a memory for this photo. Everyone with the gallery link can read it.</p>
+  <div id="commentListContainer"></div>
+  <form id="commentForm" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
+    <input type="text" id="commentName" placeholder="Your name" maxlength="40" aria-label="Your name"
+      style="flex:1 1 100%; padding:10px; background:var(--bg-box); border:1px solid var(--border-hairline); color:var(--ink); font-family:var(--font-mono); font-size:0.75rem;">
+    <input type="text" id="commentInput" placeholder="Write a note…" maxlength="280" aria-label="Note"
+      style="flex:1; padding:10px; background:var(--bg-box); border:1px solid var(--border-hairline); color:var(--ink); font-family:var(--font-mono); font-size:0.75rem;">
+    <button type="submit" class="mk-btn-peach">Post</button>
+  </form>
+</div>
+
+<!-- ==================== EXACT TKG GLOBAL DOCK ==================== -->
+<nav class="tkg-global-nav" id="globalNav" aria-label="PicGrades Navigation">
+  <a href="#gallery" class="tkg-nav-item" data-nav="gallery" aria-label="Gallery" title="Gallery">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
+    </svg>
+  </a>
+  <a href="#moments" class="tkg-nav-item tkg-nav-moments active" data-nav="moments" aria-label="Root Moment" title="Root Moment" aria-current="page">
+    <span class="tkg-moments-icon-stack">
+      <svg class="tkg-icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+      </svg>
+      <svg class="tkg-icon-recorder" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+      </svg>
+    </span>
+  </a>
+  <a href="#hub" class="tkg-nav-item tkg-nav-hub" data-nav="hub" aria-label="Wedding Hub" title="Hub">
+    <svg class="tkg-hub-badge-svg" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="#1C1815" stroke="#C9A24B" stroke-width="2"/>
+      <circle cx="20" cy="20" r="14" stroke="rgba(250,198,70,0.35)" stroke-width="1" stroke-dasharray="2 2"/>
+      <text x="20" y="24" text-anchor="middle" fill="#FAC646" font-family="Cormorant Garamond, Georgia, serif" font-weight="700" font-size="13">PG</text>
+    </svg>
+  </a>
+  <a href="#rooms" class="tkg-nav-item" data-nav="rooms" aria-label="Memory Rooms" title="Rooms">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h8"/><path d="M8 13h5"/>
+    </svg>
+  </a>
+  <a href="#studio" class="tkg-nav-item" data-nav="studio" aria-label="Studio" title="Studio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </a>
+</nav>
+
+<div class="pg-toast" id="pgToast"></div>
+<div class="pg-boot" id="pgBoot" role="status"><h1>PicGrades</h1><span id="pgBootMsg">Opening the gallery…</span></div>
+<script src="config.js"></script>
+
+<script>
+// ===== PicGrades OS live data (replaces the demo array) =====
+const API = (window.PG_CONFIG || {}).apiUrl;
+const GALLERY_ID = (new URLSearchParams(location.search).get('g') || (location.pathname.match(/\/g\/([a-z0-9]+)/) || [])[1] || '').trim();
+let GALLERY = null;            // manifest from the backend
+let ROOT_SET = [];             // Root Moment list
+let CURRENT_SET = 'root';      // 'root' or an event name
+let MOMENTS = [];              // list shown in the viewer (Root Moment or one event)
+function pgDevice() {
+  try { let d = localStorage.getItem('pg_device'); if (!d) { d = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('pg_device', d); } return d; }
+  catch (e) { if (!window.__pgDev) window.__pgDev = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); return window.__pgDev; }
+}
+function pgApi(action, body) {
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, body || {})) })
+    .then(r => r.json()).then(res => { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; });
+}
+function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+function pgImgFallback(id, w) { return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w; }
+function pgEsc(t) { const d = document.createElement('div'); d.textContent = String(t == null ? '' : t); return d.innerHTML; }
+function pgDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; }
+function pgMoment(photo, ceremony, n, total) {
+  return {
+    id: photo.id, title: (ceremony === 'Root Moment' ? GALLERY.title : ceremony) + ' · ' + n + '/' + total, story: '',
+    date: pgDate(GALLERY.eventDate), couple: String(GALLERY.title || '').toUpperCase(), ceremony: ceremony.toUpperCase(),
+    camera: '', lens: GALLERY.studio ? ('EDITED BY PICGRADES · ' + String(GALLERY.studio).toUpperCase()) : '',
+    photoUrl: pgImg(photo.id, 2048), thumbUrl: pgImg(photo.id, 360),
+    likes: (GALLERY.likes || {})[photo.id] || 0, liked: !!(GALLERY.mine || {})[photo.id], noteCount: (GALLERY.notes || {})[photo.id] || 0, comments: []
+  };
+}
+function buildRootSet() {
+  let list = GALLERY.root || [];
+  if (!list.length) list = (GALLERY.events || []).map(e => e.photos[0]).filter(Boolean).slice(0, 12);
+  return list.map((p, i) => pgMoment(p, 'Root Moment', i + 1, list.length));
+}
+function useSet(name) {
+  CURRENT_SET = name;
+  const ev = GALLERY.events.find(e => e.name === name) || GALLERY.events[0];
+  MOMENTS = ev ? ev.photos.map((p, i) => pgMoment(p, ev.name, i + 1, ev.photos.length)) : [];
+  CURRENT_SET = ev ? ev.name : '';
+  activeIdx = -1;
+  initFilmstrip();
+  const lbl = document.getElementById('pgSetLabel'); if (lbl) lbl.textContent = CURRENT_SET;
+}
+
+const rootStage = document.getElementById('mkRootStage');
+const stripScroller = document.getElementById('mkFilmstripScroller');
+const imgA = document.getElementById('mkImgA');
+const imgB = document.getElementById('mkImgB');
+const titleEl = document.getElementById('mkTitle');
+const storyEl = document.getElementById('mkStory');
+const metaDate = document.getElementById('mkMetaDate');
+const metaCouple = document.getElementById('mkMetaCouple');
+const metaCategory = document.getElementById('mkMetaCategory');
+const metaCamera = document.getElementById('mkMetaCamera');
+const metaLens = document.getElementById('mkMetaLens');
+const counterText = document.getElementById('mkCounterText');
+const nextMomentLabel = document.getElementById('mkNextMomentLabel');
+const likeBtn = document.getElementById('mkLikeBtn');
+const likeCountEl = document.getElementById('mkLikeCount');
+const commentCountEl = document.getElementById('mkCommentCount');
+const nav = document.getElementById('globalNav');
+
+let activeIdx = -1;
+let activeLayer = 'A';
+let thumbEls = [];
+
+// ============================================================================
+// V11 DUAL-MODE SYNCHRONISATION ENGINE
+// Mode A (Main Moment Reels Scroll):
+//   - Scrolls naturally through the current moment's photo + story + metadata.
+//   - When the user reaches the bottom boundary of the moment and continues
+//     scrolling down (or reaches the top boundary and pulls up), advances
+//     to the next/previous moment, resets scroll to top, and syncs filmstrip.
+// Mode B (Side Filmstrip Direct Navigation):
+//   - Tapping a thumbnail or scrolling the filmstrip jumps immediately to
+//     that moment without requiring the user to scroll the current story first.
+// ============================================================================
+let isProgrammaticStripScroll = false;
+let programmaticStripTimer = null;
+let programmaticTargetTop = null;
+let isStageTransitioning = false;
+let stageTransitionTimer = null;
+
+function clearProgrammaticStripLock() {
+  isProgrammaticStripScroll = false;
+  programmaticTargetTop = null;
+  if (programmaticStripTimer !== null) {
+    clearTimeout(programmaticStripTimer);
+    programmaticStripTimer = null;
+  }
+}
+
+function scheduleProgrammaticStripRelease(delayMs) {
+  if (programmaticStripTimer !== null) {
+    clearTimeout(programmaticStripTimer);
+  }
+  programmaticStripTimer = setTimeout(() => {
+    isProgrammaticStripScroll = false;
+    programmaticTargetTop = null;
+    programmaticStripTimer = null;
+  }, delayMs);
+}
+
+function initFilmstrip() {
+  stripScroller.innerHTML = '';
+  MOMENTS.forEach((m, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mk-thumb-item';
+    btn.setAttribute('role', 'option');
+    btn.setAttribute('aria-label', `Photo ${idx + 1} of ${MOMENTS.length}`);
+    const im = document.createElement('img');
+    im.src = m.thumbUrl; im.alt = ''; im.loading = idx < 12 ? 'eager' : 'lazy';
+    im.onerror = function () { this.onerror = null; this.src = pgImgFallback(m.id, 360); };
+    btn.appendChild(im);
+    btn.addEventListener('click', () => { selectMomentDirectly(idx, true); });
+    stripScroller.appendChild(btn);
+  });
+  thumbEls = Array.from(stripScroller.querySelectorAll('.mk-thumb-item'));
+}
+
+function renderGalleries() {
+  const wrap = document.getElementById('pgGalleryMasonry');
+  wrap.innerHTML = '';
+  wrap.className = 'pg-collections';
+  (GALLERY.events || []).forEach((ev) => {
+    const card = document.createElement('button');
+    card.type = 'button'; card.className = 'pg-collection';
+    card.setAttribute('aria-label', 'Open ' + ev.name + ' collection, ' + ev.photos.length + ' photos');
+    const cover = document.createElement('div'); cover.className = 'pg-cover';
+    const im = document.createElement('img');
+    const c = ev.photos[0];
+    im.src = pgImg(c.id, 720); im.alt = ''; im.loading = 'lazy';
+    im.onerror = function () { this.onerror = null; this.src = pgImgFallback(c.id, 720); };
+    cover.appendChild(im);
+    const h = document.createElement('h3'); h.textContent = ev.name;
+    const sm = document.createElement('small'); sm.textContent = ev.photos.length + ' photos';
+    card.appendChild(cover); card.appendChild(h); card.appendChild(sm);
+    card.addEventListener('click', () => openCollection(ev.name, 0));
+    wrap.appendChild(card);
+  });
+}
+function openCollection(name, idx) {
+  useSet(name);
+  switchView('root');
+  requestAnimationFrame(() => selectMomentDirectly(idx || 0, false));
+}
+
+// ===== Root Moment: TKG Moments reels =====
+const ICON_HEART_OUTLINE = '<svg class="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+const ICON_HEART_FILLED = '<svg class="icon-fill" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+const ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+const ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>';
+const ICON_POP = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+function renderMoments() {
+  const feed = document.getElementById('pgmFeed');
+  feed.innerHTML = '';
+  document.getElementById('pgmTitle').textContent = GALLERY.title || '';
+  if (!ROOT_SET.length) { feed.innerHTML = '<div class="pgm-empty">The Root Moment is being prepared. Open the Gallery to see all photos.</div>'; return; }
+  ROOT_SET.forEach((m, i) => {
+    const item = document.createElement('div');
+    item.className = 'pgm-item'; item.dataset.pid = m.id;
+    const blur = document.createElement('div'); blur.className = 'pgm-blur'; blur.style.backgroundImage = 'url("' + pgImg(m.id, 60) + '")';
+    const img = document.createElement('img'); img.className = 'pgm-img'; img.alt = (GALLERY.title || '') + ' · Root Moment ' + (i + 1);
+    img.src = pgImg(m.id, 1600); img.loading = i < 2 ? 'eager' : 'lazy'; img.decoding = 'async';
+    img.onerror = function () { this.onerror = null; this.src = pgImgFallback(m.id, 1600); blur.style.backgroundImage = 'url("' + pgImgFallback(m.id, 60) + '")'; };
+    const scrim = document.createElement('div'); scrim.className = 'pgm-scrim';
+    scrim.innerHTML = '<div class="pgm-name">' + pgEsc(GALLERY.title || '') + '</div><div class="pgm-meta">ROOT MOMENT ' + (i + 1) + '/' + ROOT_SET.length + (m.date ? ' · ' + pgEsc(m.date) : '') + (GALLERY.studio ? ' · ' + pgEsc(String(GALLERY.studio).toUpperCase()) : '') + '</div>';
+    const acts = document.createElement('div'); acts.className = 'pgm-actions';
+    const like = document.createElement('button'); like.type = 'button'; like.className = 'pgm-btn pgm-like'; like.setAttribute('aria-label', 'Like');
+    like.innerHTML = ICON_HEART_OUTLINE + ICON_HEART_FILLED + '<span class="pgm-like-count"></span>';
+    const note = document.createElement('button'); note.type = 'button'; note.className = 'pgm-btn'; note.setAttribute('aria-label', 'Moment Notes');
+    note.innerHTML = ICON_NOTE + '<span class="pgm-note-count"></span>';
+    const share = document.createElement('button'); share.type = 'button'; share.className = 'pgm-btn'; share.setAttribute('aria-label', 'Share');
+    share.innerHTML = ICON_SEND;
+    like.addEventListener('click', e => { e.stopPropagation(); pgToggleLike(m); });
+    note.addEventListener('click', e => { e.stopPropagation(); openNotes(m, 'Root Moment ' + (i + 1) + '/' + ROOT_SET.length); });
+    share.addEventListener('click', e => { e.stopPropagation(); pgShare(); });
+    acts.appendChild(like); acts.appendChild(note); acts.appendChild(share);
+    // double-tap to like (same as TKG Moments)
+    let lastTap = 0;
+    item.addEventListener('click', () => {
+      const now = Date.now();
+      if (now - lastTap < 400) {
+        const pop = document.createElement('div'); pop.className = 'pgm-pop'; pop.innerHTML = ICON_POP; item.appendChild(pop);
+        setTimeout(() => pop.remove(), 850);
+        if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m);
+        lastTap = 0;
+      } else lastTap = now;
+    });
+    item.appendChild(blur); item.appendChild(img); item.appendChild(scrim); item.appendChild(acts);
+    feed.appendChild(item);
+    syncCounts(m.id);
+  });
+}
+
+// ===== shared like / notes / share =====
+function syncCounts(id) {
+  const likes = (GALLERY.likes || {})[id] || 0, liked = !!(GALLERY.mine || {})[id], notes = (GALLERY.notes || {})[id] || 0;
+  document.querySelectorAll('.pgm-item[data-pid="' + id + '"]').forEach(el => {
+    const b = el.querySelector('.pgm-like'); b.classList.toggle('liked', liked);
+    el.querySelector('.pgm-like-count').textContent = likes || '';
+    el.querySelector('.pgm-note-count').textContent = notes || '';
+  });
+  const cur = MOMENTS[activeIdx];
+  if (cur && cur.id === id) {
+    likeCountEl.textContent = likes; likeBtn.classList.toggle('is-liked', liked); commentCountEl.textContent = notes;
+  }
+}
+const likeBusy = {};
+function pgToggleLike(m) {
+  if (likeBusy[m.id]) return;
+  likeBusy[m.id] = true;
+  const was = !!GALLERY.mine[m.id];
+  if (was) delete GALLERY.mine[m.id]; else GALLERY.mine[m.id] = true;
+  GALLERY.likes[m.id] = Math.max(0, (GALLERY.likes[m.id] || 0) + (was ? -1 : 1));
+  syncCounts(m.id);
+  pgApi('likePhoto', { photoId: m.id }).then(res => {
+    GALLERY.likes[m.id] = res.likes; if (res.liked) GALLERY.mine[m.id] = true; else delete GALLERY.mine[m.id];
+  }).catch(err => {
+    if (was) GALLERY.mine[m.id] = true; else delete GALLERY.mine[m.id];
+    GALLERY.likes[m.id] = Math.max(0, (GALLERY.likes[m.id] || 0) + (was ? 1 : -1));
+    showToast(err.message);
+  }).finally(() => { likeBusy[m.id] = false; syncCounts(m.id); });
+}
+function pgShare() {
+  const url = location.origin + '/g/' + encodeURIComponent(GALLERY_ID);
+  const title = (GALLERY && GALLERY.title) ? GALLERY.title + ' · PicGrades' : 'PicGrades Gallery';
+  if (navigator.share) { navigator.share({ title: title, url: url }).catch(() => {}); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => showToast('Gallery link copied'), () => showToast(url));
+  else showToast(url);
+}
+
+function centerThumbnail(idx, smooth = true) {
+  const el = thumbEls[idx];
+  if (!el) return null;
+  const activeSlotOffset = stripScroller.clientHeight * 0.48;
+  const rawTarget = el.offsetTop - activeSlotOffset + (el.offsetHeight / 2);
+  const maxScroll = Math.max(0, stripScroller.scrollHeight - stripScroller.clientHeight);
+  const clampedTarget = Math.max(0, Math.min(maxScroll, rawTarget));
+
+  stripScroller.scrollTo({
+    top: clampedTarget,
+    behavior: smooth ? 'smooth' : 'auto'
+  });
+  return clampedTarget;
+}
+
+function applyActiveMoment(idx) {
+  if (idx < 0 || idx >= MOMENTS.length) return;
+  const isSameIndex = (idx === activeIdx);
+  activeIdx = idx;
+  const m = MOMENTS[idx];
+
+  thumbEls.forEach((el, i) => {
+    const dist = Math.abs(i - idx);
+    el.classList.toggle('is-active', i === idx);
+    el.classList.toggle('is-near', dist === 1);
+    el.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+  });
+
+  if (!isSameIndex) {
+    const nextImg = activeLayer === 'A' ? imgB : imgA;
+    const prevImg = activeLayer === 'A' ? imgA : imgB;
+    activeLayer = activeLayer === 'A' ? 'B' : 'A';
+
+    nextImg.onerror = function () { this.onerror = null; this.src = pgImgFallback(m.id, 2048); };
+    nextImg.src = m.photoUrl;
+    nextImg.alt = m.title;
+    nextImg.onload = () => {
+      nextImg.classList.add('is-visible');
+      prevImg.classList.remove('is-visible');
+    };
+    if (nextImg.complete) {
+      nextImg.classList.add('is-visible');
+      prevImg.classList.remove('is-visible');
+    }
+  }
+
+  titleEl.textContent = m.title;
+  storyEl.textContent = m.story;
+  metaDate.textContent = m.date;
+  metaCouple.textContent = m.couple;
+  metaCategory.textContent = m.ceremony;
+  metaCamera.textContent = m.camera;
+  metaLens.textContent = m.lens;
+  [[metaDate, m.date], [metaCouple, m.couple], [metaCategory, m.ceremony], [metaCamera, m.camera], [metaLens, m.lens]].forEach(([el, v]) => {
+    el.classList.toggle('is-empty', !v);
+    if (el.previousElementSibling) el.previousElementSibling.classList.toggle('is-empty', !v);
+  });
+  storyEl.style.display = m.story ? '' : 'none';
+  const moreBtn = document.getElementById('mkShowMoreBtn'); if (moreBtn) moreBtn.style.display = m.story ? '' : 'none';
+  counterText.textContent = `${idx + 1}/${MOMENTS.length}`;
+
+  if (nextMomentLabel) {
+    if (idx < MOMENTS.length - 1) {
+      nextMomentLabel.textContent = `Keep scrolling for photo ${idx + 2}/${MOMENTS.length} ↓`;
+    } else {
+      nextMomentLabel.textContent = `Last photo of ${CURRENT_SET} (${MOMENTS.length}/${MOMENTS.length}) · scroll up for previous ↑`;
+    }
+  }
+
+  syncCounts(m.id);
+}
+
+// Mode B: Direct jump via Filmstrip click, Gallery selection, or Keyboard
+function selectMomentDirectly(idx, smoothStrip = true) {
+  const clamped = Math.max(0, Math.min(MOMENTS.length - 1, idx));
+
+  clearProgrammaticStripLock();
+  isProgrammaticStripScroll = true;
+
+  // Reset main window scroll to top of the newly selected moment
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  applyActiveMoment(clamped);
+
+  const targetTop = centerThumbnail(clamped, smoothStrip);
+  programmaticTargetTop = targetTop;
+
+  if (!smoothStrip || targetTop === null || Math.abs(stripScroller.scrollTop - targetTop) <= 1.5) {
+    requestAnimationFrame(clearProgrammaticStripLock);
+  } else {
+    scheduleProgrammaticStripRelease(180);
+  }
+}
+
+// Mode A: Reels-style advance when user scrolls past the bottom or top boundary of the current moment
+function advanceMomentFromMainStage(direction) {
+  if (isStageTransitioning) return false;
+  const targetIdx = activeIdx + direction;
+  if (targetIdx < 0 || targetIdx >= MOMENTS.length) return false;
+
+  isStageTransitioning = true;
+  clearTimeout(stageTransitionTimer);
+
+  // Trigger subtle Reels slide animation on .mk-root-stage
+  rootStage.classList.remove('is-transitioning-next', 'is-transitioning-prev');
+  void rootStage.offsetWidth;
+  rootStage.classList.add(direction > 0 ? 'is-transitioning-next' : 'is-transitioning-prev');
+
+  // Jump main window back to top so the new moment starts at its photograph,
+  // update active moment content, and smoothly center the filmstrip thumbnail!
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  clearProgrammaticStripLock();
+  isProgrammaticStripScroll = true;
+
+  applyActiveMoment(targetIdx);
+  const targetTop = centerThumbnail(targetIdx, true);
+  programmaticTargetTop = targetTop;
+  scheduleProgrammaticStripRelease(220);
+
+  // Expand dock when starting fresh at the top of the new moment
+  if (nav) nav.classList.remove('scrolled');
+
+  stageTransitionTimer = setTimeout(() => {
+    isStageTransitioning = false;
+    rootStage.classList.remove('is-transitioning-next', 'is-transitioning-prev');
+  }, 380);
+
+  return true;
+}
+
+// ---- MODE B HANDLERS: Side Filmstrip Direct Scroll & Takeover ----
+stripScroller.addEventListener('pointerdown', clearProgrammaticStripLock, { passive: true });
+stripScroller.addEventListener('touchstart', clearProgrammaticStripLock, { passive: true });
+stripScroller.addEventListener('wheel', clearProgrammaticStripLock, { passive: true });
+stripScroller.addEventListener('scrollend', () => {
+  if (isProgrammaticStripScroll) clearProgrammaticStripLock();
+}, { passive: true });
+
+let stripRaf = false;
+stripScroller.addEventListener('scroll', () => {
+  if (isProgrammaticStripScroll) {
+    if (programmaticTargetTop !== null && Math.abs(stripScroller.scrollTop - programmaticTargetTop) <= 1.5) {
+      clearProgrammaticStripLock();
+    } else {
+      scheduleProgrammaticStripRelease(120);
+    }
+    return;
+  }
+
+  if (!stripRaf) {
+    stripRaf = true;
+    requestAnimationFrame(() => {
+      stripRaf = false;
+      if (isProgrammaticStripScroll || !thumbEls.length) return;
+      const rect = stripScroller.getBoundingClientRect();
+      if (rect.height <= 0) return;
+      const activeLineY = rect.top + (rect.height * 0.48);
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < thumbEls.length; i++) {
+        const r = thumbEls[i].getBoundingClientRect();
+        const cY = r.top + (r.height / 2);
+        const d = Math.abs(cY - activeLineY);
+        if (d < bestDist) {
+          bestDist = d;
+          bestIdx = i;
+        }
+      }
+      if (bestIdx !== activeIdx) {
+        // Direct filmstrip scroll updates the moment immediately and resets page scroll to top
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        applyActiveMoment(bestIdx);
+      }
+    });
+  }
+}, { passive: true });
+
+// ---- MODE A HANDLERS: Full-Moment Reels Boundary Detection (Main Stage) ----
+function isRootViewActive() {
+  const rootView = document.getElementById('view-root');
+  return rootView && rootView.classList.contains('active') && !document.querySelector('.reg-overlay.show');
+}
+
+function getMomentScrollBounds() {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  const docHeight = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight
+  );
+  const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+  const maxScroll = Math.max(0, docHeight - viewHeight);
+  return {
+    scrollTop,
+    maxScroll,
+    atTop: scrollTop <= 4,
+    atBottom: scrollTop >= maxScroll - 6
+  };
+}
+
+(function initReelsMomentBoundaryScroll() {
+  // 1. Desktop Wheel / Trackpad Boundary Pull-Through
+  let boundaryWheelAccum = 0;
+  let boundaryWheelResetTimer = null;
+  const WHEEL_BOUNDARY_THRESHOLD = 65;
+
+  window.addEventListener('wheel', (e) => {
+    if (!isRootViewActive()) return;
+    // Ignore wheel events inside the right-edge filmstrip rail
+    if (e.target && e.target.closest('#mkFilmstripRail, #mkFilmstripScroller')) return;
+
+    if (isStageTransitioning) {
+      e.preventDefault();
+      return;
+    }
+
+    const bounds = getMomentScrollBounds();
+    const goingDown = e.deltaY > 0;
+    const goingUp = e.deltaY < 0;
+
+    // Only accumulate pull-through when the user has already reached the bottom (goingDown)
+    // or is already at the top (goingUp) of the current moment!
+    if (goingDown && bounds.atBottom && activeIdx < MOMENTS.length - 1) {
+      e.preventDefault();
+      boundaryWheelAccum = Math.max(0, boundaryWheelAccum) + e.deltaY;
+      clearTimeout(boundaryWheelResetTimer);
+      boundaryWheelResetTimer = setTimeout(() => { boundaryWheelAccum = 0; }, 180);
+
+      if (boundaryWheelAccum >= WHEEL_BOUNDARY_THRESHOLD) {
+        boundaryWheelAccum = 0;
+        advanceMomentFromMainStage(1);
+      }
+    } else if (goingUp && bounds.atTop && activeIdx > 0) {
+      e.preventDefault();
+      boundaryWheelAccum = Math.min(0, boundaryWheelAccum) + e.deltaY;
+      clearTimeout(boundaryWheelResetTimer);
+      boundaryWheelResetTimer = setTimeout(() => { boundaryWheelAccum = 0; }, 180);
+
+      if (Math.abs(boundaryWheelAccum) >= WHEEL_BOUNDARY_THRESHOLD) {
+        boundaryWheelAccum = 0;
+        advanceMomentFromMainStage(-1);
+      }
+    } else {
+      // Ordinary scrolling inside the current moment's photo & story
+      boundaryWheelAccum = 0;
+    }
+  }, { passive: false });
+
+  // 2. Mobile Touch Boundary Pull-Through
+  let touchActive = false;
+  let touchLastY = 0;
+  let boundaryPullAccum = 0;
+  const TOUCH_BOUNDARY_THRESHOLD = 48;
+
+  function resetTouchState() {
+    touchActive = false;
+    touchLastY = 0;
+    boundaryPullAccum = 0;
+  }
+
+  window.addEventListener('touchstart', (e) => {
+    if (!isRootViewActive()) return;
+    if (e.target && e.target.closest('#mkFilmstripScroller, .tkg-global-nav')) {
+      resetTouchState();
+      return;
+    }
+    if (!e.touches || e.touches.length !== 1) {
+      resetTouchState();
+      return;
+    }
+    touchActive = true;
+    touchLastY = e.touches[0].clientY;
+    boundaryPullAccum = 0;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!touchActive || !isRootViewActive() || isStageTransitioning) return;
+    if (!e.touches || e.touches.length !== 1) {
+      resetTouchState();
+      return;
+    }
+
+    const currentY = e.touches[0].clientY;
+    const dy = touchLastY - currentY; // positive = finger dragging up (scrolling down)
+    touchLastY = currentY;
+
+    const bounds = getMomentScrollBounds();
+
+    // If at the bottom of the current moment's story and pulling further down:
+    if (dy > 0 && bounds.atBottom && activeIdx < MOMENTS.length - 1) {
+      boundaryPullAccum = Math.max(0, boundaryPullAccum) + dy;
+      if (boundaryPullAccum >= TOUCH_BOUNDARY_THRESHOLD) {
+        resetTouchState();
+        advanceMomentFromMainStage(1);
+      }
+    }
+    // If at the very top of the current moment's photo and pulling further up:
+    else if (dy < 0 && bounds.atTop && activeIdx > 0) {
+      boundaryPullAccum = Math.min(0, boundaryPullAccum) + dy;
+      if (Math.abs(boundaryPullAccum) >= TOUCH_BOUNDARY_THRESHOLD) {
+        resetTouchState();
+        advanceMomentFromMainStage(-1);
+      }
+    } else {
+      // User is scrolling normally within the current moment's photo & story
+      boundaryPullAccum = 0;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    if (!e.touches || e.touches.length === 0) {
+      resetTouchState();
+    } else if (e.touches.length === 1) {
+      touchActive = true;
+      touchLastY = e.touches[0].clientY;
+      boundaryPullAccum = 0;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchcancel', resetTouchState, { passive: true });
+})();
+
+// Keyboard navigation
+window.addEventListener('keydown', (e) => {
+  if (!isRootViewActive()) return;
+  if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    selectMomentDirectly(activeIdx + 1, true);
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    selectMomentDirectly(activeIdx - 1, true);
+  }
+});
+
+// Controls
+document.getElementById('mkShowMoreBtn').addEventListener('click', () => {
+  document.getElementById('mkMetaTable').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+document.getElementById('mkPrevOrTopBtn').addEventListener('click', () => {
+  if (window.scrollY > 20) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    selectMomentDirectly(activeIdx - 1, true);
+  }
+});
+document.getElementById('mkViewProjectBtn').addEventListener('click', () => { switchView('gallery'); });
+
+// Social & Comments
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('pgToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+likeBtn.addEventListener('click', () => { const m = MOMENTS[activeIdx]; if (m) pgToggleLike(m); });
+
+const commentBackdrop = document.getElementById('commentBackdrop');
+const commentSheet = document.getElementById('commentSheet');
+const commentListContainer = document.getElementById('commentListContainer');
+
+function renderNotes(list) {
+  commentListContainer.innerHTML = list.length
+    ? list.map(c => `<div class="mk-comment-item"><strong>${pgEsc(c.name)}:</strong> ${pgEsc(c.text)}</div>`).join('')
+    : '<div class="mk-comment-item">No notes yet. Be the first to leave one.</div>';
+}
+let noteTarget = null;
+function openNotes(m, label) {
+  if (!m) return;
+  noteTarget = m;
+  document.getElementById('commentSheetHeading').textContent = 'Moment Notes · ' + label;
+  commentListContainer.innerHTML = '<div class="mk-comment-item">Loading notes…</div>';
+  try { const nm = localStorage.getItem('pg_note_name'); if (nm) document.getElementById('commentName').value = nm; } catch (e) {}
+  commentBackdrop.classList.add('show');
+  commentSheet.classList.add('show');
+  pgApi('getNotes', { photoId: m.id }).then(res => { if (noteTarget === m) renderNotes(res.notes); }).catch(err => { commentListContainer.innerHTML = '<div class="mk-comment-item">' + pgEsc(err.message) + '</div>'; });
+}
+document.getElementById('mkCommentBtn').addEventListener('click', () => { openNotes(MOMENTS[activeIdx], (CURRENT_SET || '') + ' ' + (activeIdx + 1) + '/' + MOMENTS.length); });
+commentBackdrop.addEventListener('click', () => { commentBackdrop.classList.remove('show'); commentSheet.classList.remove('show'); });
+document.getElementById('commentForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const m = noteTarget;
+  const inp = document.getElementById('commentInput'), nameInp = document.getElementById('commentName');
+  const val = inp.value.trim(), name = nameInp.value.trim();
+  if (!m) return;
+  if (!name) { nameInp.focus(); showToast('Add your name first'); return; }
+  if (!val) { inp.focus(); return; }
+  const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true;
+  try { localStorage.setItem('pg_note_name', name); } catch (er) {}
+  pgApi('addNote', { photoId: m.id, name: name, text: val }).then(() => {
+    inp.value = '';
+    GALLERY.notes[m.id] = (GALLERY.notes[m.id] || 0) + 1;
+    syncCounts(m.id);
+    showToast('Note added');
+    return pgApi('getNotes', { photoId: m.id }).then(res => renderNotes(res.notes));
+  }).catch(err => showToast(err.message)).finally(() => { btn.disabled = false; });
+});
+document.getElementById('mkShareBtn').addEventListener('click', pgShare);
+
+// TKG Dock Directional Scroll & View Switching
+(function initDirectionalPillScroll() {
+  if (!nav) return;
+  let lastWinY = window.scrollY || document.documentElement.scrollTop || 0;
+  let lastStripY = stripScroller ? stripScroller.scrollTop : 0;
+
+  window.addEventListener('scroll', () => {
+    const current = window.scrollY || document.documentElement.scrollTop || 0;
+    if (current <= 4) nav.classList.remove('scrolled');
+    else if (current - lastWinY > 6) nav.classList.add('scrolled');
+    else if (current - lastWinY < -6) nav.classList.remove('scrolled');
+    lastWinY = current;
+  }, { passive: true });
+
+  if (stripScroller) {
+    stripScroller.addEventListener('scroll', () => {
+      const current = stripScroller.scrollTop;
+      if (current <= 4) nav.classList.remove('scrolled');
+      else if (current - lastStripY > 6) nav.classList.add('scrolled');
+      else if (current - lastStripY < -6) nav.classList.remove('scrolled');
+      lastStripY = current;
+    }, { passive: true });
+  }
+})();
+
+(function animateMomentsNavIcon() {
+  const el = document.querySelector('.tkg-nav-moments');
+  if (!el) return;
+  let toggles = 0;
+  const iv = setInterval(() => {
+    el.classList.toggle('tkg-swap');
+    if (++toggles >= 4) clearInterval(iv);
+  }, 2500);
+})();
+
+function switchView(viewKey) {
+  clearProgrammaticStripLock();
+  document.querySelectorAll('.pg-view').forEach(v => v.classList.remove('active'));
+  const target = document.getElementById('view-' + viewKey);
+  if (target) target.classList.add('active');
+
+  document.body.classList.toggle('pgm-on', viewKey === 'moments');
+  document.querySelectorAll('.tkg-nav-item').forEach(item => {
+    const match = item.dataset.nav === (viewKey === 'root' ? 'gallery' : viewKey);
+    item.classList.toggle('active', match);
+    if (match) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
+  });
+
+  nav.classList.remove('scrolled');
+  window.scrollTo({ top: 0, behavior: 'auto' });
+
+  if (viewKey === 'root') {
+    requestAnimationFrame(() => selectMomentDirectly(activeIdx >= 0 ? activeIdx : 0, false));
+  }
+}
+function switchViewFromNav(viewKey) {
+  switchView(viewKey);
+}
+
+document.querySelectorAll('.tkg-nav-item[data-nav]').forEach(link => {
+  link.addEventListener('click', (e) => { e.preventDefault(); switchViewFromNav(link.dataset.nav); });
+});
+document.querySelectorAll('[data-goto]').forEach(btn => {
+  btn.addEventListener('click', () => switchViewFromNav(btn.dataset.goto));
+});
+
+document.getElementById('stampThemeBtn').addEventListener('click', () => {
+  const root = document.documentElement;
+  const next = root.getAttribute('data-tkg-theme') === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-tkg-theme', next);
+  showToast(next === 'dark' ? 'Dark mode' : 'Light mode');
+  try { localStorage.setItem('pg_theme', next); } catch (e) {}
+});
+document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.classList.toggle('scrolled'); });
+document.getElementById('mkMenuBtn').addEventListener('click', () => { switchView('hub'); });
+
+// Initialise with live data
+(function boot() {
+  try { const t = localStorage.getItem('pg_theme'); if (t) document.documentElement.setAttribute('data-tkg-theme', t); } catch (e) {}
+  const bootEl = document.getElementById('pgBoot'), bootMsg = document.getElementById('pgBootMsg');
+  if (!API || !GALLERY_ID) { bootMsg.textContent = 'This gallery link is incomplete. Please check the link you received.'; return; }
+  pgApi('getGallery').then(res => {
+    GALLERY = res.gallery; GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = GALLERY.mine || {};
+    const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;
+    document.title = GALLERY.title + ' · PicGrades';
+    document.getElementById('pgCoupleTitle').textContent = GALLERY.title;
+    document.getElementById('pgStampYear').textContent = (GALLERY.eventDate || '').slice(2, 4) || String(new Date().getFullYear()).slice(2);
+    const dateTxt = pgDate(GALLERY.eventDate);
+    document.getElementById('pgHubEyebrow').textContent = GALLERY.title + (dateTxt ? ' · ' + dateTxt : '');
+    document.getElementById('pgHubTitle').textContent = 'Wedding Hub';
+    document.getElementById('pgHubRootText').textContent = ((GALLERY.root || []).length || Math.min(12, (GALLERY.events || []).length)) + ' chosen moments from the photographer, one full photo at a time.';
+    document.getElementById('pgHubEventsText').textContent = (GALLERY.events || []).map(e => e.name).join(' · ') + ' — ' + total + ' photos in all.';
+    document.getElementById('pgGalleryEyebrow').textContent = GALLERY.title + ' · ' + total + ' photos';
+    document.getElementById('pgStudioName').textContent = GALLERY.studio || 'Your photographer';
+    document.getElementById('pgStudioSub').textContent = 'Photographed by ' + (GALLERY.studio || 'your photographer') + ' · edited and delivered with PicGrades.';
+    document.getElementById('pgStudioProject').textContent = GALLERY.title;
+    document.getElementById('pgStudioStats').textContent = total + ' photos · ' + (GALLERY.events || []).length + ' events' + (dateTxt ? ' · ' + dateTxt : '');
+    ROOT_SET = buildRootSet();
+    renderGalleries();
+    renderMoments();
+    if ((GALLERY.events || []).length) useSet(GALLERY.events[0].name);
+    const startView = (location.hash || '').replace('#', '');
+    switchView(['gallery', 'hub', 'rooms', 'studio'].indexOf(startView) > -1 ? startView : 'moments');
+    bootEl.classList.add('hide');
+  }).catch(err => { bootMsg.textContent = err.message; });
+})();
+</script>
+</body>
+</html>

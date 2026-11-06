@@ -259,6 +259,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
       if (o.lrFilesLink) kids.push(el('a', { href: o.lrFilesLink, target: '_blank', rel: 'noopener', style: 'font-weight:600;text-decoration:none;padding:10px 14px;border:1px solid #5A4A26;border-radius:10px', text: 'Download LR files' }));
       var act = orderActions(o);
       if (act) kids.push(act);
+      if (/completed/i.test(o.status)) kids.push(galleryControls(o));
       return el('div', { class: 'order' }, kids);
     });
     if (!list.length) list = [el('p', { class: 'muted', text: 'No orders yet.' })];
@@ -297,6 +298,33 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
       box.appendChild(rb);
     }
     return box.childNodes.length ? box : null;
+  }
+
+  function galleryControls(o) {
+    var url = o.galleryId ? location.origin + '/g/' + o.galleryId : '';
+    var box = el('details', { style: 'width:100%;font-size:14px' });
+    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);font-weight:600;min-height:32px', text: o.galleryId ? 'Wedding gallery is live' : 'Create the wedding gallery (free)' }));
+    var inner = el('div', { style: 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center' });
+    if (url) {
+      inner.appendChild(el('a', { href: url, target: '_blank', rel: 'noopener', style: 'flex:1 1 100%;font-weight:600', text: url }));
+      var cp = el('button', { type: 'button', class: 'mini', text: 'Copy link for the couple' });
+      cp.addEventListener('click', function () { if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast('Gallery link copied.'); }); });
+      inner.appendChild(cp);
+    }
+    inner.appendChild(el('p', { class: 'muted', style: 'margin:0;flex:1 1 100%;font-size:13px', text: 'Publish from Lightroom to a Google Drive folder (one subfolder per event + 00_Root_Moment), share it as "Anyone with the link", then paste the folder link.' }));
+    var folder = el('input', { placeholder: 'Google Drive folder link', style: 'flex:2 1 260px;min-height:40px;padding:8px 12px' });
+    var title = el('input', { placeholder: 'Couple names', style: 'flex:1 1 160px;min-height:40px;padding:8px 12px' });
+    var date = el('input', { type: 'date', 'aria-label': 'Wedding date', style: 'flex:0 1 170px;min-height:40px;padding:8px 12px' });
+    var b = el('button', { type: 'button', class: 'mini', text: o.galleryId ? 'Refresh photos' : 'Publish gallery' });
+    b.addEventListener('click', function () {
+      b.disabled = true; b.textContent = 'Reading folder…';
+      api('setGallery', { orderId: o.orderId, folderUrl: folder.value, title: title.value, eventDate: date.value }).then(function (r) {
+        return refresh().then(function () { toast('Gallery ready with ' + num(r.photoCount) + ' photos.'); });
+      }).catch(function (x) { toast(x.message); }).then(function () { b.disabled = false; b.textContent = o.galleryId ? 'Refresh photos' : 'Publish gallery'; });
+    });
+    [folder, title, date, b].forEach(function (x) { inner.appendChild(x); });
+    box.appendChild(inner);
+    return box;
   }
 
   function startEdit(o) {

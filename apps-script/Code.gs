@@ -44,7 +44,11 @@ function doPost(e) {
 var PUBLIC_ROUTES = {
   health: health_,
   requestCode: requestCode_,
-  verifyCode: verifyCode_
+  verifyCode: verifyCode_,
+  getGallery: getGallery_,
+  likePhoto: likePhoto_,
+  getNotes: getNotes_,
+  addNote: addNote_
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -55,7 +59,8 @@ var USER_ROUTES = {
   editOrder: editOrder_,
   cancelOrder: cancelOrder_,
   holdOrder: holdOrder_,
-  resumeOrder: resumeOrder_
+  resumeOrder: resumeOrder_,
+  setGallery: setGallery_
 };
 
 // Admin or editor (order queue + delivery)
@@ -120,7 +125,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step3',
+    version: 'step4',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
@@ -350,7 +355,7 @@ function publicOrder_(o, s, user) {
     numberOfImages: Number(o.numberOfImages || 0), cullingImages: Number(o.cullingImages || 0),
     editingOptions: o.editingOptions, quotaUsed: Number(o.quotaUsed || 0), creditsRedeemed: Number(o.creditsRedeemed || 0),
     bwPercent: o.bwPercent, catalogLink: o.catalogLink || '', referenceLinks: o.referenceLinks || '', comments: o.comments || '',
-    lrFilesLink: o.lrFilesLink || '', source: o.source, holdReason: o.holdReason || '', heldBy: o.heldBy || '',
+    lrFilesLink: o.lrFilesLink || '', source: o.source, galleryId: o.galleryLink || '', holdReason: o.holdReason || '', heldBy: o.heldBy || '',
     companyName: o.companyName, fullName: o.fullName, email: o.email
   };
   if (s && user) {
@@ -823,6 +828,210 @@ function ensureColumns_(name, cols) {
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
   var missing = cols.filter(function (c) { return head.indexOf(c) < 0; });
   missing.forEach(function (c, i) { sh.getRange(1, head.length + i + 1).setValue(c); });
+}
+
+// =====================================================================
+// 5e. Galleries (Drive folder → Root Moment + event galleries)
+// =====================================================================
+
+var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDate', 'folderId', 'folderUrl', 'manifestFileId',
+  'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy'];
+var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
+var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
+var ROOT_FOLDER_RE = /^0*_?root[ _-]*moments?$/i;
+
+function ensureTab_(name, cols) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss.getSheetByName(name)) ss.insertSheet(name).getRange(1, 1, 1, cols.length).setValues([cols]);
+  else ensureColumns_(name, cols);
+}
+
+function folderIdFromUrl_(url) {
+  var s = String(url || '').trim();
+  var m = /\/folders\/([a-zA-Z0-9_-]{10,})/.exec(s) || /[?&]id=([a-zA-Z0-9_-]{10,})/.exec(s) || /^([a-zA-Z0-9_-]{20,})$/.exec(s);
+  return m ? m[1] : null;
+}
+
+function cleanEventName_(name) {
+  return String(name).replace(/^\d+[\s._-]*/, '').replace(/[_]+/g, ' ').trim() || String(name);
+}
+
+function eventRank_(name) {
+  var i = EVENT_ORDER.indexOf(cleanEventName_(name).toLowerCase());
+  return i < 0 ? 100 : i;
+}
+
+function isImage_(f) { return /^image\/(jpeg|png|webp|gif)$/i.test(f.getMimeType()); }
+
+function listImages_(folder) {
+  var out = [], it = folder.getFiles();
+  while (it.hasNext()) { var f = it.next(); if (isImage_(f) && !f.isTrashed()) out.push({ id: f.getId(), name: f.getName() }); }
+  return out.sort(function (a, b) { return a.name.localeCompare(b.name, 'en', { numeric: true }); });
+}
+
+/** Read a wedding folder: subfolders = events, 00_Root_Moment = Root Moment. */
+function scanWeddingFolder_(folderId) {
+  var folder;
+  try { folder = DriveApp.getFolderById(folderId); } catch (err) {
+    throw new Error('Cannot open this Drive folder. Share it as "Anyone with the link – Viewer" and try again.');
+  }
+  var access = String(folder.getSharingAccess());
+  if (access !== 'ANYONE_WITH_LINK' && access !== 'ANYONE') {
+    throw new Error('The folder is not shared publicly yet. In Drive: Share → General access → "Anyone with the link" → Viewer.');
+  }
+  var events = [], root = [], subs = folder.getFolders();
+  while (subs.hasNext()) {
+    var sf = subs.next();
+    if (sf.isTrashed()) continue;
+    var photos = listImages_(sf);
+    if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
+    if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
+  }
+  var loose = listImages_(folder);
+  if (loose.length) events.push({ name: 'Highlights', folder: '', photos: loose });
+  var rank = function (e) { return e.folder ? eventRank_(e.folder) : 1000; };
+  events.sort(function (a, b) { return rank(a) - rank(b) || a.folder.localeCompare(b.folder, 'en', { numeric: true }); });
+  var count = events.reduce(function (t, e) { return t + e.photos.length; }, 0) + root.length;
+  if (!count) throw new Error('No photos found. Put JPG/PNG photos in event folders (Haldi, Wedding…) inside the shared folder.');
+  return { folderName: folder.getName(), events: events, root: root, photoCount: count };
+}
+
+function manifestFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('MANIFEST_FOLDER');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  var f = DriveApp.createFolder('PicGrades OS · gallery data (do not edit)');
+  props.setProperty('MANIFEST_FOLDER', f.getId());
+  return f;
+}
+
+function randomId_(n) {
+  var abc = 'abcdefghijkmnopqrstuvwxyz23456789', s = '';
+  for (var i = 0; i < n; i++) s += abc.charAt(Math.floor(Math.random() * abc.length));
+  return s;
+}
+
+/** Create or refresh the gallery for an order. Staff: any order. Client: own studio's orders. */
+function setGallery_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    ensureOrderColumns_(); ensureTab_('Galleries', GALLERY_COLUMNS);
+    var o = loadOrder_(p.orderId, user);
+    if (statusKey_(o.status) === 'cancelled') return { ok: false, error: 'This order was cancelled.' };
+    var existing = readTable_('Galleries').filter(function (g) { return String(g.orderId) === String(o.orderId); })[0];
+    var folderId = folderIdFromUrl_(p.folderUrl) || (existing && existing.folderId);
+    if (!folderId) return { ok: false, error: 'Paste the Google Drive folder link (it contains /folders/).' };
+    var scan = scanWeddingFolder_(folderId);
+    var title = String(p.title || (existing && existing.title) || scan.folderName.replace(/[_]+/g, ' ')).trim().slice(0, 80);
+    var eventDate = /^\d{4}-\d{2}-\d{2}$/.test(String(p.eventDate || '')) ? p.eventDate : (existing ? existing.eventDate : '');
+    var manifest = {
+      v: 1, title: title, eventDate: eventDate, studio: o.companyName, folderName: scan.folderName,
+      root: scan.root, events: scan.events, updatedAt: fmt_(new Date())
+    };
+    var json = JSON.stringify(manifest);
+    var fileId;
+    if (existing && existing.manifestFileId) {
+      try { DriveApp.getFileById(existing.manifestFileId).setContent(json); fileId = existing.manifestFileId; } catch (e) { fileId = null; }
+    }
+    if (!fileId) fileId = manifestFolder_().createFile('gallery-' + o.orderId + '.json', json, 'application/json').getId();
+    var row = {
+      orderId: o.orderId, companyName: o.companyName, title: title, eventDate: eventDate, folderId: folderId,
+      folderUrl: 'https://drive.google.com/drive/folders/' + folderId, manifestFileId: fileId,
+      photoCount: scan.photoCount, rootCount: scan.root.length, status: 'Published', updatedAt: fmt_(new Date())
+    };
+    var gid;
+    if (existing) { gid = existing.galleryId; updateRowByNumber_('Galleries', existing._row, row); }
+    else {
+      gid = randomId_(12);
+      appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email) }, row));
+    }
+    CacheService.getScriptCache().remove('gal:' + gid);
+    updateRowByNumber_('Orders', o._row, { galleryLink: gid });
+    return { galleryId: gid, photoCount: scan.photoCount, rootCount: scan.root.length,
+      events: scan.events.map(function (e) { return { name: e.name, count: e.photos.length }; }) };
+  } finally { lock.releaseLock(); }
+}
+
+function findGallery_(gid) {
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  return readTable_('Galleries').filter(function (g) { return String(g.galleryId) === String(gid || ''); })[0] || null;
+}
+
+function loadManifest_(g) {
+  var cache = CacheService.getScriptCache(), key = 'gal:' + g.galleryId;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+  var json = DriveApp.getFileById(g.manifestFileId).getBlob().getDataAsString();
+  if (json.length < 95000) cache.put(key, json, 21600);
+  return JSON.parse(json);
+}
+
+/** Public: everything the gallery page needs. */
+function getGallery_(p) {
+  var g = findGallery_(p.g);
+  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  var m = loadManifest_(g);
+  ensureTab_('MomentNotes', NOTE_COLUMNS);
+  var device = String(p.device || '').slice(0, 40);
+  var likes = {}, notes = {}, mine = {};
+  readTable_('MomentNotes').forEach(function (n) {
+    if (String(n.galleryId) !== g.galleryId || n.status === 'hidden') return;
+    if (n.type === 'like') { likes[n.photoId] = (likes[n.photoId] || 0) + 1; if (device && n.device === device) mine[n.photoId] = true; }
+    if (n.type === 'note') notes[n.photoId] = (notes[n.photoId] || 0) + 1;
+  });
+  m.galleryId = g.galleryId;
+  m.likes = likes; m.notes = notes; m.mine = mine;
+  return { gallery: m };
+}
+
+function likePhoto_(p) {
+  var g = findGallery_(p.g);
+  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  var device = String(p.device || '').slice(0, 40), photo = String(p.photoId || '');
+  if (device.length < 8 || !photo) return { ok: false, error: 'Missing details.' };
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    ensureTab_('MomentNotes', NOTE_COLUMNS);
+    var rows = readTable_('MomentNotes');
+    var mineRow = rows.filter(function (n) { return n.galleryId === g.galleryId && n.photoId === photo && n.type === 'like' && n.device === device && n.status !== 'hidden'; })[0];
+    if (mineRow) updateRowByNumber_('MomentNotes', mineRow._row, { status: 'hidden' });
+    else appendRow_('MomentNotes', { at: fmt_(new Date()), galleryId: g.galleryId, photoId: photo, type: 'like', device: device, status: 'ok' });
+    var count = rows.filter(function (n) { return n.galleryId === g.galleryId && n.photoId === photo && n.type === 'like' && n.status !== 'hidden'; }).length + (mineRow ? -1 : 1);
+    return { liked: !mineRow, likes: count };
+  } finally { lock.releaseLock(); }
+}
+
+function getNotes_(p) {
+  var g = findGallery_(p.g);
+  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  ensureTab_('MomentNotes', NOTE_COLUMNS);
+  var list = readTable_('MomentNotes').filter(function (n) { return n.galleryId === g.galleryId && n.photoId === String(p.photoId || '') && n.type === 'note' && n.status !== 'hidden'; })
+    .map(function (n) { return { at: n.at, name: n.name, text: n.text }; });
+  return { notes: list };
+}
+
+function addNote_(p) {
+  var g = findGallery_(p.g);
+  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  var name = String(p.name || '').trim().slice(0, 40), text = String(p.text || '').trim().slice(0, 280);
+  var device = String(p.device || '').slice(0, 40), photo = String(p.photoId || '');
+  if (!name) return { ok: false, error: 'Add your name.' };
+  if (!text) return { ok: false, error: 'Write a note first.' };
+  if (device.length < 8 || !photo) return { ok: false, error: 'Missing details.' };
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    ensureTab_('MomentNotes', NOTE_COLUMNS);
+    var hourAgo = new Date(Date.now() - 3600000);
+    var recent = readTable_('MomentNotes').filter(function (n) { return n.device === device && n.type === 'note' && parseDate_(n.at) > hourAgo; }).length;
+    if (recent >= 20) return { ok: false, error: 'Too many notes in a short time. Please try again later.' };
+    appendRow_('MomentNotes', { at: fmt_(new Date()), galleryId: g.galleryId, photoId: photo, type: 'note', device: device, name: name, text: text, status: 'ok' });
+    return { note: { at: fmt_(new Date()), name: name, text: text } };
+  } finally { lock.releaseLock(); }
+}
+
+/** Run once from the editor (select authorizeDrive → Run) so the script may read Drive folders. */
+function authorizeDrive() {
+  Logger.log('Drive access OK. Gallery data folder: ' + manifestFolder_().getName());
 }
 
 // =====================================================================
