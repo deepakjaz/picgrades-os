@@ -1669,6 +1669,70 @@ pgRenderHub = function () {
 </script>
 </body>""", 1)
 
+# ===================== Post / Album maker + albums in Root Moment and "Posts & Albums" (2026-11-07) =====================
+rep('''        <button type="button" class="pgc-card" id="pgcUpload">''', '''        <button type="button" class="pgc-card" id="pgcPost"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M9 5v14M15 5v14"/><path d="m2 15 4-3 3 2M15 14l3-2 4 3"/></svg></i><b>Post / Album</b><span>For Instagram</span></button>
+        <button type="button" class="pgc-card" id="pgcUpload">''')
+rep('.pgm-empty{', r'''.pgm-album{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;touch-action:pan-x pan-y}
+.pgm-album::-webkit-scrollbar{display:none}
+.pgm-album img{flex:none;width:100%;height:100%;object-fit:contain;scroll-snap-align:center}
+.pgm-dots{position:absolute;left:0;right:0;bottom:178px;display:flex;justify-content:center;gap:6px;z-index:22;pointer-events:none}
+.pgm-dots i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.45)}.pgm-dots i.on{background:#fff;width:16px}
+.pgm-empty{''')
+# couple review + my posts: albums show their first slide
+s = s.replace("""  function media(p) { return p.type === 'video' ?""", """  function media(p) { if (p.type === 'album') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ?""", 1)
+s = s.replace("""    rows.push('<div class="pgc-pill">' + (p.type === 'photo' ? '<img alt="" src="' + pgImg(p.fileId, 120) + '">'""", """    if (p.type === 'album') { rows.push('<div class="pgc-pill"><img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 120) + '"><span>Your post / album</span>' + st + '</div>'); return; }
+    rows.push('<div class="pgc-pill">' + (p.type === 'photo' ? '<img alt="" src="' + pgImg(p.fileId, 120) + '">'""", 1)
+assert "if (p.type === 'album') { rows.push" in s and "if (p.type === 'album') return '<img" in s
+# Root Moment: albums swipe sideways inside the reel
+s = s.replace("""      let media;
+      if (p.type === 'video') {""", """      let media;
+      if (p.type === 'album') {
+        const ids = String(p.fileId).split(','); m.id = ids[0]; item.dataset.pid = ids[0];
+        media = document.createElement('div'); media.className = 'pgm-album';
+        const dots = document.createElement('div'); dots.className = 'pgm-dots';
+        ids.forEach((fid, k) => { const im = document.createElement('img'); im.alt = (p.caption || 'Album') + ' ' + (k + 1); im.loading = 'lazy'; im.src = pgImg(fid, 1600); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(fid, 1600); }; media.appendChild(im); dots.appendChild(document.createElement('i')); });
+        if (ids.length > 1) { item.appendChild(dots); dots.firstChild.classList.add('on'); media.addEventListener('scroll', () => { const k = Math.round(media.scrollLeft / media.clientWidth); dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === k)); }, { passive: true }); }
+        blur.style.backgroundImage = 'url("' + pgImg(ids[0], 60) + '")';
+      } else if (p.type === 'video') {""", 1)
+assert "media.className = 'pgm-album'" in s
+s = s.replace("""<div class="pgm-meta">GUEST MOMENT · ' + (i + 1) + '/' + posts.length + '</div>""", """<div class="pgm-meta">' + (p.type === 'album' ? 'POST / ALBUM' : 'GUEST MOMENT') + ' · ' + (i + 1) + '/' + posts.length + '</div>""", 1)
+assert "'POST / ALBUM'" in s
+
+assert s.count("</body>") == 1
+s = s.replace("</body>", r"""<script>
+// "Posts & Albums" collection = every approved post/album (all slides)
+function pgAlbumsCollection() {
+  const albums = ((GALLERY && GALLERY.guestPosts) || []).filter(p => p.type === 'album');
+  GALLERY.personal = (GALLERY.personal || []).filter(x => !x.albums);
+  if (albums.length) GALLERY.personal.push({ name: 'Posts & Albums', photos: [].concat.apply([], albums.map(a => String(a.fileId).split(',').map(id => ({ id })))), albums: true });
+}
+const _loadSets = pgLoadSavedSets;
+pgLoadSavedSets = function () { _loadSets(); pgAlbumsCollection(); };
+const _reloadPosts = pgReloadPosts;
+pgReloadPosts = function () { return pgApi('getGallery').then(r => { GALLERY.guestPosts = r.gallery.guestPosts || []; renderMoments(); pgAlbumsCollection(); renderGalleries(); }).catch(() => {}); };
+
+let pgPostLoad = null;
+function pgAllCollections() { return (GALLERY.personal || []).concat(GALLERY.events || []).concat((GALLERY.root || []).length ? [{ name: 'Root Moment', photos: GALLERY.root }] : []).map(c => ({ name: c.name, photos: c.photos.map(p => ({ id: p.id })) })); }
+function pgOpenPost(photos) {
+  if (!pgPostLoad) pgPostLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/post.js'; s.onload = res; s.onerror = () => { pgPostLoad = null; rej(new Error('Could not open the post maker. Check the internet.')); }; document.head.appendChild(s); });
+  const labels = {}; (GALLERY.events || []).forEach(e => e.photos.forEach(p => { labels[p.id] = e.name; }));
+  pgPostLoad.then(() => PGPost.open({
+    photos: photos, title: GALLERY.title, date: pgDate(GALLERY.eventDate), collections: pgAllCollections(), labels, api: pgApi,
+    post: (data) => new Promise((res, rej) => {
+      const send = () => { let token = ''; try { token = localStorage.getItem('pg_token') || ''; } catch (e) {}
+        pgApi('savePost', Object.assign({ token }, pgGuestBody(), data)).then(r => { if (r.status === 'approved') pgReloadPosts(); else pgCheckMyPosts(); res(r); }).catch(rej); };
+      if (pgIsCouple() || pgIsStaff() || pgGuest()) send(); else pgNeedGuest(send, 'Tell us who you are to post.');
+    })
+  })).catch(e => showToast(e.message));
+}
+document.getElementById('pgcPost').addEventListener('click', () => {
+  const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
+  while (pick.length < 7 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 7) pick.push(p.shift()); });
+  pgOpenPost(pick.map(p => ({ id: p.id })));
+});
+</script>
+</body>""", 1)
+
 s = s.replace('aria-label="Memory Rooms" title="Rooms"', 'aria-label="Notes and blessings" title="Notes"')
 import collections; left=[s[m.start()-60:m.start()+30] for m in re.finditer('(?i)demo', s)]; print('demo left:', left)
 open(out, 'w', encoding='utf-8').write(s)

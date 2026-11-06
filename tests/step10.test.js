@@ -57,6 +57,21 @@ const gid2 = call('setGallery', { token: admin, orderId: call('queue', { token: 
 const j2 = call('guestJoin', { g: gid2, name: 'Ravi', phone: '9876543210' });
 const bad = call('uploadMoment', { g: gid2, guestId: j2.guestId, guestKey: j2.guestKey, mime: 'image/jpeg', base64: b64 });
 assert(!bad.ok && /not switched on/.test(bad.error), 'no edit access → friendly message');
+// posts & albums
+const slide = 'data:image/jpeg;base64,' + Buffer.from('slide-bytes').toString('base64');
+assert(!call('savePost', { g: gid, slides: [slide] }).ok, 'post needs couple, photographer or a named guest');
+let sp = call('savePost', { g: gid, coupleKey: ck, slides: [slide, slide, slide], caption: 'Our sangeet' });
+assert(sp.ok && sp.status === 'approved' && sp.slides === 3, 'couple post goes live straight away (3 slides)');
+const st = call('savePost', { g: gid, token: admin, slides: [slide] });
+assert(st.ok && st.status === 'approved', 'photographer/PicGrades post goes live straight away');
+const sg = call('savePost', { g: gid, guestId: j.guestId, guestKey: j.guestKey, slides: [slide, slide] });
+assert(sg.ok && sg.status === 'review', 'guest post waits for the couple');
+g = call('getGallery', { g: gid }).gallery;
+const alb = g.guestPosts.filter(x => x.type === 'album');
+assert(alb.length === 2 && alb.some(x => x.fileId.split(',').length === 3 && x.caption === 'Our sangeet'), 'approved albums are public with all slide ids');
+assert(Object.values(DRIVE.folders).some(f => f.name === '02_Posts_Albums' && f.parent === W), 'slides saved in 02_Posts_Albums');
+call('setGallery', { token: admin, orderId: ord.orderId, folderUrl: W });
+assert(!call('getGallery', { g: gid }).gallery.events.some(e => /post|album/i.test(e.name)), 'posts folder is never an event');
 assert(call('getGallery', { g: gid }).gallery.guestGate === 'open', 'demo: open by default');
 DB.Settings.push(['guestGate', 'on', '']); assert(call('getGallery', { g: gid }).gallery.guestGate === 'on', 'Settings › guestGate = on switches guest checks on');
 console.log(fails ? fails + ' FAILED' : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -1149,6 +1149,11 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 .pgm-item video.pgm-img{object-fit:contain;background:#000}
 .pgm-by{display:inline-block;margin-top:4px;font:600 11px/1 var(--font-sans);background:rgba(255,255,255,.18);padding:4px 8px;border-radius:10px}
 .pgm-mute{position:absolute;left:14px;top:calc(env(safe-area-inset-top,0px) + 74px);z-index:25;width:38px;height:38px;border-radius:19px;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:15px;cursor:pointer}
+.pgm-album{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;touch-action:pan-x pan-y}
+.pgm-album::-webkit-scrollbar{display:none}
+.pgm-album img{flex:none;width:100%;height:100%;object-fit:contain;scroll-snap-align:center}
+.pgm-dots{position:absolute;left:0;right:0;bottom:178px;display:flex;justify-content:center;gap:6px;z-index:22;pointer-events:none}
+.pgm-dots i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.45)}.pgm-dots i.on{background:#fff;width:16px}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>
@@ -1280,6 +1285,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
       <div class="pgc-row">
         <button type="button" class="pgc-card hidden" data-findme id="pgcFind"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M9 9.5v1M15 9.5v1"/><path d="M12 9.5v3.5h-1"/><path d="M9 15.5c1.6 1.4 4.4 1.4 6 0"/></svg></i><b>Find me</b><span>Your photos</span></button>
         <button type="button" class="pgc-card" id="pghReel"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10 12 5 3-5 3z"/></svg></i><b>Reel</b><span>With music</span></button>
+        <button type="button" class="pgc-card" id="pgcPost"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M9 5v14M15 5v14"/><path d="m2 15 4-3 3 2M15 14l3-2 4 3"/></svg></i><b>Post / Album</b><span>For Instagram</span></button>
         <button type="button" class="pgc-card" id="pgcUpload"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/><path d="M19 1.5v4M17 3.5h4"/></svg></i><b>Add a moment</b><span>Photo or video</span></button>
         <button type="button" class="pgc-card hidden" id="pgcReview"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/><path d="m8.5 11.5 2.3 2.3 4.7-4.6"/></svg></i><b>Review</b><span id="pgcReviewTxt">Guest moments</span></button>
       </div>
@@ -2850,6 +2856,7 @@ function pgRenderMine(posts) {
   sets.slice(0, 4).forEach(s => rows.push('<button type="button" class="pgc-pill" data-set="' + pgEsc(s.code) + '"><img alt="" src="' + pgImg(s.ids[0], 120) + '"><span><b>' + pgEsc(s.name) + '</b><br>' + s.ids.length + ' photos</span><em class="ok">Saved</em></button>'));
   (posts || pgRenderMine.posts || []).slice(0, 6).forEach(p => {
     const st = p.status === 'approved' ? '<em class="ok">Approved</em>' : p.status === 'hidden' ? '<em class="no">Not shown</em>' : '<em>In review</em>';
+    if (p.type === 'album') { rows.push('<div class="pgc-pill"><img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 120) + '"><span>Your post / album</span>' + st + '</div>'); return; }
     rows.push('<div class="pgc-pill">' + (p.type === 'photo' ? '<img alt="" src="' + pgImg(p.fileId, 120) + '">' : '<img alt="" src="' + pgImgFallback(p.fileId, 120) + '">') + '<span>Your ' + (p.type === 'video' ? 'video' : 'photo') + (p.caption ? ' · ' + pgEsc(p.caption) : '') + '</span>' + st + '</div>');
   });
   if (posts) pgRenderMine.posts = posts;
@@ -2918,7 +2925,7 @@ function pgCheckMyPosts() {
   const $ = (id) => document.getElementById(id);
   const close = () => { $('cpBackdrop').classList.remove('show'); $('cpSheet').classList.remove('show'); };
   $('cpClose').addEventListener('click', close); $('cpBackdrop').addEventListener('click', close);
-  function media(p) { return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
+  function media(p) { if (p.type === 'album') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
   function load() {
     return pgApi('coupleQueue').then(r => {
       $('cpThanks').value = r.thanks || '';
@@ -2958,7 +2965,14 @@ function pgReloadPosts() { pgApi('getGallery').then(r => { GALLERY.guestPosts = 
       const item = document.createElement('div'); item.className = 'pgm-item pgm-guest'; item.dataset.pid = p.fileId;
       const blur = document.createElement('div'); blur.className = 'pgm-blur';
       let media;
-      if (p.type === 'video') {
+      if (p.type === 'album') {
+        const ids = String(p.fileId).split(','); m.id = ids[0]; item.dataset.pid = ids[0];
+        media = document.createElement('div'); media.className = 'pgm-album';
+        const dots = document.createElement('div'); dots.className = 'pgm-dots';
+        ids.forEach((fid, k) => { const im = document.createElement('img'); im.alt = (p.caption || 'Album') + ' ' + (k + 1); im.loading = 'lazy'; im.src = pgImg(fid, 1600); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(fid, 1600); }; media.appendChild(im); dots.appendChild(document.createElement('i')); });
+        if (ids.length > 1) { item.appendChild(dots); dots.firstChild.classList.add('on'); media.addEventListener('scroll', () => { const k = Math.round(media.scrollLeft / media.clientWidth); dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === k)); }, { passive: true }); }
+        blur.style.backgroundImage = 'url("' + pgImg(ids[0], 60) + '")';
+      } else if (p.type === 'video') {
         media = document.createElement('video'); media.className = 'pgm-img';
         media.setAttribute('playsinline', ''); media.setAttribute('webkit-playsinline', ''); media.setAttribute('muted', ''); media.playsInline = true; media.muted = true; media.loop = true; media.preload = 'metadata';
         media.src = '/api/stream?id=' + encodeURIComponent(p.fileId);
@@ -2973,7 +2987,7 @@ function pgReloadPosts() { pgApi('getGallery').then(r => { GALLERY.guestPosts = 
         blur.style.backgroundImage = 'url("' + pgImg(p.fileId, 60) + '")';
       }
       const scrim = document.createElement('div'); scrim.className = 'pgm-scrim';
-      scrim.innerHTML = '<div class="pgm-name">' + pgEsc(p.caption || GALLERY.title || '') + '</div><div class="pgm-meta">GUEST MOMENT · ' + (i + 1) + '/' + posts.length + '</div><span class="pgm-by">by ' + pgEsc(p.name) + '</span>';
+      scrim.innerHTML = '<div class="pgm-name">' + pgEsc(p.caption || GALLERY.title || '') + '</div><div class="pgm-meta">' + (p.type === 'album' ? 'POST / ALBUM' : 'GUEST MOMENT') + ' · ' + (i + 1) + '/' + posts.length + '</div><span class="pgm-by">by ' + pgEsc(p.name) + '</span>';
       const acts = document.createElement('div'); acts.className = 'pgm-actions';
       const like = document.createElement('button'); like.type = 'button'; like.className = 'pgm-btn pgm-like'; like.setAttribute('aria-label', 'Like'); like.innerHTML = ICON_HEART_OUTLINE + ICON_HEART_FILLED + '<span class="pgm-like-count"></span>';
       const note = document.createElement('button'); note.type = 'button'; note.className = 'pgm-btn'; note.setAttribute('aria-label', 'Notes'); note.innerHTML = ICON_NOTE + '<span class="pgm-note-count"></span>';
@@ -3000,6 +3014,38 @@ pgRenderHub = function () {
   const code = new URLSearchParams(location.search).get('set');
   if (code) pgApi('getSet', { code }).then(r => { pgAddSavedSet({ code, name: r.name, ids: r.ids }); openCollection(r.name, 0); }).catch(e => showToast(e.message));
 };
+</script>
+<script>
+// "Posts & Albums" collection = every approved post/album (all slides)
+function pgAlbumsCollection() {
+  const albums = ((GALLERY && GALLERY.guestPosts) || []).filter(p => p.type === 'album');
+  GALLERY.personal = (GALLERY.personal || []).filter(x => !x.albums);
+  if (albums.length) GALLERY.personal.push({ name: 'Posts & Albums', photos: [].concat.apply([], albums.map(a => String(a.fileId).split(',').map(id => ({ id })))), albums: true });
+}
+const _loadSets = pgLoadSavedSets;
+pgLoadSavedSets = function () { _loadSets(); pgAlbumsCollection(); };
+const _reloadPosts = pgReloadPosts;
+pgReloadPosts = function () { return pgApi('getGallery').then(r => { GALLERY.guestPosts = r.gallery.guestPosts || []; renderMoments(); pgAlbumsCollection(); renderGalleries(); }).catch(() => {}); };
+
+let pgPostLoad = null;
+function pgAllCollections() { return (GALLERY.personal || []).concat(GALLERY.events || []).concat((GALLERY.root || []).length ? [{ name: 'Root Moment', photos: GALLERY.root }] : []).map(c => ({ name: c.name, photos: c.photos.map(p => ({ id: p.id })) })); }
+function pgOpenPost(photos) {
+  if (!pgPostLoad) pgPostLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/post.js'; s.onload = res; s.onerror = () => { pgPostLoad = null; rej(new Error('Could not open the post maker. Check the internet.')); }; document.head.appendChild(s); });
+  const labels = {}; (GALLERY.events || []).forEach(e => e.photos.forEach(p => { labels[p.id] = e.name; }));
+  pgPostLoad.then(() => PGPost.open({
+    photos: photos, title: GALLERY.title, date: pgDate(GALLERY.eventDate), collections: pgAllCollections(), labels, api: pgApi,
+    post: (data) => new Promise((res, rej) => {
+      const send = () => { let token = ''; try { token = localStorage.getItem('pg_token') || ''; } catch (e) {}
+        pgApi('savePost', Object.assign({ token }, pgGuestBody(), data)).then(r => { if (r.status === 'approved') pgReloadPosts(); else pgCheckMyPosts(); res(r); }).catch(rej); };
+      if (pgIsCouple() || pgIsStaff() || pgGuest()) send(); else pgNeedGuest(send, 'Tell us who you are to post.');
+    })
+  })).catch(e => showToast(e.message));
+}
+document.getElementById('pgcPost').addEventListener('click', () => {
+  const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
+  while (pick.length < 7 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 7) pick.push(p.shift()); });
+  pgOpenPost(pick.map(p => ({ id: p.id })));
+});
 </script>
 </body>
 </html>
