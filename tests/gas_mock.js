@@ -13,13 +13,18 @@ global.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheetByName: n => DB
 const DRIVE = { folders: {}, files: {}, n: 0 };
 function iter(a) { let i = 0; return { hasNext: () => i < a.length, next: () => a[i++] }; }
 function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed,
-  setContent: c => { f.content = c; }, getBlob: () => ({ getDataAsString: () => f.content }) }; }
+  setContent: c => { f.content = c; }, getBlob: () => ({ getDataAsString: () => f.content, getBytes: () => f.bytes || [] }),
+  setSharing: (a, b) => { f.sharing = a + ':' + b; } }; }
 function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('No item with the given ID could be found'); return {
   getId: () => id, getName: () => f.name, isTrashed: () => !!f.trashed, getSharingAccess: () => f.access || 'PRIVATE',
   getFolders: () => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id).map(folderObj)),
   getFiles: () => iter(Object.keys(DRIVE.files).filter(k => DRIVE.files[k].parent === id).map(fileObj)),
-  createFile: (name, content, mime) => { const fid = 'file' + (++DRIVE.n); DRIVE.files[fid] = { name, content, mime, parent: id }; return fileObj(fid); } }; }
-global.DriveApp = { getFolderById: folderObj, getFileById: id => { if (!DRIVE.files[id]) throw new Error('not found'); return fileObj(id); },
+  createFile: (name, content, mime) => { if (f.readOnly) throw new Error('Access denied'); const fid = 'file' + (++DRIVE.n);
+    if (name && typeof name === 'object') DRIVE.files[fid] = { name: name.name, mime: name.mime, bytes: name.bytes, parent: id };
+    else DRIVE.files[fid] = { name, content, mime, parent: id }; return fileObj(fid); },
+  getFoldersByName: n => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id && DRIVE.folders[k].name === n).map(folderObj)),
+  createFolder: n => { if (f.readOnly) throw new Error('Access denied'); const nid = 'fold' + (++DRIVE.n); DRIVE.folders[nid] = { name: n, parent: id }; return folderObj(nid); } }; }
+global.DriveApp = { Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK' }, Permission: { VIEW: 'VIEW' }, getFolderById: folderObj, getFileById: id => { if (!DRIVE.files[id]) throw new Error('not found'); return fileObj(id); },
   createFolder: name => { const id = 'fold' + (++DRIVE.n); DRIVE.folders[id] = { name, parent: 'root' }; return folderObj(id); } };
 const CACHE = {}; global.CacheService = { getScriptCache: () => ({ get: k => CACHE[k] || null, put: (k, v) => { CACHE[k] = v; }, remove: k => { delete CACHE[k]; } }) };
 global.ContentService = { createTextOutput: s => ({ s, setMimeType() { return this; } }), MimeType: { JSON: 'json' } };
@@ -34,7 +39,9 @@ global.Utilities = {
     const t = { yyyy: x.getUTCFullYear(), yy: String(x.getUTCFullYear()).slice(2), MMM: M[x.getUTCMonth()], MM: pad(x.getUTCMonth() + 1), dd: pad(x.getUTCDate()), HH: pad(x.getUTCHours()), mm: pad(x.getUTCMinutes()), ss: pad(x.getUTCSeconds()) };
     return (f || 'yyyy-MM-dd HH:mm:ss').replace(/yyyy|yy|MMM|MM|dd|HH|mm|ss/g, k => t[k]); },
   parseDate: (s) => new Date(s.replace(' ', 'T') + '+05:30'),
-  base64Encode: (b) => Buffer.from(b).toString('base64')
+  base64Encode: (b) => Buffer.from(b).toString('base64'),
+  base64Decode: (s) => Array.from(Buffer.from(s, 'base64')),
+  newBlob: (bytes, mime, name) => ({ bytes, mime, name })
 };
 global.UrlFetchApp = { fetch: (url) => { const id = (/\/d\/([^=]+)/.exec(url) || [])[1]; if (global.__fetchFail) throw new Error('blocked'); return { getResponseCode: () => 200, getBlob: () => ({ getContentType: () => 'image/jpeg', getBytes: () => Array.from(global.__fetchBytes ? global.__fetchBytes(id) : Buffer.from('img:' + id)) }) }; } };
 const props = {}; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };

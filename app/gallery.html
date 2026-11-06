@@ -1095,6 +1095,60 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 .fm-reel{width:100%;justify-content:center;margin-top:8px}
 .pgh-reel{background:var(--bg-box);color:var(--ink);margin-left:0}
 .pgh-wrap .pg-findme{width:100%;justify-content:center;margin:0 0 10px}
+/* ===== iPhone-style Create row ===== */
+.pgc-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px}
+.pgc-card{aspect-ratio:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;padding:12px;border:1px solid var(--border-hairline);border-radius:22px;background:var(--bg-box);color:var(--ink);cursor:pointer;text-align:left;font:inherit;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 6px 18px rgba(40,25,10,.06);transition:transform .15s ease}
+.pgc-card:active{transform:scale(.96)}
+.pgc-card.hidden{display:none}
+.pgc-card i{margin-bottom:auto;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--bg-cream)}
+.pgc-card i svg{width:24px;height:24px}
+.pgc-card b{font:600 .86rem/1.15 var(--font-sans)}
+.pgc-card span{font:500 .62rem/1.2 var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint)}
+.pgc-card.badge i{position:relative}.pgc-card.badge i::after{content:'';position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:#FF3B30;border:2px solid var(--bg-box)}
+.pgc-mine{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.pgc-mine.hidden{display:none}
+.pgc-pill{display:flex;align-items:center;gap:10px;background:var(--bg-box);border:1px solid var(--border-hairline);border-radius:14px;padding:10px 12px;font-size:.8rem;color:var(--ink)}
+.pgc-pill img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:var(--bg-cream)}
+.pgc-pill em{margin-left:auto;font:600 .62rem/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;font-style:normal;padding:5px 8px;border-radius:10px;background:#FFF4D6;color:#8A6100}
+.pgc-pill em.ok{background:#E3F6E8;color:#1E6B34}.pgc-pill em.no{background:#F2F2F2;color:#777}
+.pgm-head-r{display:flex;gap:8px;pointer-events:auto}
+.pgm-chip{pointer-events:auto;display:inline-flex;align-items:center;height:38px;border-radius:19px;border:1px solid rgba(255,255,255,.3);background:rgba(20,16,14,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;cursor:pointer}
+.pgm-chip svg{width:20px;height:20px}
+.pgm-add{width:38px;padding:0;justify-content:center}
+.ios-field{display:block;margin:0 0 12px}
+.ios-field span{display:block;font:600 .7rem/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+.ios-field input,.ios-field textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--border-hairline);border-radius:12px;background:var(--bg-box);color:var(--ink);padding:12px 14px;font:16px/1.3 var(--font-sans)}
+.ios-wide{width:100%;justify-content:center;border-radius:12px;min-height:48px}
+.fm-save{display:flex;gap:8px;margin:10px 0 0}
+.fm-save input{flex:1;min-height:44px;border:1px solid var(--border-hairline);border-radius:12px;background:var(--bg-box);padding:0 12px;font:16px var(--font-sans);color:var(--ink)}
+.fm-save button{min-height:44px;padding:0 16px;border:0;border-radius:12px;background:var(--ink);color:var(--bg-cream);font:600 .85rem var(--font-sans);cursor:pointer}
+.fm-saved{font-size:.78rem;color:var(--ink);margin:8px 0 0}.fm-saved a{color:var(--ink);font-weight:600}
+.fm-sheet .fm-save.hidden,.fm-sheet .fm-saved.hidden{display:none!important}
+.up-pick{margin-bottom:10px}
+.up-list{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+.up-list div{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--bg-box)}
+.up-list img,.up-list video{width:100%;height:100%;object-fit:cover}
+.up-list span{position:absolute;left:4px;bottom:4px;font:700 10px/1 var(--font-sans);color:#fff;background:rgba(0,0,0,.55);padding:3px 5px;border-radius:6px}
+.up-list div.done::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(30,107,52,.45);color:#fff;font-size:24px}
+.up-done{background:var(--bg-box);border:1px solid var(--border-hairline);border-radius:16px;padding:16px;margin-top:6px}
+.up-done b{font-family:var(--font-serif);font-weight:500;font-size:1.4rem}.up-done p{font-size:.85rem;line-height:1.5;color:var(--ink-soft);margin:6px 0 0}
+.fm-sheet .up-done.hidden,.fm-sheet #upForm.hidden{display:none!important}
+.cp-sheet{max-height:86vh;overflow-y:auto}
+.cp-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.cp-item{display:grid;grid-template-columns:88px 1fr;gap:12px;background:var(--bg-box);border:1px solid var(--border-hairline);border-radius:16px;padding:10px}
+.cp-item img,.cp-item video{width:88px;height:110px;object-fit:cover;border-radius:10px;background:#000}
+.cp-item b{font:600 .85rem var(--font-sans)}.cp-item p{margin:4px 0 8px;font-size:.78rem;color:var(--ink-soft)}
+.cp-item .cp-btns{display:flex;gap:8px}.cp-item .cp-btns button{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--border-hairline);background:var(--bg-cream);color:var(--ink);font:600 .8rem var(--font-sans);cursor:pointer}
+.cp-item .cp-btns button.yes{background:var(--ink);color:var(--bg-cream);border-color:var(--ink)}
+.cp-empty{font-size:.85rem;color:var(--ink-soft);padding:8px 0}
+.pg-notice{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:250;max-width:460px;margin:0 auto;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-radius:18px;padding:14px 40px 14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.18);color:#1c1c1e}
+.pg-notice.hidden{display:none}
+.pg-notice b{display:block;font:600 .95rem/1.3 var(--font-sans)}.pg-notice p{margin:4px 0 0;font-size:.82rem;line-height:1.45;color:#3a3a3c}
+.pg-notice button{position:absolute;top:8px;right:8px;width:30px;height:30px;border:0;background:none;font-size:20px;color:#8e8e93;cursor:pointer}
+/* guest videos in Root Moment */
+.pgm-item video.pgm-img{object-fit:contain;background:#000}
+.pgm-by{display:inline-block;margin-top:4px;font:600 11px/1 var(--font-sans);background:rgba(255,255,255,.18);padding:4px 8px;border-radius:10px}
+.pgm-mute{position:absolute;left:14px;top:calc(env(safe-area-inset-top,0px) + 74px);z-index:25;width:38px;height:38px;border-radius:19px;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:15px;cursor:pointer}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>
@@ -1193,7 +1247,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 
 <!-- ==================== ROOT MOMENT: TKG MOMENTS REELS ==================== -->
 <section class="pg-view active" id="view-moments" aria-label="Root Moment">
-  <div class="pgm-head"><div><div class="pgm-head-title" id="pgmTitle"></div><div class="pgm-head-sub" id="pgmSub">Root Moment</div></div><button type="button" class="pgm-findme hidden" data-findme aria-label="Find me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me</span></button></div>
+  <div class="pgm-head"><div><div class="pgm-head-title" id="pgmTitle"></div><div class="pgm-head-sub" id="pgmSub">Root Moment</div></div><div class="pgm-head-r"><button type="button" class="pgm-chip pgm-add" id="pgmAdd" aria-label="Add a moment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><button type="button" class="pgm-findme hidden" data-findme aria-label="Find me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M9 9.5v1M15 9.5v1"/><path d="M12 9.5v3.5h-1"/><path d="M9 15.5c1.6 1.4 4.4 1.4 6 0"/></svg><span>Find me</span></button></div></div>
   <div class="pgm-feed" id="pgmFeed"></div>
 </section>
 
@@ -1203,7 +1257,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
     <div class="pg-module-eyebrow" id="pgGalleryEyebrow">Full Archive</div>
     <h2 class="pg-module-title">Wedding Galleries</h2>
     <p class="pg-module-sub">Every event of the day. Open a collection to see all its photos.</p>
-    <button type="button" class="pg-findme hidden" data-findme><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me · see all your photos</span></button>
+    <button type="button" class="pg-findme hidden" data-findme><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M9 9.5v1M15 9.5v1"/><path d="M12 9.5v3.5h-1"/><path d="M9 15.5c1.6 1.4 4.4 1.4 6 0"/></svg><span>Find me · see all your photos</span></button>
     <div id="pgGalleryMasonry"></div>
   </div>
 </section>
@@ -1222,8 +1276,15 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
   <div class="pg-module-wrap pgh-wrap">
     <div class="pgh-stats" id="pghStats"></div>
     <div class="pgh-install hidden" id="pghInstall"><div><b>Keep this gallery as an app</b><span id="pghInstallTxt">Opens full screen, straight from your home screen.</span></div><button type="button" class="mk-btn-peach" id="pghInstallBtn">Install</button></div>
-    <button type="button" class="pg-findme hidden" data-findme><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me · see all your photos</span></button>
-    <button type="button" class="pg-findme pgh-reel" id="pghReel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10 12 5 3-5 3z"/></svg><span>Make a reel · music &amp; your photos</span></button>
+    <div class="pgh-sec pgh-create-sec"><div class="pgh-head"><h3>Create</h3></div>
+      <div class="pgc-row">
+        <button type="button" class="pgc-card hidden" data-findme id="pgcFind"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M9 9.5v1M15 9.5v1"/><path d="M12 9.5v3.5h-1"/><path d="M9 15.5c1.6 1.4 4.4 1.4 6 0"/></svg></i><b>Find me</b><span>Your photos</span></button>
+        <button type="button" class="pgc-card" id="pghReel"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8 3l3 5M14 3l3 5"/><path d="m10 12 5 3-5 3z"/></svg></i><b>Reel</b><span>With music</span></button>
+        <button type="button" class="pgc-card" id="pgcUpload"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/><path d="M19 1.5v4M17 3.5h4"/></svg></i><b>Add a moment</b><span>Photo or video</span></button>
+        <button type="button" class="pgc-card hidden" id="pgcReview"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/><path d="m8.5 11.5 2.3 2.3 4.7-4.6"/></svg></i><b>Review</b><span id="pgcReviewTxt">Guest moments</span></button>
+      </div>
+      <div class="pgc-mine hidden" id="pgcMine"></div>
+    </div>
     <div class="pgh-sec"><div class="pgh-head"><h3>Events</h3><button type="button" class="pgh-more" data-goto="gallery">All galleries →</button></div><div class="pgh-row" id="pghEvents"></div></div>
     <div class="pgh-sec hidden" id="pghLovedSec"><div class="pgh-head"><h3>Most loved</h3></div><div class="pgh-row pgh-row-sm" id="pghLoved"></div></div>
     <div class="pgh-sec hidden" id="pghNotesSec"><div class="pgh-head"><h3>Recent notes</h3><button type="button" class="pgh-more" data-goto="rooms">All notes →</button></div><div class="pgh-notes" id="pghNotes"></div></div>
@@ -1327,6 +1388,8 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
   <div class="fm-result hidden" id="fmResult">
     <div class="fm-thumbs" id="fmThumbs"></div>
     <button type="button" class="mk-btn-peach" id="fmOpen">See your photos</button>
+    <div class="fm-save" id="fmSave"><input id="fmSaveName" maxlength="50" aria-label="Name for this collection"><button type="button" id="fmSaveBtn">Save</button></div>
+    <p class="fm-saved hidden" id="fmSaved"></p>
     <button type="button" class="fm-upload fm-reel" id="fmReel">Make a reel of your photos</button>
     <button type="button" class="fm-link" id="fmAgain">Try another photo</button>
   </div>
@@ -1342,6 +1405,41 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
     <li>Tap <b>Add</b>. Open the gallery from the new icon.</li>
   </ol>
 </div>
+<div class="overlay-backdrop" id="idBackdrop"></div>
+<div class="reg-overlay fm-sheet" id="idSheet" role="dialog" aria-modal="true" aria-labelledby="idTitle">
+  <button type="button" class="pgv-sheet-close" id="idClose" aria-label="Close">×</button>
+  <h3 class="fm-title" id="idTitle">Tell us who you are</h3>
+  <p class="fm-sub" id="idSub">So the couple knows who is sharing. Your name and number stay with the couple and the photographer.</p>
+  <label class="ios-field"><span>Your name</span><input id="idName" maxlength="40" autocomplete="name" placeholder="e.g. Meera Joshi"></label>
+  <label class="ios-field"><span>Mobile number</span><input id="idPhone" maxlength="16" inputmode="tel" autocomplete="tel" placeholder="e.g. 98765 43210"></label>
+  <button type="button" class="mk-btn-peach ios-wide" id="idGo">Continue</button>
+  <p class="fm-status" id="idStatus" aria-live="polite"></p>
+</div>
+<div class="overlay-backdrop" id="upBackdrop"></div>
+<div class="reg-overlay fm-sheet" id="upSheet" role="dialog" aria-modal="true" aria-labelledby="upTitle">
+  <button type="button" class="pgv-sheet-close" id="upClose" aria-label="Close">×</button>
+  <h3 class="fm-title" id="upTitle">Add to Root Moment</h3>
+  <p class="fm-sub">Share photos or short videos (up to 20 MB each) you captured. The couple will approve them before everyone can see them.</p>
+  <div id="upForm">
+    <label class="fm-upload ios-wide up-pick">Choose photos or videos<input type="file" id="upFiles" accept="image/*,video/*" multiple hidden></label>
+    <div class="up-list" id="upList"></div>
+    <label class="ios-field"><span>Caption (optional)</span><input id="upCaption" maxlength="300" placeholder="e.g. Baraat dance!"></label>
+    <button type="button" class="mk-btn-peach ios-wide" id="upGo" disabled>Send to the couple</button>
+  </div>
+  <div class="up-done hidden" id="upDone"><b>Thank you for capturing and sharing!</b><p id="upDoneTxt"></p></div>
+  <p class="fm-status" id="upStatus" aria-live="polite"></p>
+</div>
+<div class="overlay-backdrop" id="cpBackdrop"></div>
+<div class="reg-overlay fm-sheet cp-sheet" id="cpSheet" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+  <button type="button" class="pgv-sheet-close" id="cpClose" aria-label="Close">×</button>
+  <h3 class="fm-title" id="cpTitle">Guest moments</h3>
+  <p class="fm-sub">Approve what guests shared. Approved moments appear in Root Moment, and the guest sees your thank-you note.</p>
+  <div class="cp-list" id="cpList"></div>
+  <label class="ios-field"><span>Your thank-you note</span><textarea id="cpThanks" rows="3" maxlength="400"></textarea></label>
+  <button type="button" class="fm-upload ios-wide" id="cpThanksSave">Save note</button>
+  <p class="fm-status" id="cpStatus" aria-live="polite"></p>
+</div>
+<div class="pg-notice hidden" id="pgNotice" role="status"><button type="button" aria-label="Close" id="pgNoticeX">×</button><b id="pgNoticeT"></b><p id="pgNoticeP"></p></div>
 <div class="pg-toast" id="pgToast"></div>
 <div class="pg-boot" id="pgBoot" role="status"><h1>PicGrades</h1><span id="pgBootMsg">Opening the gallery…</span></div>
 <script src="/app/config.js"></script>
@@ -2653,6 +2751,253 @@ document.getElementById('pghReel').addEventListener('click', () => {
   while (pick.length < 24 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 24) pick.push(p.shift()); });
   pgOpenReel(pick.length ? pick : (GALLERY.root || []));
 });
+</script>
+<script>
+// ---------- guests, couple, staff ----------
+const PGK = (k) => 'pg_' + k + '_' + GALLERY_ID;
+function pgStore(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(PGK(k)) || 'null'); localStorage.setItem(PGK(k), JSON.stringify(v)); } catch (e) { return null; } }
+(function pgCoupleFromLink() {
+  const q = new URLSearchParams(location.search), ck = q.get('couple');
+  if (ck && GALLERY_ID) { pgStore('couple', ck); q.delete('couple'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+})();
+const _pgApi = pgApi;
+pgApi = function (action, body) { const ck = pgStore('couple'); return _pgApi(action, Object.assign(ck ? { coupleKey: ck } : {}, body || {})); };
+function pgGuest() { return pgStore('guest'); }
+function pgIsStaff() { try { return !!localStorage.getItem('pg_token'); } catch (e) { return false; } }
+function pgIsCouple() { return !!(GALLERY && GALLERY.isCouple); }
+function pgGuestBody() { const g = pgGuest(); return g ? { guestId: g.guestId, guestKey: g.guestKey } : {}; }
+
+// "Tell us who you are" (name + mobile, OTP later)
+let pgIdNext = null;
+function pgNeedGuest(next, why) {
+  if (pgGuest()) { next(); return; }
+  pgIdNext = next;
+  const $ = (id) => document.getElementById(id);
+  $('idSub').textContent = (why ? why + ' ' : '') + 'Your name and number stay with the couple and the photographer.';
+  $('idStatus').textContent = ''; $('idBackdrop').classList.add('show'); $('idSheet').classList.add('show');
+  setTimeout(() => $('idName').focus(), 250);
+}
+(function pgIdentity() {
+  const $ = (id) => document.getElementById(id), close = () => { $('idBackdrop').classList.remove('show'); $('idSheet').classList.remove('show'); };
+  $('idClose').addEventListener('click', () => { pgIdNext = null; close(); }); $('idBackdrop').addEventListener('click', () => { pgIdNext = null; close(); });
+  $('idGo').addEventListener('click', () => {
+    const b = $('idGo'); b.disabled = true; $('idStatus').textContent = 'Saving…';
+    pgApi('guestJoin', { name: $('idName').value, phone: $('idPhone').value }).then(r => {
+      pgStore('guest', { guestId: r.guestId, guestKey: r.guestKey, name: r.name }); close();
+      const n = pgIdNext; pgIdNext = null; showToast('Welcome, ' + r.name.split(' ')[0]); if (n) setTimeout(n, 280);
+    }).catch(e => { $('idStatus').textContent = e.message; }).finally(() => { b.disabled = false; });
+  });
+})();
+// Find me needs the guest's name first (capture phase, before the Find me sheet opens)
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-findme]'); if (!b || pgGuest() || pgIsCouple() || pgIsStaff()) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  pgNeedGuest(() => b.click(), 'First, tell us who you are — then take a selfie to find your photos.');
+}, true);
+// Reels: couple and photographer anytime; guests after their name + Find me (when face search is on)
+const _openReel = pgOpenReel;
+pgOpenReel = function (photos) {
+  if (pgIsCouple() || pgIsStaff()) return _openReel(photos);
+  pgNeedGuest(() => {
+    if (GALLERY.faceSearch && !pgStore('found')) { showToast('First find your photos — then make your reel'); setTimeout(() => document.getElementById('pgcFind').click(), 300); return; }
+    _openReel(photos);
+  }, 'Tell us who you are to make a reel.');
+};
+
+// ---------- saved "Find me" collections (on this phone + a link for any phone) ----------
+function pgPhotoById() { const m = {}; (GALLERY.events || []).forEach(e => e.photos.forEach(p => { m[p.id] = p; })); (GALLERY.root || []).forEach(p => { m[p.id] = m[p.id] || p; }); return m; }
+function pgLoadSavedSets() {
+  const map = pgPhotoById(), sets = pgStore('sets') || [];
+  const keep = (GALLERY.personal || []).filter(x => !x.saved);
+  GALLERY.personal = sets.map(s => ({ name: s.name, photos: s.ids.map(id => map[id]).filter(Boolean), personal: true, saved: true, code: s.code })).filter(x => x.photos.length).concat(keep);
+}
+function pgAddSavedSet(set) { const sets = (pgStore('sets') || []).filter(s => s.code !== set.code && s.name !== set.name); sets.unshift(set); pgStore('sets', sets.slice(0, 20)); pgLoadSavedSets(); renderGalleries(); pgRenderMine(); }
+(function pgSaveFound() {
+  const $ = (id) => document.getElementById(id);
+  // remember that this phone did Find me; offer "Save as…"
+  const _render = renderGalleries;
+  renderGalleries = function () {
+    const tmp = (GALLERY.personal || []).filter(x => !x.saved && (x.name === 'Your photos' || x.name === 'Maybe you'));
+    if (tmp.length && !pgStore('found')) pgStore('found', 1);
+    _render();
+  };
+  new MutationObserver(() => {
+    if ($('fmResult').classList.contains('hidden')) return;
+    const g = pgGuest(); $('fmSaveName').value = $('fmSaveName').value || ((g ? g.name.split(' ')[0] + "'s" : 'My') + ' photos');
+    $('fmSave').classList.remove('hidden'); $('fmSaved').classList.add('hidden');
+  }).observe($('fmResult'), { attributes: true, attributeFilter: ['class'] });
+  $('fmSaveBtn').addEventListener('click', () => {
+    const set = (GALLERY.personal || []).find(x => x.name === 'Your photos') || (GALLERY.personal || []).find(x => x.name === 'Maybe you');
+    if (!set) return;
+    const name = $('fmSaveName').value.trim() || 'My photos', ids = set.photos.map(p => p.id);
+    $('fmSaveBtn').disabled = true;
+    pgApi('saveSet', Object.assign({ name, ids }, pgGuestBody())).then(r => {
+      pgAddSavedSet({ code: r.code, name: r.name, ids });
+      const link = location.origin + '/g/' + GALLERY_ID + '?set=' + r.code;
+      $('fmSave').classList.add('hidden'); $('fmSaved').classList.remove('hidden');
+      $('fmSaved').innerHTML = 'Saved as <b>' + pgEsc(r.name) + '</b> on this phone. <a href="#" id="fmCopy">Copy link</a> to open it anywhere.';
+      $('fmCopy').addEventListener('click', (e) => { e.preventDefault(); if (navigator.share) navigator.share({ title: r.name, url: link }).catch(() => {}); else if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => showToast('Link copied')); });
+    }).catch(e => showToast(e.message)).finally(() => { $('fmSaveBtn').disabled = false; });
+  });
+})();
+
+// ---------- my moments (status + thank-you) and the Create row ----------
+function pgRenderMine(posts) {
+  const box = document.getElementById('pgcMine'), sets = pgStore('sets') || [];
+  const rows = [];
+  sets.slice(0, 4).forEach(s => rows.push('<button type="button" class="pgc-pill" data-set="' + pgEsc(s.code) + '"><img alt="" src="' + pgImg(s.ids[0], 120) + '"><span><b>' + pgEsc(s.name) + '</b><br>' + s.ids.length + ' photos</span><em class="ok">Saved</em></button>'));
+  (posts || pgRenderMine.posts || []).slice(0, 6).forEach(p => {
+    const st = p.status === 'approved' ? '<em class="ok">Approved</em>' : p.status === 'hidden' ? '<em class="no">Not shown</em>' : '<em>In review</em>';
+    rows.push('<div class="pgc-pill">' + (p.type === 'photo' ? '<img alt="" src="' + pgImg(p.fileId, 120) + '">' : '<img alt="" src="' + pgImgFallback(p.fileId, 120) + '">') + '<span>Your ' + (p.type === 'video' ? 'video' : 'photo') + (p.caption ? ' · ' + pgEsc(p.caption) : '') + '</span>' + st + '</div>');
+  });
+  if (posts) pgRenderMine.posts = posts;
+  box.innerHTML = rows.join(''); box.classList.toggle('hidden', !rows.length);
+  box.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => { const s = (pgStore('sets') || []).find(x => x.code === b.dataset.set); if (s) openCollection(s.name, 0); }));
+}
+function pgNotice(t, p) { const n = document.getElementById('pgNotice'); document.getElementById('pgNoticeT').textContent = t; document.getElementById('pgNoticeP').textContent = p; n.classList.remove('hidden'); }
+document.getElementById('pgNoticeX').addEventListener('click', () => document.getElementById('pgNotice').classList.add('hidden'));
+function pgCheckMyPosts() {
+  if (!pgGuest()) return;
+  pgApi('myPosts', pgGuestBody()).then(r => {
+    pgRenderMine(r.posts);
+    const seen = pgStore('seen') || [], fresh = r.posts.filter(p => p.status === 'approved' && seen.indexOf(p.postId) < 0);
+    if (fresh.length) { pgNotice((fresh.length === 1 ? 'Your moment is' : fresh.length + ' of your moments are') + ' now in Root Moment ♥', r.thanks); pgStore('seen', seen.concat(fresh.map(p => p.postId))); }
+  }).catch(() => {});
+}
+
+// ---------- upload to Root Moment ----------
+(function pgUpload() {
+  const $ = (id) => document.getElementById(id); let files = [];
+  const open = () => pgNeedGuest(() => { files = []; $('upList').innerHTML = ''; $('upGo').disabled = true; $('upForm').classList.remove('hidden'); $('upDone').classList.add('hidden'); $('upStatus').textContent = ''; $('upBackdrop').classList.add('show'); $('upSheet').classList.add('show'); }, 'Tell us who you are to share your moments.');
+  const close = () => { $('upBackdrop').classList.remove('show'); $('upSheet').classList.remove('show'); };
+  $('pgcUpload').addEventListener('click', open); $('pgmAdd').addEventListener('click', open);
+  $('upClose').addEventListener('click', close); $('upBackdrop').addEventListener('click', close);
+  $('upFiles').addEventListener('change', function () {
+    files = Array.from(this.files || []).slice(0, 10); this.value = '';
+    $('upList').innerHTML = ''; $('upStatus').textContent = '';
+    files.forEach((f, i) => {
+      const d = document.createElement('div'), url = URL.createObjectURL(f);
+      d.innerHTML = (f.type.indexOf('video') === 0 ? '<video muted playsinline src="' + url + '"></video><span>Video</span>' : '<img alt="" src="' + url + '">');
+      if (f.type.indexOf('video') === 0 && f.size > 20 * 1024 * 1024) { d.querySelector('span').textContent = 'Too big'; f.tooBig = true; }
+      $('upList').appendChild(d);
+    });
+    if (files.some(f => f.tooBig)) $('upStatus').textContent = 'Videos must be under 20 MB — big ones will be skipped.';
+    $('upGo').disabled = !files.some(f => !f.tooBig);
+  });
+  function shrink(file) {   // photos: long side 2048 px, JPEG — quick to send
+    return new Promise((res) => {
+      const im = new Image(), url = URL.createObjectURL(file);
+      im.onload = () => { const r = Math.min(1, 2048 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * r); c.height = Math.round(im.height * r);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res({ mime: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.86) }); };
+      im.onerror = () => { URL.revokeObjectURL(url); const fr = new FileReader(); fr.onload = () => res({ mime: file.type || 'image/jpeg', data: fr.result }); fr.readAsDataURL(file); };
+      im.src = url;
+    });
+  }
+  function asData(file) { return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res({ mime: file.type || 'video/mp4', data: fr.result }); fr.onerror = rej; fr.readAsDataURL(file); }); }
+  $('upGo').addEventListener('click', async () => {
+    const b = $('upGo'); b.disabled = true; let sent = 0; const list = $('upList').children;
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i]; if (f.tooBig) continue;
+      $('upStatus').textContent = 'Sending ' + (sent + 1) + ' of ' + files.filter(x => !x.tooBig).length + '… keep this screen open';
+      try {
+        const d = f.type.indexOf('video') === 0 ? await asData(f) : await shrink(f);
+        await pgApi('uploadMoment', Object.assign({ mime: d.mime, base64: d.data, caption: $('upCaption').value }, pgGuestBody()));
+        sent++; if (list[i]) list[i].classList.add('done');
+      } catch (e) { $('upStatus').textContent = e.message; b.disabled = false; if (!sent) return; }
+    }
+    $('upForm').classList.add('hidden'); $('upDone').classList.remove('hidden'); $('upStatus').textContent = '';
+    $('upDoneTxt').textContent = (sent === 1 ? 'Your moment is' : 'Your ' + sent + ' moments are') + ' in review. ' + (GALLERY.title || 'The couple') + ' will approve ' + (sent === 1 ? 'it' : 'them') + ' soon — you will see the update right here. We really appreciate you sharing with us.';
+    $('upCaption').value = ''; pgCheckMyPosts();
+  });
+})();
+
+// ---------- couple: review guest moments + thank-you note ----------
+(function pgCouple() {
+  const $ = (id) => document.getElementById(id);
+  const close = () => { $('cpBackdrop').classList.remove('show'); $('cpSheet').classList.remove('show'); };
+  $('cpClose').addEventListener('click', close); $('cpBackdrop').addEventListener('click', close);
+  function media(p) { return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
+  function load() {
+    return pgApi('coupleQueue').then(r => {
+      $('cpThanks').value = r.thanks || '';
+      $('pgcReviewTxt').textContent = r.waiting.length ? r.waiting.length + ' waiting' : 'All done';
+      $('pgcReview').classList.toggle('badge', !!r.waiting.length);
+      $('cpList').innerHTML = r.waiting.length ? '' : '<p class="cp-empty">Nothing waiting. New guest moments will appear here.</p>';
+      r.waiting.forEach(p => {
+        const d = document.createElement('div'); d.className = 'cp-item';
+        d.innerHTML = media(p) + '<div><b>' + pgEsc(p.name) + '</b><p>' + pgEsc(p.caption || (p.type === 'video' ? 'Video' : 'Photo')) + '</p><div class="cp-btns"><button type="button" class="yes">Approve</button><button type="button">Hide</button></div></div>';
+        const [yes, no] = d.querySelectorAll('button');
+        const act = (decision) => { yes.disabled = no.disabled = true; pgApi('couplePost', { postId: p.postId, decision }).then(() => { d.remove(); showToast(decision === 'approve' ? 'Approved — now in Root Moment' : 'Hidden'); load(); if (decision === 'approve') pgReloadPosts(); }).catch(e => { showToast(e.message); yes.disabled = no.disabled = false; }); };
+        yes.addEventListener('click', () => act('approve')); no.addEventListener('click', () => act('hide'));
+        $('cpList').appendChild(d);
+      });
+    }).catch(e => { $('cpStatus').textContent = e.message; });
+  }
+  $('pgcReview').addEventListener('click', () => { $('cpStatus').textContent = ''; $('cpBackdrop').classList.add('show'); $('cpSheet').classList.add('show'); load(); });
+  $('cpThanksSave').addEventListener('click', () => pgApi('coupleThanks', { text: $('cpThanks').value }).then(() => showToast('Thank-you note saved')).catch(e => showToast(e.message)));
+  window.pgCoupleInit = function () { if (pgIsCouple()) { $('pgcReview').classList.remove('hidden'); load(); } };
+})();
+
+// ---------- approved guest moments in Root Moment (photos + videos, like TKG Moments) ----------
+let pgVidObs = null;
+function pgReloadPosts() { pgApi('getGallery').then(r => { GALLERY.guestPosts = r.gallery.guestPosts || []; renderMoments(); }).catch(() => {}); }
+(function pgGuestReels() {
+  const _render = renderMoments;
+  renderMoments = function () {
+    _render();
+    const feed = document.getElementById('pgmFeed'), posts = (GALLERY && GALLERY.guestPosts) || [];
+    if (!posts.length) return;
+    const empty = feed.querySelector('.pgm-empty'); if (empty) empty.remove();
+    let muted = true;
+    if (pgVidObs) pgVidObs.disconnect();
+    pgVidObs = new IntersectionObserver((ents) => ents.forEach(en => { const v = en.target; if (en.isIntersecting && en.intersectionRatio > 0.6) { v.muted = muted; const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => {}); }); } else v.pause(); }), { threshold: [0, 0.6, 1] });
+    posts.forEach((p, i) => {
+      const m = { id: p.fileId };
+      const item = document.createElement('div'); item.className = 'pgm-item pgm-guest'; item.dataset.pid = p.fileId;
+      const blur = document.createElement('div'); blur.className = 'pgm-blur';
+      let media;
+      if (p.type === 'video') {
+        media = document.createElement('video'); media.className = 'pgm-img';
+        media.setAttribute('playsinline', ''); media.setAttribute('webkit-playsinline', ''); media.setAttribute('muted', ''); media.playsInline = true; media.muted = true; media.loop = true; media.preload = 'metadata';
+        media.src = '/api/stream?id=' + encodeURIComponent(p.fileId);
+        pgVidObs.observe(media);
+        const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'pgm-mute'; mb.textContent = '🔇'; mb.setAttribute('aria-label', 'Sound on or off');
+        mb.addEventListener('click', (e) => { e.stopPropagation(); muted = !muted; document.querySelectorAll('.pgm-guest video').forEach(v => { v.muted = muted; }); document.querySelectorAll('.pgm-mute').forEach(x => { x.textContent = muted ? '🔇' : '🔊'; }); });
+        item.appendChild(mb);
+        media.addEventListener('click', (e) => { e.stopPropagation(); if (media.paused) media.play().catch(() => {}); else media.pause(); });
+      } else {
+        media = document.createElement('img'); media.className = 'pgm-img'; media.alt = 'Shared by ' + p.name; media.loading = 'lazy';
+        media.src = pgImg(p.fileId, 1600); media.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.fileId, 1600); };
+        blur.style.backgroundImage = 'url("' + pgImg(p.fileId, 60) + '")';
+      }
+      const scrim = document.createElement('div'); scrim.className = 'pgm-scrim';
+      scrim.innerHTML = '<div class="pgm-name">' + pgEsc(p.caption || GALLERY.title || '') + '</div><div class="pgm-meta">GUEST MOMENT · ' + (i + 1) + '/' + posts.length + '</div><span class="pgm-by">by ' + pgEsc(p.name) + '</span>';
+      const acts = document.createElement('div'); acts.className = 'pgm-actions';
+      const like = document.createElement('button'); like.type = 'button'; like.className = 'pgm-btn pgm-like'; like.setAttribute('aria-label', 'Like'); like.innerHTML = ICON_HEART_OUTLINE + ICON_HEART_FILLED + '<span class="pgm-like-count"></span>';
+      const note = document.createElement('button'); note.type = 'button'; note.className = 'pgm-btn'; note.setAttribute('aria-label', 'Notes'); note.innerHTML = ICON_NOTE + '<span class="pgm-note-count"></span>';
+      const share = document.createElement('button'); share.type = 'button'; share.className = 'pgm-btn'; share.setAttribute('aria-label', 'Share'); share.innerHTML = ICON_SEND;
+      like.addEventListener('click', e => { e.stopPropagation(); pgToggleLike(m); });
+      note.addEventListener('click', e => { e.stopPropagation(); openNotes(m, 'Guest moment by ' + p.name); });
+      share.addEventListener('click', e => { e.stopPropagation(); pgShare(); });
+      acts.appendChild(like); acts.appendChild(note); acts.appendChild(share);
+      let lastTap = 0;
+      item.addEventListener('click', () => { const now = Date.now(); if (now - lastTap < 400) { const pop = document.createElement('div'); pop.className = 'pgm-pop'; pop.innerHTML = ICON_POP; item.appendChild(pop); setTimeout(() => pop.remove(), 850); if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m); lastTap = 0; } else lastTap = now; });
+      item.appendChild(blur); item.appendChild(media); item.appendChild(scrim); item.appendChild(acts);
+      feed.appendChild(item); syncCounts(m.id);
+    });
+  };
+})();
+
+// ---------- after the gallery loads ----------
+const _hub = pgRenderHub;
+pgRenderHub = function () {
+  _hub();
+  pgLoadSavedSets(); renderGalleries(); pgRenderMine(); pgCheckMyPosts();
+  if (pgStore('couple') && !GALLERY.isCouple) pgApi('coupleQueue').then(() => { GALLERY.isCouple = true; if (window.pgCoupleInit) pgCoupleInit(); }).catch(() => pgStore('couple', null));
+  else if (window.pgCoupleInit) pgCoupleInit();
+  const code = new URLSearchParams(location.search).get('set');
+  if (code) pgApi('getSet', { code }).then(r => { pgAddSavedSet({ code, name: r.name, ids: r.ids }); openCollection(r.name, 0); }).catch(e => showToast(e.message));
+};
 </script>
 </body>
 </html>

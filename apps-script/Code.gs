@@ -50,7 +50,15 @@ var PUBLIC_ROUTES = {
   getNotes: getNotes_,
   addNote: addNote_,
   getFaces: getFaces_,
-  photoData: photoData_
+  photoData: photoData_,
+  guestJoin: guestJoin_,
+  saveSet: saveSet_,
+  getSet: getSet_,
+  uploadMoment: uploadMoment_,
+  myPosts: myPosts_,
+  coupleQueue: coupleQueue_,
+  couplePost: couplePost_,
+  coupleThanks: coupleThanks_
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -131,7 +139,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step8-reels',
+    version: 'step10-guests',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
@@ -842,10 +850,12 @@ function ensureColumns_(name, cols) {
 
 var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDate', 'folderId', 'folderUrl', 'manifestFileId',
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
-  'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo'];
+  'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
+  'coupleKey', 'thanksNote', 'guestFolderId'];
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
 var ROOT_FOLDER_RE = /^0*_?root[ _-]*moments?$/i;
+var GUEST_FOLDER_NAME = '01_Guest_Moments';
 
 function ensureTab_(name, cols) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -889,7 +899,7 @@ function scanWeddingFolder_(folderId) {
   var events = [], root = [], subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
-    if (sf.isTrashed()) continue;
+    if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME) continue; // guest uploads are shown only after approval
     var photos = listImages_(sf);
     if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
@@ -996,6 +1006,11 @@ function getGallery_(p) {
   m.galleryId = g.galleryId;
   m.likes = likes; m.notes = notes; m.mine = mine;
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
+  ensureTab_('GuestPosts', POST_COLUMNS);
+  m.guestPosts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.status === 'approved'; })
+    .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, at: x.at }; })
+    .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+  m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
   return { gallery: m };
 }
 
@@ -1087,7 +1102,7 @@ function facesStatus_(p, user) {
   return {
     gallery: { galleryId: g.galleryId, title: g.title, studio: g.companyName, catalogName: o.catalogName,
       status: g.facesStatus || '', faceCount: Number(g.faceCount || 0), sentAt: g.sentAt || '', sentTo: g.sentTo || '',
-      dueAt: due, clientEmail: o.email || '' },
+      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g) },
     photos: photos, faces: f
   };
 }
@@ -1147,6 +1162,149 @@ function facesProxy_(p, user) {
     if (blob) out[id] = 'data:' + (blob.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(blob.getBytes());
   });
   return { images: out };
+}
+
+// =====================================================================
+// 6c. Guests: name + phone (OTP later), saved "Find me" collections, Root Moment uploads with couple approval
+// =====================================================================
+var GUEST_COLUMNS = ['at', 'galleryId', 'guestId', 'keyHash', 'name', 'phone', 'device', 'status'];
+var SET_COLUMNS = ['at', 'galleryId', 'code', 'name', 'guestId', 'device', 'ids'];
+var POST_COLUMNS = ['at', 'galleryId', 'postId', 'guestId', 'name', 'phone', 'caption', 'fileId', 'mime', 'type', 'status', 'reviewedAt'];
+var MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // same as TKG Moments: Apps Script request bodies stay well under ~50 MB
+
+function publishedGallery_(gid) {
+  var g = findGallery_(gid);
+  if (!g || g.status !== 'Published') throw new Error('This gallery is not available.');
+  return g;
+}
+function coupleKey_(g) {
+  if (g.coupleKey) return g.coupleKey;
+  var k = randomId_(20);
+  updateRowByNumber_('Galleries', g._row, { coupleKey: k }); g.coupleKey = k;
+  return k;
+}
+function guestFor_(g, p) {
+  ensureTab_('Guests', GUEST_COLUMNS);
+  var id = String(p.guestId || ''), key = String(p.guestKey || '');
+  if (!id || !key) throw new Error('Please add your name and phone number first.');
+  var row = readTable_('Guests').filter(function (x) { return x.galleryId === g.galleryId && x.guestId === id; })[0];
+  if (!row || row.keyHash !== hash_(key) || row.status === 'blocked') throw new Error('Please add your name and phone number again.');
+  return row;
+}
+
+/** Public: a guest says who they are (name + phone). Returns an id + key kept on their phone. */
+function guestJoin_(p) {
+  var g = publishedGallery_(p.g);
+  var name = String(p.name || '').replace(/\s+/g, ' ').trim().slice(0, 40), phone = String(p.phone || '').replace(/[^\d+]/g, '');
+  if (name.length < 2) return { ok: false, error: 'Please write your name.' };
+  if (phone.replace(/\D/g, '').length < 10 || phone.replace(/\D/g, '').length > 13) return { ok: false, error: 'Please write a valid mobile number.' };
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    ensureTab_('Guests', GUEST_COLUMNS);
+    var key = randomId_(24), id = 'gst_' + randomId_(10);
+    appendRow_('Guests', { at: fmt_(new Date()), galleryId: g.galleryId, guestId: id, keyHash: hash_(key), name: name, phone: phone, device: String(p.device || '').slice(0, 40), status: 'ok' });
+    return { guestId: id, guestKey: key, name: name };
+  } finally { lock.releaseLock(); }
+}
+
+/** Public: save a "Find me" result with a name → short code for a link that opens it on any phone. */
+function saveSet_(p) {
+  var g = publishedGallery_(p.g), name = String(p.name || '').trim().slice(0, 50);
+  if (!name) return { ok: false, error: 'Give this collection a name.' };
+  var m = loadManifest_(g), ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
+  var list = (p.ids || []).filter(function (id) { return ids[id]; }).slice(0, 600);
+  if (!list.length) return { ok: false, error: 'No photos to save.' };
+  ensureTab_('SavedSets', SET_COLUMNS);
+  var code = randomId_(8);
+  appendRow_('SavedSets', { at: fmt_(new Date()), galleryId: g.galleryId, code: code, name: name, guestId: String(p.guestId || ''), device: String(p.device || '').slice(0, 40), ids: list.join(',') });
+  return { code: code, name: name, count: list.length };
+}
+/** Public: open a saved collection by its code. */
+function getSet_(p) {
+  var g = publishedGallery_(p.g);
+  ensureTab_('SavedSets', SET_COLUMNS);
+  var row = readTable_('SavedSets').filter(function (x) { return x.galleryId === g.galleryId && x.code === String(p.code || ''); })[0];
+  if (!row) return { ok: false, error: 'This saved collection was not found.' };
+  return { name: row.name, ids: String(row.ids || '').split(',').filter(String) };
+}
+
+function guestFolder_(g) {
+  if (g.guestFolderId) { try { return DriveApp.getFolderById(g.guestFolderId); } catch (e) {} }
+  var parent;
+  try { parent = DriveApp.getFolderById(g.folderId); } catch (e) { throw new Error('The wedding folder cannot be opened by PicGrades.'); }
+  var it = parent.getFoldersByName(GUEST_FOLDER_NAME), f;
+  try { f = it.hasNext() ? it.next() : parent.createFolder(GUEST_FOLDER_NAME); }
+  catch (e) { throw new Error('Uploads are not switched on for this wedding yet (PicGrades needs edit access to the wedding folder).'); }
+  updateRowByNumber_('Galleries', g._row, { guestFolderId: f.getId() });
+  return f;
+}
+
+/** Public (guest with name + phone): upload one photo or short video to Root Moment. It waits for the couple's approval. */
+function uploadMoment_(p) {
+  var g = publishedGallery_(p.g), guest = guestFor_(g, p);
+  var mime = String(p.mime || ''), isVideo = /^video\//.test(mime), isPhoto = /^image\/(jpeg|png|webp|heic|heif)$/.test(mime);
+  if (!isVideo && !isPhoto) return { ok: false, error: 'Only photos and videos can be uploaded.' };
+  var data = String(p.base64 || '').replace(/^data:[^,]*,/, '');
+  if (!data) return { ok: false, error: 'The file is empty.' };
+  if (data.length * 0.75 > MAX_UPLOAD_BYTES) return { ok: false, error: 'This file is too big (max 20 MB). Try a shorter video.' };
+  var cache = CacheService.getScriptCache(), rk = 'up:' + guest.guestId, used = Number(cache.get(rk) || 0);
+  if (used >= 30) return { ok: false, error: 'Too many uploads for now. Please try again in an hour.' };
+  cache.put(rk, String(used + 1), 3600);
+  var folder = guestFolder_(g);
+  var ext = isVideo ? (/quicktime/.test(mime) ? 'mov' : 'mp4') : (/png/.test(mime) ? 'png' : 'jpg');
+  var postId = 'pst_' + randomId_(10);
+  var blob = Utilities.newBlob(Utilities.base64Decode(data), mime, guest.name.replace(/[^\w ]+/g, '').slice(0, 20) + '_' + postId + '.' + ext);
+  var file = folder.createFile(blob);
+  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    ensureTab_('GuestPosts', POST_COLUMNS);
+    appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: guest.guestId, name: guest.name, phone: guest.phone,
+      caption: String(p.caption || '').slice(0, 300), fileId: file.getId(), mime: mime, type: isVideo ? 'video' : 'photo', status: 'review', reviewedAt: '' });
+  } finally { lock.releaseLock(); }
+  return { postId: postId, status: 'review' };
+}
+
+/** Public (guest): my uploads and their status, plus the couple's thank-you note once approved. */
+function myPosts_(p) {
+  var g = publishedGallery_(p.g), guest = guestFor_(g, p);
+  ensureTab_('GuestPosts', POST_COLUMNS);
+  var posts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.guestId === guest.guestId; })
+    .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, caption: x.caption, status: x.status, at: x.at, reviewedAt: x.reviewedAt }; });
+  return { posts: posts, thanks: g.thanksNote || defaultThanks_(g) };
+}
+function defaultThanks_(g) { return 'Thank you for capturing this moment and sharing it with us. It means the world to us. — ' + g.title; }
+
+function coupleGallery_(p) {
+  var g = publishedGallery_(p.g);
+  if (!p.coupleKey || !g.coupleKey || String(p.coupleKey) !== String(g.coupleKey)) throw new Error('This couple link is not valid.');
+  return g;
+}
+/** Couple link: posts waiting for approval (and recent decisions). */
+function coupleQueue_(p) {
+  var g = coupleGallery_(p);
+  ensureTab_('GuestPosts', POST_COLUMNS);
+  var all = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId; })
+    .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, status: x.status, at: x.at }; })
+    .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+  return { waiting: all.filter(function (x) { return x.status === 'review'; }), decided: all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40), thanks: g.thanksNote || defaultThanks_(g) };
+}
+/** Couple link: approve or hide a guest post. */
+function couplePost_(p) {
+  var g = coupleGallery_(p), decision = p.decision === 'approve' ? 'approved' : p.decision === 'hide' ? 'hidden' : '';
+  if (!decision) return { ok: false, error: 'Choose approve or hide.' };
+  ensureTab_('GuestPosts', POST_COLUMNS);
+  var row = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.postId === String(p.postId || ''); })[0];
+  if (!row) return { ok: false, error: 'Post not found.' };
+  updateRowByNumber_('GuestPosts', row._row, { status: decision, reviewedAt: fmt_(new Date()) });
+  return { postId: row.postId, status: decision };
+}
+/** Couple link: the thank-you note guests see once their moment is approved. */
+function coupleThanks_(p) {
+  var g = coupleGallery_(p), text = String(p.text || '').trim().slice(0, 400);
+  if (!text) return { ok: false, error: 'Write a short note.' };
+  updateRowByNumber_('Galleries', g._row, { thanksNote: text });
+  return { thanks: text };
 }
 
 /** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.
