@@ -48,6 +48,13 @@ const srv = http.createServer((req, res) => {
     }
     await pg.locator('.rl-chip', { hasText: 'Party' }).first().click();
     console.log('nav hidden while reel open:', !(await pg.isVisible('.tkg-global-nav')));
+    // add photos from other collections
+    await pg.click('.rl-add'); await pg.waitForSelector('.rl-picker');
+    console.log('picker tabs:', (await pg.locator('.rl-ptabs .rl-chip').allTextContents()).join(' | '), '|', await pg.textContent('.rl-pcount'));
+    await pg.locator('.rl-pick').nth(0).click(); await pg.locator('.rl-pick').nth(1).click();
+    await pg.screenshot({ path: '/tmp/s11_picker.png' });
+    await pg.click('.rl-pdone'); await pg.waitForTimeout(1500);
+    console.log('after picker:', await pg.locator('.rl-th:not(.rl-add)').count(), 'photos |', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'));
     await pg.click('.rl-play'); await pg.waitForTimeout(3200); await pg.screenshot({ path: '/tmp/s8_preview_title.png' });
     await pg.waitForTimeout(2500); await pg.screenshot({ path: '/tmp/s8_preview_photo.png' });
     await pg.locator('.rl-chip', { hasText: '15 s' }).click();

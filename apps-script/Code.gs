@@ -139,7 +139,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step10-guests',
+    version: 'step11-open',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing,
@@ -1011,6 +1011,8 @@ function getGallery_(p) {
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, at: x.at }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
+  // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
+  m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   return { gallery: m };
 }
 
