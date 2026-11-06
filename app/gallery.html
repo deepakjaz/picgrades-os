@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>PicGrades · Wedding Gallery</title>
 <meta name="theme-color" content="#F6EFEA">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wedding Gallery" id="pgAppTitle">
+<link rel="apple-touch-icon" href="/app/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/app/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
@@ -1053,6 +1059,30 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 .pgh-studio span{font:500 .65rem/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
 .pgh-studio b{font-family:var(--font-serif);font-weight:400;font-size:1.3rem;flex:1}
 .pgh-studio em{font-style:normal}
+/* ===== viewer: one photo per screen, scrolls like the filmstrip ===== */
+#view-root #mkPhotoHero{display:none!important}
+.pgv-feed{position:absolute;inset:0;overflow-y:scroll;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none;z-index:1;background:#0b0908}
+.pgv-feed::-webkit-scrollbar{display:none}
+.pgv-item{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;touch-action:pan-y;cursor:pointer}
+.pgv-iblur{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(32px) brightness(.42) saturate(1.1);transform:scale(1.12)}
+.pgv-item img,.pgm-item .pgm-img{transform-origin:center center;will-change:transform}
+.pgv-item img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.is-zoomed{touch-action:none!important;cursor:grab}
+.pgv-top-r{display:flex;align-items:center;gap:10px;padding-right:calc(var(--rail-width) + var(--rail-right-gap))}
+.pgv-top-r .pgv-count{padding-right:0}
+.pgv-ic.hidden{display:none}
+.pgv-ic.on{background:rgba(255,255,255,.9);color:#141413}
+@media (max-width:380px){.pgv-bar{gap:6px}.pgv-ic{min-width:38px;height:38px;padding:0 8px}}
+.mk-header{padding-top:calc(12px + env(safe-area-inset-top,0px))}
+.pgh-install{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);color:var(--bg-cream);padding:14px 16px;margin:-4px 0 18px}
+.pgh-install.hidden{display:none}
+.pgh-install b{display:block;font-family:var(--font-serif);font-weight:400;font-size:1.25rem}
+.pgh-install span{font-size:.72rem;opacity:.8}
+.pgh-install .mk-btn-peach{flex:none}
+.ios-steps{margin:4px 0 8px 18px;padding:0;font-size:.85rem;line-height:1.6;color:var(--ink)}
+.ios-steps li{margin-bottom:8px}
+.ios-steps svg{width:18px;height:18px;vertical-align:-3px}
+.pgm-item{touch-action:pan-y}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>
@@ -1078,6 +1108,7 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 <!-- ==================== VIEW 1: ROOT MOMENT ==================== -->
 <main class="pg-view" id="view-root">
   <div class="mk-root-stage" id="mkRootStage">
+    <div class="pgv-feed" id="pgvFeed" aria-label="Photos"></div>
     <div class="mk-photo-hero" id="mkPhotoHero">
       <div class="pgv-blur" id="pgvBlur"></div>
       <img class="mk-photo-layer is-visible" id="mkImgA" src="" alt="">
@@ -1136,12 +1167,14 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 
 <div class="pgv-top" id="pgvTop">
   <button type="button" class="pgv-ic" id="pgvBack" aria-label="All collections"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-  <div class="pgv-count" id="pgvCount"></div>
+  <div class="pgv-top-r"><div class="pgv-count" id="pgvCount"></div><button type="button" class="pgv-ic hidden" id="pgvFull" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>
 </div>
 <div class="pgv-bar" id="pgvBar">
   <button type="button" class="pgv-ic pgv-like" id="pgvLike" aria-label="Like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span id="pgvLikeCount"></span></button>
   <button type="button" class="pgv-ic" id="pgvNote" aria-label="Notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><span id="pgvNoteCount"></span></button>
   <button type="button" class="pgv-ic" id="pgvShare" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
+  <button type="button" class="pgv-ic" id="pgvSave" aria-label="Download photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg></button>
+  <button type="button" class="pgv-ic" id="pgvZoom" aria-label="Zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 8.5v5M8.5 11h5"/></svg></button>
   <button type="button" class="pgv-ic" id="pgvInfo" aria-label="Photo details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5v.5"/></svg></button>
 </div>
 
@@ -1175,6 +1208,7 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
   </div>
   <div class="pg-module-wrap pgh-wrap">
     <div class="pgh-stats" id="pghStats"></div>
+    <div class="pgh-install hidden" id="pghInstall"><div><b>Keep this gallery as an app</b><span id="pghInstallTxt">Opens full screen, straight from your home screen.</span></div><button type="button" class="mk-btn-peach" id="pghInstallBtn">Install</button></div>
     <button type="button" class="pg-findme hidden" data-findme><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/></svg><span>Find me · see all your photos</span></button>
     <div class="pgh-sec"><div class="pgh-head"><h3>Events</h3><button type="button" class="pgh-more" data-goto="gallery">All galleries →</button></div><div class="pgh-row" id="pghEvents"></div></div>
     <div class="pgh-sec hidden" id="pghLovedSec"><div class="pgh-head"><h3>Most loved</h3></div><div class="pgh-row pgh-row-sm" id="pghLoved"></div></div>
@@ -1281,6 +1315,17 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
     <button type="button" class="fm-link" id="fmAgain">Try another photo</button>
   </div>
 </div>
+<div class="overlay-backdrop" id="iosBackdrop"></div>
+<div class="reg-overlay fm-sheet" id="iosSheet" role="dialog" aria-modal="true" aria-labelledby="iosTitle">
+  <button type="button" class="pgv-sheet-close" id="iosClose" aria-label="Close">×</button>
+  <h3 class="fm-title" id="iosTitle">Add to Home Screen</h3>
+  <p class="fm-sub">On iPhone the gallery opens full screen when it is on your home screen.</p>
+  <ol class="ios-steps">
+    <li>Tap the <b>Share</b> button <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M6 11v9h12v-9"/></svg> at the bottom (or top) of Safari.</li>
+    <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+    <li>Tap <b>Add</b>. Open the gallery from the new icon.</li>
+  </ol>
+</div>
 <div class="pg-toast" id="pgToast"></div>
 <div class="pg-boot" id="pgBoot" role="status"><h1>PicGrades</h1><span id="pgBootMsg">Opening the gallery…</span></div>
 <script src="/app/config.js"></script>
@@ -1307,7 +1352,7 @@ function pgEsc(t) { const d = document.createElement('div'); d.textContent = Str
 function pgDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; }
 function pgMoment(photo, ceremony, n, total) {
   return {
-    id: photo.id, title: (ceremony === 'Root Moment' ? GALLERY.title : ceremony) + ' · ' + n + '/' + total, story: '',
+    id: photo.id, n: n, title: (ceremony === 'Root Moment' ? GALLERY.title : ceremony) + ' · ' + n + '/' + total, story: '',
     date: pgDate(GALLERY.eventDate), couple: String(GALLERY.title || '').toUpperCase(), ceremony: ceremony.toUpperCase(),
     camera: '', lens: GALLERY.studio ? ('EDITED BY PICGRADES · ' + String(GALLERY.studio).toUpperCase()) : '',
     photoUrl: pgImg(photo.id, 2048), thumbUrl: pgImg(photo.id, 360),
@@ -2015,16 +2060,17 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     renderGalleries();
     renderMoments();
     pgRenderHub();
+    pgSetAppMeta();
     if ((GALLERY.events || []).length) useSet(GALLERY.events[0].name);
     const startView = (location.hash || '').replace('#', '');
-    switchView(['gallery', 'hub', 'rooms', 'studio'].indexOf(startView) > -1 ? startView : 'moments');
+    switchView(['gallery', 'moments', 'hub', 'rooms', 'studio'].indexOf(startView) > -1 ? startView : 'hub');
     bootEl.classList.add('hide');
   }).catch(err => { bootMsg.textContent = err.message; });
 })();
 </script>
 <script>
 (function pgViewerNav() {
-  const view = document.getElementById('view-root'), hero = document.getElementById('mkPhotoHero'), body = document.body;
+  const view = document.getElementById('view-root'), hero = document.getElementById('pgvFeed'), body = document.body;
   const blur = document.getElementById('pgvBlur'), countEl = document.getElementById('pgvCount');
   const likeEl = document.getElementById('pgvLike'), likeCountEl2 = document.getElementById('pgvLikeCount'), noteCountEl2 = document.getElementById('pgvNoteCount');
   const isOn = () => view.classList.contains('active') && !document.querySelector('.reg-overlay.show') && !body.classList.contains('pgv-info');
@@ -2057,13 +2103,14 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     const t = activeIdx + d;
     if (t < 0) { showToast('First photo of ' + CURRENT_SET); return; }
     if (t >= MOMENTS.length) { showToast('Last photo of ' + CURRENT_SET); return; }
-    advanceMomentFromMainStage(d);
+    selectMomentDirectly(t, true);
   }
   // mouse wheel / trackpad: down = next, up = previous
   let acc = 0, lockUntil = 0, accTimer = null;
   view.addEventListener('wheel', (e) => {
     if (!isOn()) return;
     if (e.target.closest('.mk-filmstrip-rail, .mk-editorial-sheet')) return;
+    if (e.ctrlKey || (window.pgvIsZoomed && pgvIsZoomed())) return; // zoom / pan
     e.preventDefault();
     if (Date.now() < lockUntil) return;
     acc += e.deltaY; clearTimeout(accTimer); accTimer = setTimeout(() => { acc = 0; }, 200);
@@ -2077,6 +2124,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     const now = Date.now();
     if (now - lastTap < 320) {
       clearTimeout(tapTimer); lastTap = 0;
+      if (window.pgvZoomReset && pgvZoomReset()) return; // double-tap on a zoomed photo = back to whole photo
       const m = MOMENTS[activeIdx];
       if (m) {
         if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m);
@@ -2088,17 +2136,6 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     lastTap = now;
     tapTimer = setTimeout(() => body.classList.toggle('pgv-clean'), 320);
   }
-  hero.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) { sx = null; return; } sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
-  hero.addEventListener('touchmove', (e) => { if (sx !== null) e.preventDefault(); }, { passive: false });
-  hero.addEventListener('touchend', (e) => {
-    if (sx === null) return;
-    lastTouch = Date.now();
-    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; sx = null;
-    if (!isOn() && !body.classList.contains('pgv-info')) return;
-    if (Math.abs(dy) > 45 && Math.abs(dy) >= Math.abs(dx)) { if (isOn()) go(dy < 0 ? 1 : -1); return; }
-    if (Math.abs(dx) > 45) { if (isOn()) go(dx < 0 ? 1 : -1); return; }
-    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) tap(t.clientX, t.clientY);
-  }, { passive: true });
   hero.addEventListener('click', (e) => { if (Date.now() - lastTouch < 700) return; tap(e.clientX, e.clientY); });
 
   window.addEventListener('keydown', (e) => {
@@ -2351,6 +2388,199 @@ function pgRenderHub() {
   heroEl.onclick = () => { if (cur) pgOpenPhoto(cur.p.id); };
   heroEl.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && cur) { e.preventDefault(); pgOpenPhoto(cur.p.id); } };
 }
+</script>
+<script>
+// ---------- zoom: pinch on phones, button / ctrl+wheel / drag on computers. Photos are always shown whole until zoomed. ----------
+function pgZoomable(box, img, scroller) {
+  let s = 1, x = 0, y = 0, st = null, drag = null;
+  function apply() {
+    img.style.transform = s > 1.001 ? 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')' : '';
+    box.classList.toggle('is-zoomed', s > 1.001);
+    scroller.style.overflowY = s > 1.001 ? 'hidden' : '';
+  }
+  function clamp() { const mx = (s - 1) * box.clientWidth / 2, my = (s - 1) * box.clientHeight / 2; x = Math.max(-mx, Math.min(mx, x)); y = Math.max(-my, Math.min(my, y)); }
+  function rel(cx, cy) { const r = box.getBoundingClientRect(); return [cx - r.left - r.width / 2, cy - r.top - r.height / 2]; }
+  function zoomAt(ns, px, py) { ns = Math.max(1, Math.min(5, ns)); const k = ns / s; x = px - k * (px - x); y = py - k * (py - y); s = ns; if (s <= 1.001) { s = 1; x = y = 0; } clamp(); apply(); }
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  box.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) { e.preventDefault(); const m = rel((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2); st = { d: dist(e.touches), s, x, y, m }; scroller.style.overflowY = 'hidden'; }
+    else if (e.touches.length === 1 && s > 1) st = { px: e.touches[0].clientX, py: e.touches[0].clientY, x, y };
+  }, { passive: false });
+  box.addEventListener('touchmove', (e) => {
+    if (!st) return;
+    if (e.touches.length === 2 && st.d) {
+      e.preventDefault();
+      const ns = Math.max(1, Math.min(5, st.s * dist(e.touches) / st.d));
+      const m = rel((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2), k = ns / st.s;
+      x = m[0] - k * (st.m[0] - st.x); y = m[1] - k * (st.m[1] - st.y); s = ns; clamp(); apply();
+    } else if (e.touches.length === 1 && s > 1 && st.px !== undefined) {
+      e.preventDefault(); x = st.x + e.touches[0].clientX - st.px; y = st.y + e.touches[0].clientY - st.py; clamp(); apply();
+    }
+  }, { passive: false });
+  box.addEventListener('touchend', (e) => {
+    if (e.touches.length === 1 && s > 1) { st = { px: e.touches[0].clientX, py: e.touches[0].clientY, x, y }; return; }
+    if (!e.touches.length) { if (s < 1.08) reset(); else apply(); st = null; }
+  });
+  box.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) { e.preventDefault(); e.stopPropagation(); const p = rel(e.clientX, e.clientY); zoomAt(s * Math.exp(-e.deltaY / 120), p[0], p[1]); }
+    else if (s > 1) { e.preventDefault(); e.stopPropagation(); x -= e.deltaX; y -= e.deltaY; clamp(); apply(); }
+  }, { passive: false });
+  box.addEventListener('mousedown', (e) => { if (s > 1 && e.button === 0) { drag = { px: e.clientX, py: e.clientY, x, y, moved: false }; e.preventDefault(); } });
+  window.addEventListener('mousemove', (e) => { if (!drag) return; x = drag.x + e.clientX - drag.px; y = drag.y + e.clientY - drag.py; if (Math.abs(e.clientX - drag.px) + Math.abs(e.clientY - drag.py) > 4) drag.moved = true; clamp(); apply(); });
+  window.addEventListener('mouseup', () => { if (drag && drag.moved) box.dataset.dragged = String(Date.now()); drag = null; });
+  function reset() { const was = s > 1; s = 1; x = y = 0; apply(); return was; }
+  return { reset, zoomed: () => s > 1.001, toggle: (cx, cy) => { if (s > 1) reset(); else { const p = cx === undefined ? [0, 0] : rel(cx, cy); zoomAt(2.5, p[0], p[1]); } } };
+}
+document.addEventListener('gesturestart', (e) => e.preventDefault()); // iPhone: no page zoom, our pinch zoom instead
+
+// ---------- download (no name or number asked) ----------
+const pgBlobCache = {};
+function pgFileName(m) {
+  const slug = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return [slug(GALLERY.title) || 'wedding', slug(m.ceremony || m.set || 'photo'), String(m.n || (MOMENTS.indexOf(m) + 1) || 1).padStart(3, '0')].join('_') + '.jpg';
+}
+async function pgDownload(m) {
+  if (!m) return;
+  const name = pgFileName(m), phone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const saveBlob = (blob) => {
+    const file = new File([blob], name, { type: blob.type || 'image/jpeg' });
+    if (phone && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] });
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000); showToast('Photo saved');
+  };
+  try {
+    if (pgBlobCache[m.id]) { await saveBlob(pgBlobCache[m.id]); return; }
+    showToast('Getting the photo…');
+    const r = await fetch(pgImg(m.id, 2048)); if (!r.ok) throw new Error('fetch');
+    const blob = await r.blob(); pgBlobCache[m.id] = blob;
+    try { await saveBlob(blob); }
+    catch (e) { if (e && e.name === 'AbortError') return; if (e && e.name === 'NotAllowedError') { showToast('Photo ready — tap download again to save'); return; } throw e; }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    window.open('https://drive.google.com/uc?export=download&id=' + encodeURIComponent(m.id), '_blank', 'noopener');
+  }
+}
+
+// ---------- viewer feed: one photo per screen; swipe/scroll moves the whole photo, like the filmstrip ----------
+(function pgViewerFeed() {
+  const feed = document.getElementById('pgvFeed'), view = document.getElementById('view-root');
+  let items = [], feedIdx = 0, fromFeed = false, scrollTimer = null;
+  function build() {
+    feed.innerHTML = ''; feedIdx = 0;
+    items = MOMENTS.map((m, i) => {
+      const el = document.createElement('div'); el.className = 'pgv-item'; el.dataset.i = i;
+      const bl = document.createElement('div'); bl.className = 'pgv-iblur';
+      const im = document.createElement('img'); im.alt = (GALLERY.title || '') + ' · ' + (CURRENT_SET || '') + ' ' + (i + 1); im.decoding = 'async'; im.draggable = false;
+      el.appendChild(bl); el.appendChild(im); feed.appendChild(el);
+      return { el, im, bl, m, z: null };
+    });
+  }
+  function load(i) {
+    for (let j = i - 1; j <= i + 2; j++) {
+      const it = items[j]; if (!it || it.im.getAttribute('src')) continue;
+      it.im.onerror = function () { this.onerror = null; this.src = pgImgFallback(it.m.id, 2048); it.bl.style.backgroundImage = 'url("' + pgImgFallback(it.m.id, 60) + '")'; };
+      it.im.src = it.m.photoUrl || pgImg(it.m.id, 2048);
+      it.bl.style.backgroundImage = 'url("' + pgImg(it.m.id, 60) + '")';
+      it.z = pgZoomable(it.el, it.im, feed);
+    }
+  }
+  function cur() { return items[feedIdx]; }
+  window.pgvIsZoomed = () => !!(cur() && cur().z && cur().z.zoomed());
+  window.pgvZoomReset = () => !!(cur() && cur().z && cur().z.reset());
+  function scrollToIdx(i, smooth) {
+    const h = feed.clientHeight; if (!h) return;
+    feed.scrollTo({ top: i * h, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  const _useSet = useSet;
+  useSet = function (name) { _useSet(name); build(); };
+  const _apply = applyActiveMoment;
+  applyActiveMoment = function (idx) {
+    _apply(idx);
+    if (fromFeed || !items.length) return;
+    const target = activeIdx, near = Math.abs(target - feedIdx) <= 1;
+    items.forEach(it => it.z && it.z.reset());
+    feedIdx = target; load(target);
+    requestAnimationFrame(() => scrollToIdx(target, near && view.classList.contains('active')));
+  };
+  feed.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const h = feed.clientHeight; if (!h || !items.length) return;
+      const i = Math.max(0, Math.min(items.length - 1, Math.round(feed.scrollTop / h)));
+      load(i);
+      if (i !== activeIdx) {
+        items.forEach((it, k) => { if (k !== i && it.z) it.z.reset(); });
+        feedIdx = i; fromFeed = true;
+        try { selectMomentDirectly(i, true); } finally { fromFeed = false; }
+      }
+    }, 90);
+  }, { passive: true });
+  window.addEventListener('resize', () => { if (items.length) scrollToIdx(feedIdx, false); });
+  // buttons
+  document.getElementById('pgvSave').addEventListener('click', () => pgDownload(MOMENTS[activeIdx]));
+  const zb = document.getElementById('pgvZoom');
+  zb.addEventListener('click', () => { const it = cur(); if (!it) return; load(feedIdx); it.z.toggle(); zb.classList.toggle('on', it.z.zoomed()); });
+  feed.addEventListener('scroll', () => zb.classList.remove('on'), { passive: true });
+  const fsb = document.getElementById('pgvFull'), de = document.documentElement;
+  const fsOk = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  if (fsOk && !/iPhone|iPod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches) fsb.classList.remove('hidden');
+  fsb.addEventListener('click', () => {
+    if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (de.requestFullscreen || de.webkitRequestFullscreen).call(de); if (r && r.catch) r.catch(() => {}); }
+  });
+  // a drag to pan must not count as a tap
+  feed.addEventListener('click', (e) => { const it = e.target.closest('.pgv-item'); if (it && it.dataset.dragged && Date.now() - Number(it.dataset.dragged) < 300) e.stopImmediatePropagation(); }, true);
+})();
+
+// ---------- Root Moment reels: zoom + download, like Instagram ----------
+(function pgReelsExtra() {
+  const ICON_SAVE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';
+  const _render = renderMoments;
+  renderMoments = function () {
+    _render();
+    const feed = document.getElementById('pgmFeed'), zs = [];
+    document.querySelectorAll('#pgmFeed .pgm-item').forEach((item, i) => {
+      const m = ROOT_SET[i], img = item.querySelector('.pgm-img'); if (!m || !img) return;
+      const z = pgZoomable(item, img, feed); zs.push(z);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pgm-btn'; b.setAttribute('aria-label', 'Download photo'); b.innerHTML = ICON_SAVE;
+      b.addEventListener('click', (e) => { e.stopPropagation(); pgDownload(m); });
+      const acts = item.querySelector('.pgm-actions'); if (acts) acts.appendChild(b);
+    });
+    let t = null;
+    feed.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => zs.forEach(z => z.zoomed() && !feed.style.overflowY && z.reset()), 120); }, { passive: true });
+  };
+})();
+
+// ---------- install as an app (PWA) ----------
+(function pgInstall() {
+  const card = document.getElementById('pghInstall'), btn = document.getElementById('pghInstallBtn');
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let deferred = null;
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; if (!standalone) card.classList.remove('hidden'); });
+  window.addEventListener('appinstalled', () => { card.classList.add('hidden'); showToast('Installed — open it from your home screen'); });
+  if (!standalone && ios) card.classList.remove('hidden');
+  const sheet = document.getElementById('iosSheet'), back = document.getElementById('iosBackdrop');
+  const closeIos = () => { sheet.classList.remove('show'); back.classList.remove('show'); };
+  document.getElementById('iosClose').addEventListener('click', closeIos); back.addEventListener('click', closeIos);
+  btn.addEventListener('click', () => {
+    if (deferred) { deferred.prompt(); deferred.userChoice.finally(() => { deferred = null; }); return; }
+    if (ios) { sheet.classList.add('show'); back.classList.add('show'); return; }
+    showToast('Use your browser menu → Install app / Add to Home screen');
+  });
+  // per-gallery manifest (name + start page), added once the gallery is known
+  window.pgSetAppMeta = function () {
+    if (!GALLERY || !GALLERY_ID) return;
+    document.getElementById('pgAppTitle').setAttribute('content', String(GALLERY.title || 'Wedding Gallery').slice(0, 30));
+    if (!document.querySelector('link[rel=manifest]')) {
+      const l = document.createElement('link'); l.rel = 'manifest';
+      l.href = '/api/manifest?g=' + encodeURIComponent(GALLERY_ID) + '&n=' + encodeURIComponent(GALLERY.title || 'Wedding Gallery');
+      document.head.appendChild(l);
+    }
+  };
+})();
 </script>
 </body>
 </html>

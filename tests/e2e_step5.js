@@ -57,7 +57,7 @@ const srv = http.createServer((req, res) => {
   b = await chromium.launch({ args: GL.concat(['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-video-capture=/tmp/selfie.y4m']) });
   ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, permissions: ['camera'] }); pg = await ctx.newPage();
   pg.on('pageerror', e => errors.push('gallery: ' + e.message)); await pg.route('**fonts.g**', r => r.abort()); await photoRoute(pg);
-  await pg.goto('http://localhost:8771/g/' + pub.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
+  await pg.goto('http://localhost:8771/g/' + pub.galleryId + '#moments'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
   console.log('monogram:', await pg.textContent('#pgMono'), '| stamp text gone:', !(await pg.content()).includes('結婚'));
   await pg.screenshot({ path: '/tmp/s5_moments_findme.png' });
   await pg.click('.pgm-findme'); await pg.waitForTimeout(300);
@@ -73,7 +73,7 @@ const srv = http.createServer((req, res) => {
   console.log('collections:', (await pg.locator('.pg-collection h3').allTextContents()).join(', '));
   await pg.screenshot({ path: '/tmp/s5_collections_personal.png' });
   // live camera
-  await pg.click('.pg-findme'); await pg.waitForTimeout(300); await pg.click('#fmCamBtn');
+  await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(300); await pg.click('#fmCamBtn');
   await pg.waitForFunction(() => !document.getElementById('fmShoot').disabled, null, { timeout: 120000 });
   console.log('camera:', await pg.textContent('#fmHint')); await pg.screenshot({ path: '/tmp/s5_camera.png' });
   await pg.click('#fmShoot'); await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });

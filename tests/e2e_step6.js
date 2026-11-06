@@ -64,5 +64,23 @@ const srv = http.createServer((req, res) => {
     }
     await ctx.close();
   }
+  { // iPhone: install card + Add to Home Screen steps; Root Moment reels have zoom + download
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' });
+    const pg = await ctx.newPage(); pg.on('pageerror', e => errors.push('iphone: ' + e.message)); await pg.route('**fonts.g**', r => r.abort());
+    const FXD = path.join(__dirname, 'fixtures'); const fx = fs.readdirSync(FXD).filter(f => f.endsWith('.jpg')).map(f => path.join(FXD, f));
+    await pg.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync(fx[0]) }));
+    await pg.goto('http://localhost:8772/g/' + A.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(500);
+    console.log('iphone | lands on hub:', await pg.isVisible('#view-hub'), '| install card:', await pg.isVisible('#pghInstall'), '| manifest:', await pg.getAttribute('link[rel=manifest]', 'href'), '| app title:', await pg.getAttribute('#pgAppTitle', 'content'));
+    await pg.click('#pghInstallBtn'); await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/s7_ios_install.png' });
+    console.log('iphone | steps sheet:', await pg.isVisible('#iosSheet.show'));
+    await pg.click('#iosClose'); await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500);
+    console.log('iphone | reel buttons:', await pg.locator('.pgm-item').first().locator('.pgm-btn').count(), '| full screen button hidden (iPhone cannot):', !(await pg.isVisible('#pgvFull')));
+    await pg.screenshot({ path: '/tmp/s7_reel_iphone.png' });
+    await pg.locator('.pgm-item').first().locator('.pgm-btn').first().click(); await pg.click('.pg-collection-none', { timeout: 1 }).catch(() => {});
+    await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(600);
+    console.log('iphone | viewer fullscreen btn visible:', await pg.isVisible('#pgvFull'));
+    await pg.screenshot({ path: '/tmp/s7_viewer_iphone.png' });
+    await ctx.close();
+  }
   console.log('page errors:', errors); await b.close(); srv.close();
 });
