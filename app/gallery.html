@@ -1083,6 +1083,9 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 .ios-steps li{margin-bottom:8px}
 .ios-steps svg{width:18px;height:18px;vertical-align:-3px}
 .pgm-item{touch-action:pan-y}
+html.pg-dark,body.pgv-on,body.pgm-on{background:#0b0908}
+html.ios-app #view-moments,html.ios-app #view-root.active{bottom:auto;height:var(--pg-full-h,100dvh)}
+html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-stage{height:var(--pg-full-h,100dvh)}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>
@@ -2580,6 +2583,23 @@ async function pgDownload(m) {
       document.head.appendChild(l);
     }
   };
+})();
+</script>
+<script>
+(function pgIosAppHeight() {
+  const de = document.documentElement;
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const app = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  function dark() { de.classList.toggle('pg-dark', document.body.classList.contains('pgv-on') || document.body.classList.contains('pgm-on')); }
+  new MutationObserver(dark).observe(document.body, { attributes: true, attributeFilter: ['class'] }); dark();
+  if (!(ios && app)) return;
+  de.classList.add('ios-app');
+  function size() {
+    const portrait = window.matchMedia('(orientation: portrait)').matches;
+    const full = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+    de.style.setProperty('--pg-full-h', Math.max(full, window.innerHeight) + 'px');
+  }
+  size(); window.addEventListener('resize', size); window.addEventListener('orientationchange', () => setTimeout(size, 300));
 })();
 </script>
 </body>

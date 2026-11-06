@@ -82,5 +82,17 @@ const srv = http.createServer((req, res) => {
     await pg.screenshot({ path: '/tmp/s7_viewer_iphone.png' });
     await ctx.close();
   }
+  { // iPhone home-screen app with the short-viewport bug: screen 844 tall, page only 790
+    const ctx = await b.newContext({ viewport: { width: 390, height: 790 }, screen: { width: 390, height: 844 }, hasTouch: true, isMobile: true, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' });
+    await ctx.addInitScript(() => { Object.defineProperty(navigator, 'standalone', { get: () => true }); });
+    const pg = await ctx.newPage(); pg.on('pageerror', e => errors.push('iphone-app: ' + e.message)); await pg.route('**fonts.g**', r => r.abort());
+    await pg.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync(path.join(__dirname, 'fixtures', 'sample1.jpg')) }));
+    await pg.goto('http://localhost:8772/g/' + A.galleryId + '#moments'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(400);
+    console.log('iphone app | reels height:', await pg.$eval('#view-moments', e => e.getBoundingClientRect().height), await pg.$eval('.pgm-item', e => e.getBoundingClientRect().height), '| page dark:', await pg.evaluate(() => getComputedStyle(document.documentElement).backgroundColor));
+    await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(500);
+    console.log('iphone app | viewer height:', await pg.$eval('#view-root', e => e.getBoundingClientRect().height), await pg.$eval('.pgv-item', e => e.getBoundingClientRect().height));
+    await pg.click('#pgvBack'); await pg.waitForTimeout(300); console.log('iphone app | gallery page light again:', await pg.evaluate(() => getComputedStyle(document.documentElement).backgroundColor));
+    await ctx.close();
+  }
   console.log('page errors:', errors); await b.close(); srv.close();
 });

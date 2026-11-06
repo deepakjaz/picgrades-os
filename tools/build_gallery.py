@@ -1210,6 +1210,33 @@ rep("""    renderMoments();
     pgRenderHub();
     pgSetAppMeta();""")
 
+# ===================== iPhone home-screen app: fill the bottom of the screen (2026-11-07) =====================
+# In an iPhone home-screen app, iOS can stop "full screen" boxes short of the bottom edge, leaving a light strip.
+# We size the photo screens from the real screen height and keep the page behind them dark.
+rep('.pgm-empty{', r"""html.pg-dark,body.pgv-on,body.pgm-on{background:#0b0908}
+html.ios-app #view-moments,html.ios-app #view-root.active{bottom:auto;height:var(--pg-full-h,100dvh)}
+html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-stage{height:var(--pg-full-h,100dvh)}
+.pgm-empty{""")
+assert s.count("</body>") == 1
+s = s.replace("</body>", r"""<script>
+(function pgIosAppHeight() {
+  const de = document.documentElement;
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const app = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  function dark() { de.classList.toggle('pg-dark', document.body.classList.contains('pgv-on') || document.body.classList.contains('pgm-on')); }
+  new MutationObserver(dark).observe(document.body, { attributes: true, attributeFilter: ['class'] }); dark();
+  if (!(ios && app)) return;
+  de.classList.add('ios-app');
+  function size() {
+    const portrait = window.matchMedia('(orientation: portrait)').matches;
+    const full = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+    de.style.setProperty('--pg-full-h', Math.max(full, window.innerHeight) + 'px');
+  }
+  size(); window.addEventListener('resize', size); window.addEventListener('orientationchange', () => setTimeout(size, 300));
+})();
+</script>
+</body>""", 1)
+
 s = s.replace('aria-label="Memory Rooms" title="Rooms"', 'aria-label="Notes and blessings" title="Notes"')
 import collections; left=[s[m.start()-60:m.start()+30] for m in re.finditer('(?i)demo', s)]; print('demo left:', left)
 open(out, 'w', encoding='utf-8').write(s)
