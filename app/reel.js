@@ -47,6 +47,14 @@
     '.rl-status{position:absolute;inset:4px 14px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(0,0,0,.35);text-align:center;pointer-events:none}' +
     '.rl-status.on{display:flex}.rl-status b{font:400 4rem/1 "Cormorant Garamond",serif;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}' +
     '.rl-status span{font:600 .95rem/1.3 inherit;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.7)}.rl-status small{font:500 .75rem/1 "IBM Plex Mono",monospace;color:#E7C873;letter-spacing:.06em;text-transform:uppercase}' +
+    '.rl-add{display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(231,200,115,.15);border:1px dashed #E7C873;color:#E7C873}.rl-add b{font:300 26px/1 sans-serif}.rl-add small{font:600 10px/1 sans-serif;margin-top:2px}' +
+    '.rl-picker{position:absolute;inset:0;z-index:5;background:#0b0908;display:flex;flex-direction:column}' +
+    '.rl-picker .rl-top{gap:10px}.rl-pdone{width:auto;margin:0;min-height:40px;padding:0 18px}.rl-pcount{margin-left:auto;font:500 .75rem/1 "IBM Plex Mono",monospace;color:rgba(255,255,255,.7)}' +
+    '.rl-ptabs{padding:4px 14px 10px}' +
+    '.rl-pgrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 3px calc(env(safe-area-inset-bottom,0px) + 10px);align-content:start}' +
+    '.rl-pick{position:relative;aspect-ratio:1;border:0;padding:0;background:#222;cursor:pointer}.rl-pick img{width:100%;height:100%;object-fit:cover;display:block}' +
+    '.rl-pick i{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:11px;border:2px solid #fff;background:rgba(0,0,0,.25)}' +
+    '.rl-pick.on i{background:#E7C873;border-color:#E7C873}.rl-pick.on i::after{content:"✓";display:block;text-align:center;font:700 13px/18px sans-serif;color:#1b140c}.rl-pick.on img{opacity:.8}' +
     '.rl-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:10px}.rl-bar i{display:block;height:100%;width:0;background:#E7C873}';
 
   // ---------- loading photos (direct from Drive, else through the gallery server) ----------
@@ -466,13 +474,55 @@
         [el('img', { src: 'https://lh3.googleusercontent.com/d/' + p.id + '=w160', alt: '', loading: 'lazy' }), el('span', { text: p.on ? String(num) : '+' })]);
       S.thumbs.appendChild(b);
     });
+    if ((S.opt.collections || []).length) S.thumbs.appendChild(el('button', { type: 'button', class: 'rl-th rl-add', 'aria-label': 'Add more photos', onclick: openPicker }, [el('b', { text: '+' }), el('small', { text: 'Add' })]));
     var P = plan(); S.info.textContent = P.used + ' photos · ' + P.shots + ' shots · ' + Math.round(P.dur) + ' s';
+  }
+
+  // ---------- choose photos from every collection ----------
+  function openPicker() {
+    stopPreview();
+    var cols = S.opt.collections || [], cur = 0, chosen = {};
+    S.photos.forEach(function (p) { chosen[p.id] = true; });
+    var grid = el('div', { class: 'rl-pgrid' }), tabs = el('div', { class: 'rl-row rl-ptabs' }), count = el('span', { class: 'rl-pcount' });
+    var box = el('div', { class: 'rl-picker', role: 'dialog', 'aria-label': 'Choose photos' }, [
+      el('div', { class: 'rl-top' }, [el('h3', { text: 'Choose photos' }), count, el('button', { type: 'button', class: 'rl-go rl-pdone', text: 'Done', onclick: done })]),
+      tabs, grid]);
+    function upd() { count.textContent = Object.keys(chosen).length + ' chosen'; }
+    function showTab(i) {
+      cur = i; tabs.querySelectorAll('.rl-chip').forEach(function (c, k) { c.classList.toggle('on', k === i); });
+      grid.innerHTML = '';
+      (cols[i].photos || []).forEach(function (p) {
+        var t = el('button', { type: 'button', class: 'rl-pick' + (chosen[p.id] ? ' on' : ''), 'aria-pressed': chosen[p.id] ? 'true' : 'false' },
+          [el('img', { src: 'https://lh3.googleusercontent.com/d/' + p.id + '=w240', alt: '', loading: 'lazy' }), el('i')]);
+        t.addEventListener('click', function () { if (chosen[p.id]) delete chosen[p.id]; else chosen[p.id] = true; t.classList.toggle('on', !!chosen[p.id]); t.setAttribute('aria-pressed', chosen[p.id] ? 'true' : 'false'); upd(); });
+        grid.appendChild(t);
+      });
+      grid.scrollTop = 0;
+    }
+    cols.forEach(function (c, i) { tabs.appendChild(el('button', { type: 'button', class: 'rl-chip', text: c.name + ' · ' + c.photos.length, onclick: function () { showTab(i); } })); });
+    tabs.appendChild(el('button', { type: 'button', class: 'rl-chip', text: 'Select all here', onclick: function () { (cols[cur].photos || []).forEach(function (p) { chosen[p.id] = true; }); showTab(cur); upd(); } }));
+    function done() {
+      var keep = S.photos.filter(function (p) { return chosen[p.id]; }), have = {};
+      keep.forEach(function (p) { have[p.id] = 1; p.on = true; });
+      var added = Object.keys(chosen).filter(function (id) { return !have[id]; }).slice(0, Math.max(0, 80 - keep.length));
+      S.photos = keep.concat(added.map(function (id) { return { id: id, on: true }; }));
+      box.remove(); renderThumbs();
+      var need = added.filter(function (id) { return !S.bitmaps[id]; });
+      if (!need.length) return;
+      S.goBtn.disabled = true; msg('Getting the new photos ready… 0 / ' + need.length);
+      loadPhotos(need, function (d, n) { msg('Getting the new photos ready… ' + d + ' / ' + n); }).then(function (got) {
+        Object.keys(got).forEach(function (id) { S.bitmaps[id] = got[id]; });
+        S.photos = S.photos.filter(function (p) { return S.bitmaps[p.id]; });
+        S.goBtn.disabled = false; renderThumbs(); msg('Tap ▶ to preview, then “Make video”.'); draw(S.canvas.getContext('2d'), plan(), 0.9);
+      });
+    }
+    S.wrap.appendChild(box); upd(); if (cols.length) showTab(0);
   }
 
   function open(opt) {
     if (S && S.wrap) close();
     if (!document.getElementById('rl-css')) document.head.appendChild(el('style', { id: 'rl-css', text: CSS }));
-    S = { opt: opt, tid: opt.style && TEMPLATES[opt.style] ? opt.style : 'south', seed: Math.floor(Math.random() * 1e9), T: null, photos: opt.photos.slice(0, 40).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, blurs: {}, buffers: {},
+    S = { opt: opt, tid: opt.style && TEMPLATES[opt.style] ? opt.style : 'south', seed: Math.floor(Math.random() * 1e9), T: null, photos: opt.photos.slice(0, 80).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, blurs: {}, buffers: {},
       names: opt.title || 'Our Wedding',  date: opt.date || '', studio: opt.studio || '', length: 30, endCard: true, tracks: [], track: null };
     S.T = TEMPLATES[S.tid];
     var wrap = el('div', { class: 'rl-wrap', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Make a reel' });

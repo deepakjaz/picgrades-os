@@ -1,6 +1,7 @@
 // Browser test for step 10: Create row, name + phone, Find me gate, save a collection, upload a moment, couple approval, guest sees thank-you, guest video in Root Moment.
 const http = require('http'); const fs = require('fs'); const path = require('path'); const { execFileSync } = require('child_process');
-const { call, mail, DRIVE } = require('./gas_mock');
+const { call, mail, DRIVE, DB } = require('./gas_mock');
+DB.Settings.push(['guestGate', 'on', 'test: guest checks on']);
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
 const W = 'TENWEDDING00000000001';
 DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' }; DRIVE.folders.tW = { name: 'Wedding', parent: W };

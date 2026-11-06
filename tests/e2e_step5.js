@@ -1,6 +1,7 @@
 // Browser test for face reading (faces.html) and Find me (gallery): real face photos, real face models.
 const http = require('http'); const fs = require('fs'); const path = require('path'); const { execFileSync } = require('child_process');
-const { call, mail, DRIVE } = require('./gas_mock');
+const { call, mail, DRIVE, DB } = require('./gas_mock');
+DB.Settings.push(['guestGate', 'on', 'test: guest checks on']);
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures');
 const W = 'FACEWEDDING00000000001';
 DRIVE.folders[W] = { name: 'Neha_Rohan', access: 'ANYONE_WITH_LINK' };

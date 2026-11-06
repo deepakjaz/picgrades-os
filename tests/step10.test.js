@@ -1,5 +1,5 @@
 // Step 10: guests (name + phone), saved Find me collections, Root Moment uploads, couple approval + thank-you note.
-const { call, mail, DRIVE } = require('./gas_mock');
+const { call, mail, DRIVE, DB } = require('./gas_mock');
 let fails = 0; const assert = (c, m) => { if (!c) { fails++; console.error('FAIL', m); } else console.log('ok  ', m); };
 function login(email) { call('requestCode', { email }); const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]; return call('verifyCode', { email, code }).token; }
 const W = 'GUESTWEDDING00000001';
@@ -57,4 +57,6 @@ const gid2 = call('setGallery', { token: admin, orderId: call('queue', { token: 
 const j2 = call('guestJoin', { g: gid2, name: 'Ravi', phone: '9876543210' });
 const bad = call('uploadMoment', { g: gid2, guestId: j2.guestId, guestKey: j2.guestKey, mime: 'image/jpeg', base64: b64 });
 assert(!bad.ok && /not switched on/.test(bad.error), 'no edit access → friendly message');
+assert(call('getGallery', { g: gid }).gallery.guestGate === 'open', 'demo: open by default');
+DB.Settings.push(['guestGate', 'on', '']); assert(call('getGallery', { g: gid }).gallery.guestGate === 'on', 'Settings › guestGate = on switches guest checks on');
 console.log(fails ? fails + ' FAILED' : 'ALL PASSED'); process.exit(fails ? 1 : 0);

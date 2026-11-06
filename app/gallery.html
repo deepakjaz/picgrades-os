@@ -2737,7 +2737,8 @@ function pgOpenReel(photos) {
   photos = (photos || []).filter(Boolean);
   if (!photos.length) { showToast('No photos to make a reel'); return; }
   if (!pgReelLoad) pgReelLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/reel.js'; s.onload = res; s.onerror = () => { pgReelLoad = null; rej(new Error('Could not open the reel maker. Check the internet.')); }; document.head.appendChild(s); });
-  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi }))
+  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi,
+    collections: (GALLERY.personal || []).concat(GALLERY.events || []).concat((GALLERY.root || []).length ? [{ name: 'Root Moment', photos: GALLERY.root }] : []).map(c => ({ name: c.name, photos: c.photos.map(p => ({ id: p.id })) })) }))
     .catch(e => showToast(e.message));
 }
 document.getElementById('pgvReel').addEventListener('click', () => pgOpenReel(MOMENTS.map(m => ({ id: m.id }))));
@@ -2765,6 +2766,7 @@ pgApi = function (action, body) { const ck = pgStore('couple'); return _pgApi(ac
 function pgGuest() { return pgStore('guest'); }
 function pgIsStaff() { try { return !!localStorage.getItem('pg_token'); } catch (e) { return false; } }
 function pgIsCouple() { return !!(GALLERY && GALLERY.isCouple); }
+function pgOpenMode() { return !GALLERY || GALLERY.guestGate !== 'on'; } // demo: everything open; Settings › guestGate = on brings the guest checks back
 function pgGuestBody() { const g = pgGuest(); return g ? { guestId: g.guestId, guestKey: g.guestKey } : {}; }
 
 // "Tell us who you are" (name + mobile, OTP later)
@@ -2790,14 +2792,14 @@ function pgNeedGuest(next, why) {
 })();
 // Find me needs the guest's name first (capture phase, before the Find me sheet opens)
 document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-findme]'); if (!b || pgGuest() || pgIsCouple() || pgIsStaff()) return;
+  const b = e.target.closest('[data-findme]'); if (!b || pgOpenMode() || pgGuest() || pgIsCouple() || pgIsStaff()) return;
   e.stopImmediatePropagation(); e.preventDefault();
   pgNeedGuest(() => b.click(), 'First, tell us who you are — then take a selfie to find your photos.');
 }, true);
 // Reels: couple and photographer anytime; guests after their name + Find me (when face search is on)
 const _openReel = pgOpenReel;
 pgOpenReel = function (photos) {
-  if (pgIsCouple() || pgIsStaff()) return _openReel(photos);
+  if (pgOpenMode() || pgIsCouple() || pgIsStaff()) return _openReel(photos);
   pgNeedGuest(() => {
     if (GALLERY.faceSearch && !pgStore('found')) { showToast('First find your photos — then make your reel'); setTimeout(() => document.getElementById('pgcFind').click(), 300); return; }
     _openReel(photos);
