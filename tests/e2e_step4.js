@@ -14,7 +14,8 @@ console.log('published:', pub.ok, pub.photoCount);
 const srv = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api') { let b = ''; req.on('data', d => b += d); req.on('end', () => { const p = JSON.parse(b); res.end(JSON.stringify(call(p.action, p))); }); return; }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
-  let f = path.join(root, req.url.split('?')[0]);
+  let u = req.url.split('?')[0]; if (/^\/g\/[a-z0-9]+$/.test(u)) u = '/app/gallery.html';
+  let f = path.join(root, u);
   fs.readFile(f, (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', f.endsWith('.html') ? 'text/html' : 'text/javascript'); res.end(d); } });
 }).listen(8767, async () => {
   const { chromium } = require('playwright');
@@ -25,7 +26,7 @@ const srv = http.createServer((req, res) => {
     await pg.route('**fonts.g**', r => r.abort());
     // even ids = portrait, odd = landscape
     await pg.route('https://lh3.googleusercontent.com/**', r => { const n = parseInt(r.request().url().match(/IMG(\d+)/)[1], 10); r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync('/tmp/sample' + (n % 2 ? 0 : 1) + '.jpg') }); });
-    await pg.goto('http://localhost:8767/app/gallery.html?g=' + pub.galleryId);
+    await pg.goto('http://localhost:8767/g/' + pub.galleryId);
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 });
     await pg.waitForTimeout(500);
     console.log(vp.name, '| landing view moments:', await pg.isVisible('#view-moments'), '| reels:', await pg.locator('.pgm-item').count(), '| img fit:', await pg.$eval('.pgm-img', e => getComputedStyle(e).objectFit));
