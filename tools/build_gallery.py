@@ -123,7 +123,7 @@ body.pgm-on .mk-header{display:none}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>""")
-rep('<div class="pg-toast" id="pgToast"></div>', '<div class="pg-toast" id="pgToast"></div>\n<div class="pg-boot" id="pgBoot" role="status"><h1>PicGrades</h1><span id="pgBootMsg">Opening the gallery…</span></div>\n<script src="config.js"></script>')
+rep('<div class="pg-toast" id="pgToast"></div>', '<div class="pg-toast" id="pgToast"></div>\n<div class="pg-boot" id="pgBoot" role="status"><h1>PicGrades</h1><span id="pgBootMsg">Opening the gallery…</span></div>\n<script src="/app/config.js"></script>')
 
 # ---- data: replace demo MOMENTS with live loader ----
 start = s.index('const MOMENTS = [')
