@@ -28,6 +28,7 @@ const srv = http.createServer((req, res) => {
       r.fulfill({ contentType: 'image/jpeg', body: global.__fetchBytes(id), headers: { 'Access-Control-Allow-Origin': '*' } });
     });
     await pg.goto('http://localhost:8773/g/' + pub.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
+    await pg.evaluate(() => localStorage.setItem('pg_token', 'staff-test')); // photographer/PicGrades: reels without Find me
     if (mode === 'direct') {
       await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(500);
       await pg.click('#pgvReel');

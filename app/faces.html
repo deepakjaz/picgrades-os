@@ -76,6 +76,9 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     <p class="muted" style="margin:0 0 10px">Emails the gallery link. Gallery: <a id="galLink" target="_blank" rel="noopener"></a></p>
     <div class="row"><input id="sendTo" type="email" placeholder="client@email.com" style="flex:1 1 260px" aria-label="Client email"><button class="btn" id="sendBtn" type="button">Send to client</button></div>
     <p class="msg muted" id="sendMsg"></p>
+    <h2 style="margin-top:22px">Couple link</h2>
+    <p class="muted" style="margin:0 0 10px">Send this private link only to the bride and groom. With it they approve the photos and videos guests share in Root Moment, and write their thank-you note.</p>
+    <div class="row"><input id="coupleLink" readonly style="flex:1 1 260px" aria-label="Couple link"><button class="mini" id="coupleCopy" type="button">Copy</button></div>
   </section>
 </div>
 
@@ -257,6 +260,8 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     $('sub').textContent = r.gallery.studio + ' · ' + r.photos.length + ' photos' + (r.gallery.catalogName ? ' · order ' + r.gallery.catalogName : '');
     var url = location.origin + '/g/' + r.gallery.galleryId; $('galLink').href = url; $('galLink').textContent = url;
     $('sendTo').value = r.gallery.sentTo || r.gallery.clientEmail || '';
+    if (r.gallery.coupleKey) $('coupleLink').value = location.origin + '/g/' + r.gallery.galleryId + '?couple=' + r.gallery.coupleKey;
+    $('coupleCopy').onclick = function () { $('coupleLink').select(); if (navigator.clipboard) navigator.clipboard.writeText($('coupleLink').value).then(function () { $('coupleCopy').textContent = 'Copied'; }); };
     if (r.gallery.sentAt) $('sendMsg').textContent = 'Last sent to ' + r.gallery.sentTo + ' at ' + dmyhm(r.gallery.sentAt) + '.';
     ['readCard'].forEach(function (id) { $(id).classList.remove('hidden'); });
     paint(); if (counts().faces) showPeople();

@@ -61,16 +61,20 @@ const srv = http.createServer((req, res) => {
   console.log('monogram:', await pg.textContent('#pgMono'), '| stamp text gone:', !(await pg.content()).includes('結婚'));
   await pg.screenshot({ path: '/tmp/s5_moments_findme.png' });
   await pg.click('.pgm-findme'); await pg.waitForTimeout(300);
+  console.log('Find me asks name first:', await pg.isVisible('#idSheet.show')); await pg.fill('#idName', 'Neha Guest'); await pg.fill('#idPhone', '9876543210'); await pg.click('#idGo'); await pg.waitForSelector('#fmSheet.show');
   await pg.screenshot({ path: '/tmp/s5_sheet.png' });
   await pg.setInputFiles('#fmFile', '/tmp/selfie.jpg');
   await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });
   console.log('upload result:', await pg.textContent('#fmStatus'), '|', await pg.textContent('#fmOpen'));
+  await pg.fill('#fmSaveName', "Neha's photos"); await pg.click('#fmSaveBtn'); await pg.waitForSelector('#fmSaved:not(.hidden)'); console.log('saved:', await pg.textContent('#fmSaved'));
   await pg.screenshot({ path: '/tmp/s5_result.png' });
   await pg.click('#fmOpen'); await pg.waitForTimeout(600);
   console.log('viewer opened:', await pg.isVisible('#view-root'), await pg.textContent('#pgvCount'));
   await pg.screenshot({ path: '/tmp/s5_yourphotos_viewer.png' });
   await pg.click('#pgvBack'); await pg.waitForTimeout(400);
   console.log('collections:', (await pg.locator('.pg-collection h3').allTextContents()).join(', '));
+  await pg.click('.tkg-nav-item[data-nav=hub]'); await pg.waitForTimeout(300); console.log('hub create:', (await pg.locator('.pgc-card:not(.hidden) b').allTextContents()).join(' | '), '| mine:', (await pg.locator('#pgcMine .pgc-pill').allTextContents()).join(' | '));
+  await pg.click('#pghReel'); await pg.waitForTimeout(800); console.log('reel unlocked after Find me:', await pg.isVisible('.rl-wrap')); await pg.evaluate(() => PGReel.close()); await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(300);
   await pg.screenshot({ path: '/tmp/s5_collections_personal.png' });
   // live camera
   await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(300); await pg.click('#fmCamBtn');
