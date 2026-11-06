@@ -37,6 +37,7 @@ g = call('getGallery', { g: gid, device: 'deviceBBBB' }); assert(g.gallery.likes
 assert(!call('addNote', { g: gid, photoId: 'R0', device: 'deviceAAAA', name: '', text: 'hi' }).ok, 'note needs a name');
 r = call('addNote', { g: gid, photoId: 'R0', device: 'deviceAAAA', name: 'Meera Bhua', text: 'Beautiful <b>light</b>' });
 assert(r.ok, 'note added');
+{ const gg = call('getGallery', { g: gid }).gallery; assert(gg.recentNotes.length === 1 && gg.recentNotes[0].name === 'Meera Bhua' && gg.recentNotes[0].photoId === 'R0', 'hub: recent notes listed (newest first)'); }
 r = call('getNotes', { g: gid, photoId: 'R0' }); assert(r.notes.length === 1 && r.notes[0].text === 'Beautiful <b>light</b>', 'notes listed (raw text, page escapes it)');
 for (let i = 0; i < 20; i++) call('addNote', { g: gid, photoId: 'R1', device: 'deviceSPAM', name: 'x', text: 'y' + i });
 assert(!call('addNote', { g: gid, photoId: 'R1', device: 'deviceSPAM', name: 'x', text: 'z' }).ok && call('addNote', { g: gid, photoId: 'R1', device: 'deviceSPAM', name: 'x', text: 'z' }).error.indexOf('Too many') === 0, 'note rate limit (20/hour/device)');
