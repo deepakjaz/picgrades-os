@@ -26,7 +26,8 @@ const srv = http.createServer((req, res) => {
     await pg.route('**fonts.g**', r => r.abort());
     // even ids = portrait, odd = landscape
     await pg.route('https://lh3.googleusercontent.com/**', r => { const n = parseInt(r.request().url().match(/IMG(\d+)/)[1], 10); r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync('/tmp/sample' + (n % 2 ? 0 : 1) + '.jpg') }); });
-    await pg.goto('http://localhost:8767/g/' + pub.galleryId);
+    await pg.goto('http://localhost:8767/g/' + pub.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 }); console.log(vp.name, '| default landing is Hub:', await pg.isVisible('#view-hub'));
+    await pg.goto('http://localhost:8767/g/' + pub.galleryId + '#moments'); await pg.reload();
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 });
     await pg.waitForTimeout(500);
     console.log(vp.name, '| landing view moments:', await pg.isVisible('#view-moments'), '| reels:', await pg.locator('.pgm-item').count(), '| img fit:', await pg.$eval('.pgm-img', e => getComputedStyle(e).objectFit));
@@ -53,18 +54,36 @@ const srv = http.createServer((req, res) => {
     await pg.screenshot({ path: '/tmp/s4_collections_scrolled_' + vp.name + '.png' });
     await pg.locator('.pg-collection', { hasText: 'Wedding' }).click(); await pg.waitForTimeout(600);
     const sheetHidden = await pg.$eval('#mkEditorialSheet', e => e.getBoundingClientRect().top >= innerHeight - 2);
-    console.log(vp.name, '| viewer full screen:', await pg.$eval('#mkPhotoHero', e => Math.round(e.getBoundingClientRect().height)) === vp.height, '| text hidden:', sheetHidden, '| nav hidden:', !(await pg.isVisible('.tkg-global-nav')), '| counter:', await pg.textContent('#pgvCount'), '| fit:', await pg.$eval('#mkImgA', e => getComputedStyle(e).objectFit));
+    console.log(vp.name, '| viewer full screen:', await pg.$eval('#pgvFeed', e => Math.round(e.getBoundingClientRect().height)) === vp.height, '| text hidden:', sheetHidden, '| nav hidden:', !(await pg.isVisible('.tkg-global-nav')), '| counter:', await pg.textContent('#pgvCount'), '| fit:', await pg.$eval('.pgv-item img', e => getComputedStyle(e).objectFit));
     await pg.screenshot({ path: '/tmp/s4_viewer_' + vp.name + '.png' });
     if (vp.name === 'mobile') {
-      const swipe = async (y1, y2) => { await pg.evaluate(([a, b]) => { const h = document.getElementById('mkPhotoHero'); const t = (y) => [new Touch({ identifier: 1, target: h, clientX: 180, clientY: y })]; h.dispatchEvent(new TouchEvent('touchstart', { touches: t(a), changedTouches: t(a), bubbles: true, cancelable: true })); h.dispatchEvent(new TouchEvent('touchmove', { touches: t(b), changedTouches: t(b), bubbles: true, cancelable: true })); h.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: t(b), bubbles: true, cancelable: true })); }, [y1, y2]); await pg.waitForTimeout(500); };
-      await swipe(600, 300); console.log('swipe up ->', await pg.textContent('#pgvCount'));
-      await swipe(600, 300); console.log('swipe up ->', await pg.textContent('#pgvCount'));
-      await swipe(300, 600); console.log('swipe down ->', await pg.textContent('#pgvCount'));
+      // finger scroll = the whole photo moves (native scroll with snap), like the filmstrip
+      const scrollTo = async (k) => { await pg.$eval('#pgvFeed', (f, k) => f.scrollTo(0, f.clientHeight * k), k); await pg.waitForTimeout(500); };
+      await scrollTo(1); console.log('swipe up ->', await pg.textContent('#pgvCount'), '| rail active:', await pg.locator('.mk-thumb-item.is-active, .mk-thumb-item.active').count());
+      await scrollTo(2); console.log('swipe up ->', await pg.textContent('#pgvCount'));
+      await scrollTo(1); console.log('swipe down ->', await pg.textContent('#pgvCount'));
+      // pinch zoom (two fingers) then pan with one finger
+      const pinch = await pg.evaluate(() => {
+        const it = document.querySelectorAll('.pgv-item')[1], im = it.querySelector('img');
+        const T = (id, x, y) => new Touch({ identifier: id, target: it, clientX: x, clientY: y });
+        const ev = (type, list) => it.dispatchEvent(new TouchEvent(type, { touches: list, targetTouches: list, changedTouches: list, bubbles: true, cancelable: true }));
+        ev('touchstart', [T(1, 150, 400), T(2, 240, 400)]); ev('touchmove', [T(1, 90, 400), T(2, 300, 400)]); ev('touchend', []);
+        const z1 = im.style.transform;
+        ev('touchstart', [T(1, 200, 400)]); ev('touchmove', [T(1, 260, 430)]); ev('touchend', []);
+        return [z1, im.style.transform, it.classList.contains('is-zoomed'), document.getElementById('pgvFeed').style.overflowY];
+      });
+      console.log('pinch:', JSON.stringify(pinch));
+      await pg.waitForTimeout(400);
+      console.log('double-tap on zoomed photo resets zoom:', await (async () => { await pg.mouse.click(200, 420); await pg.waitForTimeout(80); await pg.mouse.click(200, 420); await pg.waitForTimeout(400); return pg.evaluate(() => document.querySelectorAll('.pgv-item img')[1].style.transform === ''); })());
       await pg.screenshot({ path: '/tmp/s4_viewer2_mobile.png' });
     } else {
-      await pg.mouse.move(500, 400); await pg.mouse.wheel(0, 120); await pg.waitForTimeout(600); console.log('wheel down ->', await pg.textContent('#pgvCount'));
-      await pg.mouse.wheel(0, 120); await pg.waitForTimeout(600); console.log('wheel down ->', await pg.textContent('#pgvCount'));
-      await pg.mouse.wheel(0, -120); await pg.waitForTimeout(600); console.log('wheel up ->', await pg.textContent('#pgvCount'));
+      await pg.mouse.move(500, 400); await pg.mouse.wheel(0, 120); await pg.waitForTimeout(900); console.log('wheel down ->', await pg.textContent('#pgvCount'));
+      await pg.mouse.wheel(0, 120); await pg.waitForTimeout(900); console.log('wheel down ->', await pg.textContent('#pgvCount'));
+      await pg.mouse.wheel(0, -120); await pg.waitForTimeout(900); console.log('wheel up ->', await pg.textContent('#pgvCount'));
+      await pg.click('#pgvZoom'); await pg.waitForTimeout(200); console.log('zoom button:', await pg.evaluate(() => { const f = document.getElementById('pgvFeed'), i = Math.round(f.scrollTop / f.clientHeight); return document.querySelectorAll('.pgv-item img')[i].style.transform; }));
+      await pg.click('#pgvZoom'); await pg.waitForTimeout(200);
+      const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 8000 }).catch(() => null), pg.click('#pgvSave')]);
+      console.log('download:', dl ? dl.suggestedFilename() : 'none');
       await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(500); console.log('arrow down ->', await pg.textContent('#pgvCount'));
     }
     await pg.waitForTimeout(800);
