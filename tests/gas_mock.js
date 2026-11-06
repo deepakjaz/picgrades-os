@@ -8,7 +8,20 @@ function sheet(name) { const v = DB[name]; return {
   getRange: (r, c, nr, nc) => ({ getValues: () => [v[r - 1].slice(c - 1, c - 1 + (nc || 1))], setValue: x => { while (v[r - 1].length < c) v[r - 1].push(''); v[r - 1][c - 1] = x; } }),
   appendRow: row => v.push(row) }; }
 const pad = n => String(n).padStart(2, '0');
-global.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheetByName: n => DB[n] ? sheet(n) : null }) };
+global.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheetByName: n => DB[n] ? sheet(n) : null, insertSheet: n => { DB[n] = [['']]; const sh = sheet(n); sh.getRange = (r, c, nr, nc) => ({ setValues: v => { DB[n][0] = v[0].slice(); }, getValues: () => [DB[n][r - 1].slice(c - 1, c - 1 + (nc || 1))], setValue: x => { DB[n][r - 1][c - 1] = x; } }); return sh; } }) };
+// Fake Google Drive: folders/files kept in memory. DRIVE.folders[id] = {name, access, parent, trashed}
+const DRIVE = { folders: {}, files: {}, n: 0 };
+function iter(a) { let i = 0; return { hasNext: () => i < a.length, next: () => a[i++] }; }
+function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed,
+  setContent: c => { f.content = c; }, getBlob: () => ({ getDataAsString: () => f.content }) }; }
+function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('No item with the given ID could be found'); return {
+  getId: () => id, getName: () => f.name, isTrashed: () => !!f.trashed, getSharingAccess: () => f.access || 'PRIVATE',
+  getFolders: () => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id).map(folderObj)),
+  getFiles: () => iter(Object.keys(DRIVE.files).filter(k => DRIVE.files[k].parent === id).map(fileObj)),
+  createFile: (name, content, mime) => { const fid = 'file' + (++DRIVE.n); DRIVE.files[fid] = { name, content, mime, parent: id }; return fileObj(fid); } }; }
+global.DriveApp = { getFolderById: folderObj, getFileById: id => { if (!DRIVE.files[id]) throw new Error('not found'); return fileObj(id); },
+  createFolder: name => { const id = 'fold' + (++DRIVE.n); DRIVE.folders[id] = { name, parent: 'root' }; return folderObj(id); } };
+const CACHE = {}; global.CacheService = { getScriptCache: () => ({ get: k => CACHE[k] || null, put: (k, v) => { CACHE[k] = v; }, remove: k => { delete CACHE[k]; } }) };
 global.ContentService = { createTextOutput: s => ({ s, setMimeType() { return this; } }), MimeType: { JSON: 'json' } };
 global.Logger = { log: () => {} };
 global.Session = { getScriptTimeZone: () => 'Asia/Kolkata' };
@@ -29,4 +42,4 @@ global.console = console;
 eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;');
 global.__clock = 0; const RealDate = Date;
 global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(RealDate.now() + global.__clock); } static now() { return RealDate.now() + global.__clock; } };
-module.exports = { advance: h => { global.__clock += h * 3600000; }, call: (action, p) => JSON.parse(doPost({ postData: { contents: JSON.stringify(Object.assign({ action }, p || {})) } }).s), DB, mail };
+module.exports = { DRIVE, advance: h => { global.__clock += h * 3600000; }, call: (action, p) => JSON.parse(doPost({ postData: { contents: JSON.stringify(Object.assign({ action }, p || {})) } }).s), DB, mail };

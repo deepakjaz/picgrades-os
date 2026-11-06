@@ -274,6 +274,29 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   // ---- queue / editor ----
   function loadQueue() { api('queue').then(function (res) { renderQueue(res); }).catch(function (x) { toast(x.message, true); }); }
   function act(label, fn, cls) { var b = el('button', { type: 'button', class: cls || 'mini', text: label }); b.addEventListener('click', function () { busy(b, fn(b)).then(function (m) { if (m) toast(m); loadQueue(); }).catch(function (x) { toast(x.message, true); }); }); return b; }
+  function galleryUrl(id) { return location.origin + '/g/' + id; }
+  function galleryBox(o) {
+    var box = el('details', { style: 'font-size:13px' });
+    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);min-height:32px', text: o.galleryId ? 'Gallery published · update' : 'Publish gallery' }));
+    var inner = el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-top:8px' });
+    if (o.galleryId) inner.appendChild(el('a', { href: galleryUrl(o.galleryId), target: '_blank', rel: 'noopener', text: galleryUrl(o.galleryId) }));
+    var folder = el('input', { placeholder: 'Google Drive folder link (shared: Anyone with the link)', style: 'min-height:40px' });
+    var title = el('input', { placeholder: 'Couple names, e.g. Aarav & Kavya', style: 'min-height:40px' });
+    var date = el('input', { type: 'date', style: 'min-height:40px', 'aria-label': 'Wedding date' });
+    var msg = el('span', { class: 'muted' });
+    var go = el('button', { type: 'button', class: 'mini', text: o.galleryId ? 'Refresh photos / save' : 'Publish gallery' });
+    go.addEventListener('click', function () {
+      msg.textContent = 'Reading the Drive folder…';
+      busy(go, api('setGallery', { orderId: o.orderId, folderUrl: folder.value, title: title.value, eventDate: date.value })).then(function (r) {
+        msg.textContent = '';
+        toast('Gallery ready: ' + r.photoCount + ' photos (' + r.events.map(function (e) { return e.name + ' ' + e.count; }).join(', ') + (r.rootCount ? ', Root Moment ' + r.rootCount : '') + '). Link: ' + galleryUrl(r.galleryId));
+        loadQueue();
+      }).catch(function (x) { msg.textContent = x.message; });
+    });
+    [folder, title, date, go, msg].forEach(function (x) { inner.appendChild(x); });
+    box.appendChild(inner);
+    return box;
+  }
   function renderQueue(res) {
     fill('qOpen', res.open.length ? res.open.map(function (o) {
       var k = String(o.status).toLowerCase();
@@ -293,9 +316,9 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
         btns.appendChild(act('Put on hold', function (b) { if (reason.classList.contains('hidden')) { reason.classList.remove('hidden'); reason.focus(); b.textContent = 'Confirm hold'; return Promise.resolve(''); } return api('holdOrder', { orderId: o.orderId, reason: reason.value }).then(function () { return 'On hold: ' + o.catalogName + ' (client emailed)'; }); }));
       }
       var done = el('div', { style: 'display:flex;gap:8px;flex-wrap:wrap' }, [lr, note, act('Complete + email client', function () { return api('completeOrder', { orderId: o.orderId, lrFilesLink: lr.value, note: note.value }).then(function () { return 'Completed: ' + o.catalogName + ' — client emailed the LR link.'; }); }, 'btn')]);
-      return el('div', { class: 'qitem' }, [head, meta, links, btns, done]);
+      return el('div', { class: 'qitem' }, [head, meta, links, btns, done, galleryBox(o)]);
     }) : [el('p', { class: 'muted', text: 'No open orders. 🎉'.replace(' 🎉', '') })]);
-    fill('qDone', res.recentDone.map(function (o) { return el('div', { class: 'qitem' }, [el('b', { text: o.catalogName }), el('span', { class: 'muted', style: 'font-size:13px', text: o.companyName + ' · ' + num(o.numberOfImages) + ' imgs' }), o.lrFilesLink ? el('a', { href: o.lrFilesLink, target: '_blank', rel: 'noopener', style: 'font-size:13px', text: 'LR link' }) : null]); }));
+    fill('qDone', res.recentDone.map(function (o) { return el('div', { class: 'qitem' }, [el('b', { text: o.catalogName }), el('span', { class: 'muted', style: 'font-size:13px', text: o.companyName + ' · ' + num(o.numberOfImages) + ' imgs' }), o.lrFilesLink ? el('a', { href: o.lrFilesLink, target: '_blank', rel: 'noopener', style: 'font-size:13px', text: 'LR link' }) : null, galleryBox(o)]); }));
   }
 
   // ---- start ----
