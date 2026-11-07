@@ -144,7 +144,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step16-cleanup',
+    version: 'step17-structure',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1027,18 +1027,18 @@ function gallerySummary_(g) {
   var key = 'sum:' + g.galleryId, hit = cacheGetBig_(key);
   if (hit) return JSON.parse(hit);
   ensureTab_('MomentNotes', NOTE_COLUMNS); ensureTab_('GuestPosts', POST_COLUMNS);
-  var last = {}, noteCount = {}, notes = {}, recent = [];
+  var taps = {}, likes = {}, noteCount = {}, notes = {}, recent = [];
   readTable_('MomentNotes').forEach(function (n) {
     if (String(n.galleryId) !== g.galleryId) return;
-    if (n.type === 'like' || n.type === 'unlike') { last[n.photoId + '|' + n.device] = n.type === 'like' && n.status !== 'hidden'; return; }   // a phone's last tap wins
+    if (n.type === 'likeTotal') { likes[n.photoId] = (likes[n.photoId] || 0) + Number(n.text || 0); return; }   // hearts packed by the nightly clean-up
+    if (n.type === 'like' || n.type === 'unlike') { var k = n.photoId + '|' + n.device; (taps[k] = taps[k] || []).push(n.status === 'hidden' ? 'unlike' : n.type); return; }
     if (n.type === 'note' && n.status !== 'hidden') {
       noteCount[n.photoId] = (noteCount[n.photoId] || 0) + 1;
       var x = { photoId: n.photoId, name: n.name, text: n.text, at: n.at };
       (notes[n.photoId] = notes[n.photoId] || []).push(x); recent.push(x);
     }
   });
-  var likes = {};
-  Object.keys(last).forEach(function (k) { if (last[k]) { var id = k.split('|')[0]; likes[id] = (likes[id] || 0) + 1; } });
+  Object.keys(taps).forEach(function (k) { var id = k.split('|')[0]; likes[id] = Math.max(0, (likes[id] || 0) + tapsNet_(taps[k])); });
   recent.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
   var posts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.status === 'approved'; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, at: x.at }; })
@@ -1684,8 +1684,45 @@ function nightlyCleanup() {
     });
     guests.forEach(function (x) { if (phoneGone[x.galleryId] && x.phone) { updateRowByNumber_('Guests', x._row, { phone: '' }); out.phonesRemoved++; } });
     posts.forEach(function (x) { if (phoneGone[x.galleryId] && x.phone) updateRowByNumber_('GuestPosts', x._row, { phone: '' }); });
+    out.heartRowsSaved = packHearts_();
   } finally { lock.releaseLock(); }
   Logger.log(JSON.stringify(out));
   return out;
 }
+/** What a phone's taps on one photo add up to: +1 if it ends on a heart; -1 if it starts by taking a heart away
+ *  (that heart was already counted, e.g. packed the night before). Works the same before and after packing. */
+function tapsNet_(list) { return (list[list.length - 1] === 'like' ? 1 : 0) - (list[0] === 'unlike' ? 1 : 0); }
+
+/** Nightly: hearts older than 2 days are packed into one 'likeTotal' row per photo, so the notes tab stays small
+ *  (one row per photo with hearts instead of one row per tap). */
+function packHearts_() {
+  ensureTab_('MomentNotes', NOTE_COLUMNS);
+  var sh = sheet_('MomentNotes'), last = sh.getLastRow(), cols = sh.getLastColumn();
+  if (last < 2) return 0;
+  var values = sh.getRange(1, 1, last, cols).getValues(), head = values[0], ix = {};
+  head.forEach(function (h, c) { ix[h] = c; });
+  var cutoff = Date.now() - 2 * 86400000, keep = [], totals = {}, taps = {}, packed = 0;
+  for (var r = 1; r < values.length; r++) {
+    var v = values[r], type = v[ix.type], at = parseDate_(v[ix.at] instanceof Date ? fmt_(v[ix.at]) : v[ix.at]).getTime();
+    var gp = v[ix.galleryId] + '|' + v[ix.photoId];
+    if (type === 'likeTotal') { totals[gp] = (totals[gp] || 0) + Number(v[ix.text] || 0); packed++; continue; }
+    if ((type === 'like' || type === 'unlike') && at > 0 && at < cutoff) {
+      var k = gp + '|' + v[ix.device]; (taps[k] = taps[k] || []).push(v[ix.status] === 'hidden' ? 'unlike' : type); packed++; continue;
+    }
+    keep.push(v);
+  }
+  if (!packed) return 0;
+  Object.keys(taps).forEach(function (k) { var gp = k.split('|').slice(0, 2).join('|'); totals[gp] = (totals[gp] || 0) + tapsNet_(taps[k]); });
+  var stamp = fmt_(new Date());
+  Object.keys(totals).forEach(function (gp) {
+    if (totals[gp] <= 0) return;
+    var row = head.map(function () { return ''; }), parts = gp.split('|');
+    row[ix.at] = stamp; row[ix.galleryId] = parts[0]; row[ix.photoId] = parts[1]; row[ix.type] = 'likeTotal'; row[ix.text] = totals[gp]; row[ix.status] = 'ok';
+    keep.push(row);
+  });
+  sh.getRange(2, 1, last - 1, cols).clearContent();
+  if (keep.length) sh.getRange(2, 1, keep.length, cols).setValues(keep);
+  return (last - 1) - keep.length;
+}
+
 function monthsSince_(d, now) { return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()) - (now.getDate() < d.getDate() ? 1 : 0); }

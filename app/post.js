@@ -81,6 +81,7 @@
     return cols;
   }
   function layoutStrip(list, T, slidesWanted) {
+    if (T.slots) return layoutSlots(list, T, slidesWanted);
     var h = SH - T.top - T.bottom, cols = columns(list, h, T);
     var natural = cols.reduce(function (t, c) { return t + c.w; }, 0) + T.gap * Math.max(0, cols.length - 1) + 2 * T.pad + (T.deco === 'masthead' ? SW * 0.75 : 0);
     var n = slidesWanted || Math.max(1, Math.min(10, Math.round(natural / SW)));
@@ -96,7 +97,22 @@
     });
     return { W: W, n: n, cells: cells };
   }
+  // templates from the packs: 'slots' = page designs, each a list of photo boxes [x, y, w, h] as parts of the page (0–1)
+  function layoutSlots(list, T, slidesWanted) {
+    var designs = T.slots, cells = [], s = 0, i = 0, max = slidesWanted || 10;
+    while (i < list.length && s < max) {
+      var left = list.length - i, d = designs[s % designs.length];
+      if (left < d.length) {   // last page: use the design that fits the photos left best
+        var fit = designs.filter(function (x) { return x.length >= left; }).sort(function (a, b) { return a.length - b.length; })[0] || d;
+        d = fit.slice(0, left);
+      }
+      d.forEach(function (b) { if (i < list.length) cells.push({ id: list[i++].id, x: s * SW + b[0] * SW, y: b[1] * SH, w: b[2] * SW, h: b[3] * SH }); });
+      s++;
+    }
+    return { W: Math.max(1, s) * SW, n: Math.max(1, s), cells: cells };
+  }
   function layoutCarousel(list, T) {   // each slide is its own page with 1–3 photos
+    if (T.slots) return layoutSlots(list, T, 0);
     var per = T.singles ? 1 : 2, slides = [], cells = [];
     for (var i = 0; i < list.length && slides.length < 10; i += per) slides.push(list.slice(i, i + per));
     slides.forEach(function (grp, s) {
@@ -291,7 +307,7 @@
   function chips(row, list, cur, onPick, cls) {
     row.innerHTML = '';
     list.forEach(function (it) {
-      var b = el('button', { type: 'button', class: (cls || 'ps-chip') + (it.v === cur ? ' on' : ''), text: it.t || '', 'aria-label': it.label || it.t, style: it.style || '', onclick: function () { row.querySelectorAll('button').forEach(function (c) { c.classList.remove('on'); }); b.classList.add('on'); onPick(it.v); } });
+      var b = el('button', { type: 'button', 'data-v': String(it.v), class: (cls || 'ps-chip') + (it.v === cur ? ' on' : ''), text: it.t || '', 'aria-label': it.label || it.t, style: it.style || '', onclick: function () { row.querySelectorAll('button').forEach(function (c) { c.classList.remove('on'); }); b.classList.add('on'); onPick(it.v); } });
       row.appendChild(b);
     });
   }
@@ -404,9 +420,15 @@
   }
   // the drawings file loads in the background; anything that needs it waits for it (opened quickly = no error)
   var stickersP = null;
+  function addStickerPack() {   // extra drawings: /app/packs/stickers.json, same format as stickers.js
+    return getJSON('/app/packs/stickers.json').then(function (l) {
+      var have = {}; window.PG_STICKERS.forEach(function (x) { have[x.k] = 1; });
+      l.forEach(function (x) { if (x && x.k && !have[x.k] && x.n && /^[MmLlHhVvCcSsQqTtAaZz0-9 .,\-]+$/.test(x.d || '') && String(x.d).length < 4000) { window.PG_STICKERS.push({ k: x.k, n: String(x.n).slice(0, 24), c: x.c || 'Wedding', d: x.d }); have[x.k] = 1; } });
+    });
+  }
   function stickersReady() {
     if (window.PG_STICKERS) return Promise.resolve();
-    if (!stickersP) stickersP = new Promise(function (res, rej) { var ss = document.createElement('script'); ss.src = '/app/stickers.js'; ss.onload = res; ss.onerror = function () { stickersP = null; rej(new Error('The drawings could not load. Check the internet and try again.')); }; document.head.appendChild(ss); });
+    if (!stickersP) stickersP = new Promise(function (res, rej) { var ss = document.createElement('script'); ss.src = '/app/stickers.js'; ss.onload = function () { addStickerPack().then(res); }; ss.onerror = function () { stickersP = null; rej(new Error('The drawings could not load. Check the internet and try again.')); }; document.head.appendChild(ss); });
     return stickersP;
   }
   function stickerSheet() {
@@ -426,7 +448,30 @@
     S.wrap.appendChild(box); show(cur);
   }
 
-  function open(opt) {
+  // ---------- extra templates and drawings from /app/packs (format: see the helpers' brief) ----------
+  var CELLS = { plain: 1, polaroid: 1, caption: 1, arch: 1, outline: 1, neon: 1 }, DECOS = { none: 1, rule: 1, overlay: 1, film: 1, string: 1, masthead: 1, arch: 1, kasavu: 1, floral: 1, cocktail: 1 };
+  var LAYS = { mosaic: 1, hero: 1, singles: 1, stagger: 1, triple: 1, pairs: 1 };
+  function addTemplate(x) {
+    if (!x || !x.id || TEMPLATES[x.id] || !x.name) return false;
+    var pg = x.page || {}, num = function (v, d, lo, hi) { v = Number(v); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
+    var ok = function (b) { return Array.isArray(b) && b.length === 4 && b.every(function (v) { return typeof v === 'number' && v >= 0 && v <= 1; }) && b[0] + b[2] <= 1.001 && b[1] + b[3] <= 1.001 && b[2] > 0.05 && b[3] > 0.05; };
+    var slots = Array.isArray(x.slots) ? x.slots.map(function (d) { return (Array.isArray(d) ? d : []).filter(ok); }).filter(function (d) { return d.length; }) : null;
+    if (!(slots && slots.length) && !LAYS[x.layout]) return false;
+    TEMPLATES[x.id] = { name: String(x.name).slice(0, 30), pad: num(pg.pad, 70, 0, 300), top: num(pg.top, 180, 0, 500), bottom: num(pg.bottom, 160, 0, 500), gap: num(pg.gap, 20, 0, 120),
+      cell: CELLS[x.cell] ? x.cell : 'plain', deco: DECOS[x.deco] ? x.deco : 'none', layout: LAYS[x.layout] ? x.layout : 'pairs', slots: slots && slots.length ? slots : null,
+      dark: !!x.dark, white: !!x.white, palette: null, forWhat: x.for || [] };
+    var P = x.palette || {}, hex = function (v) { return /^#[0-9a-f]{6}$/i.test(v || ''); };
+    if (hex(P.paper) && hex(P.ink) && hex(P.accent)) { PALETTES[x.id] = { name: String(x.name).slice(0, 30), paper: P.paper, ink: P.ink, accent: P.accent, soft: hex(P.soft) ? P.soft : P.accent }; TEMPLATES[x.id].palette = x.id; }
+    ORDER.push(x.id); return true;
+  }
+  var packsP = null;
+  function getJSON(u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : []; }).then(function (l) { return Array.isArray(l) ? l : []; }).catch(function () { return []; }); }
+  function loadPacks() {
+    if (!packsP) packsP = Promise.race([getJSON('/app/packs/album-templates.json').then(function (l) { l.forEach(addTemplate); }), new Promise(function (res) { setTimeout(res, 2500); })]);
+    return packsP;
+  }
+  function open(opt) { return loadPacks().then(function () { return openNow(opt); }); }
+  function openNow(opt) {
     if (S && S.wrap) close();
     if (!document.getElementById('ps-css')) document.head.appendChild(el('style', { id: 'ps-css', text: CSS }));
     S = { opt: opt, tid: 'album', pid: opt.palette || 'ivory', format: 'strip', slides: 0, art: true, names: opt.title || 'Our Wedding', date: opt.date || '',
@@ -475,7 +520,7 @@
     wrap.appendChild(panel); document.body.appendChild(wrap); bindEditing();
     stickersReady().then(function () { if (S) redraw(); });
     chips(fmtRow, [{ t: 'Album strip', v: 'strip' }, { t: 'Carousel', v: 'carousel' }, { t: 'Single post', v: 'single' }], S.format, function (v) { S.format = v; draw(); });
-    chips(tplRow, ORDER.map(function (k) { return { t: TEMPLATES[k].name, v: k }; }), S.tid, function (v) { S.tid = v; if (TEMPLATES[v].dark && S.pid !== 'midnight') { /* keep chosen accent */ } draw(); });
+    chips(tplRow, ORDER.map(function (k) { return { t: TEMPLATES[k].name, v: k }; }), S.tid, function (v) { S.tid = v; if (TEMPLATES[v].palette) { S.pid = TEMPLATES[v].palette; palRow.querySelectorAll('.on').forEach(function (b) { b.classList.remove('on'); }); var pb = palRow.querySelector('[data-v="' + S.pid + '"]'); if (pb) pb.classList.add('on'); } draw(); });
     chips(palRow, Object.keys(PALETTES).map(function (k) { var P = PALETTES[k]; return { v: k, label: P.name, style: 'background:linear-gradient(135deg,' + P.paper + ' 50%,' + P.accent + ' 50%)' }; }), S.pid, function (v) { S.pid = v; draw(); }, 'ps-dot');
     chips(slideRow, [{ t: 'Auto', v: 0 }, { t: '2', v: 2 }, { t: '3', v: 3 }, { t: '4', v: 4 }, { t: '5', v: 5 }, { t: '6', v: 6 }, { t: '8', v: 8 }, { t: '10', v: 10 }], 0, function (v) { S.slides = v; draw(); });
     renderThumbs(); msg('Getting the photos ready…');
@@ -486,7 +531,7 @@
     });
   }
   function close() { if (!S) return; if (S.wrap) S.wrap.remove(); document.body.classList.remove('ps-on'); freeUrls(); S = null; }
-  window.PGPost = { open: open, close: close, templates: ORDER, palettes: Object.keys(PALETTES),
+  window.PGPost = { addTemplate: addTemplate, open: open, close: close, templates: ORDER, palettes: Object.keys(PALETTES),
     setFaces: function (f) { if (S) { S.opt.faces = f; draw(); } }, addSticker: function (k) { if (S) addSticker(k); },
     state: function () { return S ? { sel: S.sel, adj: S.adj, stickers: S.stickers, photos: S.photos.map(function (p) { return p.id; }) } : null; },
     set: function (k, v) { if (S) { S[k] = v; draw(); } }, info: function () { return S && S.L ? { slides: S.L.n, cells: S.L.cells.length, W: S.L.W } : null; } };

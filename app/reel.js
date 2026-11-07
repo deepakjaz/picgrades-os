@@ -566,7 +566,31 @@
     S.wrap.appendChild(box); upd(); if (cols.length) showTab(0);
   }
 
-  function open(opt) {
+  // ---------- extra styles from /app/packs/reel-styles.json (format: see the helpers' brief) ----------
+  var KNOWN = { layouts: LAYOUT_N, trans: { fade: 1, zoomfade: 1, slide: 1, cut: 1, whip: 1, zoom: 1, flash: 1, glitch: 1 }, cards: { kasavu: 1, minimal: 1, bold: 1, film: 1, festive: 1, neon: 1 } };
+  var packsP = null;
+  function addStyle(x) {
+    if (!x || !x.id || TEMPLATES[x.id] || !x.name) return false;
+    var c = x.colours || x.colors || {}, hex = function (v, d) { return /^#[0-9a-f]{6}$/i.test(v || '') ? v : d; };
+    var lay = (x.layouts || []).filter(function (k) { return KNOWN.layouts[k]; }), tr = (x.trans || []).filter(function (k) { return KNOWN.trans[k]; });
+    var beats = (x.beats || []).map(Number).filter(function (b) { return b >= 1 && b <= 8; });
+    if (!lay.length || !tr.length || !beats.length) return false;
+    var fx = x.fx || {};
+    TEMPLATES[x.id] = { name: String(x.name).slice(0, 30), music: x.music || 'kasavu-morning', beats: beats, layouts: lay, trans: tr, card: KNOWN.cards[x.card] ? x.card : 'minimal', frame: !!x.frame,
+      fx: { pulse: Math.min(0.05, +fx.pulse || 0), shake: Math.min(16, +fx.shake || 0), flashEvery: +fx.flashEvery || 0, flash: /^\d+,\d+,\d+$/.test(fx.flash || '') ? fx.flash : '255,255,255',
+        flashA: Math.min(0.4, +fx.flashA || 0), leak: !!fx.leak, confetti: !!fx.confetti, rgb: !!fx.rgb },
+      paper: hex(c.paper, '#F6EFEA'), ink: hex(c.ink, '#2B2522'), gold: hex(c.gold, '#B89A6A'), gold2: hex(c.gold2, hex(c.gold, '#B89A6A')), deep: hex(c.deep, '#7A5C4A'), forWhat: x.for || [] };
+    ORDER.push(x.id); return true;
+  }
+  function loadPacks() {
+    if (!packsP) packsP = Promise.race([
+      fetch('/app/packs/reel-styles.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : []; }).then(function (list) { (Array.isArray(list) ? list : []).forEach(addStyle); }).catch(function () {}),
+      new Promise(function (res) { setTimeout(res, 2500); })   // never wait long for extras
+    ]);
+    return packsP;
+  }
+  function open(opt) { return loadPacks().then(function () { return openNow(opt); }); }
+  function openNow(opt) {
     if (S && S.wrap) close();
     if (!document.getElementById('rl-css')) document.head.appendChild(el('style', { id: 'rl-css', text: CSS }));
     S = { opt: opt, tid: opt.style && TEMPLATES[opt.style] ? opt.style : 'south', seed: Math.floor(Math.random() * 1e9), T: null, photos: opt.photos.slice(0, 80).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, blurs: {}, buffers: {},
@@ -648,7 +672,7 @@
     if (S.buffers) delete S.buffers.own;   // your own music is let go right away
     freeUrls(); S = null;
   }
-  window.PGReel = { open: open, close: close, styles: ORDER,
+  window.PGReel = { open: open, close: close, styles: ORDER, addStyle: addStyle,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), plan(), t); return S ? plan().dur : 0; },  // used by tests
     setStyle: function (k) { if (S && TEMPLATES[k]) { S.tid = k; S.T = TEMPLATES[k]; } },
     state: function () { return S ? { track: S.track, own: !!(S.buffers && S.buffers.own) } : null; } };

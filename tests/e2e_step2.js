@@ -6,7 +6,7 @@ const srv = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api') { let b = ''; req.on('data', d => b += d); req.on('end', () => { const p = JSON.parse(b); res.end(JSON.stringify(call(p.action, p))); }); return; }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
   let f = path.join(root, req.url.split('?')[0]); if (f.endsWith('/')) f += 'index.html';
-  fs.readFile(f, (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', f.endsWith('.html') ? 'text/html' : 'text/javascript'); res.end(d); } });
+  fs.readFile(f, (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', f.endsWith('.html') ? 'text/html' : f.endsWith('.css') ? 'text/css' : f.endsWith('.json') ? 'application/json' : 'text/javascript'); res.end(d); } });
 }).listen(8765, async () => {
   const { chromium } = require('playwright');
   const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1280, height: 900 } });

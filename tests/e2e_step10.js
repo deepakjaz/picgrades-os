@@ -17,7 +17,7 @@ const srv = http.createServer((req, res) => {
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
   if (req.url.indexOf('/api/stream') === 0) { const id = new URL('http://x' + req.url).searchParams.get('id'); res.setHeader('Content-Type', 'video/mp4'); res.end(bytesOf(id)); return; }
   let u = req.url.split('?')[0]; if (/^\/g\/[a-z0-9]+$/.test(u)) u = '/app/gallery.html';
-  fs.readFile(path.join(root, u), (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', u.endsWith('.html') ? 'text/html' : u.endsWith('.json') ? 'application/json' : 'text/javascript'); res.end(d); } });
+  fs.readFile(path.join(root, u), (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', u.endsWith('.html') ? 'text/html' : u.endsWith('.css') ? 'text/css' : u.endsWith('.json') ? 'application/json' : 'text/javascript'); res.end(d); } });
 }).listen(8775, async () => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = [];
   const phone = async (opts) => { const ctx = await b.newContext(Object.assign({ viewport: { width: 390, height: 844 }, hasTouch: true }, opts || {})); const pg = await ctx.newPage();
