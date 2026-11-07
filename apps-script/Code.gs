@@ -52,6 +52,7 @@ var PUBLIC_ROUTES = {
   getNotes: getNotes_,
   addNote: addNote_,
   findFaces: findFaces_,
+  getStudio: getStudio_,
   faceBoxes: faceBoxes_,
   videoOk: videoOk_,
   photoData: photoData_,
@@ -144,7 +145,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step17-structure',
+    version: 'step21-studio',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -859,7 +860,7 @@ function ensureColumns_(name, cols) {
 var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDate', 'folderId', 'folderUrl', 'manifestFileId',
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
-  'coupleKey', 'thanksNote', 'guestFolderId'];
+  'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio'];   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
 var ROOT_FOLDER_RE = /^0*_?root[ _-]*moments?$/i;
@@ -905,12 +906,13 @@ function scanWeddingFolder_(folderId) {
   if (access !== 'ANYONE_WITH_LINK' && access !== 'ANYONE') {
     throw new Error('The folder is not shared publicly yet. In Drive: Share → General access → "Anyone with the link" → Viewer.');
   }
-  var events = [], root = [], subs = folder.getFolders();
+  var events = [], root = [], portfolio = [], subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
     if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME || sf.getName() === POSTS_FOLDER_NAME) continue; // guest uploads are shown only after approval
     var photos = listImages_(sf);
     if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
+    if (PORTFOLIO_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { portfolio = photos; continue; }   // the photographer's picks for their portfolio
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
   }
   var loose = listImages_(folder);
@@ -919,7 +921,7 @@ function scanWeddingFolder_(folderId) {
   events.sort(function (a, b) { return rank(a) - rank(b) || a.folder.localeCompare(b.folder, 'en', { numeric: true }); });
   var count = events.reduce(function (t, e) { return t + e.photos.length; }, 0) + root.length;
   if (!count) throw new Error('No photos found. Put JPG/PNG photos in event folders (Haldi, Wedding…) inside the shared folder.');
-  return { folderName: folder.getName(), events: events, root: root, photoCount: count };
+  return { folderName: folder.getName(), events: events, root: root, portfolio: portfolio, photoCount: count };
 }
 
 function manifestFolder_() {
@@ -957,7 +959,7 @@ function setGallery_(p, user) {
     var eventDate = /^\d{4}-\d{2}-\d{2}$/.test(String(p.eventDate || '')) ? p.eventDate : (existing ? existing.eventDate : '');
     var manifest = {
       v: 1, title: title, eventDate: eventDate, studio: o.companyName, folderName: scan.folderName,
-      root: scan.root, events: scan.events, updatedAt: fmt_(new Date())
+      root: scan.root, events: scan.events, portfolio: scan.portfolio || [], updatedAt: fmt_(new Date())
     };
     var json = JSON.stringify(manifest);
   }
@@ -1726,3 +1728,56 @@ function packHearts_() {
 }
 
 function monthsSince_(d, now) { return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()) - (now.getDate() < d.getDate() ? 1 : 0); }
+
+// =====================================================================
+// Photographer app (/p/<slug>): the photographer's portfolio, in the same app as the weddings
+// =====================================================================
+var STUDIO_COLUMNS = ['slug', 'companyName', 'name', 'tagline', 'about', 'city', 'phone', 'email', 'instagram', 'website', 'galleries', 'status', 'createdAt'];
+var PORTFOLIO_FOLDER_RE = /^0*0?[_\s-]*portfolio$/i;   // "00_Portfolio" inside a wedding folder
+// PicGrades' own profile is made the first time it is opened (edit the row in the Studios tab any time)
+var PICGRADES_STUDIO = { slug: 'picgrades', companyName: 'AD Creative Mediaa', name: 'PicGrades', tagline: 'Wedding stories, edited with care',
+  about: 'PicGrades edits and delivers wedding photographs for studios across India, and gives every couple their own wedding app: the gallery, Root Moment, Find me, reels, albums and more.',
+  city: 'Surat, Gujarat', phone: '', email: 'adcmediaa@gmail.com', instagram: '', website: 'https://picgrades.com', galleries: 'c9w9wicn54f9', status: 'Live' };
+
+function studioRow_(slug) {
+  ensureTab_('Studios', STUDIO_COLUMNS);
+  slug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40);
+  var row = readTable_('Studios').filter(function (x) { return String(x.slug).toLowerCase() === slug; })[0];
+  if (!row && slug === PICGRADES_STUDIO.slug) { appendRow_('Studios', Object.assign({}, PICGRADES_STUDIO, { createdAt: fmt_(new Date()) })); row = PICGRADES_STUDIO; }
+  return row && row.status !== 'Off' ? row : null;
+}
+
+/** Public: the photographer's app. Weddings = their published galleries the couple has not hidden (portfolio on by default)
+ *  plus any listed in the 'galleries' column. Each wedding shows only the photographer's picks (00_Portfolio), never the full wedding. */
+function getStudio_(p) {
+  var st = studioRow_(p.slug);
+  if (!st) return { ok: false, error: 'This photographer page is not available.' };
+  var key = 'studio:' + st.slug, hit = cacheGetBig_(key);
+  if (hit) return { gallery: JSON.parse(hit) };
+  var listed = String(st.galleries || '').split(/[\s,]+/).filter(String);
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  var gals = readTable_('Galleries').filter(function (g) {
+    if (g.status !== 'Published' || String(g.portfolio || '').toLowerCase() === 'off') return false;
+    return listed.indexOf(g.galleryId) > -1 || (st.companyName && String(g.companyName) === String(st.companyName));
+  }).sort(function (a, b) { return String(b.eventDate || b.createdAt).localeCompare(String(a.eventDate || a.createdAt)); });
+  var events = [], posts = [], reviews = [];
+  gals.forEach(function (g) {
+    var m; try { m = loadManifest_(g); } catch (e) { return; }
+    var picks = (m.portfolio && m.portfolio.length) ? m.portfolio : [];
+    if (!picks.length) {   // no 00_Portfolio folder yet: a few photos from each event
+      var seen = {}, pool = (m.root || []).slice();
+      (m.events || []).forEach(function (e) { pool = pool.concat(e.photos.slice(0, 5)); });
+      pool.forEach(function (x) { if (!seen[x.id] && picks.length < 30) { seen[x.id] = 1; picks.push(x); } });
+    }
+    if (!picks.length) return;
+    var title = g.title || m.title || 'Wedding';
+    events.push({ name: title, folder: g.galleryId, date: g.eventDate || '', photos: picks.slice(0, 60) });
+    posts.push({ postId: 'w-' + g.galleryId, fileId: picks.slice(0, 10).map(function (x) { return x.id; }).join(','), type: 'album', name: st.name, caption: title, at: g.eventDate || g.createdAt });
+    if (String(g.thanksNote || '').trim()) reviews.push({ photoId: picks[0].id, name: title, text: String(g.thanksNote).slice(0, 400), at: g.eventDate || g.createdAt });
+  });
+  var out = { isStudio: true, title: st.name, studio: st.name, eventDate: '', events: events, personal: [], root: [], guestPosts: posts,
+    likes: {}, notes: {}, recentNotes: reviews, mine: {}, faceSearch: false, isCouple: false, guestGate: 'open',
+    studioInfo: { slug: st.slug, name: st.name, tagline: st.tagline || '', about: st.about || '', city: st.city || '', phone: st.phone || '', email: st.email || '', instagram: st.instagram || '', website: st.website || '' } };
+  cachePutBig_(key, JSON.stringify(out), 300);
+  return { gallery: out };
+}

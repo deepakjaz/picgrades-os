@@ -3,6 +3,10 @@
     {
       "source": "/g/:id",
       "destination": "/app/gallery.html?g=:id"
+    },
+    {
+      "source": "/p/:slug",
+      "destination": "/app/gallery.html?p=:slug"
     }
   ],
   "headers": [
