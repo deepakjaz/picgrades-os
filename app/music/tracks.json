@@ -54,6 +54,147 @@
    "region": "any",
    "credit": "",
    "licence": "PicGrades original (made in-house)"
+  },
+  {
+   "id": "sangeet-spark",
+   "title": "Sangeet Spark (dhol + synth)",
+   "file": "/app/music/sangeet-spark.mp3",
+   "bpm": 120,
+   "beat0": 0.0,
+   "seconds": 64,
+   "region": "north",
+   "mood": "dance",
+   "for": [
+    "sangeet",
+    "baraat"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with Gemini)",
+   "by": "gemini"
+  },
+  {
+   "id": "pheras-serenity",
+   "title": "Pheras Serenity (tanpura + veena)",
+   "file": "/app/music/pheras-serenity.mp3",
+   "bpm": 84,
+   "beat0": 0.0,
+   "seconds": 68,
+   "region": "all",
+   "mood": "soft",
+   "for": [
+    "pheras",
+    "wedding"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with Gemini)",
+   "by": "gemini"
+  },
+  {
+   "id": "royal-shehnai",
+   "title": "Royal Shehnai (palace entry)",
+   "file": "/app/music/royal-shehnai.mp3",
+   "bpm": 96,
+   "beat0": 0.0,
+   "seconds": 64,
+   "region": "west",
+   "mood": "royal",
+   "for": [
+    "wedding",
+    "reception",
+    "varmala"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with Gemini)",
+   "by": "gemini"
+  },
+  {
+   "id": "mehendi-grooves",
+   "title": "Mehendi Courtyard (folk plucks)",
+   "file": "/app/music/mehendi-grooves.mp3",
+   "bpm": 108,
+   "beat0": 0.0,
+   "seconds": 64,
+   "region": "west",
+   "mood": "festive",
+   "for": [
+    "mehendi",
+    "haldi"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with Gemini)",
+   "by": "gemini"
+  },
+  {
+   "id": "vidaai-strings",
+   "title": "Vidaai Strings (golden nostalgia)",
+   "file": "/app/music/vidaai-strings.mp3",
+   "bpm": 76,
+   "beat0": 0.0,
+   "seconds": 72,
+   "region": "western",
+   "mood": "soft",
+   "for": [
+    "vidaai",
+    "wedding",
+    "reception"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with Gemini)",
+   "by": "gemini"
+  },
+  {
+   "id": "afterparty-bass",
+   "title": "Afterparty Club (late night)",
+   "file": "/app/music/afterparty-bass.mp3",
+   "bpm": 126,
+   "beat0": 0.0,
+   "seconds": 60,
+   "region": "all",
+   "mood": "party",
+   "for": [
+    "cocktail",
+    "sangeet"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with Gemini)",
+   "by": "gemini"
+  },
+  {
+   "id": "haldi-sunrise",
+   "title": "Haldi Sunrise (hand drum + bright plucks)",
+   "file": "/app/music/haldi-sunrise.mp3",
+   "bpm": 112,
+   "beat0": 0.0,
+   "seconds": 68,
+   "region": "west",
+   "mood": "festive",
+   "for": [
+    "haldi",
+    "mehendi",
+    "garba"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with ChatGPT)",
+   "by": "chatgpt"
+  },
+  {
+   "id": "evening-glow",
+   "title": "Evening Glow (soft cinematic)",
+   "file": "/app/music/evening-glow.mp3",
+   "bpm": 96,
+   "beat0": 0.0,
+   "seconds": 72,
+   "region": "all",
+   "mood": "soft/emotional",
+   "for": [
+    "pheras",
+    "ceremony",
+    "vidaai",
+    "highlights"
+   ],
+   "credit": "",
+   "licence": "PicGrades original (generated from a recipe made with ChatGPT)",
+   "by": "chatgpt"
   }
  ]
 }

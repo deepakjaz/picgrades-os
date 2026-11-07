@@ -1,1 +1,1275 @@
-[]
+[
+ {
+  "id": "haldi-sunshine",
+  "name": "Haldi · Sunshine",
+  "for": [
+   "haldi"
+  ],
+  "region": "all",
+  "music": "dhol-festival",
+  "beats": [
+   2,
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "polaroid",
+   "grid3",
+   "punch"
+  ],
+  "trans": [
+   "flash",
+   "slide",
+   "cut"
+  ],
+  "card": "festive",
+  "fx": {
+   "pulse": 0.022,
+   "confetti": true,
+   "flashEvery": 8,
+   "flash": "255,214,10",
+   "flashA": 0.25
+  },
+  "colours": {
+   "paper": "#FFF7D6",
+   "ink": "#3D2200",
+   "gold": "#F2A900",
+   "gold2": "#FFD84D",
+   "deep": "#B85300"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "mehendi-courtyard",
+  "name": "Mehendi · Courtyard",
+  "for": [
+   "mehendi"
+  ],
+  "region": "all",
+  "music": "mehendi-grooves",
+  "beats": [
+   2,
+   4,
+   4
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "polaroid",
+   "grid3"
+  ],
+  "trans": [
+   "slide",
+   "fade",
+   "whip"
+  ],
+  "card": "kasavu",
+  "fx": {
+   "pulse": 0.015,
+   "leak": true,
+   "flashEvery": 8,
+   "flash": "212,230,185",
+   "flashA": 0.18
+  },
+  "colours": {
+   "paper": "#F2F5EC",
+   "ink": "#1E301B",
+   "gold": "#688F38",
+   "gold2": "#C9A24A",
+   "deep": "#365926"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "sangeet-glitz",
+  "name": "Sangeet · Glitz",
+  "for": [
+   "sangeet"
+  ],
+  "region": "all",
+  "music": "sangeet-spark",
+  "beats": [
+   1,
+   1,
+   2
+  ],
+  "layouts": [
+   "punch",
+   "split2",
+   "grid4",
+   "strobe",
+   "single"
+  ],
+  "trans": [
+   "cut",
+   "whip",
+   "flash",
+   "zoom"
+  ],
+  "card": "bold",
+  "fx": {
+   "pulse": 0.038,
+   "shake": 10,
+   "confetti": true,
+   "flashEvery": 4,
+   "flash": "255,220,130",
+   "flashA": 0.3
+  },
+  "colours": {
+   "paper": "#0D0B14",
+   "ink": "#FFFFFF",
+   "gold": "#F5C242",
+   "gold2": "#FF4F8B",
+   "deep": "#9B51E0"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "baraat-baraati",
+  "name": "Baraat · Royal Dhol",
+  "for": [
+   "baraat"
+  ],
+  "region": "north",
+  "music": "dhol-festival",
+  "beats": [
+   1,
+   2,
+   2
+  ],
+  "layouts": [
+   "punch",
+   "grid3",
+   "split2",
+   "single",
+   "punch"
+  ],
+  "trans": [
+   "cut",
+   "whip",
+   "zoom",
+   "flash"
+  ],
+  "card": "festive",
+  "fx": {
+   "pulse": 0.042,
+   "shake": 12,
+   "confetti": true,
+   "flashEvery": 4,
+   "flash": "255,155,40",
+   "flashA": 0.32
+  },
+  "colours": {
+   "paper": "#2B090E",
+   "ink": "#FFF5E4",
+   "gold": "#FFAE19",
+   "gold2": "#FF5E3A",
+   "deep": "#D92B2B"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "pheras-sacred-fire",
+  "name": "Pheras · Sacred Vows",
+  "for": [
+   "pheras",
+   "wedding"
+  ],
+  "region": "all",
+  "music": "pheras-serenity",
+  "beats": [
+   4,
+   4,
+   6
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "single"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade",
+   "iris"
+  ],
+  "card": "kasavu",
+  "fx": {
+   "pulse": 0.008,
+   "leak": true,
+   "flashEvery": 12,
+   "flash": "245,195,120",
+   "flashA": 0.15
+  },
+  "colours": {
+   "paper": "#F7EFE4",
+   "ink": "#2E1511",
+   "gold": "#C8923B",
+   "gold2": "#E8C37D",
+   "deep": "#7A1C18"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "vidaai-nostalgia",
+  "name": "Vidaai · Golden Nostalgia",
+  "for": [
+   "vidaai",
+   "wedding"
+  ],
+  "region": "all",
+  "music": "vidaai-strings",
+  "beats": [
+   4,
+   6,
+   6
+  ],
+  "layouts": [
+   "single",
+   "polaroid",
+   "single",
+   "strip"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade"
+  ],
+  "card": "minimal",
+  "fx": {
+   "pulse": 0.005,
+   "leak": true
+  },
+  "colours": {
+   "paper": "#F5EFE8",
+   "ink": "#29221E",
+   "gold": "#B38E5D",
+   "gold2": "#D8C3A5",
+   "deep": "#5E493A"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "reception-velvet",
+  "name": "Reception · Black Tie",
+  "for": [
+   "reception"
+  ],
+  "region": "all",
+  "music": "royal-shehnai",
+  "beats": [
+   2,
+   4,
+   4
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "grid3",
+   "single"
+  ],
+  "trans": [
+   "fade",
+   "slide",
+   "zoomfade"
+  ],
+  "card": "minimal",
+  "fx": {
+   "pulse": 0.014,
+   "flashEvery": 8,
+   "flash": "235,205,140",
+   "flashA": 0.16
+  },
+  "colours": {
+   "paper": "#10131A",
+   "ink": "#F7F3EB",
+   "gold": "#D4AF37",
+   "gold2": "#F3E5AB",
+   "deep": "#8A6D1F"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "cocktail-afterglow",
+  "name": "Cocktail · Afterparty",
+  "for": [
+   "cocktail"
+  ],
+  "region": "all",
+  "music": "afterparty-bass",
+  "beats": [
+   1,
+   1,
+   2
+  ],
+  "layouts": [
+   "punch",
+   "rgb",
+   "strobe",
+   "grid4",
+   "split2"
+  ],
+  "trans": [
+   "cut",
+   "glitch",
+   "flash",
+   "whip"
+  ],
+  "card": "neon",
+  "fx": {
+   "pulse": 0.048,
+   "shake": 14,
+   "rgb": true,
+   "flashEvery": 2,
+   "flash": "255,255,255",
+   "flashA": 0.24
+  },
+  "colours": {
+   "paper": "#060609",
+   "ink": "#FFFFFF",
+   "gold": "#FF2A85",
+   "gold2": "#00F0FF",
+   "deep": "#00F0FF"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "south-kasavu-gold",
+  "name": "South · Kasavu & Temple",
+  "for": [
+   "wedding",
+   "muhurtham"
+  ],
+  "region": "south",
+  "music": "kasavu-morning",
+  "beats": [
+   4,
+   4
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "single"
+  ],
+  "trans": [
+   "slide",
+   "fade",
+   "zoomfade"
+  ],
+  "card": "kasavu",
+  "fx": {
+   "pulse": 0.012,
+   "leak": true,
+   "flashEvery": 8,
+   "flash": "231,200,115",
+   "flashA": 0.18
+  },
+  "colours": {
+   "paper": "#F6EEDB",
+   "ink": "#362415",
+   "gold": "#C99E3E",
+   "gold2": "#E8C974",
+   "deep": "#6B1D14"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "gujarati-garba-raas",
+  "name": "Gujarati · Garba & Lagna",
+  "for": [
+   "sangeet",
+   "wedding",
+   "haldi"
+  ],
+  "region": "west",
+  "music": "dhol-festival",
+  "beats": [
+   2,
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "grid4",
+   "polaroid",
+   "punch",
+   "duo"
+  ],
+  "trans": [
+   "whip",
+   "flash",
+   "slide",
+   "cut"
+  ],
+  "card": "festive",
+  "fx": {
+   "pulse": 0.026,
+   "confetti": true,
+   "flashEvery": 6,
+   "flash": "255,180,50",
+   "flashA": 0.25
+  },
+  "colours": {
+   "paper": "#FFF3E2",
+   "ink": "#3B1410",
+   "gold": "#E67E22",
+   "gold2": "#F1C40F",
+   "deep": "#B01E28"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "punjabi-anand-karaj",
+  "name": "Punjabi · Anand Karaj",
+  "for": [
+   "wedding",
+   "pheras"
+  ],
+  "region": "north",
+  "music": "pheras-serenity",
+  "beats": [
+   4,
+   4,
+   2
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "polaroid",
+   "single"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade",
+   "slide"
+  ],
+  "card": "minimal",
+  "fx": {
+   "pulse": 0.012,
+   "leak": true,
+   "flashEvery": 8,
+   "flash": "255,220,210",
+   "flashA": 0.18
+  },
+  "colours": {
+   "paper": "#FDF2F0",
+   "ink": "#3A1921",
+   "gold": "#D49B54",
+   "gold2": "#F2C6C2",
+   "deep": "#912F46"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "bengali-shubho-drishti",
+  "name": "Bengali · Shubho Drishti",
+  "for": [
+   "wedding"
+  ],
+  "region": "east",
+  "music": "temple-procession",
+  "beats": [
+   4,
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "grid3",
+   "single"
+  ],
+  "trans": [
+   "fade",
+   "slide",
+   "zoomfade"
+  ],
+  "card": "kasavu",
+  "fx": {
+   "pulse": 0.014,
+   "leak": true,
+   "flashEvery": 8,
+   "flash": "240,210,180",
+   "flashA": 0.18
+  },
+  "colours": {
+   "paper": "#FAF3E8",
+   "ink": "#2B1111",
+   "gold": "#B82925",
+   "gold2": "#D9A441",
+   "deep": "#851613"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "marwari-royal-rajwada",
+  "name": "Marwari · Royal Rajwada",
+  "for": [
+   "wedding",
+   "reception",
+   "baraat"
+  ],
+  "region": "west",
+  "music": "royal-shehnai",
+  "beats": [
+   2,
+   4,
+   4
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "grid3",
+   "punch",
+   "jharokha"
+  ],
+  "trans": [
+   "slide",
+   "zoomfade",
+   "fade",
+   "iris"
+  ],
+  "card": "kasavu",
+  "fx": {
+   "pulse": 0.018,
+   "flashEvery": 8,
+   "flash": "240,195,105",
+   "flashA": 0.22
+  },
+  "colours": {
+   "paper": "#F5E9D4",
+   "ink": "#2C1810",
+   "gold": "#C59332",
+   "gold2": "#E5C168",
+   "deep": "#7D1E19"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "nikah-noor-emerald",
+  "name": "Nikah · Noor & Zari",
+  "for": [
+   "wedding",
+   "reception"
+  ],
+  "region": "all",
+  "music": "pheras-serenity",
+  "beats": [
+   4,
+   4,
+   6
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "single"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade",
+   "slide"
+  ],
+  "card": "minimal",
+  "fx": {
+   "pulse": 0.01,
+   "leak": true,
+   "flashEvery": 10,
+   "flash": "220,235,215",
+   "flashA": 0.16
+  },
+  "colours": {
+   "paper": "#EFF4F0",
+   "ink": "#122B21",
+   "gold": "#C49B45",
+   "gold2": "#E3C988",
+   "deep": "#1E523E"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "white-wedding-ivory",
+  "name": "White Wedding · Editorial",
+  "for": [
+   "wedding",
+   "reception"
+  ],
+  "region": "western",
+  "music": "vidaai-strings",
+  "beats": [
+   4,
+   6,
+   4
+  ],
+  "layouts": [
+   "single",
+   "polaroid",
+   "duo",
+   "strip"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade"
+  ],
+  "card": "minimal",
+  "fx": {
+   "pulse": 0.006,
+   "leak": true
+  },
+  "colours": {
+   "paper": "#FAF9F6",
+   "ink": "#1C1B19",
+   "gold": "#A89882",
+   "gold2": "#DCD5C9",
+   "deep": "#595247"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "super8-vintage-travel",
+  "name": "Destination · Super 8 Film",
+  "for": [
+   "haldi",
+   "mehendi",
+   "wedding"
+  ],
+  "region": "all",
+  "music": "road-trip",
+  "beats": [
+   2,
+   4,
+   2
+  ],
+  "layouts": [
+   "strip",
+   "tv",
+   "polaroid",
+   "single",
+   "triptych"
+  ],
+  "trans": [
+   "whip",
+   "slide",
+   "cut"
+  ],
+  "card": "film",
+  "fx": {
+   "pulse": 0.012,
+   "leak": true
+  },
+  "colours": {
+   "paper": "#EFE6D5",
+   "ink": "#1F1B17",
+   "gold": "#D47A27",
+   "gold2": "#E8B878",
+   "deep": "#2B241E"
+  },
+  "by": "gemini"
+ },
+ {
+  "id": "haldi-sunshine-glow",
+  "name": "Haldi · Sunshine Glow",
+  "for": [
+   "haldi"
+  ],
+  "region": "all",
+  "music": "haldi-sunrise",
+  "beats": [
+   2,
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "polaroid",
+   "grid3",
+   "punch"
+  ],
+  "trans": [
+   "flash",
+   "slide",
+   "cut"
+  ],
+  "card": "festive",
+  "fx": {
+   "pulse": 0.025,
+   "confetti": true,
+   "flashEvery": 8,
+   "flash": "255,214,10",
+   "flashA": 0.22
+  },
+  "colours": {
+   "paper": "#FFF6D6",
+   "ink": "#4A2A00",
+   "gold": "#F2B705",
+   "gold2": "#FFD84D",
+   "deep": "#B85C00"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "mehendi-garden",
+  "name": "Mehendi Garden",
+  "for": [
+   "mehendi"
+  ],
+  "region": "all",
+  "music": "kasavu-morning",
+  "beats": [
+   2,
+   4
+  ],
+  "layouts": [
+   "polaroid",
+   "duo",
+   "single",
+   "grid4"
+  ],
+  "trans": [
+   "fade",
+   "slide",
+   "zoomfade"
+  ],
+  "card": "festive",
+  "fx": {
+   "pulse": 0.012,
+   "leak": true
+  },
+  "colours": {
+   "paper": "#F1F5EC",
+   "ink": "#23361F",
+   "gold": "#78934A",
+   "gold2": "#B9C98A",
+   "deep": "#31553A"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "sangeet-afterglow",
+  "name": "Sangeet Afterglow",
+  "for": [
+   "sangeet"
+  ],
+  "region": "north",
+  "music": "dhol-festival",
+  "beats": [
+   1,
+   2,
+   2
+  ],
+  "layouts": [
+   "punch",
+   "duo",
+   "grid3",
+   "single"
+  ],
+  "trans": [
+   "whip",
+   "flash",
+   "cut",
+   "zoom"
+  ],
+  "card": "neon",
+  "fx": {
+   "pulse": 0.045,
+   "shake": 3,
+   "flashEvery": 4,
+   "flash": "255,255,255",
+   "flashA": 0.18
+  },
+  "colours": {
+   "paper": "#171326",
+   "ink": "#FFF7F0",
+   "gold": "#F2A6D8",
+   "gold2": "#7CE7E0",
+   "deep": "#351B54"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "baraat-grand-entry",
+  "name": "Baraat Grand Entry",
+  "for": [
+   "baraat"
+  ],
+  "region": "north",
+  "music": "dhol-festival",
+  "beats": [
+   1,
+   2,
+   4
+  ],
+  "layouts": [
+   "punch",
+   "single",
+   "strip",
+   "grid3"
+  ],
+  "trans": [
+   "whip",
+   "flash",
+   "zoom"
+  ],
+  "card": "bold",
+  "fx": {
+   "pulse": 0.04,
+   "shake": 5,
+   "confetti": true
+  },
+  "colours": {
+   "paper": "#FFF0D8",
+   "ink": "#3A160D",
+   "gold": "#D99A35",
+   "gold2": "#F2C66D",
+   "deep": "#7A241D"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "pheras-forever",
+  "name": "Pheras · Forever",
+  "for": [
+   "pheras",
+   "ceremony"
+  ],
+  "region": "all",
+  "music": "evening-glow",
+  "beats": [
+   4,
+   4,
+   6
+  ],
+  "layouts": [
+   "single",
+   "polaroid",
+   "duo"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade",
+   "slide"
+  ],
+  "card": "minimal",
+  "fx": {
+   "leak": true
+  },
+  "colours": {
+   "paper": "#F8F2E8",
+   "ink": "#3D3028",
+   "gold": "#B68B52",
+   "gold2": "#D8C4A5",
+   "deep": "#49372D"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "vidaai-soft-light",
+  "name": "Vidaai · Soft Light",
+  "for": [
+   "vidaai"
+  ],
+  "region": "all",
+  "music": "kasavu-morning",
+  "beats": [
+   4,
+   6
+  ],
+  "layouts": [
+   "single",
+   "polaroid"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade"
+  ],
+  "card": "film",
+  "fx": {
+   "leak": true,
+   "pulse": 0.008
+  },
+  "colours": {
+   "paper": "#F4EEE9",
+   "ink": "#51423F",
+   "gold": "#C59D91",
+   "gold2": "#E2C9BF",
+   "deep": "#69504B"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "reception-noir",
+  "name": "Reception Noir",
+  "for": [
+   "reception"
+  ],
+  "region": "all",
+  "music": "cocktail-night",
+  "beats": [
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "split2",
+   "punch"
+  ],
+  "trans": [
+   "zoomfade",
+   "slide",
+   "cut"
+  ],
+  "card": "film",
+  "fx": {
+   "pulse": 0.018,
+   "leak": true
+  },
+  "colours": {
+   "paper": "#171719",
+   "ink": "#F8F3EA",
+   "gold": "#C9A66B",
+   "gold2": "#E7D4B4",
+   "deep": "#343033"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "cocktail-midnight",
+  "name": "Cocktail Midnight",
+  "for": [
+   "cocktail"
+  ],
+  "region": "western",
+  "music": "cocktail-night",
+  "beats": [
+   1,
+   2
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "rgb",
+   "punch"
+  ],
+  "trans": [
+   "glitch",
+   "whip",
+   "zoom"
+  ],
+  "card": "neon",
+  "fx": {
+   "pulse": 0.04,
+   "rgb": true
+  },
+  "colours": {
+   "paper": "#10131E",
+   "ink": "#F4F5FA",
+   "gold": "#C6A7FF",
+   "gold2": "#79D7D0",
+   "deep": "#252B43"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "south-kasavu",
+  "name": "South · Kasavu Grace",
+  "for": [
+   "ceremony",
+   "reception"
+  ],
+  "region": "south",
+  "music": "kasavu-morning",
+  "beats": [
+   4,
+   4,
+   2
+  ],
+  "layouts": [
+   "single",
+   "polaroid",
+   "strip",
+   "duo"
+  ],
+  "trans": [
+   "fade",
+   "slide",
+   "zoomfade"
+  ],
+  "card": "kasavu",
+  "fx": {
+   "leak": true
+  },
+  "colours": {
+   "paper": "#FFF9E9",
+   "ink": "#293B32",
+   "gold": "#C7A45A",
+   "gold2": "#E5D5A5",
+   "deep": "#285747"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "gujarati-garba",
+  "name": "Gujarati · Garba Glow",
+  "for": [
+   "sangeet",
+   "haldi"
+  ],
+  "region": "west",
+  "music": "dhol-festival",
+  "beats": [
+   1,
+   2,
+   4
+  ],
+  "layouts": [
+   "grid4",
+   "duo",
+   "punch",
+   "single"
+  ],
+  "trans": [
+   "flash",
+   "slide",
+   "whip"
+  ],
+  "card": "festive",
+  "fx": {
+   "pulse": 0.04,
+   "confetti": true
+  },
+  "colours": {
+   "paper": "#FFF1DF",
+   "ink": "#542D26",
+   "gold": "#D87936",
+   "gold2": "#F2B84B",
+   "deep": "#713B62"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "punjabi-royal",
+  "name": "Punjabi · Royal Celebration",
+  "for": [
+   "baraat",
+   "reception"
+  ],
+  "region": "north",
+  "music": "temple-procession",
+  "beats": [
+   2,
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "strip",
+   "grid3",
+   "punch"
+  ],
+  "trans": [
+   "whip",
+   "zoomfade",
+   "flash"
+  ],
+  "card": "bold",
+  "fx": {
+   "pulse": 0.03,
+   "confetti": true
+  },
+  "colours": {
+   "paper": "#F8E9D8",
+   "ink": "#431E25",
+   "gold": "#C89B3C",
+   "gold2": "#E9C66D",
+   "deep": "#6B2438"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "bengal-alta",
+  "name": "Bengal · Alta & Ivory",
+  "for": [
+   "ceremony",
+   "reception"
+  ],
+  "region": "east",
+  "music": "temple-procession",
+  "beats": [
+   4,
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "polaroid"
+  ],
+  "trans": [
+   "fade",
+   "slide",
+   "cut"
+  ],
+  "card": "minimal",
+  "fx": {
+   "leak": true
+  },
+  "colours": {
+   "paper": "#FFF8F1",
+   "ink": "#542B2B",
+   "gold": "#B94C4C",
+   "gold2": "#D99A83",
+   "deep": "#6B303A"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "marwari-majestic",
+  "name": "Marwari · Majestic",
+  "for": [
+   "ceremony",
+   "baraat"
+  ],
+  "region": "west",
+  "music": "temple-procession",
+  "beats": [
+   2,
+   4,
+   4
+  ],
+  "layouts": [
+   "single",
+   "grid3",
+   "polaroid",
+   "strip",
+   "jharokha"
+  ],
+  "trans": [
+   "zoomfade",
+   "flash",
+   "slide"
+  ],
+  "card": "bold",
+  "fx": {
+   "pulse": 0.018,
+   "confetti": true
+  },
+  "colours": {
+   "paper": "#F8EBD8",
+   "ink": "#49261B",
+   "gold": "#C49A42",
+   "gold2": "#E4C47B",
+   "deep": "#702F2B"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "nikah-moonlight",
+  "name": "Nikah · Moonlight",
+  "for": [
+   "ceremony"
+  ],
+  "region": "all",
+  "music": "kasavu-morning",
+  "beats": [
+   4,
+   6
+  ],
+  "layouts": [
+   "single",
+   "duo",
+   "polaroid"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade",
+   "slide"
+  ],
+  "card": "minimal",
+  "fx": {
+   "leak": true
+  },
+  "colours": {
+   "paper": "#F1F0F7",
+   "ink": "#29283B",
+   "gold": "#B6A7D5",
+   "gold2": "#D8CFE8",
+   "deep": "#3C4962"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "christian-white",
+  "name": "White Wedding · Ever After",
+  "for": [
+   "ceremony",
+   "reception"
+  ],
+  "region": "western",
+  "music": "kasavu-morning",
+  "beats": [
+   4,
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "polaroid",
+   "duo"
+  ],
+  "trans": [
+   "fade",
+   "zoomfade",
+   "slide"
+  ],
+  "card": "minimal",
+  "fx": {
+   "leak": true
+  },
+  "colours": {
+   "paper": "#FFFFFF",
+   "ink": "#343A42",
+   "gold": "#B9A68A",
+   "gold2": "#E5DDD0",
+   "deep": "#59636B"
+  },
+  "by": "chatgpt"
+ },
+ {
+  "id": "wedding-cinema",
+  "name": "Wedding Cinema",
+  "for": [
+   "highlights",
+   "reception"
+  ],
+  "region": "all",
+  "music": "road-trip",
+  "beats": [
+   2,
+   4
+  ],
+  "layouts": [
+   "single",
+   "punch",
+   "duo",
+   "strip",
+   "triptych"
+  ],
+  "trans": [
+   "zoomfade",
+   "whip",
+   "cut"
+  ],
+  "card": "film",
+  "fx": {
+   "pulse": 0.015,
+   "leak": true
+  },
+  "colours": {
+   "paper": "#181817",
+   "ink": "#F6F0E6",
+   "gold": "#C7A36A",
+   "gold2": "#E2C99F",
+   "deep": "#34312B"
+  },
+  "by": "chatgpt"
+ }
+]

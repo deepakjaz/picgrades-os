@@ -47,7 +47,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('#pghReel'); await pg.waitForFunction(() => /preview/i.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 20000 });
   const styles = await pg.evaluate(() => PGReel.styles.slice());
   console.log('reel styles:', styles.join(', '), '| broken skipped:', !styles.includes('broken'), '| unknown layout dropped:', await pg.evaluate(() => { PGReel.setStyle('haldi-sunshine'); return true; }));
-  await pg.locator('.rl-chip', { hasText: 'Haldi' }).click(); await pg.waitForTimeout(1200);
+  await pg.locator('.rl-chip', { hasText: 'Haldi · Sunshine' }).first().click(); await pg.waitForTimeout(1200);
   await pg.screenshot({ path: '/tmp/s17_reel_pack.png' });
   await pg.evaluate(() => PGReel.close());
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
