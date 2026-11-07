@@ -69,6 +69,8 @@
       if (!box.children.length) box.textContent = 'No games yet.';
     }).catch(() => { box.textContent = 'Games could not load. Check the internet and try again.'; });
   }
-  const card = document.getElementById('pgcGames'); if (card) card.addEventListener('click', open);
+  // the Games card only shows when games.json lists at least one game
+  const card = document.getElementById('pgcGames');
+  if (card) { card.classList.add('hidden'); card.addEventListener('click', open); loadList().then(gs => card.classList.toggle('hidden', !gs.length)).catch(() => {}); }
   window.pgOpenGames = open;
 })();

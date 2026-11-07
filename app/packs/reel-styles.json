@@ -47,7 +47,7 @@
    "mehendi"
   ],
   "region": "all",
-  "music": "mehendi-grooves",
+  "music": "dhol-festival",
   "beats": [
    2,
    4,
@@ -88,7 +88,7 @@
    "sangeet"
   ],
   "region": "all",
-  "music": "sangeet-spark",
+  "music": "dhol-festival",
   "beats": [
    1,
    1,
@@ -177,7 +177,7 @@
    "wedding"
   ],
   "region": "all",
-  "music": "pheras-serenity",
+  "music": "kasavu-morning",
   "beats": [
    4,
    4,
@@ -218,7 +218,7 @@
    "wedding"
   ],
   "region": "all",
-  "music": "vidaai-strings",
+  "music": "kasavu-morning",
   "beats": [
    4,
    6,
@@ -255,7 +255,7 @@
    "reception"
   ],
   "region": "all",
-  "music": "royal-shehnai",
+  "music": "temple-procession",
   "beats": [
    2,
    4,
@@ -295,7 +295,7 @@
    "cocktail"
   ],
   "region": "all",
-  "music": "afterparty-bass",
+  "music": "cocktail-night",
   "beats": [
    1,
    1,
@@ -425,7 +425,7 @@
    "pheras"
   ],
   "region": "north",
-  "music": "pheras-serenity",
+  "music": "kasavu-morning",
   "beats": [
    4,
    4,
@@ -509,7 +509,7 @@
    "baraat"
   ],
   "region": "west",
-  "music": "royal-shehnai",
+  "music": "temple-procession",
   "beats": [
    2,
    4,
@@ -552,7 +552,7 @@
    "reception"
   ],
   "region": "all",
-  "music": "pheras-serenity",
+  "music": "kasavu-morning",
   "beats": [
    4,
    4,
@@ -593,7 +593,7 @@
    "reception"
   ],
   "region": "western",
-  "music": "vidaai-strings",
+  "music": "kasavu-morning",
   "beats": [
    4,
    6,
@@ -671,7 +671,7 @@
    "haldi"
   ],
   "region": "all",
-  "music": "haldi-sunrise",
+  "music": "dhol-festival",
   "beats": [
    2,
    2,
@@ -831,7 +831,7 @@
    "ceremony"
   ],
   "region": "all",
-  "music": "evening-glow",
+  "music": "kasavu-morning",
   "beats": [
    4,
    4,

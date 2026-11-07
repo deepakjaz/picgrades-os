@@ -1114,3 +1114,5 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 .tkg-global-nav.scrolled .tkg-nav-item:nth-child(5){transform:translate(calc(-50% + 46px),-50%)!important}
 .tkg-global-nav.scrolled .tkg-nav-item.tkg-nav-hub{width:60px!important;height:50px!important}
 .tkg-global-nav.scrolled .tkg-nav-item.tkg-nav-hub > svg{width:38px!important;height:38px!important}
+
+.pgm-pop.off,.pgv-pop.off{color:#fff}   /* double-tap that takes a heart back */

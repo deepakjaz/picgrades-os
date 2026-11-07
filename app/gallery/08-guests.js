@@ -240,7 +240,7 @@ function pgReloadPosts() { return pgApi('getGallery').then(r => { GALLERY.guestP
         dl.addEventListener('click', e => { e.stopPropagation(); pgDownload(m); }); acts.appendChild(dl);
       }
       let lastTap = 0;
-      item.addEventListener('click', () => { const now = Date.now(); if (now - lastTap < 400) { const pop = document.createElement('div'); pop.className = 'pgm-pop'; pop.innerHTML = ICON_POP; item.appendChild(pop); setTimeout(() => pop.remove(), 850); if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m); lastTap = 0; } else lastTap = now; });
+      item.addEventListener('click', () => { const now = Date.now(); if (now - lastTap < 400) { const pop = document.createElement('div'); pop.className = 'pgm-pop'; pgDoubleTapLike(m, pop); item.appendChild(pop); setTimeout(() => pop.remove(), 850); lastTap = 0; } else lastTap = now; });
       item.appendChild(blur); item.appendChild(media); item.appendChild(scrim); item.appendChild(acts);
       feed.appendChild(item); syncCounts(m.id);
     });

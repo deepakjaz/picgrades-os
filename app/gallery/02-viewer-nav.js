@@ -53,9 +53,8 @@
       if (window.pgvZoomReset && pgvZoomReset()) return; // double-tap on a zoomed photo = back to whole photo
       const m = MOMENTS[activeIdx];
       if (m) {
-        if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m);
         const p = document.createElement('div'); p.className = 'pgv-pop'; p.style.left = x + 'px'; p.style.top = y + 'px';
-        p.innerHTML = ICON_POP; document.body.appendChild(p); setTimeout(() => p.remove(), 850);
+        pgDoubleTapLike(m, p); document.body.appendChild(p); setTimeout(() => p.remove(), 850);
       }
       return;
     }

@@ -167,6 +167,14 @@ const ICON_HEART_OUTLINE = '<svg class="icon-outline" viewBox="0 0 24 24" fill="
 const ICON_HEART_FILLED = '<svg class="icon-fill" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
 const ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
 const ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>';
+// Double-tap a photo: heart on if it was off, heart off if it was on (the heart button does the same).
+// Shows a red heart when liking, a white outline heart when taking the like back.
+function pgDoubleTapLike(m, pop) {
+  const had = !!(GALLERY.mine || {})[m.id];
+  pgToggleLike(m);
+  if (pop) { if (had) pop.classList.add('off'); pop.innerHTML = had ? ICON_POP_OFF : ICON_POP; }
+}
+const ICON_POP_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
 const ICON_POP = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
 function renderMoments() {
   const feed = document.getElementById('pgmFeed');
@@ -198,9 +206,8 @@ function renderMoments() {
     item.addEventListener('click', () => {
       const now = Date.now();
       if (now - lastTap < 400) {
-        const pop = document.createElement('div'); pop.className = 'pgm-pop'; pop.innerHTML = ICON_POP; item.appendChild(pop);
+        const pop = document.createElement('div'); pop.className = 'pgm-pop'; pgDoubleTapLike(m, pop); item.appendChild(pop);
         setTimeout(() => pop.remove(), 850);
-        if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m);
         lastTap = 0;
       } else lastTap = now;
     });
