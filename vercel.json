@@ -1,8 +1,28 @@
 {
   "rewrites": [
-    { "source": "/g/:id", "destination": "/app/gallery.html?g=:id" }
+    {
+      "source": "/g/:id",
+      "destination": "/app/gallery.html?g=:id"
+    }
   ],
   "headers": [
-    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }, { "key": "Service-Worker-Allowed", "value": "/" }] }
-  ]
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/stream.js": {
+      "includeFiles": "app/config.js"
+    }
+  }
 }

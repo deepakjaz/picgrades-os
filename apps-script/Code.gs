@@ -49,7 +49,9 @@ var PUBLIC_ROUTES = {
   likePhoto: likePhoto_,
   getNotes: getNotes_,
   addNote: addNote_,
-  getFaces: getFaces_,
+  findFaces: findFaces_,
+  faceBoxes: faceBoxes_,
+  videoOk: videoOk_,
   photoData: photoData_,
   guestJoin: guestJoin_,
   saveSet: saveSet_,
@@ -140,11 +142,10 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step12-posts',
+    version: 'step14-safety',
     time: new Date().toISOString(),
     rows: counts,
-    missingTabs: missing,
-    settings: getSettings_()
+    missingTabs: missing
   };
 }
 
@@ -185,7 +186,8 @@ function requestCode_(p) {
   });
   if (recent.length >= 5) return { ok: false, error: 'Too many codes requested. Try again in an hour.' };
 
-  var code = String(Math.floor(100000 + Math.random() * 900000));
+  var rb = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid());
+  var code = String(100000 + (((rb[0] & 0xff) << 16 | (rb[1] & 0xff) << 8 | (rb[2] & 0xff)) % 900000));
   appendRow_('Sessions', {
     token: Utilities.getUuid(), email: email, type: 'otp', codeHash: hash_(email + ':' + code),
     createdAt: fmt_(now), expiresAt: fmt_(new Date(now.getTime() + Number(s.otpMinutes || 10) * 60000)), used: 0
@@ -423,6 +425,8 @@ function calcOrder_(c, o, s, existingOrders, baseDate) {
   var catalogName = String(o.catalogName || '').trim();
   if (!catalogName) return { error: 'Add a catalog name.' };
   if (!String(o.catalogLink || '').trim()) return { error: 'Add the catalog link.' };
+  if (!/^https:\/\/\S+$/i.test(String(o.catalogLink).trim())) return { error: 'The catalog link must be a web link starting with https://' };
+  if (String(o.referenceLinks || '').split(/[\s,]+/).filter(String).some(function (l) { return !/^https:\/\/\S+$/i.test(l); })) return { error: 'Reference links must be web links starting with https://' };
 
   var images = Math.max(0, parseInt(o.images, 10) || 0);
   var cullOnly = option === 'Culling';
@@ -766,7 +770,7 @@ function recordPayment_(p, user) {
     var method = String(p.method || '').trim() || 'UPI';
     var images = Math.floor(amount / rate + 1e-9);
     var date = /^\d{4}-\d{2}-\d{2}$/.test(String(p.date || '')) ? p.date + ' 12:00:00' : fmt_(new Date());
-    var pay = { paymentId: 'PAY' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss'), date: date, companyName: c.companyName,
+    var pay = { paymentId: 'PAY' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + '-' + randomId_(4), date: date, companyName: c.companyName,
       amount: amount, currency: c.currency || 'INR', method: method, ratePerImage: rate, imagesAdded: images,
       note: String(p.note || '').trim(), recordedBy: normEmail_(user.email) };
     appendRow_('Payments', pay);
@@ -795,7 +799,7 @@ function adjustQuota_(p, user) {
     if (!images) return { ok: false, error: 'Enter images to add (or a minus number to remove).' };
     var note = String(p.note || '').trim();
     if (!note) return { ok: false, error: 'Add a note so the change is clear later.' };
-    appendRow_('Payments', { paymentId: 'ADJ' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss'), date: fmt_(new Date()), companyName: c.companyName,
+    appendRow_('Payments', { paymentId: 'ADJ' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + '-' + randomId_(4), date: fmt_(new Date()), companyName: c.companyName,
       amount: 0, currency: c.currency || 'INR', method: 'Adjustment', ratePerImage: '', imagesAdded: images, note: note, recordedBy: normEmail_(user.email) });
     var patch = { totalQuota: Number(c.totalQuota || 0) + images };
     updateRowByNumber_('Companies', c._row, patch);
@@ -924,9 +928,13 @@ function manifestFolder_() {
   return f;
 }
 
+/** Random id from Google's secure random source (Math.random is not safe for keys). */
 function randomId_(n) {
   var abc = 'abcdefghijkmnopqrstuvwxyz23456789', s = '';
-  for (var i = 0; i < n; i++) s += abc.charAt(Math.floor(Math.random() * abc.length));
+  while (s.length < n) {
+    var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid() + Utilities.getUuid());
+    for (var i = 0; i < bytes.length && s.length < n; i++) { var b = bytes[i] & 0xff; if (b < 231) s += abc.charAt(b % 33); }  // 231 = 7×33, keeps every letter equally likely
+  }
   return s;
 }
 
@@ -969,7 +977,7 @@ function setGallery_(p, user) {
       var missing = ids.filter(function (id) { return !known[id]; }).length;
       if (missing) updateRowByNumber_('Galleries', existing._row, { facesStatus: 'Needs update' });
     }
-    CacheService.getScriptCache().remove('gal:' + gid);
+    cacheRemoveBig_('gal:' + gid); dropSummary_(gid);
     updateRowByNumber_('Orders', o._row, { galleryLink: gid });
     return { galleryId: gid, photoCount: scan.photoCount, rootCount: scan.root.length,
       events: scan.events.map(function (e) { return { name: e.name, count: e.photos.length }; }) };
@@ -983,10 +991,10 @@ function findGallery_(gid) {
 
 function loadManifest_(g) {
   var cache = CacheService.getScriptCache(), key = 'gal:' + g.galleryId;
-  var hit = cache.get(key);
+  var hit = cacheGetBig_(key);
   if (hit) return JSON.parse(hit);
   var json = DriveApp.getFileById(g.manifestFileId).getBlob().getDataAsString();
-  if (json.length < 95000) cache.put(key, json, 21600);
+  cachePutBig_(key, json, 21600);
   return JSON.parse(json);
 }
 
@@ -994,53 +1002,67 @@ function loadManifest_(g) {
 function getGallery_(p) {
   var g = findGallery_(p.g);
   if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
-  var m = loadManifest_(g);
-  ensureTab_('MomentNotes', NOTE_COLUMNS);
-  var device = String(p.device || '').slice(0, 40);
-  var likes = {}, notes = {}, mine = {}, recent = [];
-  readTable_('MomentNotes').forEach(function (n) {
-    if (String(n.galleryId) !== g.galleryId || n.status === 'hidden') return;
-    if (n.type === 'like') { likes[n.photoId] = (likes[n.photoId] || 0) + 1; if (device && n.device === device) mine[n.photoId] = true; }
-    if (n.type === 'note') { notes[n.photoId] = (notes[n.photoId] || 0) + 1; recent.push({ photoId: n.photoId, name: n.name, text: n.text, at: n.at }); }
-  });
-  recent.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
-  m.recentNotes = recent.slice(0, 30);
+  var m = loadManifest_(g), sum = gallerySummary_(g);
   m.galleryId = g.galleryId;
-  m.likes = likes; m.notes = notes; m.mine = mine;
+  m.likes = sum.likes; m.notes = sum.noteCount; m.recentNotes = sum.recent; m.guestPosts = sum.posts;
+  m.mine = {};   // each phone remembers its own hearts (no per-phone scan on the server)
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
-  ensureTab_('GuestPosts', POST_COLUMNS);
-  m.guestPosts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.status === 'approved'; })
-    .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, at: x.at }; })
-    .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   return { gallery: m };
 }
 
+/** Likes, notes and approved posts of one gallery, worked out once and kept for a minute.
+ *  On the wedding day hundreds of guests open the gallery together: they share this instead of each reading the Sheet. */
+function gallerySummary_(g) {
+  var key = 'sum:' + g.galleryId, hit = cacheGetBig_(key);
+  if (hit) return JSON.parse(hit);
+  ensureTab_('MomentNotes', NOTE_COLUMNS); ensureTab_('GuestPosts', POST_COLUMNS);
+  var last = {}, noteCount = {}, notes = {}, recent = [];
+  readTable_('MomentNotes').forEach(function (n) {
+    if (String(n.galleryId) !== g.galleryId) return;
+    if (n.type === 'like' || n.type === 'unlike') { last[n.photoId + '|' + n.device] = n.type === 'like' && n.status !== 'hidden'; return; }   // a phone's last tap wins
+    if (n.type === 'note' && n.status !== 'hidden') {
+      noteCount[n.photoId] = (noteCount[n.photoId] || 0) + 1;
+      var x = { photoId: n.photoId, name: n.name, text: n.text, at: n.at };
+      (notes[n.photoId] = notes[n.photoId] || []).push(x); recent.push(x);
+    }
+  });
+  var likes = {};
+  Object.keys(last).forEach(function (k) { if (last[k]) { var id = k.split('|')[0]; likes[id] = (likes[id] || 0) + 1; } });
+  recent.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+  var posts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.status === 'approved'; })
+    .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, at: x.at }; })
+    .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+  var sum = { stamp: randomId_(6), likes: likes, noteCount: noteCount, notes: notes, recent: recent.slice(0, 30), posts: posts };
+  cachePutBig_(key, JSON.stringify(sum), 60);
+  return sum;
+}
+function dropSummary_(gid) { cacheRemoveBig_('sum:' + gid); }
+
 function likePhoto_(p) {
   var g = findGallery_(p.g);
   if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
   var device = String(p.device || '').slice(0, 40), photo = String(p.photoId || '');
   if (device.length < 8 || !photo) return { ok: false, error: 'Missing details.' };
-  var lock = LockService.getScriptLock(); lock.waitLock(10000);
-  try {
-    ensureTab_('MomentNotes', NOTE_COLUMNS);
-    var rows = readTable_('MomentNotes');
-    var mineRow = rows.filter(function (n) { return n.galleryId === g.galleryId && n.photoId === photo && n.type === 'like' && n.device === device && n.status !== 'hidden'; })[0];
-    if (mineRow) updateRowByNumber_('MomentNotes', mineRow._row, { status: 'hidden' });
-    else appendRow_('MomentNotes', { at: fmt_(new Date()), galleryId: g.galleryId, photoId: photo, type: 'like', device: device, status: 'ok' });
-    var count = rows.filter(function (n) { return n.galleryId === g.galleryId && n.photoId === photo && n.type === 'like' && n.status !== 'hidden'; }).length + (mineRow ? -1 : 1);
-    return { liked: !mineRow, likes: count };
-  } finally { lock.releaseLock(); }
+  var want = p.liked === undefined ? true : !!p.liked;   // the phone says heart on or off
+  if (!limitOk_('lk:' + g.galleryId, 6000, 3600) || !limitOk_('lkd:' + device, 400, 3600)) return { ok: false, error: 'Too many hearts for now. Please try again later.' };
+  var sum = gallerySummary_(g);
+  ensureTab_('MomentNotes', NOTE_COLUMNS);
+  // no lock and no Sheet scan: one new row; the summary counts each phone's last tap
+  appendRow_('MomentNotes', { at: fmt_(new Date()), galleryId: g.galleryId, photoId: photo, type: want ? 'like' : 'unlike', device: device, status: 'ok' });
+  // hearts since the summary was made are counted on the side, so the number the guest sees stays right
+  var c = CacheService.getScriptCache(), dk = 'ld:' + g.galleryId + ':' + sum.stamp + ':' + photo, delta = Number(c.get(dk) || 0) + (want ? 1 : -1);
+  c.put(dk, String(delta), 120);
+  var count = Math.max(0, (sum.likes[photo] || 0) + delta);
+  return { liked: want, likes: count };
 }
 
 function getNotes_(p) {
   var g = findGallery_(p.g);
   if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
-  ensureTab_('MomentNotes', NOTE_COLUMNS);
-  var list = readTable_('MomentNotes').filter(function (n) { return n.galleryId === g.galleryId && n.photoId === String(p.photoId || '') && n.type === 'note' && n.status !== 'hidden'; })
-    .map(function (n) { return { at: n.at, name: n.name, text: n.text }; });
+  var list = (gallerySummary_(g).notes[String(p.photoId || '')] || []).map(function (n) { return { at: n.at, name: n.name, text: n.text }; });
   return { notes: list };
 }
 
@@ -1052,15 +1074,11 @@ function addNote_(p) {
   if (!name) return { ok: false, error: 'Add your name.' };
   if (!text) return { ok: false, error: 'Write a note first.' };
   if (device.length < 8 || !photo) return { ok: false, error: 'Missing details.' };
-  var lock = LockService.getScriptLock(); lock.waitLock(10000);
-  try {
-    ensureTab_('MomentNotes', NOTE_COLUMNS);
-    var hourAgo = new Date(Date.now() - 3600000);
-    var recent = readTable_('MomentNotes').filter(function (n) { return n.device === device && n.type === 'note' && parseDate_(n.at) > hourAgo; }).length;
-    if (recent >= 20) return { ok: false, error: 'Too many notes in a short time. Please try again later.' };
-    appendRow_('MomentNotes', { at: fmt_(new Date()), galleryId: g.galleryId, photoId: photo, type: 'note', device: device, name: name, text: text, status: 'ok' });
-    return { note: { at: fmt_(new Date()), name: name, text: text } };
-  } finally { lock.releaseLock(); }
+  if (!limitOk_('nt:' + device, 20, 3600) || !limitOk_('ntg:' + g.galleryId, 500, 3600)) return { ok: false, error: 'Too many notes in a short time. Please try again later.' };
+  ensureTab_('MomentNotes', NOTE_COLUMNS);
+  appendRow_('MomentNotes', { at: fmt_(new Date()), galleryId: g.galleryId, photoId: photo, type: 'note', device: device, name: name, text: text, status: 'ok' });
+  dropSummary_(g.galleryId);
+  return { note: { at: fmt_(new Date()), name: name, text: text } };
 }
 
 // =====================================================================
@@ -1202,19 +1220,18 @@ function guestJoin_(p) {
   var name = String(p.name || '').replace(/\s+/g, ' ').trim().slice(0, 40), phone = String(p.phone || '').replace(/[^\d+]/g, '');
   if (name.length < 2) return { ok: false, error: 'Please write your name.' };
   if (phone.replace(/\D/g, '').length < 10 || phone.replace(/\D/g, '').length > 13) return { ok: false, error: 'Please write a valid mobile number.' };
-  var lock = LockService.getScriptLock(); lock.waitLock(10000);
-  try {
-    ensureTab_('Guests', GUEST_COLUMNS);
-    var key = randomId_(24), id = 'gst_' + randomId_(10);
-    appendRow_('Guests', { at: fmt_(new Date()), galleryId: g.galleryId, guestId: id, keyHash: hash_(key), name: name, phone: phone, device: String(p.device || '').slice(0, 40), status: 'ok' });
-    return { guestId: id, guestKey: key, name: name };
-  } finally { lock.releaseLock(); }
+  if (!limitOk_('gj:' + String(p.device || phone).slice(0, 40), 5, 3600) || !limitOk_('gjg:' + g.galleryId, 600, 3600)) return { ok: false, error: 'Too many sign-ins for now. Please try again later.' };
+  ensureTab_('Guests', GUEST_COLUMNS);
+  var key = randomId_(24), id = 'gst_' + randomId_(10);
+  appendRow_('Guests', { at: fmt_(new Date()), galleryId: g.galleryId, guestId: id, keyHash: hash_(key), name: name, phone: phone, device: String(p.device || '').slice(0, 40), status: 'ok' });
+  return { guestId: id, guestKey: key, name: name };
 }
 
 /** Public: save a "Find me" result with a name → short code for a link that opens it on any phone. */
 function saveSet_(p) {
   var g = publishedGallery_(p.g), name = String(p.name || '').trim().slice(0, 50);
   if (!name) return { ok: false, error: 'Give this collection a name.' };
+  if (!limitOk_('ss:' + String(p.device || '').slice(0, 40), 20, 3600) || !limitOk_('ssg:' + g.galleryId, 400, 3600)) return { ok: false, error: 'Too many saved collections for now. Please try again later.' };
   var m = loadManifest_(g), ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
   var list = (p.ids || []).filter(function (id) { return ids[id]; }).slice(0, 600);
   if (!list.length) return { ok: false, error: 'No photos to save.' };
@@ -1253,6 +1270,7 @@ function uploadMoment_(p) {
   if (data.length * 0.75 > MAX_UPLOAD_BYTES) return { ok: false, error: 'This file is too big (max 20 MB). Try a shorter video.' };
   var cache = CacheService.getScriptCache(), rk = 'up:' + guest.guestId, used = Number(cache.get(rk) || 0);
   if (used >= 30) return { ok: false, error: 'Too many uploads for now. Please try again in an hour.' };
+  if (!limitOk_('upg:' + g.galleryId, 300, 3600)) return { ok: false, error: 'Many guests are uploading right now. Please try again in a little while.' };
   cache.put(rk, String(used + 1), 3600);
   var folder = guestFolder_(g);
   var ext = isVideo ? (/quicktime/.test(mime) ? 'mov' : 'mp4') : (/png/.test(mime) ? 'png' : 'jpg');
@@ -1260,12 +1278,9 @@ function uploadMoment_(p) {
   var blob = Utilities.newBlob(Utilities.base64Decode(data), mime, guest.name.replace(/[^\w ]+/g, '').slice(0, 20) + '_' + postId + '.' + ext);
   var file = folder.createFile(blob);
   try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
-  var lock = LockService.getScriptLock(); lock.waitLock(10000);
-  try {
-    ensureTab_('GuestPosts', POST_COLUMNS);
-    appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: guest.guestId, name: guest.name, phone: guest.phone,
-      caption: String(p.caption || '').slice(0, 300), fileId: file.getId(), mime: mime, type: isVideo ? 'video' : 'photo', status: 'review', reviewedAt: '' });
-  } finally { lock.releaseLock(); }
+  ensureTab_('GuestPosts', POST_COLUMNS);
+  appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: guest.guestId, name: guest.name, phone: guest.phone,
+    caption: String(p.caption || '').slice(0, 300), fileId: file.getId(), mime: mime, type: isVideo ? 'video' : 'photo', status: 'review', reviewedAt: '' });
   return { postId: postId, status: 'review' };
 }
 
@@ -1286,7 +1301,7 @@ function savePost_(p) {
     var u = authUser_(p.token);
     if (u) { try { loadOrder_(g.orderId, u); who = { guestId: 'staff:' + u.email, name: g.companyName || 'Photographer', phone: '' }; status = 'approved'; } catch (e) {} }
   }
-  if (!who) who = guestFor_(g, p);
+  if (!who) { who = guestFor_(g, p); if (!limitOk_('spg:' + g.galleryId, 200, 3600)) return { ok: false, error: 'Many guests are posting right now. Please try again in a little while.' }; }
   var slides = (p.slides || []).slice(0, 10);
   if (!slides.length) return { ok: false, error: 'Nothing to save.' };
   var total = slides.reduce(function (t, x) { return t + String(x || '').length; }, 0);
@@ -1298,12 +1313,10 @@ function savePost_(p) {
     try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
     ids.push(f.getId());
   });
-  var lock = LockService.getScriptLock(); lock.waitLock(10000);
-  try {
-    ensureTab_('GuestPosts', POST_COLUMNS);
-    appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: who.guestId, name: who.name, phone: who.phone || '',
-      caption: String(p.caption || '').slice(0, 300), fileId: ids.join(','), mime: 'image/jpeg', type: 'album', status: status, reviewedAt: status === 'approved' ? fmt_(new Date()) : '' });
-  } finally { lock.releaseLock(); }
+  ensureTab_('GuestPosts', POST_COLUMNS);
+  appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: who.guestId, name: who.name, phone: who.phone || '',
+    caption: String(p.caption || '').slice(0, 300), fileId: ids.join(','), mime: 'image/jpeg', type: 'album', status: status, reviewedAt: status === 'approved' ? fmt_(new Date()) : '' });
+  if (status === 'approved') dropSummary_(g.galleryId);
   return { postId: postId, status: status, slides: ids.length };
 }
 
@@ -1339,6 +1352,11 @@ function couplePost_(p) {
   var row = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.postId === String(p.postId || ''); })[0];
   if (!row) return { ok: false, error: 'Post not found.' };
   updateRowByNumber_('GuestPosts', row._row, { status: decision, reviewedAt: fmt_(new Date()) });
+  // hidden = the Drive file is no longer open to anyone with its link (the nightly clean-up deletes it after 7 days)
+  String(row.fileId || '').split(',').filter(String).forEach(function (id) {
+    try { DriveApp.getFileById(id).setSharing(decision === 'approved' ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, DriveApp.Permission.VIEW); } catch (e) {}
+  });
+  dropSummary_(g.galleryId);
   return { postId: row.postId, status: decision };
 }
 /** Couple link: the thank-you note guests see once their moment is approved. */
@@ -1360,6 +1378,7 @@ function photoData_(p) {
   var want = (p.ids || []).slice(0, 4).filter(function (id) { return ids[id]; });
   var cache = CacheService.getScriptCache(), key = 'pd:' + g.galleryId + ':' + device, used = Number(cache.get(key) || 0);
   if (used + want.length > 150) return { ok: false, error: 'Too many photos for now. Please try again in an hour.' };
+  if (!limitOk_('pdg:' + g.galleryId, 1500, 3600)) return { ok: false, error: 'This gallery is very busy. Please try again in a little while.' };   // ≈6,000 photos an hour for the whole wedding
   cache.put(key, String(used + want.length), 3600);
   var out = {};
   want.forEach(function (id) {
@@ -1372,13 +1391,84 @@ function photoData_(p) {
 }
 
 /** Public: faces of a gallery for "Find me" (the selfie never leaves the guest's phone). */
-function getFaces_(p) {
-  var g = findGallery_(p.g);
-  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
-  if (g.facesStatus !== 'Ready' && g.facesStatus !== 'Needs update') return { ok: false, error: 'Face search is not ready for this gallery yet.' };
-  var f = readFacesFile_(g);
-  return { faces: { scale: f.scale, photos: f.photos } };
+/** Public: Find me. The phone reads the guest's selfie and sends only that one face code; matching happens here,
+ *  so nobody can download the face codes of everyone in the wedding. Returns photo ids only. */
+var FACE_SURE = 0.5, FACE_MAYBE = 0.58;
+function findFaces_(p) {
+  var g = faceGallery_(p.g), device = String(p.device || '').slice(0, 40);
+  if (device.length < 8) return { ok: false, error: 'Missing details.' };
+  if (!limitOk_('ff:' + device, 20, 3600) || !limitOk_('ffg:' + g.galleryId, 1500, 3600)) return { ok: false, error: 'Too many searches for now. Please try again in an hour.' };
+  var f = readFacesFile_(g), scale = f.scale || 250, me = faceBytes_(String(p.d || ''));
+  if (!me) return { ok: false, error: 'The face could not be read. Please try again.' };
+  var limSure = FACE_SURE * scale, limMaybe = FACE_MAYBE * scale, sure = [], maybe = [], best = {};
+  Object.keys(f.photos || {}).forEach(function (pid) {
+    var b = 1e9;
+    (f.photos[pid].f || []).forEach(function (fc) {
+      var x = faceBytes_(fc[1]); if (!x) return;
+      var t = 0; for (var i = 0; i < 128; i++) { var d = me[i] - x[i]; t += d * d; if (t > limMaybe * limMaybe) break; }
+      t = Math.sqrt(t); if (t < b) b = t;
+    });
+    if (b <= limMaybe) best[pid] = b;
+  });
+  Object.keys(best).sort(function (a, c) { return best[a] - best[c]; }).forEach(function (pid) { (best[pid] <= limSure ? sure : maybe).push(pid); });
+  return { sure: sure, maybe: maybe, photos: Object.keys(f.photos || {}).length };
 }
+/** Public: where faces are in each photo (boxes only, no face codes) so the album maker keeps people in frame. */
+function faceBoxes_(p) {
+  var g = faceGallery_(p.g), f = readFacesFile_(g), out = {};
+  Object.keys(f.photos || {}).forEach(function (pid) { out[pid] = (f.photos[pid].f || []).map(function (fc) { return fc[0]; }); });
+  return { boxes: out };
+}
+function faceGallery_(gid) {
+  var g = findGallery_(gid);
+  if (!g || g.status !== 'Published') throw new Error('This gallery is not available.');
+  if (g.facesStatus !== 'Ready' && g.facesStatus !== 'Needs update') throw new Error('Face search is not ready for this gallery yet.');
+  return g;
+}
+/** 128 numbers from a saved face code (base64 of 128 signed bytes). */
+function faceBytes_(b64) {
+  try { var b = Utilities.base64Decode(b64); if (b.length !== 128) return null; var o = new Array(128); for (var i = 0; i < 128; i++) o[i] = b[i] > 127 ? b[i] - 256 : b[i]; return o; }
+  catch (e) { return null; }
+}
+/** Public (used by the video player on Vercel): is this an approved video of this gallery? */
+function videoOk_(p) {
+  var g = findGallery_(p.g);
+  if (!g || g.status !== 'Published') return { ok: true, allowed: false };
+  var id = String(p.id || '');
+  if (gallerySummary_(g).posts.some(function (x) { return x.type === 'video' && x.fileId === id; })) return { allowed: true };
+  // a video still waiting for the couple's review (the couple has to watch it to decide)
+  var c = CacheService.getScriptCache(), k = 'vok:' + g.galleryId + ':' + id, hit = c.get(k);
+  if (hit) return { allowed: hit === '1' };
+  ensureTab_('GuestPosts', POST_COLUMNS);
+  var ok = readTable_('GuestPosts').some(function (x) { return x.galleryId === g.galleryId && x.fileId === id && x.type === 'video' && x.status === 'review'; });
+  c.put(k, ok ? '1' : '0', 300);
+  return { allowed: ok };
+}
+
+/** Counts requests in a time window (shared by everyone). false = over the limit. */
+function limitOk_(key, max, seconds) {
+  var c = CacheService.getScriptCache(), used = Number(c.get('lim:' + key) || 0);
+  if (used >= max) return false;
+  c.put('lim:' + key, String(used + 1), seconds);
+  return true;
+}
+/** CacheService keeps at most 100 KB per value: big values are stored in pieces. */
+function cachePutBig_(key, str, seconds) {
+  var c = CacheService.getScriptCache(), size = 90000, n = Math.ceil(str.length / size);
+  if (n > 40) return;   // too big to keep (over ~3.5 MB): read it fresh
+  var all = {}; for (var i = 0; i < n; i++) all[key + ':' + i] = str.substr(i * size, size);
+  all[key + ':n'] = String(n);
+  try { c.putAll(all, seconds); } catch (e) {}
+}
+function cacheGetBig_(key) {
+  var c = CacheService.getScriptCache(), n = Number(c.get(key + ':n') || 0);
+  if (!n) return null;
+  var keys = []; for (var i = 0; i < n; i++) keys.push(key + ':' + i);
+  var got = c.getAll(keys), out = '';
+  for (var k = 0; k < n; k++) { if (got[keys[k]] == null) return null; out += got[keys[k]]; }
+  return out;
+}
+function cacheRemoveBig_(key) { CacheService.getScriptCache().remove(key + ':n'); }
 
 /** Logged in: email the gallery link to the client (you press "Send to client"). */
 function sendGallery_(p, user) {

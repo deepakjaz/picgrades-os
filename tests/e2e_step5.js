@@ -40,9 +40,10 @@ const srv = http.createServer((req, res) => {
   await pg.waitForFunction(() => document.getElementById('statusPill').textContent === 'Ready', null, { timeout: 600000 });
   console.log('READY in', Math.round((Date.now() - t0) / 1000), 's | faces:', await pg.textContent('#tFaces'), '| read:', await pg.textContent('#tRead'), '| people:', await pg.locator('.person').count(), '| via:', await pg.textContent('#engine'));
   await pg.screenshot({ path: '/tmp/s5_faces_ready.png', fullPage: true });
-  const fx = call('getFaces', { g: pub.galleryId }).faces;
+  const fx = call('faceBoxes', { g: pub.galleryId }).boxes, dim = require('child_process').execSync('python3 -c "from PIL import Image;print(*Image.open(\'' + path.join(FX, 'sample2.jpg') + '\').size)"').toString().trim().split(' ').map(Number);
+  console.log('public face boxes have no face codes:', !/[A-Za-z0-9+\/]{40,}/.test(JSON.stringify(fx)), '| getFaces still public:', !!call('getFaces', { g: pub.galleryId }).faces);
   // a "selfie": crop the biggest face of sample2 (pixel box from the stored 0..1000 box)
-  const e2 = fx.photos.FX2, big = e2.f.sort((a, c) => c[0][2] - a[0][2])[0][0];
+  const e2 = { w: dim[0], h: dim[1] }, big = fx.FX2.sort((a, c) => c[2] - a[2])[0];
   const px = (v, n) => Math.round(v / 1000 * n), pad = 0.6;
   const cw = px(big[2], e2.w), ch = px(big[3], e2.h), cx = Math.max(0, px(big[0], e2.w) - cw * pad), cy = Math.max(0, px(big[1], e2.h) - ch * pad);
   const crop = `crop=${Math.round(cw * (1 + 2 * pad))}:${Math.round(ch * (1 + 2 * pad))}:${Math.round(cx)}:${Math.round(cy)}`;

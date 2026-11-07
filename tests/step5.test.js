@@ -18,14 +18,15 @@ assert(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(r.gallery.dueAt) || r.gallery.dueAt
 assert(!call('facesStatus', { token: other, g: gid }).ok, 'another studio cannot open face reading');
 assert(call('facesStatus', { token: client, g: gid }).ok, 'the order\'s own studio can open face reading');
 assert(!call('getGallery', { g: gid }).gallery.faceSearch, 'Find me is off before faces are read');
-assert(!call('getFaces', { g: gid }).ok, 'faces not public before ready');
-const d = Buffer.from(Array.from({ length: 128 }, (_, i) => (i * 7) % 256)).toString('base64');
-const face = (x) => [[x, 100, 120, 160], d];
+assert(!call('findFaces', { g: gid, d: 'AAAA', device: 'devicefaces1' }).ok, 'Find me not open before faces are ready');
+const person = (k) => Buffer.from(Array.from({ length: 128 }, (_, i) => ((((i * 7 + k * 53) % 41) - 20) * (k ? -1 : 1) + 256) % 256)).toString('base64');
+const d = person(0);
+const face = (x, k) => [[x, 100, 120, 160], person(k || 0)];
 r = call('saveFaces', { token: admin, g: gid, pass: 1, photos: { P1: { w: 1600, h: 1067, f: [face(100), face(500)] }, P2: { w: 1067, h: 1600, f: [] } } });
 assert(r.ok && r.status === 'Reading' && r.faceCount === 2 && r.photosRead === 2 && r.photosTotal === 5, 'batch 1 saved: Reading, 2 faces, 2/5 photos');
 assert(!call('saveFaces', { token: admin, g: gid, pass: 1, photos: { ZZZ: { w: 1, h: 1, f: [] } } }).ok, 'photo outside gallery rejected');
 assert(!call('saveFaces', { token: admin, g: gid, pass: 1, photos: { P3: { w: 10, h: 10, f: [[[1, 2, 3], 'x']] } } }).ok, 'broken face data rejected');
-r = call('saveFaces', { token: admin, g: gid, pass: 1, photos: { P2b: { w: 1600, h: 1067, f: [face(10)] }, P3: { w: 1600, h: 1067, f: [] } }, done: true });
+r = call('saveFaces', { token: admin, g: gid, pass: 1, photos: { P2b: { w: 1600, h: 1067, f: [face(10, 1)] }, P3: { w: 1600, h: 1067, f: [] } }, done: true });
 assert(r.ok && r.status === 'Reading', 'done=true but a photo still unread → stays Reading');
 r = call('saveFaces', { token: admin, g: gid, pass: 1, photos: { P4: { w: 1600, h: 1067, f: [face(300)] } } });
 r = call('facesStatus', { token: admin, g: gid });
@@ -35,8 +36,15 @@ assert(r.ok && r.status === 'Ready' && r.faceCount === 5, 'pass 2 adds a face; R
 assert(call('facesStatus', { token: admin, g: gid }).faces.pass.P1 === 2, 'pass recorded as 2');
 let g = call('getGallery', { g: gid }).gallery;
 assert(g.faceSearch === true, 'Find me switched on when Ready');
-r = call('getFaces', { g: gid });
-assert(r.ok && r.faces.scale === 250 && r.faces.photos.P1.f.length === 3 && !r.faces.pass, 'public faces for Find me (no internal fields)');
+assert(call('getFaces', { g: gid }).code === 'AUTH' || !call('getFaces', { g: gid }).faces, 'face codes of everyone can no longer be downloaded');
+r = call('findFaces', { g: gid, d: face(500)[1], device: 'devicefaces1' });
+assert(r.ok && r.sure.includes('P1') && !r.sure.includes('P2b') && !r.faces && JSON.stringify(r).length < 200, 'Find me matches on the server and returns photo ids only: ' + JSON.stringify(r));
+r = call('findFaces', { g: gid, d: face(10, 1)[1], device: 'devicefaces1' });
+assert(r.ok && r.sure.includes('P2b') && !r.sure.includes('P1'), 'another face finds its own photo');
+r = call('faceBoxes', { g: gid });
+assert(r.ok && r.boxes.P1.length === 3 && !/[A-Za-z0-9+\/]{40,}/.test(JSON.stringify(r)), 'album maker gets face boxes without face codes');
+let flim = 0; for (let i = 0; i < 25; i++) if (!call('findFaces', { g: gid, d: face(10)[1], device: 'devicefaces2' }).ok) flim++;
+assert(flim === 5, 'searches per phone are limited (20 an hour)');
 // proxy
 r = call('facesProxy', { token: admin, g: gid, ids: ['P1', 'NOPE', 'P3'] });
 assert(r.ok && /^data:image\/jpeg;base64,/.test(r.images.P1) && !r.images.NOPE && r.images.P3, 'photo proxy returns only gallery photos');

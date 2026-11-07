@@ -24,16 +24,17 @@ assert(r.ok && r.order.quotaUsed === 150 && r.company.usedQuota === before + 150
 assert(DB.Orders.length === n0 + 1 && DB.Orders[DB.Orders.length - 1][0] === 'PG00420', 'order row appended with id PG00420');
 assert(mail.slice(-2).map(m => m.to).join() === 'team@35mmcandids.com,adcmediaa@gmail.com', 'client + admin emails sent');
 // culling only: no editing quota, 72h
-r = call('placeOrder', { token, order: { option: 'Culling', catalogName: 'Cull Test', images: 300, cullingImages: 1200, hours: 24, catalogLink: 'x' } });
+assert(/https/.test(call('placeOrder', { token, order: { option: 'Culling', catalogName: 'Bad link', images: 10, catalogLink: 'javascript:alert(1)' } }).error), 'non-https catalog link rejected');
+r = call('placeOrder', { token, order: { option: 'Culling', catalogName: 'Cull Test', images: 300, cullingImages: 1200, hours: 24, catalogLink: 'https://drive.google.com/x' } });
 assert(r.ok && r.order.quotaUsed === 0 && r.order.hours === 72, 'culling-only: 0 quota, forced 72h');
 assert(r.company.totalImagesCulled === 1200, 'culled count added');
 // validation
-assert(!call('placeOrder', { token, order: { option: 'Human Touch', catalogName: '', images: 10, catalogLink: 'x' } }).ok, 'missing catalog name rejected');
-assert(!call('placeOrder', { token, order: { option: 'Hacked', catalogName: 'a', images: 10, catalogLink: 'x' } }).ok, 'unknown option rejected');
+assert(!call('placeOrder', { token, order: { option: 'Human Touch', catalogName: '', images: 10, catalogLink: 'https://drive.google.com/x' } }).ok, 'missing catalog name rejected');
+assert(!call('placeOrder', { token, order: { option: 'Hacked', catalogName: 'a', images: 10, catalogLink: 'https://drive.google.com/x' } }).ok, 'unknown option rejected');
 // credits: 35mm has credits enabled? use them
 const c35 = call('me', { token }).company;
 if (c35.creditsEnabled && c35.credits > 0) {
-  r = call('placeOrder', { token, order: { option: 'Human Touch', catalogName: 'Credit Test', images: 50, hours: 96, catalogLink: 'x', useCredits: true } });
+  r = call('placeOrder', { token, order: { option: 'Human Touch', catalogName: 'Credit Test', images: 50, hours: 96, catalogLink: 'https://drive.google.com/x', useCredits: true } });
   assert(r.ok && r.order.creditsRedeemed === Math.min(50, c35.credits) && r.company.credits === c35.credits - r.order.creditsRedeemed, 'credits redeemed and logged');
 }
 // sample company login + limits
@@ -42,8 +43,8 @@ const c2 = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1];
 const t2 = call('verifyCode', { email: 'ovigraphy7@gmail.com', code: c2 }).token;
 r = call('me', { token: t2 });
 assert(r.company.packageType === 'SAMPLE' && r.orderForm.options[0] === 'Sample (Color Correction)' && r.orderForm.maxImages === 150, 'SAMPLE: one option, max 150');
-assert(!call('placeOrder', { token: t2, order: { option: 'Sample (Color Correction)', catalogName: 'S', images: 151, catalogLink: 'x' } }).ok, 'SAMPLE over 150 blocked');
-assert(call('placeOrder', { token: t2, order: { option: 'Sample (Color Correction)', catalogName: 'S', images: 150, hours: 96, catalogLink: 'x' } }).ok, 'SAMPLE 150 allowed');
+assert(!call('placeOrder', { token: t2, order: { option: 'Sample (Color Correction)', catalogName: 'S', images: 151, catalogLink: 'https://drive.google.com/x' } }).ok, 'SAMPLE over 150 blocked');
+assert(call('placeOrder', { token: t2, order: { option: 'Sample (Color Correction)', catalogName: 'S', images: 150, hours: 96, catalogLink: 'https://drive.google.com/x' } }).ok, 'SAMPLE 150 allowed');
 assert(!call('me', { token: t2 }).orderForm.canOrder, 'SAMPLE used up → blocked');
 assert(call('logout', { token: t2 }).ok && call('me', { token: t2 }).code === 'AUTH', 'logout ends session');
 console.log('emails logged:', DB.EmailLog.length - 1);
