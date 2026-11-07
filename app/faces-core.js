@@ -1,6 +1,7 @@
 /* PicGrades face reading core — shared by the face-reading page (faces.html) and the gallery (Find me).
-   Uses face-api (MIT, /app/vendor/face-api.js) with models in /app/models. Everything runs in the browser:
-   photos and selfies are never sent anywhere for face matching. */
+   Uses face-api (MIT, /app/vendor/face-api.js) with models in /app/models. Faces are read in the browser:
+   photos and selfies are never uploaded. For Find me only the selfie's face code (128 numbers) is sent, and the
+   PicGrades server matches it, so nobody can download the face codes of everyone in a wedding. */
 (function () {
   'use strict';
   var MODEL_URL = '/app/models';

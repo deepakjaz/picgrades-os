@@ -1664,6 +1664,9 @@ function syncCounts(id) {
   }
 }
 const likeBusy = {};
+// each phone remembers its own hearts for this wedding
+function pgSaveMine() { try { localStorage.setItem('pg_mine_' + GALLERY_ID, JSON.stringify(Object.keys(GALLERY.mine || {}))); } catch (e) {} }
+function pgLoadMine() { const out = {}; try { (JSON.parse(localStorage.getItem('pg_mine_' + GALLERY_ID) || '[]') || []).forEach(id => { out[id] = true; }); } catch (e) {} return out; }
 function pgToggleLike(m) {
   if (likeBusy[m.id]) return;
   likeBusy[m.id] = true;
@@ -1671,8 +1674,9 @@ function pgToggleLike(m) {
   if (was) delete GALLERY.mine[m.id]; else GALLERY.mine[m.id] = true;
   GALLERY.likes[m.id] = Math.max(0, (GALLERY.likes[m.id] || 0) + (was ? -1 : 1));
   syncCounts(m.id);
-  pgApi('likePhoto', { photoId: m.id }).then(res => {
+  pgApi('likePhoto', { photoId: m.id, liked: !was }).then(res => {
     GALLERY.likes[m.id] = res.likes; if (res.liked) GALLERY.mine[m.id] = true; else delete GALLERY.mine[m.id];
+    pgSaveMine();
   }).catch(err => {
     if (was) GALLERY.mine[m.id] = true; else delete GALLERY.mine[m.id];
     GALLERY.likes[m.id] = Math.max(0, (GALLERY.likes[m.id] || 0) + (was ? 1 : -1));
@@ -2171,7 +2175,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
   const bootEl = document.getElementById('pgBoot'), bootMsg = document.getElementById('pgBootMsg');
   if (!API || !GALLERY_ID) { bootMsg.textContent = 'This gallery link is incomplete. Please check the link you received.'; return; }
   pgApi('getGallery').then(res => {
-    GALLERY = res.gallery; GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = GALLERY.mine || {};
+    GALLERY = res.gallery; GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
     const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;
     document.title = GALLERY.title + ' · PicGrades';
     document.getElementById('pgCoupleTitle').textContent = GALLERY.title;
@@ -2292,7 +2296,7 @@ function pgMonogram() {
 }
 (function pgFindMe() {
   const $ = (id) => document.getElementById(id);
-  let FLAT = null, stream = null, loopTimer = null, coreReady = null, lastResult = null;
+  let stream = null, loopTimer = null, coreReady = null, lastResult = null;
   const sheet = $('fmSheet'), back = $('fmBackdrop'), video = $('fmVideo'), overlay = $('fmOverlay');
   function status(t) { $('fmStatus').textContent = t || ''; }
   function loadCore() {
@@ -2301,7 +2305,7 @@ function pgMonogram() {
   }
   function prepare() {
     status('Getting face search ready… the first time takes a few seconds.');
-    return loadCore().then(() => Promise.all([PGFaces.load(), FLAT ? null : pgApi('getFaces').then(r => { FLAT = PGFaces.flatten(r.faces); })])).then(() => status(''));
+    return loadCore().then(() => PGFaces.load()).then(() => status(''));
   }
   function reset() { $('fmResult').classList.add('hidden'); $('fmActions').classList.remove('hidden'); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden'); status(''); }
   function open() { reset(); back.classList.add('show'); sheet.classList.add('show'); prepare().catch(e => status(e.message)); }
@@ -2349,11 +2353,10 @@ function pgMonogram() {
     busy(true, 'Getting face search ready…');
     return paint().then(prepare).then(() => { busy(true, 'Reading your face…'); return paint(); }).then(() => PGFaces.detect(input, 0.5)).then(found => {
       if (!found.length) { busy(false); reset(); status('No face found. Use a clear, front-facing photo in good light.'); return; }
-      busy(true, 'Matching with ' + new Set(FLAT.map(x => x.pid)).size + ' photos…');
-      return paint().then(() => {
-        const me = found.sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height)[0];
-        const m = PGFaces.match(me.descriptor, FLAT); busy(false); showResult(m, found.length > 1);
-      });
+      busy(true, 'Matching with the wedding photos…');
+      // only this one face code is sent; the matching happens on the PicGrades server
+      const me = found.sort((a, b) => b.box.width * b.box.height - a.box.width * a.box.height)[0];
+      return pgApi('findFaces', { d: PGFaces.pack(me.descriptor) }).then(m => { busy(false); showResult(m, found.length > 1); });
     }).catch(e => { busy(false); reset(); status(e.message); });
   }
   function photoIndex() {
@@ -2933,7 +2936,7 @@ function pgCheckMyPosts() {
   const $ = (id) => document.getElementById(id);
   const close = () => { $('cpBackdrop').classList.remove('show'); $('cpSheet').classList.remove('show'); };
   $('cpClose').addEventListener('click', close); $('cpBackdrop').addEventListener('click', close);
-  function media(p) { if (p.type === 'album') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
+  function media(p) { if (p.type === 'album') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
   function load() {
     return pgApi('coupleQueue').then(r => {
       $('cpThanks').value = r.thanks || '';
@@ -2983,7 +2986,7 @@ function pgReloadPosts() { pgApi('getGallery').then(r => { GALLERY.guestPosts = 
       } else if (p.type === 'video') {
         media = document.createElement('video'); media.className = 'pgm-img';
         media.setAttribute('playsinline', ''); media.setAttribute('webkit-playsinline', ''); media.setAttribute('muted', ''); media.playsInline = true; media.muted = true; media.loop = true; media.preload = 'metadata';
-        media.src = '/api/stream?id=' + encodeURIComponent(p.fileId);
+        media.src = '/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId);
         pgVidObs.observe(media);
         const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'pgm-mute'; mb.textContent = '🔇'; mb.setAttribute('aria-label', 'Sound on or off');
         mb.addEventListener('click', (e) => { e.stopPropagation(); muted = !muted; document.querySelectorAll('.pgm-guest video').forEach(v => { v.muted = muted; }); document.querySelectorAll('.pgm-mute').forEach(x => { x.textContent = muted ? '🔇' : '🔊'; }); });
@@ -3050,8 +3053,8 @@ function pgOpenPost(photos) {
   })).then(() => {
     // faces we already read keep people in view when a photo is cropped into the album
     if (!GALLERY.faceSearch) return;
-    (window.pgFaceBoxes ? Promise.resolve(window.pgFaceBoxes) : pgApi('getFaces').then(r => {
-      const m = {}; Object.keys(r.faces.photos || {}).forEach(id => { m[id] = r.faces.photos[id].f.map(f => f[0].map(v => v / 1000)); }); return (window.pgFaceBoxes = m);
+    (window.pgFaceBoxes ? Promise.resolve(window.pgFaceBoxes) : pgApi('faceBoxes').then(r => {
+      const m = {}; Object.keys(r.boxes || {}).forEach(id => { m[id] = r.boxes[id].map(b => b.map(v => v / 1000)); }); return (window.pgFaceBoxes = m);
     })).then(m => PGPost.setFaces(m)).catch(() => {});
   }).catch(e => showToast(e.message));
 }

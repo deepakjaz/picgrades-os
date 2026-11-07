@@ -45,6 +45,12 @@ let q = call('coupleQueue', { g: gid, coupleKey: ck });
 assert(q.ok && q.waiting.length === 2 && q.waiting[0].name === 'Meera Bhua', 'couple sees 2 waiting');
 assert(call('couplePost', { g: gid, coupleKey: ck, postId: u.postId, decision: 'approve' }).status === 'approved', 'couple approves photo');
 assert(call('couplePost', { g: gid, coupleKey: ck, postId: u2.postId, decision: 'hide' }).status === 'hidden', 'couple hides video');
+{ const row = DB.GuestPosts.slice(1).find(r => r.includes(u2.postId)), fid = row.find(v => /^file\d+$/.test(String(v)));
+  assert(/^PRIVATE/.test(DRIVE.files[fid].sharing), 'hidden video is no longer open to anyone with its Drive link');
+  assert(!call('videoOk', { g: gid, id: fid }).allowed, 'hidden video cannot be streamed'); }
+{ const row = DB.GuestPosts.slice(1).find(r => r.includes(u.postId)), fid = row.find(v => /^file\d+$/.test(String(v)));
+  assert(/^ANYONE_WITH_LINK/.test(DRIVE.files[fid].sharing), 'approved photo stays viewable'); }
+assert(!call('videoOk', { g: gid, id: 'SOMEOTHERDRIVEFILE000' }).allowed, 'videoOk refuses files from outside the gallery');
 assert(call('coupleThanks', { g: gid, coupleKey: ck, text: 'Thank you Meera Bhua! — Diya & Kabir' }).ok, 'thank-you note saved');
 g = call('getGallery', { g: gid, coupleKey: ck }).gallery;
 assert(g.guestPosts.length === 1 && g.guestPosts[0].caption === 'Baraat!' && g.guestPosts[0].name === 'Meera Bhua' && g.isCouple === true, 'approved post is public; couple mode on with key');
@@ -74,4 +80,11 @@ call('setGallery', { token: admin, orderId: ord.orderId, folderUrl: W });
 assert(!call('getGallery', { g: gid }).gallery.events.some(e => /post|album/i.test(e.name)), 'posts folder is never an event');
 assert(call('getGallery', { g: gid }).gallery.guestGate === 'open', 'demo: open by default');
 DB.Settings.push(['guestGate', 'on', '']); assert(call('getGallery', { g: gid }).gallery.guestGate === 'on', 'Settings › guestGate = on switches guest checks on');
+// health no longer shows Settings to everyone
+{ const h = call('health', {}); assert(h.version === 'step14-safety' && !h.settings, 'public health check shows status + version only'); }
+// secure ids: right length, only the friendly letters, no repeats
+{ const ids = new Set(); let good = true; for (let i = 0; i < 300; i++) { const k = call('guestJoin', { g: gid, name: 'Test ' + i, phone: '98' + String(10000000 + i), device: 'devjoin' + i }).guestKey; if (!k || !/^[a-km-z2-9]{24}$/.test(k)) good = false; ids.add(k); }
+  assert(good && ids.size === 300, 'guest keys: 24 safe random letters, all different'); }
+// sign-ups per phone are limited
+{ let n = 0; for (let i = 0; i < 8; i++) if (call('guestJoin', { g: gid, name: 'Spam', phone: '9811111111', device: 'devSPAM01' }).ok) n++; assert(n === 5, 'guest sign-ups: 5 per phone per hour'); }
 console.log(fails ? fails + ' FAILED' : 'ALL PASSED'); process.exit(fails ? 1 : 0);

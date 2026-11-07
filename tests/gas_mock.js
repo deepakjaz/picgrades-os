@@ -24,9 +24,13 @@ function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('N
     else DRIVE.files[fid] = { name, content, mime, parent: id }; return fileObj(fid); },
   getFoldersByName: n => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id && DRIVE.folders[k].name === n).map(folderObj)),
   createFolder: n => { if (f.readOnly) throw new Error('Access denied'); const nid = 'fold' + (++DRIVE.n); DRIVE.folders[nid] = { name: n, parent: id }; return folderObj(nid); } }; }
-global.DriveApp = { Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK' }, Permission: { VIEW: 'VIEW' }, getFolderById: folderObj, getFileById: id => { if (!DRIVE.files[id]) throw new Error('not found'); return fileObj(id); },
+global.DriveApp = { Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK', PRIVATE: 'PRIVATE' }, Permission: { VIEW: 'VIEW' }, getFolderById: folderObj, getFileById: id => { if (!DRIVE.files[id]) throw new Error('not found'); return fileObj(id); },
   createFolder: name => { const id = 'fold' + (++DRIVE.n); DRIVE.folders[id] = { name, parent: 'root' }; return folderObj(id); } };
-const CACHE = {}; global.CacheService = { getScriptCache: () => ({ get: k => CACHE[k] || null, put: (k, v) => { CACHE[k] = v; }, remove: k => { delete CACHE[k]; } }) };
+const CACHE = {}; const cget = k => { const e = CACHE[k]; if (!e) return null; if (e.until < Date.now() + (global.__clockSkip || 0)) { delete CACHE[k]; return null; } return e.v; };
+const cput = (k, v, sec) => { CACHE[k] = { v: String(v), until: Date.now() + (global.__clockSkip || 0) + (sec || 600) * 1000 }; };
+global.CacheService = { getScriptCache: () => ({ get: cget, put: cput, remove: k => { delete CACHE[k]; },
+  getAll: ks => { const o = {}; ks.forEach(k => { const v = cget(k); if (v !== null) o[k] = v; }); return o; }, putAll: (o, sec) => Object.keys(o).forEach(k => cput(k, o[k], sec)) }) };
+global.__CACHE = CACHE;
 global.ContentService = { createTextOutput: s => ({ s, setMimeType() { return this; } }), MimeType: { JSON: 'json' } };
 global.Logger = { log: () => {} };
 global.Session = { getScriptTimeZone: () => 'Asia/Kolkata' };

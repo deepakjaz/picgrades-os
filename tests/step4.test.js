@@ -29,10 +29,12 @@ let g = call('getGallery', { g: gid, device: 'deviceAAAA' });
 assert(g.ok && g.gallery.title === 'Aarav & Kavya' && g.gallery.root.map(x => x.name).join() === 'r1.jpg,r2.jpg,r10.jpg', 'public gallery: root sorted naturally');
 assert(!call('getGallery', { g: 'nope' }).ok, 'unknown gallery id rejected');
 // likes
-r = call('likePhoto', { g: gid, photoId: 'R0', device: 'deviceAAAA' }); assert(r.ok && r.liked && r.likes === 1, 'like');
-r = call('likePhoto', { g: gid, photoId: 'R0', device: 'deviceBBBB' }); assert(r.likes === 2, 'second device like');
-r = call('likePhoto', { g: gid, photoId: 'R0', device: 'deviceAAAA' }); assert(!r.liked && r.likes === 1, 'unlike toggles');
-g = call('getGallery', { g: gid, device: 'deviceBBBB' }); assert(g.gallery.likes.R0 === 1 && g.gallery.mine.R0, 'counts + my likes returned');
+r = call('likePhoto', { g: gid, photoId: 'R0', device: 'deviceAAAA', liked: true }); assert(r.ok && r.liked && r.likes === 1, 'like');
+r = call('likePhoto', { g: gid, photoId: 'R0', device: 'deviceBBBB', liked: true }); assert(r.likes === 2, 'second device like');
+r = call('likePhoto', { g: gid, photoId: 'R0', device: 'deviceAAAA', liked: false }); assert(!r.liked && r.likes === 1, 'heart off');
+global.__clockSkip = 61000;   // a minute later the shared summary is made again
+g = call('getGallery', { g: gid, device: 'deviceBBBB' }); assert(g.gallery.likes.R0 === 1, 'counts returned (each phone\'s last tap)');
+r = call('likePhoto', { g: gid, photoId: 'R0', device: 'deviceCCCC' }); assert(r.liked && r.likes === 2, 'old phones without on/off still add a heart');
 // notes
 assert(!call('addNote', { g: gid, photoId: 'R0', device: 'deviceAAAA', name: '', text: 'hi' }).ok, 'note needs a name');
 r = call('addNote', { g: gid, photoId: 'R0', device: 'deviceAAAA', name: 'Meera Bhua', text: 'Beautiful <b>light</b>' });

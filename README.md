@@ -12,6 +12,10 @@ Vercel (index.html + app)  ──►  Google Apps Script Web App  ──►  Goo
 | --- | --- |
 | `apps-script/Code.gs` | Backend. Paste into the Sheet's Apps Script editor. |
 | `tools/build_db.py` | Builds the database workbook from a Wix export. Re-run any time the Wix data changes. |
+| `app/gallery.html` | The wedding gallery app (Hub, Gallery, Root Moment, Find me, guests, uploads). Edit this file directly — it is the source (the old generator script was retired in step 14). |
+| `app/reel.js`, `app/post.js`, `app/stickers.js` | Reel maker, Post / Album maker, flower & wedding drawings. |
+| `app/faces.html`, `app/faces-core.js` | Studio page that reads faces for Find me. Matching of a guest's selfie happens on the server (`findFaces`). |
+| `api/stream.js`, `api/manifest.js` | Vercel functions: guest video streaming (only approved videos of that gallery), per-wedding app manifest. |
 
 ## Sheet tabs
 

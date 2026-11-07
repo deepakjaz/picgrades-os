@@ -8,14 +8,14 @@ const admin = login('adcmediaa@gmail.com');
 const start = call('me', { token: client }).company;
 
 // --- place + edit within window
-let r = call('placeOrder', { token: client, order: { option: 'Human Touch', catalogName: 'Edit Me', images: 100, hours: 24, catalogLink: 'x' } });
+let r = call('placeOrder', { token: client, order: { option: 'Human Touch', catalogName: 'Edit Me', images: 100, hours: 24, catalogLink: 'https://drive.google.com/x' } });
 const id = r.order.orderId;
 assert(r.order.canEdit && r.order.quotaUsed === 200, '24h order: 200 quota, editable');
 let me = call('me', { token: client });
 const ord = me.orders.find(o => o.orderId === id);
 const hrsLeft = (new Date(ord.editUntil.replace(' ', 'T') + '+05:30') - Date.now()) / 3600000;
 assert(hrsLeft > 3.9 && hrsLeft <= 4, '24h order edit window is 4 hours');
-r = call('editOrder', { token: client, orderId: id, order: { option: 'Human Touch', catalogName: 'Edit Me v2', images: 100, hours: 96, catalogLink: 'x' } });
+r = call('editOrder', { token: client, orderId: id, order: { option: 'Human Touch', catalogName: 'Edit Me v2', images: 100, hours: 96, catalogLink: 'https://drive.google.com/x' } });
 assert(r.ok && r.order.quotaUsed === 100 && r.company.usedQuota === start.usedQuota + 100, 'edit 24h→96h returns 100 quota');
 // edit window for 96h is 24h → still editable after 5h
 advance(5);
@@ -27,14 +27,14 @@ assert(!call('cancelOrder', { token: client, orderId: id }).ok, 'cannot cancel t
 assert(DB.Orders.find(x => x[0] === id)[4] === 'Cancelled', 'order row kept, status Cancelled');
 
 // --- window expiry: 48h order editable 8h only
-r = call('placeOrder', { token: client, order: { option: 'Retouching', catalogName: 'Window', images: 10, hours: 48, catalogLink: 'x' } });
+r = call('placeOrder', { token: client, order: { option: 'Retouching', catalogName: 'Window', images: 10, hours: 48, catalogLink: 'https://drive.google.com/x' } });
 const id2 = r.order.orderId;
 advance(7.9); assert(call('me', { token: client }).orders.find(o => o.orderId === id2).canEdit, '48h order editable at 7.9h');
-advance(0.2); assert(!call('editOrder', { token: client, orderId: id2, order: { option: 'Retouching', catalogName: 'W', images: 5, hours: 48, catalogLink: 'x' } }).ok, '48h order locked after 8h');
+advance(0.2); assert(!call('editOrder', { token: client, orderId: id2, order: { option: 'Retouching', catalogName: 'W', images: 5, hours: 48, catalogLink: 'https://drive.google.com/x' } }).ok, '48h order locked after 8h');
 assert(!call('cancelOrder', { token: client, orderId: id2 }).ok, 'cancel also locked after window');
 
 // --- editor starts → client can no longer edit
-r = call('placeOrder', { token: client, order: { option: 'Human Touch', catalogName: 'Started', images: 10, hours: 96, catalogLink: 'x' } });
+r = call('placeOrder', { token: client, order: { option: 'Human Touch', catalogName: 'Started', images: 10, hours: 96, catalogLink: 'https://drive.google.com/x' } });
 const id3 = r.order.orderId;
 assert(call('setStatus', { token: admin, orderId: id3, status: 'Editing' }).ok, 'admin sets Editing');
 assert(!call('cancelOrder', { token: client, orderId: id3 }).ok, 'client cannot cancel once Editing');
