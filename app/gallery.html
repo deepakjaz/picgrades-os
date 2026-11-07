@@ -1154,6 +1154,14 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 .pgm-album img{flex:none;width:100%;height:100%;object-fit:contain;scroll-snap-align:center}
 .pgm-dots{position:absolute;left:0;right:0;bottom:178px;display:flex;justify-content:center;gap:6px;z-index:22;pointer-events:none}
 .pgm-dots i{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.45)}.pgm-dots i.on{background:#fff;width:16px}
+/* thicker nav dock */
+.tkg-global-nav{height:58px!important;width:min(370px,calc(100vw - 28px))!important}
+.tkg-nav-item{width:50px!important;height:42px!important}
+.tkg-nav-item svg{width:24px!important;height:24px!important}
+.tkg-nav-item:nth-child(1){transform:translate(calc(-50% - 132px),-50%)!important}
+.tkg-nav-item:nth-child(2){transform:translate(calc(-50% - 66px),-50%)!important}
+.tkg-nav-item:nth-child(4){transform:translate(calc(-50% + 66px),-50%)!important}
+.tkg-nav-item:nth-child(5){transform:translate(calc(-50% + 132px),-50%)!important}
 .pgm-empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--font-mono);font-size:.8rem;padding:24px;text-align:center}
 </style>
 </head>
@@ -1251,7 +1259,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 </div>
 
 <!-- ==================== ROOT MOMENT: TKG MOMENTS REELS ==================== -->
-<section class="pg-view active" id="view-moments" aria-label="Root Moment">
+<section class="pg-view" id="view-moments" aria-label="Root Moment">
   <div class="pgm-head"><div><div class="pgm-head-title" id="pgmTitle"></div><div class="pgm-head-sub" id="pgmSub">Root Moment</div></div><div class="pgm-head-r"><button type="button" class="pgm-chip pgm-add" id="pgmAdd" aria-label="Add a moment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button><button type="button" class="pgm-findme hidden" data-findme aria-label="Find me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M9 9.5v1M15 9.5v1"/><path d="M12 9.5v3.5h-1"/><path d="M9 15.5c1.6 1.4 4.4 1.4 6 0"/></svg><span>Find me</span></button></div></div>
   <div class="pgm-feed" id="pgmFeed"></div>
 </section>
@@ -1268,7 +1276,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 </section>
 
 <!-- ==================== VIEW 3: CLIENT WEDDING HUB ==================== -->
-<section class="pg-view" id="view-hub">
+<section class="pg-view active" id="view-hub">
   <div class="pgh-hero" id="pghHero" role="button" tabindex="0" aria-label="Open this photo">
     <img class="pgh-hero-img is-on" id="pghHeroA" alt=""><img class="pgh-hero-img" id="pghHeroB" alt="">
     <div class="pgh-hero-scrim"></div>
@@ -1348,7 +1356,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
       <rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
     </svg>
   </a>
-  <a href="#moments" class="tkg-nav-item tkg-nav-moments active" data-nav="moments" aria-label="Root Moment" title="Root Moment" aria-current="page">
+  <a href="#moments" class="tkg-nav-item tkg-nav-moments" data-nav="moments" aria-label="Root Moment" title="Root Moment">
     <span class="tkg-moments-icon-stack">
       <svg class="tkg-icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
@@ -1358,7 +1366,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
       </svg>
     </span>
   </a>
-  <a href="#hub" class="tkg-nav-item tkg-nav-hub" data-nav="hub" aria-label="Wedding Hub" title="Hub">
+  <a href="#hub" class="tkg-nav-item tkg-nav-hub active" data-nav="hub" aria-label="Wedding Hub" title="Hub" aria-current="page">
     <svg class="tkg-hub-badge-svg" viewBox="0 0 40 40" fill="none" aria-hidden="true">
       <circle cx="20" cy="20" r="18" fill="#1C1815" stroke="#C9A24B" stroke-width="2"/>
       <circle cx="20" cy="20" r="14" stroke="rgba(250,198,70,0.35)" stroke-width="1" stroke-dasharray="2 2"/>
@@ -3039,13 +3047,50 @@ function pgOpenPost(photos) {
         pgApi('savePost', Object.assign({ token }, pgGuestBody(), data)).then(r => { if (r.status === 'approved') pgReloadPosts(); else pgCheckMyPosts(); res(r); }).catch(rej); };
       if (pgIsCouple() || pgIsStaff() || pgGuest()) send(); else pgNeedGuest(send, 'Tell us who you are to post.');
     })
-  })).catch(e => showToast(e.message));
+  })).then(() => {
+    // faces we already read keep people in view when a photo is cropped into the album
+    if (!GALLERY.faceSearch) return;
+    (window.pgFaceBoxes ? Promise.resolve(window.pgFaceBoxes) : pgApi('getFaces').then(r => {
+      const m = {}; Object.keys(r.faces.photos || {}).forEach(id => { m[id] = r.faces.photos[id].f.map(f => f[0].map(v => v / 1000)); }); return (window.pgFaceBoxes = m);
+    })).then(m => PGPost.setFaces(m)).catch(() => {});
+  }).catch(e => showToast(e.message));
 }
 document.getElementById('pgcPost').addEventListener('click', () => {
   const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
   while (pick.length < 7 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 7) pick.push(p.shift()); });
   pgOpenPost(pick.map(p => ({ id: p.id })));
 });
+</script>
+<script>
+// Phones (iPhone most of all) reload a page that holds too many big photos at once. Keep only the photos
+// near the one on screen; the rest are let go and come back when you scroll near them.
+const PG_BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
+function pgKeepNear(list, i, keep, srcOf) {
+  list.forEach((im, k) => {
+    const near = Math.abs(k - i) <= keep;
+    if (!near && im.dataset.live === '1') { im.onerror = null; im.src = PG_BLANK; im.dataset.live = '0'; }
+    else if (near && im.dataset.live !== '1') { const s = srcOf(im, k); if (s) { im.src = s; im.dataset.live = '1'; } }
+  });
+}
+(function pgReelsMemory() {
+  const feed = document.getElementById('pgmFeed'); let t = null;
+  function tidy() {
+    const imgs = Array.from(feed.querySelectorAll('.pgm-item > img.pgm-img')); if (!imgs.length) return;
+    imgs.forEach(im => { if (!im.dataset.full && im.src && im.src !== PG_BLANK) { im.dataset.full = im.src; im.dataset.live = '1'; } });
+    const i = Math.round(feed.scrollTop / Math.max(1, feed.clientHeight));
+    pgKeepNear(imgs, i, 3, (im) => im.dataset.full);
+  }
+  feed.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(tidy, 150); }, { passive: true });
+  const _r = renderMoments; renderMoments = function () { _r(); setTimeout(tidy, 50); };
+})();
+(function pgViewerMemory() {
+  const feed = document.getElementById('pgvFeed'); let t = null;
+  feed.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => {
+    const imgs = Array.from(feed.querySelectorAll('.pgv-item img')); const i = Math.round(feed.scrollTop / Math.max(1, feed.clientHeight));
+    imgs.forEach(im => { if (!im.dataset.full && im.getAttribute('src') && im.src !== PG_BLANK) { im.dataset.full = im.src; im.dataset.live = '1'; } });
+    pgKeepNear(imgs, i, 4, (im) => im.dataset.full || null);
+  }, 200); }, { passive: true });
+})();
 </script>
 </body>
 </html>

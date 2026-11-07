@@ -58,7 +58,11 @@
     '.rl-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:10px}.rl-bar i{display:block;height:100%;width:0;background:#E7C873}';
 
   // ---------- loading photos (direct from Drive, else through the gallery server) ----------
-  function bitmapFromBlob(b) { return window.createImageBitmap ? createImageBitmap(b) : new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = URL.createObjectURL(b); }); }
+  // Photos are kept as small compressed files; the phone decodes them only while drawing (a big list of decoded
+  // bitmaps made iPhones reload the page).
+  var URLS = [];
+  function bitmapFromBlob(b) { return new Promise(function (res, rej) { var i = new Image(), u = URL.createObjectURL(b); URLS.push(u); i.onload = function () { res(i); }; i.onerror = rej; i.src = u; }); }
+  function freeUrls() { URLS.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} }); URLS = []; }
   function imgFromSrc(src) { return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; }); }
   function loadPhotos(ids, onProgress) {
     var out = {}, done = 0, viaServer = false;
@@ -377,7 +381,9 @@
     var src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; src.connect(g); g.connect(dest);
     var t0 = ac.currentTime + 0.05;
     g.gain.setValueAtTime(1, t0); g.gain.setValueAtTime(1, t0 + Math.max(0, dur - 1.5)); g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
-    src.start(t0, 0, dur + 0.1);
+    var from = (S.track && S.track.beat0) || 0;   // your own song: start on its first beat
+    if (buf.duration - from < dur) from = 0;
+    src.start(t0, from, dur + 0.1);
     return { src: src, t0: t0 };
   }
   function clock(aud) { var ac = S.ac; var base = aud ? aud.t0 : null; var p0 = performance.now(); return function () { return aud && ac ? ac.currentTime - base : (performance.now() - p0) / 1000; }; }
@@ -461,9 +467,42 @@
     });
   }
   function renderMusic() {
-    chips(S.musicRow, S.tracks.map(function (t) { return { t: t.title, v: t.id }; }).concat([{ t: 'No music', v: '' }]), S.track ? S.track.id : '', function (v) {
+    chips(S.musicRow, S.tracks.map(function (t) { return { t: t.title, v: t.id }; }).concat([{ t: 'No music', v: '' }, { t: '+ Your music…', v: '__own' }]), S.track ? S.track.id : '', function (v) {
+      if (v === '__own') { S.ownInput.click(); renderMusic(); return; }
       S.track = S.tracks.filter(function (t) { return t.id === v; })[0] || null; renderThumbs(); stopPreview();
     });
+  }
+  // ---------- your own music: stays on this phone, never uploaded; gone when the reel maker closes ----------
+  function findBeat(buf) {
+    var sr = buf.sampleRate, n = Math.min(buf.length, Math.round(sr * 90)), hop = Math.round(sr * 0.01), chs = [];
+    for (var c = 0; c < Math.min(2, buf.numberOfChannels); c++) chs.push(buf.getChannelData(c));
+    var a = Math.exp(-2 * Math.PI * 160 / sr), y = 0, acc = 0, env = [];
+    for (var i = 0; i < n; i++) { var x = chs.length > 1 ? (chs[0][i] + chs[1][i]) / 2 : chs[0][i]; y = (1 - a) * x + a * y; acc += y * y; if ((i + 1) % hop === 0) { env.push(Math.sqrt(acc / hop)); acc = 0; } }
+    var on = env.map(function (v, k) { return k ? Math.max(0, v - env[k - 1]) : 0; });
+    var best = 0, bestL = 50;
+    for (var L = 33; L <= 100; L++) {      // 60–180 beats per minute
+      var r = 0; for (var k = 0; k + L < on.length; k++) r += on[k] * on[k + L];
+      var bpm = 6000 / L, w = Math.exp(-Math.pow(Math.log2(bpm / 118), 2) / 0.5); r *= w;
+      if (r > best) { best = r; bestL = L; }
+    }
+    // the beat rarely lands on a whole 10 ms step, so fine-tune the gap and the start together
+    function comb(P, o) { var sum = 0; for (var q = o; q < on.length; q += P) { var j = Math.round(q); sum += on[j] + 0.5 * ((on[j - 1] || 0) + (on[j + 1] || 0)); } return sum; }
+    var P = bestL, phase = 0, pb = -1;
+    for (var p = bestL - 1; p <= bestL + 1; p += 0.02) for (var o = 0; o < p; o += 0.5) { var v = comb(p, o); if (v > pb) { pb = v; P = p; phase = o; } }
+    var bpm2 = 6000 / P; while (bpm2 < 75) bpm2 *= 2; while (bpm2 > 165) bpm2 /= 2;
+    return { bpm: Math.round(bpm2 * 10) / 10, beat0: Math.round(phase * hop / sr * 1000) / 1000 };
+  }
+  function addOwnMusic(file) {
+    if (!file) return;
+    stopPreview(); msg('Listening to your music for its beat…');
+    file.arrayBuffer().then(function (ab) { return new Promise(function (res, rej) { audioCtx().decodeAudioData(ab, res, rej); }); }).then(function (buf) {
+      var b = findBeat(buf), id = 'own';
+      S.buffers[id] = buf;
+      var tr = { id: id, title: 'Yours: ' + String(file.name || 'music').replace(/\.[^.]+$/, '').slice(0, 24), bpm: b.bpm, beat0: b.beat0, own: true };
+      S.tracks = S.tracks.filter(function (t) { return t.id !== id; }).concat([tr]); S.track = tr;
+      renderMusic(); renderThumbs();
+      msg('Your music: about ' + Math.round(b.bpm) + ' beats per minute — the photos will change on its beat. It stays on this phone only.');
+    }).catch(function () { msg('This music file could not be read. Try an MP3 or M4A song.'); });
   }
   function renderThumbs() {
     S.thumbs.innerHTML = '';
@@ -547,6 +586,9 @@
     endTog.addEventListener('change', function () { S.endCard = endTog.checked; renderThumbs(); stopPreview(); });
     S.goBtn = el('button', { type: 'button', class: 'rl-go', text: 'Make video', onclick: exportReel });
     var styleRow = el('div', { class: 'rl-row' }); S.musicRow = musicRow;
+    S.ownInput = el('input', { type: 'file', accept: 'audio/*', style: 'display:none' });
+    S.ownInput.addEventListener('change', function () { var f = this.files[0]; this.value = ''; addOwnMusic(f); });
+    S.ctrls.appendChild(S.ownInput);
     S.ctrls.appendChild(el('div', { class: 'rl-lbl', text: 'Style' })); S.ctrls.appendChild(styleRow);
     chips(styleRow, ORDER.map(function (k) { return { t: TEMPLATES[k].name, v: k }; }), S.tid, function (v) {
       S.tid = v; S.T = TEMPLATES[v];
@@ -595,9 +637,11 @@
     if (!S) return; stopPreview();
     if (S.wrap) S.wrap.remove(); document.body.classList.remove('rl-on');
     if (S.ac && S.ac.close) S.ac.close().catch(function () {});
-    S = null;
+    if (S.buffers) delete S.buffers.own;   // your own music is let go right away
+    freeUrls(); S = null;
   }
   window.PGReel = { open: open, close: close, styles: ORDER,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), plan(), t); return S ? plan().dur : 0; },  // used by tests
-    setStyle: function (k) { if (S && TEMPLATES[k]) { S.tid = k; S.T = TEMPLATES[k]; } } };
+    setStyle: function (k) { if (S && TEMPLATES[k]) { S.tid = k; S.T = TEMPLATES[k]; } },
+    state: function () { return S ? { track: S.track, own: !!(S.buffers && S.buffers.own) } : null; } };
 })();

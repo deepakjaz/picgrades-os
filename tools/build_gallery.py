@@ -1723,13 +1723,71 @@ function pgOpenPost(photos) {
         pgApi('savePost', Object.assign({ token }, pgGuestBody(), data)).then(r => { if (r.status === 'approved') pgReloadPosts(); else pgCheckMyPosts(); res(r); }).catch(rej); };
       if (pgIsCouple() || pgIsStaff() || pgGuest()) send(); else pgNeedGuest(send, 'Tell us who you are to post.');
     })
-  })).catch(e => showToast(e.message));
+  })).then(() => {
+    // faces we already read keep people in view when a photo is cropped into the album
+    if (!GALLERY.faceSearch) return;
+    (window.pgFaceBoxes ? Promise.resolve(window.pgFaceBoxes) : pgApi('getFaces').then(r => {
+      const m = {}; Object.keys(r.faces.photos || {}).forEach(id => { m[id] = r.faces.photos[id].f.map(f => f[0].map(v => v / 1000)); }); return (window.pgFaceBoxes = m);
+    })).then(m => PGPost.setFaces(m)).catch(() => {});
+  }).catch(e => showToast(e.message));
 }
 document.getElementById('pgcPost').addEventListener('click', () => {
   const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
   while (pick.length < 7 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 7) pick.push(p.shift()); });
   pgOpenPost(pick.map(p => ({ id: p.id })));
 });
+</script>
+</body>""", 1)
+
+# ===================== Stability on phones + Hub first + thicker nav (2026-11-07) =====================
+# Hub is the first page: no flash of Root Moment in the nav while loading
+s = s.replace('<a href="#moments" class="tkg-nav-item tkg-nav-moments active" data-nav="moments" aria-label="Root Moment" title="Root Moment" aria-current="page">',
+              '<a href="#moments" class="tkg-nav-item tkg-nav-moments" data-nav="moments" aria-label="Root Moment" title="Root Moment">', 1)
+s = s.replace('<a href="#hub" class="tkg-nav-item tkg-nav-hub" data-nav="hub" aria-label="Wedding Hub" title="Hub">',
+              '<a href="#hub" class="tkg-nav-item tkg-nav-hub active" data-nav="hub" aria-label="Wedding Hub" title="Hub" aria-current="page">', 1)
+s = s.replace('<section class="pg-view active" id="view-moments" aria-label="Root Moment">', '<section class="pg-view" id="view-moments" aria-label="Root Moment">', 1)
+s = s.replace('<section class="pg-view" id="view-hub">', '<section class="pg-view active" id="view-hub">', 1)
+assert 'tkg-nav-hub active' in s and 'class="pg-view active" id="view-hub"' in s and 'class="pg-view active" id="view-moments"' not in s
+rep('.pgm-empty{', r'''/* thicker nav dock */
+.tkg-global-nav{height:58px!important;width:min(370px,calc(100vw - 28px))!important}
+.tkg-nav-item{width:50px!important;height:42px!important}
+.tkg-nav-item svg{width:24px!important;height:24px!important}
+.tkg-nav-item:nth-child(1){transform:translate(calc(-50% - 132px),-50%)!important}
+.tkg-nav-item:nth-child(2){transform:translate(calc(-50% - 66px),-50%)!important}
+.tkg-nav-item:nth-child(4){transform:translate(calc(-50% + 66px),-50%)!important}
+.tkg-nav-item:nth-child(5){transform:translate(calc(-50% + 132px),-50%)!important}
+.pgm-empty{''')
+assert s.count("</body>") == 1
+s = s.replace("</body>", r"""<script>
+// Phones (iPhone most of all) reload a page that holds too many big photos at once. Keep only the photos
+// near the one on screen; the rest are let go and come back when you scroll near them.
+const PG_BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=';
+function pgKeepNear(list, i, keep, srcOf) {
+  list.forEach((im, k) => {
+    const near = Math.abs(k - i) <= keep;
+    if (!near && im.dataset.live === '1') { im.onerror = null; im.src = PG_BLANK; im.dataset.live = '0'; }
+    else if (near && im.dataset.live !== '1') { const s = srcOf(im, k); if (s) { im.src = s; im.dataset.live = '1'; } }
+  });
+}
+(function pgReelsMemory() {
+  const feed = document.getElementById('pgmFeed'); let t = null;
+  function tidy() {
+    const imgs = Array.from(feed.querySelectorAll('.pgm-item > img.pgm-img')); if (!imgs.length) return;
+    imgs.forEach(im => { if (!im.dataset.full && im.src && im.src !== PG_BLANK) { im.dataset.full = im.src; im.dataset.live = '1'; } });
+    const i = Math.round(feed.scrollTop / Math.max(1, feed.clientHeight));
+    pgKeepNear(imgs, i, 3, (im) => im.dataset.full);
+  }
+  feed.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(tidy, 150); }, { passive: true });
+  const _r = renderMoments; renderMoments = function () { _r(); setTimeout(tidy, 50); };
+})();
+(function pgViewerMemory() {
+  const feed = document.getElementById('pgvFeed'); let t = null;
+  feed.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => {
+    const imgs = Array.from(feed.querySelectorAll('.pgv-item img')); const i = Math.round(feed.scrollTop / Math.max(1, feed.clientHeight));
+    imgs.forEach(im => { if (!im.dataset.full && im.getAttribute('src') && im.src !== PG_BLANK) { im.dataset.full = im.src; im.dataset.live = '1'; } });
+    pgKeepNear(imgs, i, 4, (im) => im.dataset.full || null);
+  }, 200); }, { passive: true });
+})();
 </script>
 </body>""", 1)
 
