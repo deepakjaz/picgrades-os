@@ -428,9 +428,16 @@
         showResult();
       };
       rec.start(500);
+      var lock = null; try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (l) { lock = l; }, function () {}); } catch (e) {}
+      var left = false, onHide = function () { if (document.hidden && !left) { left = true; rec.onstop = function () { stopped('The reel stopped because the phone left this screen. Keep the screen open and try again.'); }; try { rec.stop(); } catch (e) {} } };
+      document.addEventListener('visibilitychange', onHide);
+      var release = function () { document.removeEventListener('visibilitychange', onHide); try { if (lock) lock.release(); } catch (e) {} };
+      var stopped = function (t) { release(); cancelAnimationFrame(S.raf); if (aud && aud.src) try { aud.src.stop(); } catch (e) {} chunks = []; S.busy = false; S.goBtn.disabled = false; S.barWrap.style.display = 'none'; S.status.classList.remove('on'); S.ctrls.style.display = ''; msg(t); };
+      var _onstop = rec.onstop; rec.onstop = function () { release(); _onstop(); };
       var aud = buf ? startAudio(buf, dest, P.dur) : null, now = clock(aud);
       (function loop() {
         var t = now();
+        if (left || !S) return;
         if (t >= P.dur) { draw(ctx, P, P.dur - 0.001); setTimeout(function () { rec.stop(); }, 120); return; }
         draw(ctx, P, Math.max(0, t)); var pc = Math.min(100, t / P.dur * 100); S.bar.style.width = pc.toFixed(1) + '%';
         S.status.firstChild.textContent = Math.floor(pc) + '%'; S.status.children[1].textContent = 'Making your reel · ' + Math.floor(t) + ' / ' + Math.round(P.dur) + ' s';
@@ -440,7 +447,7 @@
     }).catch(function (e) { S.busy = false; S.goBtn.disabled = false; S.barWrap.style.display = 'none'; S.status.classList.remove('on'); S.ctrls.style.display = ''; msg('Could not make the reel: ' + (e && e.message || e)); });
   }
   function showResult() {
-    var url = URL.createObjectURL(S.result);
+    var url = URL.createObjectURL(S.result); URLS.push(url);   // freed when the maker closes
     S.video = el('video', { src: url, controls: '', playsinline: '', loop: '' });
     S.canvas.style.display = 'none'; S.playBtn.classList.add('hide'); S.stage.appendChild(S.video);
     S.ctrls.style.display = 'none'; S.done.style.display = 'block';
@@ -453,7 +460,8 @@
   }
   function downloadResult() {
     var f = S.result; if (!f) return;
-    var a = el('a', { href: URL.createObjectURL(f), download: f.name }); document.body.appendChild(a); a.click(); a.remove();
+    var u = URL.createObjectURL(f), a = el('a', { href: u, download: f.name }); document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
   }
 
   function msg(t) { if (S && S.msg) S.msg.textContent = t || ''; }
@@ -607,7 +615,7 @@
     S.done = el('div', { style: 'display:none' }, [
       el('button', { type: 'button', class: 'rl-go', text: 'Share (Instagram, WhatsApp…)', onclick: shareResult }),
       el('button', { type: 'button', class: 'rl-sub', text: 'Download video', onclick: downloadResult }),
-      el('button', { type: 'button', class: 'rl-sub', text: 'Change and make again', onclick: function () { if (S.video) S.video.remove(); S.video = null; S.canvas.style.display = ''; S.ctrls.style.display = ''; S.done.style.display = 'none'; S.playBtn.classList.remove('hide'); msg(''); } })
+      el('button', { type: 'button', class: 'rl-sub', text: 'Change and make again', onclick: function () { if (S.video) { URL.revokeObjectURL(S.video.src); S.video.removeAttribute('src'); S.video.remove(); } S.video = null; S.result = null; S.canvas.style.display = ''; S.ctrls.style.display = ''; S.done.style.display = 'none'; S.playBtn.classList.remove('hide'); msg(''); } })
     ]);
     panel.appendChild(S.ctrls); panel.appendChild(S.barWrap); panel.appendChild(S.msg); panel.appendChild(S.done);
     wrap.appendChild(top); wrap.appendChild(S.stage); wrap.appendChild(panel);

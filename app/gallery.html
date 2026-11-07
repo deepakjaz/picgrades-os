@@ -201,7 +201,6 @@ button {
   min-height: 100dvh;
   padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px));
   transition: opacity 0.22s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
 }
 
 .mk-root-stage.is-transitioning-next {
@@ -246,7 +245,6 @@ button {
   object-position: center 25%;
   opacity: 0;
   transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
   pointer-events: none;
 }
 
@@ -1071,7 +1069,7 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 .pgv-feed::-webkit-scrollbar{display:none}
 .pgv-item{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;touch-action:pan-y;cursor:pointer}
 .pgv-iblur{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(32px) brightness(.42) saturate(1.1);transform:scale(1.12)}
-.pgv-item img,.pgm-item .pgm-img{transform-origin:center center;will-change:transform}
+.pgv-item img,.pgm-item .pgm-img{transform-origin:center center}
 .pgv-item img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .is-zoomed{touch-action:none!important;cursor:grab}
 .pgv-top-r{display:flex;align-items:center;gap:10px;padding-right:calc(var(--rail-width) + var(--rail-right-gap))}
@@ -1475,6 +1473,10 @@ function pgApi(action, body) {
     .then(r => r.json()).then(res => { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; });
 }
 function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+// Phones get photos sized for their screen (an iPhone shows ~1200 px across; 2048 px photos use 3× the memory and make Safari reload the page).
+// Downloads still use the full 2048 px photo.
+const PG_PHONE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)) || Math.min(screen.width, screen.height) < 820;
+const PG_FULL_W = PG_PHONE ? 1280 : 2048, PG_THUMB_W = 200;
 function pgImgFallback(id, w) { return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w; }
 function pgEsc(t) { const d = document.createElement('div'); d.textContent = String(t == null ? '' : t); return d.innerHTML; }
 function pgDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; }
@@ -1483,7 +1485,7 @@ function pgMoment(photo, ceremony, n, total) {
     id: photo.id, n: n, title: (ceremony === 'Root Moment' ? GALLERY.title : ceremony) + ' · ' + n + '/' + total, story: '',
     date: pgDate(GALLERY.eventDate), couple: String(GALLERY.title || '').toUpperCase(), ceremony: ceremony.toUpperCase(),
     camera: '', lens: GALLERY.studio ? ('EDITED BY PICGRADES · ' + String(GALLERY.studio).toUpperCase()) : '',
-    photoUrl: pgImg(photo.id, 2048), thumbUrl: pgImg(photo.id, 360),
+    photoUrl: pgImg(photo.id, PG_FULL_W), thumbUrl: pgImg(photo.id, PG_THUMB_W),
     likes: (GALLERY.likes || {})[photo.id] || 0, liked: !!(GALLERY.mine || {})[photo.id], noteCount: (GALLERY.notes || {})[photo.id] || 0, comments: []
   };
 }
@@ -1570,8 +1572,9 @@ function initFilmstrip() {
     btn.setAttribute('role', 'option');
     btn.setAttribute('aria-label', `Photo ${idx + 1} of ${MOMENTS.length}`);
     const im = document.createElement('img');
-    im.src = m.thumbUrl; im.alt = ''; im.loading = idx < 12 ? 'eager' : 'lazy';
-    im.onerror = function () { this.onerror = null; this.src = pgImgFallback(m.id, 360); };
+    im.src = m.thumbUrl; im.alt = ''; im.loading = idx < 12 ? 'eager' : 'lazy'; im.decoding = 'async';
+    im.dataset.full = m.thumbUrl; im.dataset.live = '1';
+    im.onerror = function () { this.onerror = null; this.src = pgImgFallback(m.id, PG_THUMB_W); };
     btn.appendChild(im);
     btn.addEventListener('click', () => { selectMomentDirectly(idx, true); });
     stripScroller.appendChild(btn);
@@ -1719,23 +1722,7 @@ function applyActiveMoment(idx) {
     el.setAttribute('aria-selected', i === idx ? 'true' : 'false');
   });
 
-  if (!isSameIndex) {
-    const nextImg = activeLayer === 'A' ? imgB : imgA;
-    const prevImg = activeLayer === 'A' ? imgA : imgB;
-    activeLayer = activeLayer === 'A' ? 'B' : 'A';
-
-    nextImg.onerror = function () { this.onerror = null; this.src = pgImgFallback(m.id, 2048); };
-    nextImg.src = m.photoUrl;
-    nextImg.alt = m.title;
-    nextImg.onload = () => {
-      nextImg.classList.add('is-visible');
-      prevImg.classList.remove('is-visible');
-    };
-    if (nextImg.complete) {
-      nextImg.classList.add('is-visible');
-      prevImg.classList.remove('is-visible');
-    }
-  }
+  // (the old big photo behind the viewer is hidden; the viewer feed shows the photos, so nothing is loaded here)
 
   titleEl.textContent = m.title;
   storyEl.textContent = m.story;
@@ -1849,7 +1836,9 @@ stripScroller.addEventListener('scroll', () => {
       const activeLineY = rect.top + (rect.height * 0.48);
       let bestIdx = 0;
       let bestDist = Infinity;
-      for (let i = 0; i < thumbEls.length; i++) {
+      // only look near the current photo (measuring hundreds of thumbnails every frame makes the strip stutter)
+      const from = activeIdx > 40 ? activeIdx - 40 : 0, to = activeIdx >= 0 ? Math.min(thumbEls.length, activeIdx + 41) : thumbEls.length;
+      for (let i = from; i < to; i++) {
         const r = thumbEls[i].getBoundingClientRect();
         const cY = r.top + (r.height / 2);
         const d = Math.abs(cY - activeLineY);
@@ -2013,8 +2002,9 @@ function getMomentScrollBounds() {
 })();
 
 // Keyboard navigation
+function pgTyping(e) { const t = e.target; return !!(t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) || document.body.classList.contains('rl-on') || document.body.classList.contains('ps-on'); }
 window.addEventListener('keydown', (e) => {
-  if (!isRootViewActive()) return;
+  if (!isRootViewActive() || pgTyping(e)) return;
   if (e.key === 'ArrowRight') {
     e.preventDefault();
     selectMomentDirectly(activeIdx + 1, true);
@@ -2174,7 +2164,26 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
   try { const t = localStorage.getItem('pg_theme'); if (t) document.documentElement.setAttribute('data-tkg-theme', t); } catch (e) {}
   const bootEl = document.getElementById('pgBoot'), bootMsg = document.getElementById('pgBootMsg');
   if (!API || !GALLERY_ID) { bootMsg.textContent = 'This gallery link is incomplete. Please check the link you received.'; return; }
-  pgApi('getGallery').then(res => {
+  // The gallery opens at once from the copy kept on this phone, then the fresh copy is fetched in the background.
+  // If the phone had to reload the page, the guest comes back to the same collection and photo.
+  const CK = 'pg_gal_' + GALLERY_ID;
+  let kept = null; try { const k = JSON.parse(localStorage.getItem(CK) || 'null'); if (k && k.at > Date.now() - 7 * 864e5 && k.gallery) kept = k; } catch (e) {}
+  const fresh = pgApi('getGallery').then(res => { try { localStorage.setItem(CK, JSON.stringify({ at: Date.now(), gallery: res.gallery })); } catch (e) {} return res; });
+  let started = false;
+  // wait until every part of the page is set up (later scripts add features to the gallery)
+  const ready = new Promise(r => document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', r, { once: true }) : r());
+  if (kept) { started = true; ready.then(() => start({ gallery: kept.gallery }, true)); }
+  Promise.all([fresh, ready]).then(([res]) => {
+    if (!started) { started = true; return start(res, false); }
+    // already showing the kept copy: bring in new hearts, notes and approved posts without moving the guest
+    GALLERY.likes = res.gallery.likes || {}; GALLERY.notes = res.gallery.notes || {}; GALLERY.recentNotes = res.gallery.recentNotes; GALLERY.isCouple = res.gallery.isCouple;
+    GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate;
+    const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
+    GALLERY.guestPosts = res.gallery.guestPosts || [];
+    if (newPosts && !document.getElementById('view-moments').classList.contains('active')) { ROOT_SET = buildRootSet(); renderMoments(); }
+    renderGalleries();
+  }).catch(err => { if (!started) bootMsg.textContent = err.message; });
+  function start(res, fromKept) {
     GALLERY = res.gallery; GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
     const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;
     document.title = GALLERY.title + ' · PicGrades';
@@ -2195,9 +2204,13 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     pgSetAppMeta();
     if ((GALLERY.events || []).length) useSet(GALLERY.events[0].name);
     const startView = (location.hash || '').replace('#', '');
-    switchView(['gallery', 'moments', 'hub', 'rooms', 'studio'].indexOf(startView) > -1 ? startView : 'hub');
+    let back = null; try { back = JSON.parse(sessionStorage.getItem('pg_pos_' + GALLERY_ID) || 'null'); } catch (e) {}
+    if (back && back.at > Date.now() - 30 * 60000 && back.view === 'root' && (GALLERY.personal || []).concat(GALLERY.events || []).some(e => e.name === back.set)) openCollection(back.set, back.idx || 0);
+    else switchView(back && back.at > Date.now() - 30 * 60000 && ['gallery', 'moments', 'hub', 'rooms', 'studio'].indexOf(back.view) > -1 ? back.view
+      : ['gallery', 'moments', 'hub', 'rooms', 'studio'].indexOf(startView) > -1 ? startView : 'hub');
     bootEl.classList.add('hide');
-  }).catch(err => { bootMsg.textContent = err.message; });
+    window.pgBootFromKept = fromKept;
+  }
 })();
 </script>
 <script>
@@ -2212,7 +2225,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     _apply(idx);
     const m = MOMENTS[activeIdx]; if (!m) return;
     countEl.textContent = (activeIdx + 1) + ' / ' + MOMENTS.length;
-    blur.style.backgroundImage = 'url("' + m.photoUrl + '")';
+    blur.style.backgroundImage = 'url("' + pgImg(m.id, 60) + '")';
     pgvSync();
   };
   function pgvSync() {
@@ -2271,7 +2284,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
   hero.addEventListener('click', (e) => { if (Date.now() - lastTouch < 700) return; tap(e.clientX, e.clientY); });
 
   window.addEventListener('keydown', (e) => {
-    if (!view.classList.contains('active')) return;
+    if (!view.classList.contains('active') || pgTyping(e)) return;
     if (e.key === 'Escape') { if (body.classList.contains('pgv-info')) body.classList.remove('pgv-info'); else switchView('gallery'); return; }
     if (!isOn()) return;
     if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(1); }
@@ -2616,15 +2629,23 @@ async function pgDownload(m) {
       return { el, im, bl, m, z: null };
     });
   }
-  function load(i) {
-    for (let j = i - 1; j <= i + 2; j++) {
-      const it = items[j]; if (!it || it.im.getAttribute('src')) continue;
-      it.im.onerror = function () { this.onerror = null; this.src = pgImgFallback(it.m.id, 2048); it.bl.style.backgroundImage = 'url("' + pgImgFallback(it.m.id, 60) + '")'; };
-      it.im.src = it.m.photoUrl || pgImg(it.m.id, 2048);
-      it.bl.style.backgroundImage = 'url("' + pgImg(it.m.id, 60) + '")';
-      it.z = pgZoomable(it.el, it.im, feed);
-    }
+  // Each photo is in one of three states: '' (nothing loaded), 'thumb' (the small filmstrip picture, already in the
+  // phone's cache) or 'full'. While the guest flicks the filmstrip only thumbnails are shown; the full photo comes
+  // when the strip stops. Photos far away are let go, so the iPhone never runs out of memory.
+  function show(it, q) {
+    if (!it.bl.style.backgroundImage) it.bl.style.backgroundImage = 'url("' + pgImg(it.m.id, 60) + '")';
+    if (q === 'thumb' && it.q) return;
+    if (q === 'full' && it.q === 'full') return;
+    it.im.onerror = function () { this.onerror = null; this.src = pgImgFallback(it.m.id, q === 'full' ? PG_FULL_W : PG_THUMB_W); };
+    it.im.src = q === 'full' ? it.m.photoUrl : it.m.thumbUrl; it.q = q;
+    if (!it.z) it.z = pgZoomable(it.el, it.im, feed);
   }
+  function load(i, thumbsOnly) {
+    // this photo and the next one in full; the one before and the one after next as thumbnails (ready to sharpen)
+    for (let j = i - 1; j <= i + 2; j++) { const it = items[j]; if (it) show(it, !thumbsOnly && (j === i || j === i + 1) ? 'full' : 'thumb'); }
+    items.forEach((it, k) => { if (it.q && Math.abs(k - i) > 3) { it.im.onerror = null; it.im.src = PG_BLANK; it.q = ''; if (it.z) it.z.reset(); } });
+  }
+  let fullTimer = null;
   function cur() { return items[feedIdx]; }
   window.pgvIsZoomed = () => !!(cur() && cur().z && cur().z.zoomed());
   window.pgvZoomReset = () => !!(cur() && cur().z && cur().z.reset());
@@ -2647,7 +2668,10 @@ async function pgDownload(m) {
     if (fromFeed || !items.length) return;
     const target = activeIdx, near = Math.abs(target - feedIdx) <= 1;
     items.forEach(it => it.z && it.z.reset());
-    feedIdx = target; load(target);
+    feedIdx = target;
+    clearTimeout(fullTimer);
+    if (userOnStrip()) { load(target, true); const sharpen = () => { if (userOnStrip()) fullTimer = setTimeout(sharpen, 250); else load(activeIdx); }; fullTimer = setTimeout(sharpen, 300); }
+    else load(target);
     // from the filmstrip: jump straight to the photo (no slow slide that could be read as the guest scrolling back)
     requestAnimationFrame(() => scrollToIdx(target, near && !userOnStrip() && view.classList.contains('active')));
   };
@@ -3078,21 +3102,38 @@ function pgKeepNear(list, i, keep, srcOf) {
 (function pgReelsMemory() {
   const feed = document.getElementById('pgmFeed'); let t = null;
   function tidy() {
-    const imgs = Array.from(feed.querySelectorAll('.pgm-item > img.pgm-img')); if (!imgs.length) return;
-    imgs.forEach(im => { if (!im.dataset.full && im.src && im.src !== PG_BLANK) { im.dataset.full = im.src; im.dataset.live = '1'; } });
+    const slides = Array.from(feed.querySelectorAll('.pgm-item')); if (!slides.length) return;
     const i = Math.round(feed.scrollTop / Math.max(1, feed.clientHeight));
-    pgKeepNear(imgs, i, 3, (im) => im.dataset.full);
+    // each slide keeps its own position, so guest videos and albums between photos can never shift which photo is let go
+    slides.forEach((sl, k) => { const im = sl.querySelector(':scope > img.pgm-img'); if (!im) return;
+      if (!im.dataset.full && im.src && im.src !== PG_BLANK) { im.dataset.full = im.src; im.dataset.live = '1'; }
+      pgKeepNear([im], Math.abs(k - i) <= 3 ? 0 : 99, 0, (x) => x.dataset.full); });
   }
   feed.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(tidy, 150); }, { passive: true });
   const _r = renderMoments; renderMoments = function () { _r(); setTimeout(tidy, 50); };
 })();
-(function pgViewerMemory() {
-  const feed = document.getElementById('pgvFeed'); let t = null;
-  feed.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => {
-    const imgs = Array.from(feed.querySelectorAll('.pgv-item img')); const i = Math.round(feed.scrollTop / Math.max(1, feed.clientHeight));
-    imgs.forEach(im => { if (!im.dataset.full && im.getAttribute('src') && im.src !== PG_BLANK) { im.dataset.full = im.src; im.dataset.live = '1'; } });
-    pgKeepNear(imgs, i, 4, (im) => im.dataset.full || null);
-  }, 200); }, { passive: true });
+// Filmstrip: thumbnails far from the current photo are let go too (a 500-photo strip would otherwise keep 500 pictures in memory).
+// They come back from the phone's cache as soon as the strip gets near them.
+// Remember where the guest is (this tab only, for 30 minutes), so a reload by the phone brings them back to the same photo.
+(function pgRememberPlace() {
+  let t = null;
+  function save() { clearTimeout(t); t = setTimeout(() => {
+    const v = document.querySelector('.pg-view.active'); if (!v || !GALLERY) return;
+    try { sessionStorage.setItem('pg_pos_' + GALLERY_ID, JSON.stringify({ at: Date.now(), view: v.id.replace('view-', ''), set: CURRENT_SET, idx: Math.max(0, activeIdx) })); } catch (e) {}
+  }, 300); }
+  const _sv = switchView; switchView = function (k) { _sv(k); save(); };
+  const _ap = applyActiveMoment; applyActiveMoment = function (i) { _ap(i); save(); };
+})();
+(function pgStripMemory() {
+  let t = null;
+  function tidy() {
+    if (!thumbEls.length) return;
+    const ims = thumbEls.map(b => b.firstChild).filter(Boolean);
+    pgKeepNear(ims, Math.max(0, activeIdx), 60, (im) => im.dataset.full);   // the strip always follows the current photo
+  }
+  // runs a few times a second while the strip moves, so thumbnails come back before they reach the screen
+  stripScroller.addEventListener('scroll', () => { if (!t) t = setTimeout(() => { t = null; tidy(); }, 200); }, { passive: true });
+  const _init = initFilmstrip; initFilmstrip = function () { _init(); setTimeout(tidy, 60); };
 })();
 </script>
 </body>

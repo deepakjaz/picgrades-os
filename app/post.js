@@ -402,7 +402,15 @@
     S.stickers.push({ k: k, x: Math.min(S.L.n - 1, vis) * SW + SW * 0.78, y: SH * 0.16, s: 150, r: 0, col: '' });
     select({ type: 'sticker', i: S.stickers.length - 1 });
   }
+  // the drawings file loads in the background; anything that needs it waits for it (opened quickly = no error)
+  var stickersP = null;
+  function stickersReady() {
+    if (window.PG_STICKERS) return Promise.resolve();
+    if (!stickersP) stickersP = new Promise(function (res, rej) { var ss = document.createElement('script'); ss.src = '/app/stickers.js'; ss.onload = res; ss.onerror = function () { stickersP = null; rej(new Error('The drawings could not load. Check the internet and try again.')); }; document.head.appendChild(ss); });
+    return stickersP;
+  }
   function stickerSheet() {
+    if (!window.PG_STICKERS) { msg('Getting the drawings ready…'); stickersReady().then(function () { msg(''); stickerSheet(); }, function (e) { msg(e.message); }); return; }
     var cats = ['Flowers', 'Wedding', 'Love', 'Party'], cur = 'Flowers';
     var grid = el('div', { class: 'ps-sgrid' }), tabs = el('div', { class: 'ps-row', style: 'padding:4px 14px 10px' });
     var box = el('div', { class: 'ps-picker', role: 'dialog', 'aria-label': 'Flowers and wedding drawings' }, [
@@ -465,7 +473,7 @@
       S.postBtn, el('button', { type: 'button', class: 'ps-sub', text: 'Download for Instagram', onclick: download }), S.msg].forEach(function (x) { panel.appendChild(x); });
     panel.insertBefore(S.edit, panel.firstChild);
     wrap.appendChild(panel); document.body.appendChild(wrap); bindEditing();
-    if (!window.PG_STICKERS) { var ss = document.createElement('script'); ss.src = '/app/stickers.js'; document.head.appendChild(ss); }
+    stickersReady().then(function () { if (S) redraw(); });
     chips(fmtRow, [{ t: 'Album strip', v: 'strip' }, { t: 'Carousel', v: 'carousel' }, { t: 'Single post', v: 'single' }], S.format, function (v) { S.format = v; draw(); });
     chips(tplRow, ORDER.map(function (k) { return { t: TEMPLATES[k].name, v: k }; }), S.tid, function (v) { S.tid = v; if (TEMPLATES[v].dark && S.pid !== 'midnight') { /* keep chosen accent */ } draw(); });
     chips(palRow, Object.keys(PALETTES).map(function (k) { var P = PALETTES[k]; return { v: k, label: P.name, style: 'background:linear-gradient(135deg,' + P.paper + ' 50%,' + P.accent + ' 50%)' }; }), S.pid, function (v) { S.pid = v; draw(); }, 'ps-dot');
