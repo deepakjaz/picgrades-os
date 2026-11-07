@@ -18,7 +18,9 @@ function pgHookable(name) {
   };
 }
 const API = (window.PG_CONFIG || {}).apiUrl;
-const GALLERY_ID = (new URLSearchParams(location.search).get('g') || (location.pathname.match(/\/g\/([a-z0-9]+)/) || [])[1] || '').trim();
+// a photographer's page (/p/<name>) uses the same app; its id is 'p-<name>' so nothing mixes with a wedding
+const PG_STUDIO_SLUG = (new URLSearchParams(location.search).get('p') || (location.pathname.match(/\/p\/([a-z0-9-]+)/) || [])[1] || '').trim().toLowerCase();
+const GALLERY_ID = PG_STUDIO_SLUG ? 'p-' + PG_STUDIO_SLUG : (new URLSearchParams(location.search).get('g') || (location.pathname.match(/\/g\/([a-z0-9]+)/) || [])[1] || '').trim();
 let GALLERY = null;            // manifest from the backend
 let ROOT_SET = [];             // Root Moment list
 let CURRENT_SET = 'root';      // 'root' or an event name
@@ -28,7 +30,7 @@ function pgDevice() {
   catch (e) { if (!window.__pgDev) window.__pgDev = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); return window.__pgDev; }
 }
 function pgApi(action, body) {
-  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, body || {})) })
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, PG_STUDIO_SLUG ? { slug: PG_STUDIO_SLUG } : {}, body || {})) })
     .then(r => r.json()).then(res => { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; });
 }
 function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
@@ -564,7 +566,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
   // If the phone had to reload the page, the guest comes back to the same collection and photo.
   const CK = 'pg_gal_' + GALLERY_ID;
   let kept = null; try { const k = JSON.parse(localStorage.getItem(CK) || 'null'); if (k && k.at > Date.now() - 7 * 864e5 && k.gallery) kept = k; } catch (e) {}
-  const fresh = pgApi('getGallery').then(res => { try { localStorage.setItem(CK, JSON.stringify({ at: Date.now(), gallery: res.gallery })); } catch (e) {} return res; });
+  const fresh = pgApi(PG_STUDIO_SLUG ? 'getStudio' : 'getGallery').then(res => { try { localStorage.setItem(CK, JSON.stringify({ at: Date.now(), gallery: res.gallery })); } catch (e) {} return res; });
   let started = false;
   // wait until every part of the page is set up (later scripts add features to the gallery)
   const ready = new Promise(r => document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', r, { once: true }) : r());

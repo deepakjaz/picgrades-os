@@ -4,7 +4,7 @@
 function pgAlbumsCollection() {
   const albums = ((GALLERY && GALLERY.guestPosts) || []).filter(p => p.type === 'album');
   GALLERY.personal = (GALLERY.personal || []).filter(x => !x.albums);
-  if (albums.length) GALLERY.personal.push({ name: 'Posts & Albums', photos: [].concat.apply([], albums.map(a => String(a.fileId).split(',').map(id => ({ id })))), albums: true });
+  if (albums.length && !GALLERY.isStudio) GALLERY.personal.push({ name: 'Posts & Albums', photos: [].concat.apply([], albums.map(a => String(a.fileId).split(',').map(id => ({ id })))), albums: true });
 }
 pgAfter('pgLoadSavedSets', () => pgAlbumsCollection());
 

@@ -2,9 +2,9 @@
 // Lets guests install one wedding gallery as an app that opens on its Hub.
 module.exports = (req, res) => {
   const q = req.query || {};
-  const g = String(q.g || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);
+  const g = String(q.g || '').replace(/[^a-z0-9-]/gi, '').slice(0, 40);
   const n = String(q.n || 'Wedding Gallery').replace(/[<>]/g, '').slice(0, 60) || 'Wedding Gallery';
-  const base = g ? '/g/' + g : '/';
+  const base = /^p-/.test(g) ? '/p/' + g.slice(2) : g ? '/g/' + g : '/';   // p-<name> = a photographer's page
   res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=600');
   res.end(JSON.stringify({

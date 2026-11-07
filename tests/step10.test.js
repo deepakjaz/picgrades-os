@@ -81,7 +81,7 @@ assert(!call('getGallery', { g: gid }).gallery.events.some(e => /post|album/i.te
 assert(call('getGallery', { g: gid }).gallery.guestGate === 'open', 'demo: open by default');
 DB.Settings.push(['guestGate', 'on', '']); assert(call('getGallery', { g: gid }).gallery.guestGate === 'on', 'Settings › guestGate = on switches guest checks on');
 // health no longer shows Settings to everyone
-{ const h = call('health', {}); assert(h.version === 'step17-structure' && !h.settings, 'public health check shows status + version only'); }
+{ const h = call('health', {}); assert(h.version === 'step21-studio' && !h.settings, 'public health check shows status + version only'); }
 // secure ids: right length, only the friendly letters, no repeats
 { const ids = new Set(); let good = true; for (let i = 0; i < 300; i++) { const k = call('guestJoin', { g: gid, name: 'Test ' + i, phone: '98' + String(10000000 + i), device: 'devjoin' + i }).guestKey; if (!k || !/^[a-km-z2-9]{24}$/.test(k)) good = false; ids.add(k); }
   assert(good && ids.size === 300, 'guest keys: 24 safe random letters, all different'); }
