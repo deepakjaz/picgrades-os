@@ -28,7 +28,7 @@ const srv = http.createServer((req, res) => {
 }).listen(8772, async () => {
   const { chromium } = require('playwright');
   const b = await chromium.launch(); const errors = [];
-  const samples = ['/tmp/sample0.jpg', '/tmp/sample1.jpg'].filter(f => fs.existsSync(f));
+  const samples = ['sample1.jpg', 'sample2.jpg'].map(f => path.join(__dirname, 'fixtures', f));
   const FXD = path.join(__dirname, 'fixtures'); const fx = fs.readdirSync(FXD).filter(f => f.endsWith('.jpg')).map(f => path.join(FXD, f));
   for (const vp of [{ width: 390, height: 844, name: 'mobile' }, { width: 1280, height: 860, name: 'desktop' }]) {
     const ctx = await b.newContext({ viewport: vp, hasTouch: vp.name === 'mobile' }); const pg = await ctx.newPage();

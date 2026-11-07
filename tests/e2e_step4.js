@@ -25,7 +25,7 @@ const srv = http.createServer((req, res) => {
     pg.on('pageerror', e => errors.push(vp.name + ': ' + e.message));
     await pg.route('**fonts.g**', r => r.abort());
     // even ids = portrait, odd = landscape
-    await pg.route('https://lh3.googleusercontent.com/**', r => { const n = parseInt(r.request().url().match(/IMG(\d+)/)[1], 10); r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync('/tmp/sample' + (n % 2 ? 0 : 1) + '.jpg') }); });
+    await pg.route('https://lh3.googleusercontent.com/**', r => { const n = parseInt(r.request().url().match(/IMG(\d+)/)[1], 10); r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync(path.join(__dirname, 'fixtures', 'sample' + (n % 2 ? 1 : 2) + '.jpg')) }); });
     await pg.goto('http://localhost:8767/g/' + pub.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 }); console.log(vp.name, '| default landing is Hub:', await pg.isVisible('#view-hub'));
     await pg.goto('http://localhost:8767/g/' + pub.galleryId + '#moments'); await pg.reload();
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 });
