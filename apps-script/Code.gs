@@ -26,8 +26,10 @@ var SAMPLE_OPTION = 'Sample (Color Correction)';
 // =====================================================================
 
 function doGet(e) {
+  // Only the health check works as a plain link; everything else must be sent as a POST (keeps login tokens out of web addresses and logs).
   var action = (e && e.parameter && e.parameter.action) || 'health';
-  return respond_(route_(action, e ? e.parameter : {}));
+  if (action !== 'health') return respond_({ ok: false, error: 'Use POST for this action.' });
+  return respond_(route_('health', {}));
 }
 
 function doPost(e) {
@@ -142,7 +144,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step14-safety',
+    version: 'step16-cleanup',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -464,6 +466,7 @@ function calcOrder_(c, o, s, existingOrders, baseDate) {
   var deliveryDue = new Date(base.getTime() + hours * 3600000 + extraDays * 86400000);
 
   var bw = String(o.bwPercent == null ? '' : o.bwPercent).replace(/[^\d]/g, '');
+  if (bw !== '' && Number(bw) > 100) return { error: 'Black & white must be between 0 and 100 %.' };
   return {
     option: option, catalogName: catalogName, images: images, cullingImages: cullingImages, hours: hours,
     quotaUsed: quotaUsed, creditsUsed: creditsUsed, creditsEarned: creditsEarned, deliveryDue: deliveryDue,
@@ -940,8 +943,9 @@ function randomId_(n) {
 
 /** Create or refresh the gallery for an order. Staff: any order. Client: own studio's orders. */
 function setGallery_(p, user) {
-  var lock = LockService.getScriptLock(); lock.waitLock(30000);
-  try {
+  // Reading the wedding folder can take a minute for 2,000 photos, so it happens before the lock:
+  // other studios and guests are not kept waiting meanwhile. Only the Sheet writes are locked.
+  {
     ensureOrderColumns_(); ensureTab_('Galleries', GALLERY_COLUMNS);
     var o = loadOrder_(p.orderId, user);
     if (statusKey_(o.status) === 'cancelled') return { ok: false, error: 'This order was cancelled.' };
@@ -956,6 +960,10 @@ function setGallery_(p, user) {
       root: scan.root, events: scan.events, updatedAt: fmt_(new Date())
     };
     var json = JSON.stringify(manifest);
+  }
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    existing = readTable_('Galleries').filter(function (g) { return String(g.orderId) === String(o.orderId); })[0];   // read again inside the lock
     var fileId;
     if (existing && existing.manifestFileId) {
       try { DriveApp.getFileById(existing.manifestFileId).setContent(json); fileId = existing.manifestFileId; } catch (e) { fileId = null; }
@@ -1579,15 +1587,24 @@ function appendRow_(name, obj) {
   sh.appendRow(head.map(function (h) { return obj[h] === undefined ? '' : obj[h]; }));
 }
 
-/** Update the first row where keyCol === keyVal with the fields in patch. Returns true if found. */
-function updateRow_(name, keyCol, keyVal, patch) {
-  var row = readTable_(name).filter(function (r) { return String(r[keyCol]) === String(keyVal); })[0];
-  if (!row) return false;
-  updateRowByNumber_(name, row._row, patch);
-  return true;
-}
 
 /** Update cells of one sheet row (row number from readTable_ _row). */
+/** Keep only the rows where keep(row) is true (rewrites the tab once: fast even for thousands of rows). Returns how many were removed. */
+function keepRows_(name, keep) {
+  var sh = sheet_(name), last = sh.getLastRow(), cols = sh.getLastColumn();
+  if (last < 2) return 0;
+  var values = sh.getRange(1, 1, last, cols).getValues(), head = values[0], kept = [];
+  for (var r = 1; r < values.length; r++) {
+    var obj = {}; head.forEach(function (h, c) { var v = values[r][c]; obj[h] = v instanceof Date ? fmt_(v) : v; });
+    if (keep(obj)) kept.push(values[r]);
+  }
+  var removed = values.length - 1 - kept.length;
+  if (!removed) return 0;
+  sh.getRange(2, 1, last - 1, cols).clearContent();
+  if (kept.length) sh.getRange(2, 1, kept.length, cols).setValues(kept);
+  return removed;
+}
+
 function updateRowByNumber_(name, rowNumber, patch) {
   var sh = sheet_(name);
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
@@ -1625,3 +1642,50 @@ function parseDate_(v) {
 function normEmail_(e) { return String(e || '').trim().toLowerCase(); }
 function isTrue_(v) { return v === true || String(v).toUpperCase() === 'TRUE'; }
 function round2_(n) { return Math.round(n * 100) / 100; }
+
+// =====================================================================
+// Nightly clean-up (run setupNightly once: Apps Script › select setupNightly › Run)
+// =====================================================================
+var KEEP_HIDDEN_DAYS = 7, KEEP_PHONE_MONTHS = 6, KEEP_FACES_MONTHS = 12;
+
+function setupNightly() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'nightlyCleanup') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('nightlyCleanup').timeBased().everyDays(1).atHour(3).create();
+  Logger.log('Nightly clean-up switched on (every night around 3 am).');
+}
+
+/** Every night: old login codes and sessions go; hidden guest uploads are deleted after 7 days;
+ *  guest phone numbers are removed 6 months after the wedding and face data 12 months after it.
+ *  Posts, albums, approved moments, names and notes stay. */
+function nightlyCleanup() {
+  var lock = LockService.getScriptLock(); lock.waitLock(60000);
+  var out = { sessions: 0, hiddenDeleted: 0, phonesRemoved: 0, facesRemoved: 0 };
+  try {
+    var now = new Date(), day = 86400000;
+    out.sessions = keepRows_('Sessions', function (r) { var e = parseDate_(r.expiresAt); return !(e.getTime() > 0 && e.getTime() < now.getTime() - day); });
+
+    ensureTab_('GuestPosts', POST_COLUMNS);
+    readTable_('GuestPosts').forEach(function (x) {
+      if (x.status !== 'hidden') return;
+      var at = parseDate_(x.reviewedAt || x.at); if (!(at.getTime() > 0) || now - at < KEEP_HIDDEN_DAYS * day) return;
+      String(x.fileId || '').split(',').filter(String).forEach(function (id) { try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {} });
+      updateRowByNumber_('GuestPosts', x._row, { status: 'deleted', fileId: '' }); out.hiddenDeleted++;
+    });
+
+    ensureTab_('Galleries', GALLERY_COLUMNS); ensureTab_('Guests', GUEST_COLUMNS);
+    var phoneGone = {}, guests = readTable_('Guests'), posts = readTable_('GuestPosts');
+    readTable_('Galleries').forEach(function (g) {
+      var wed = parseDate_(String(g.eventDate || '').length === 10 ? g.eventDate + ' 00:00:00' : g.createdAt); if (!(wed.getTime() > 0)) return;   // no date known: keep
+      if (monthsSince_(wed, now) >= KEEP_PHONE_MONTHS) phoneGone[g.galleryId] = true;
+      if (monthsSince_(wed, now) >= KEEP_FACES_MONTHS && g.facesFileId) {
+        try { DriveApp.getFileById(g.facesFileId).setTrashed(true); } catch (e) {}
+        updateRowByNumber_('Galleries', g._row, { facesFileId: '', facesStatus: 'Expired' }); out.facesRemoved++;
+      }
+    });
+    guests.forEach(function (x) { if (phoneGone[x.galleryId] && x.phone) { updateRowByNumber_('Guests', x._row, { phone: '' }); out.phonesRemoved++; } });
+    posts.forEach(function (x) { if (phoneGone[x.galleryId] && x.phone) updateRowByNumber_('GuestPosts', x._row, { phone: '' }); });
+  } finally { lock.releaseLock(); }
+  Logger.log(JSON.stringify(out));
+  return out;
+}
+function monthsSince_(d, now) { return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth()) - (now.getDate() < d.getDate() ? 1 : 0); }

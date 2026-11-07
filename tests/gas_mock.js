@@ -1,18 +1,20 @@
 // Minimal Apps Script mock over the exported workbook, for local testing only.
 const fs = require('fs'); const crypto = require('crypto');
-const DB = JSON.parse(fs.readFileSync(process.env.DB || '/tmp/db.json'));
+const DB = JSON.parse(fs.readFileSync(process.env.DB || (__dirname + '/fixtures/db.json')));
 const mail = [];
 function sheet(name) { const v = DB[name]; return {
   getLastRow: () => v.length, getLastColumn: () => v[0].length,
   getDataRange: () => ({ getValues: () => v.map(r => r.slice()) }),
-  getRange: (r, c, nr, nc) => ({ getValues: () => [v[r - 1].slice(c - 1, c - 1 + (nc || 1))], setValue: x => { while (v[r - 1].length < c) v[r - 1].push(''); v[r - 1][c - 1] = x; } }),
+  getRange: (r, c, nr, nc) => ({ getValues: () => v.slice(r - 1, r - 1 + (nr || 1)).map(row => row.slice(c - 1, c - 1 + (nc || 1))), setValue: x => { while (v[r - 1].length < c) v[r - 1].push(''); v[r - 1][c - 1] = x; },
+    clearContent: () => { v.splice(r - 1, nr || 1); },                                     // mock: clearing rows at the end removes them
+    setValues: rows => { rows.forEach((row, k) => { v[r - 1 + k] = row.slice(); }); } }),
   appendRow: row => v.push(row) }; }
 const pad = n => String(n).padStart(2, '0');
 global.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheetByName: n => DB[n] ? sheet(n) : null, insertSheet: n => { DB[n] = [['']]; const sh = sheet(n); sh.getRange = (r, c, nr, nc) => ({ setValues: v => { DB[n][0] = v[0].slice(); }, getValues: () => [DB[n][r - 1].slice(c - 1, c - 1 + (nc || 1))], setValue: x => { DB[n][r - 1][c - 1] = x; } }); return sh; } }) };
 // Fake Google Drive: folders/files kept in memory. DRIVE.folders[id] = {name, access, parent, trashed}
 const DRIVE = { folders: {}, files: {}, n: 0 };
 function iter(a) { let i = 0; return { hasNext: () => i < a.length, next: () => a[i++] }; }
-function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed,
+function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed, setTrashed: t => { f.trashed = !!t; },
   setContent: c => { f.content = c; }, getBlob: () => ({ getDataAsString: () => f.content, getBytes: () => f.bytes || [] }),
   setSharing: (a, b) => { f.sharing = a + ':' + b; } }; }
 function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('No item with the given ID could be found'); return {
@@ -51,8 +53,11 @@ global.UrlFetchApp = { fetch: (url) => { const id = (/\/d\/([^=]+)/.exec(url) ||
 const props = {}; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
 global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
 global.MailApp = { sendEmail: m => mail.push(m) };
+global.ScriptApp = { __t: [], getProjectTriggers() { return this.__t; }, deleteTrigger(t) { this.__t = this.__t.filter(x => x !== t); },
+  newTrigger(fn) { const self = this, t = { fn, getHandlerFunction: () => fn }; const b = { timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { self.__t.push(t); return t; } }; return b; } };
+global.Logger = { log: () => {} };
 global.console = console;
-eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;');
+eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;global.__nightly=nightlyCleanup;global.__setupNightly=setupNightly;');
 global.__clock = 0; const RealDate = Date;
 global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(RealDate.now() + global.__clock); } static now() { return RealDate.now() + global.__clock; } };
 module.exports = { DRIVE, advance: h => { global.__clock += h * 3600000; }, call: (action, p) => JSON.parse(doPost({ postData: { contents: JSON.stringify(Object.assign({ action }, p || {})) } }).s), DB, mail };

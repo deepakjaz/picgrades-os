@@ -10,7 +10,7 @@ const img = (id, parent, name, mime) => { DRIVE.files[id] = { name, parent, mime
 ['r2.jpg', 'r10.jpg', 'r1.jpg'].forEach((n, i) => img('R' + i, 'fR', n));
 img('W1', 'fW', 'w1.jpg'); img('W2', 'fW', 'notes.txt', 'text/plain'); img('H1', 'fH', 'h1.jpg'); img('X1', 'fX', 'x1.jpg'); img('L1', W, 'loose.jpg');
 
-const client = login('team@35mmcandids.com'), admin = login('adcmediaa@gmail.com'), other = login('mithil@sandboxstudios.in');
+const client = login('alpha@example.com'), admin = login('adcmediaa@gmail.com'), other = login('beta@example.com');
 const ord = call('me', { token: client }).orders.find(o => /completed/i.test(o.status));
 assert(!call('setGallery', { token: client, orderId: ord.orderId, folderUrl: 'https://example.com/nothing' }).ok, 'bad link rejected');
 DRIVE.folders[W].access = 'PRIVATE';

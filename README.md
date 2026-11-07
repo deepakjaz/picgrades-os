@@ -46,3 +46,20 @@ Balance = totalQuota − usedQuota. Amount due = images over quota × perImageRa
 1. Export again from Wix (Claude does this through the Wix connection).
 2. `python3 tools/build_db.py <export-folder> PicGrades_OS_Database.xlsx`
 3. In the Google Sheet, replace the Companies, Orders, CreditLog, Packages and Users tabs with the new ones (File › Import › Replace current sheet, per tab). Keep Payments, Sessions, EmailLog.
+
+## Nightly clean-up (one time)
+
+In Apps Script select **setupNightly** → **Run**. Every night around 3 am `nightlyCleanup` then:
+
+- removes old login codes and expired sessions,
+- deletes guest uploads the couple hid, 7 days after hiding,
+- removes guest phone numbers 6 months after the wedding date,
+- removes face data (Find me) 12 months after the wedding date.
+
+Photos, posts, albums, approved moments, names and notes are never deleted.
+
+## Tests
+
+`npm install && npx playwright install chromium`, then `npm test` (all tests) or `npm run test:quick` (backend only).
+They run on GitHub for every pull request too (`.github/workflows/tests.yml`). The test database `tests/fixtures/db.json`
+is made by `tools/make_test_db.py` with every client detail replaced by made-up ones.
