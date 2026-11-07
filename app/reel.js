@@ -103,8 +103,8 @@
       fx: { pulse: 0.045, shake: 14, flashEvery: 2, flash: '255,255,255', flashA: 0.22, rgb: true }, paper: '#07060B', ink: '#FFFFFF', gold: '#FF2E88', deep: '#21D4FD' }
   };
   var ORDER = ['south', 'soft', 'dynamic', 'travel', 'festival', 'party'];
-  var LAYOUT_N = { single: 1, punch: 1, polaroid: 1, tv: 1, strobe: 1, rgb: 1, duo: 2, split2: 2, grid3: 3, grid4: 4, strip: 4 };
-  var LAYOUT_MIN = { grid4: 2, grid3: 2, strip: 4, polaroid: 2, tv: 2, duo: 2, split2: 2 };
+  var LAYOUT_N = { single: 1, punch: 1, polaroid: 1, tv: 1, strobe: 1, rgb: 1, duo: 2, split2: 2, grid3: 3, grid4: 4, strip: 4, jharokha: 1, triptych: 3 };
+  var LAYOUT_MIN = { grid4: 2, grid3: 2, strip: 4, polaroid: 2, tv: 2, duo: 2, split2: 2, jharokha: 2, triptych: 3 };
   function rng(seed) { var a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
   // ---------- timeline ----------
@@ -230,6 +230,22 @@
         var half = beat / 2, on = (lt % half) < half * 0.7;
         if (on) { blurBg(ctx, id, 0.35); contain(ctx, id, 30, 50, W - 60, H - 220, 1.04); } else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); }
         break; }
+      // the next two layouts were designed by Gemini (palace arch window, three cinema panels)
+      case 'jharokha': {
+        ctx.fillStyle = T.paper; ctx.fillRect(0, 0, W, H);
+        var jx = 110, jy = 210, jw = W - 220, jh = H - 560;
+        var arch = function (pad) { var ax = jx - pad, ay = jy - pad, aw = jw + pad * 2, ah = jh + pad * 2, ar = aw / 2;
+          ctx.beginPath(); ctx.moveTo(ax, ay + ah); ctx.lineTo(ax, ay + ar); ctx.quadraticCurveTo(ax, ay + ar * 0.25, ax + ar, ay); ctx.quadraticCurveTo(ax + aw, ay + ar * 0.25, ax + aw, ay + ar); ctx.lineTo(ax + aw, ay + ah); ctx.closePath(); };
+        ctx.save(); arch(0); ctx.clip(); cover(ctx, id, jx, jy, jw, jh, 1 + 0.05 * u); ctx.restore();
+        ctx.strokeStyle = T.gold; ctx.lineWidth = 4; arch(16); ctx.stroke(); ctx.lineWidth = 1.5; arch(28); ctx.stroke(); break; }
+      case 'triptych': {
+        ctx.fillStyle = T.paper; ctx.fillRect(0, 0, W, H);
+        var tp = 64, tg = 24, tw = W - tp * 2, th = Math.floor((H - 340 - tg * 2) / 3);
+        for (var ti = 0; ti < 3; ti++) {
+          var lp = Math.max(0, Math.min(1, (u - ti * 0.12) / 0.45)), te = 1 - Math.pow(1 - lp, 3), tox = (1 - te) * 140 * (ti % 2 ? -1 : 1), tby = 150 + ti * (th + tg);
+          ctx.globalAlpha = te; cover(ctx, ids[ti % ids.length], tp + tox, tby, tw, th, 1.03); ctx.strokeStyle = T.gold; ctx.lineWidth = 2; ctx.strokeRect(tp + tox, tby, tw, th); ctx.globalAlpha = 1;
+        }
+        break; }
       case 'rgb': {
         blurBg(ctx, id, 0.5); var off = 18 * Math.exp(-(lt % beat) / (beat * 0.2));
         ctx.globalAlpha = 0.5; ctx.globalCompositeOperation = 'screen';
@@ -347,6 +363,8 @@
         ctx.globalAlpha = 0.25 * Math.sin(p * Math.PI); try { ctx.drawImage(S.canvas, 40, 0); ctx.drawImage(S.canvas, -40, 0); } catch (e) {} ctx.globalAlpha = 1; }
       else if (tr === 'zoom' || tr === 'zoomfade') { scaled(ctx, W / 2, H / 2, 1 + p * 0.5, function () { ctx.globalAlpha = 1 - p; one(ctx, prev, t, beat); }); ctx.globalAlpha = p;
         scaled(ctx, W / 2, H / 2, 0.85 + 0.15 * p, function () { one(ctx, seg, t, beat); }); ctx.globalAlpha = 1; }
+      else if (tr === 'iris') {   // Gemini's circle reveal: the next shot opens from the middle
+        one(ctx, prev, t, beat); ctx.save(); ctx.beginPath(); ctx.arc(W / 2, H / 2, Math.max(1, 1150 * p), 0, Math.PI * 2); ctx.clip(); one(ctx, seg, t, beat); ctx.restore(); }
       else if (tr === 'flash') { one(ctx, seg, t, beat); ctx.fillStyle = 'rgba(255,255,255,' + (1 - p) + ')'; ctx.fillRect(0, 0, W, H); }
       else if (tr === 'glitch') { one(ctx, seg, t, beat); for (var g = 0; g < 7; g++) { var gy = ((g * 0.137 + seg.r) % 1) * H, gh = 40 + g * 15, gx = (g % 2 ? 1 : -1) * 60 * (1 - p); try { ctx.drawImage(S.canvas, 0, gy, W, gh, gx, gy, W, gh); } catch (e) {} } }
       else { one(ctx, prev, t, beat); ctx.globalAlpha = p; one(ctx, seg, t, beat); ctx.globalAlpha = 1; }
@@ -566,8 +584,15 @@
     S.wrap.appendChild(box); upd(); if (cols.length) showTab(0);
   }
 
+  // ---------- groups by event (styles and templates from the packs say which events they suit) ----------
+  var GROUPS = [['all', 'All'], ['haldi', 'Haldi', ['haldi']], ['mehendi', 'Mehendi', ['mehendi']], ['sangeet', 'Sangeet', ['sangeet']], ['baraat', 'Baraat', ['baraat']],
+    ['wedding', 'Wedding', ['wedding', 'pheras', 'ceremony', 'muhurtham', 'vidaai']], ['reception', 'Reception', ['reception', 'highlights']], ['cocktail', 'Cocktail', ['cocktail']]];
+  function inGroup(x, g) { if (g === 'all') return true; var G = GROUPS.filter(function (r) { return r[0] === g; })[0]; return !!(G && (x.forWhat || []).some(function (f) { return G[2].indexOf(f) > -1; })); }
+  // add ?packinfo to the gallery address to see who made each style (G = Gemini, C = ChatGPT) while testing
+  var PACKINFO = /[?&]packinfo\b/.test(location.search);
+  function label(x) { return x.name + (PACKINFO && x.by ? (x.by === 'gemini' ? ' · G' : x.by === 'chatgpt' ? ' · C' : '') : ''); }
   // ---------- extra styles from /app/packs/reel-styles.json (format: see the helpers' brief) ----------
-  var KNOWN = { layouts: LAYOUT_N, trans: { fade: 1, zoomfade: 1, slide: 1, cut: 1, whip: 1, zoom: 1, flash: 1, glitch: 1 }, cards: { kasavu: 1, minimal: 1, bold: 1, film: 1, festive: 1, neon: 1 } };
+  var KNOWN = { layouts: LAYOUT_N, trans: { fade: 1, zoomfade: 1, slide: 1, cut: 1, whip: 1, zoom: 1, flash: 1, glitch: 1, iris: 1 }, cards: { kasavu: 1, minimal: 1, bold: 1, film: 1, festive: 1, neon: 1 } };
   var packsP = null;
   function addStyle(x) {
     if (!x || !x.id || TEMPLATES[x.id] || !x.name) return false;
@@ -579,7 +604,7 @@
     TEMPLATES[x.id] = { name: String(x.name).slice(0, 30), music: x.music || 'kasavu-morning', beats: beats, layouts: lay, trans: tr, card: KNOWN.cards[x.card] ? x.card : 'minimal', frame: !!x.frame,
       fx: { pulse: Math.min(0.05, +fx.pulse || 0), shake: Math.min(16, +fx.shake || 0), flashEvery: +fx.flashEvery || 0, flash: /^\d+,\d+,\d+$/.test(fx.flash || '') ? fx.flash : '255,255,255',
         flashA: Math.min(0.4, +fx.flashA || 0), leak: !!fx.leak, confetti: !!fx.confetti, rgb: !!fx.rgb },
-      paper: hex(c.paper, '#F6EFEA'), ink: hex(c.ink, '#2B2522'), gold: hex(c.gold, '#B89A6A'), gold2: hex(c.gold2, hex(c.gold, '#B89A6A')), deep: hex(c.deep, '#7A5C4A'), forWhat: x.for || [] };
+      paper: hex(c.paper, '#F6EFEA'), ink: hex(c.ink, '#2B2522'), gold: hex(c.gold, '#B89A6A'), gold2: hex(c.gold2, hex(c.gold, '#B89A6A')), deep: hex(c.deep, '#7A5C4A'), forWhat: x.for || [], by: x.by || '' };
     ORDER.push(x.id); return true;
   }
   function loadPacks() {
@@ -621,12 +646,17 @@
     S.ownInput = el('input', { type: 'file', accept: 'audio/*', style: 'display:none' });
     S.ownInput.addEventListener('change', function () { var f = this.files[0]; this.value = ''; addOwnMusic(f); });
     S.ctrls.appendChild(S.ownInput);
-    S.ctrls.appendChild(el('div', { class: 'rl-lbl', text: 'Style' })); S.ctrls.appendChild(styleRow);
-    chips(styleRow, ORDER.map(function (k) { return { t: TEMPLATES[k].name, v: k }; }), S.tid, function (v) {
+    var groupRow = el('div', { class: 'rl-row' }), styleGroup = 'all';
+    S.ctrls.appendChild(el('div', { class: 'rl-lbl', text: 'Style' })); S.ctrls.appendChild(groupRow); S.ctrls.appendChild(styleRow);
+    var groups = GROUPS.filter(function (g) { return ORDER.some(function (k) { return inGroup(TEMPLATES[k], g[0]); }); });
+    if (groups.length > 1) chips(groupRow, groups.map(function (g) { return { t: g[1], v: g[0] }; }), 'all', function (v) { styleGroup = v; showStyles(); }); else groupRow.style.display = 'none';
+    function showStyles() { chips(styleRow, ORDER.filter(function (k) { return inGroup(TEMPLATES[k], styleGroup); }).map(function (k) { return { t: label(TEMPLATES[k]), v: k }; }), S.tid, pickStyle); }
+    showStyles();
+    function pickStyle(v) {
       S.tid = v; S.T = TEMPLATES[v];
       var rec = S.tracks.filter(function (t) { return t.id === S.T.music; })[0]; if (rec) S.track = rec;
       renderMusic(); renderThumbs(); stopPreview(); draw(S.canvas.getContext('2d'), plan(), 0.9);
-    });
+    }
     S.ctrls.appendChild(el('div', { class: 'rl-lbl', text: 'Music' })); S.ctrls.appendChild(musicRow);
     S.ctrls.appendChild(el('div', { class: 'rl-lbl', text: 'Length' })); S.ctrls.appendChild(lenRow);
     S.ctrls.appendChild(el('div', { class: 'rl-lbl', text: 'Photos · tap to remove or add' })); S.ctrls.appendChild(S.thumbs); S.ctrls.appendChild(S.info);

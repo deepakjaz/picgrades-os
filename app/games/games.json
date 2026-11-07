@@ -1,0 +1,42 @@
+{
+ "games": [
+  {
+   "id": "baraat-run",
+   "file": "baraat-run.js",
+   "by": "gemini"
+  },
+  {
+   "id": "varmala-toss",
+   "file": "varmala-toss.js",
+   "by": "gemini"
+  },
+  {
+   "id": "wedding-memory",
+   "file": "wedding-memory.js",
+   "by": "gemini"
+  },
+  {
+   "id": "joota-chupai",
+   "file": "joota-chupai.js",
+   "by": "gemini"
+  },
+  {
+   "id": "shagun-catch",
+   "file": "shagun-catch.js",
+   "by": "chatgpt",
+   "hostExit": true
+  },
+  {
+   "id": "baraat-run-simple",
+   "file": "baraat-run-simple.js",
+   "by": "chatgpt",
+   "hostExit": true
+  },
+  {
+   "id": "wedding-memory-cards",
+   "file": "wedding-memory-cards.js",
+   "by": "chatgpt",
+   "hostExit": true
+  }
+ ]
+}

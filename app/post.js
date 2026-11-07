@@ -174,6 +174,12 @@
       if (T.cell === 'neon') { ctx.save(); ctx.shadowColor = acc; ctx.shadowBlur = 30; line(ctx, acc, 5); ctx.strokeRect(c.x - 10, c.y - 10, c.w + 20, c.h + 20); ctx.restore(); }
       if (T.cell === 'caption' && opt.labels && opt.labels[c.id]) { ctx.fillStyle = '#8a8178'; ctx.font = '500 26px ' + MONO; ctx.textAlign = 'center'; ctx.fillText(String(opt.labels[c.id]).toUpperCase(), c.x + c.w / 2, c.y + c.h + 52); }
     });
+    // line decorations from the packs (one copy on every page)
+    if (T.decoPaths && DECOPATHS[T.decoPaths] && window.Path2D) {
+      var role = { ink: ink, accent: acc, soft: P.soft || acc };
+      for (var pg = 0; pg < L.n; pg++) DECOPATHS[T.decoPaths].forEach(function (q) {
+        ctx.save(); ctx.translate(pg * SW, 0); line(ctx, role[q.role] || acc, Math.max(0.5, Math.min(8, +q.stroke || 2))); try { ctx.stroke(new Path2D(q.d)); } catch (e) {} ctx.restore(); });
+    }
     // words + drawings on top
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     var names = S.names, date = S.date;
@@ -433,7 +439,7 @@
   }
   function stickerSheet() {
     if (!window.PG_STICKERS) { msg('Getting the drawings ready…'); stickersReady().then(function () { msg(''); stickerSheet(); }, function (e) { msg(e.message); }); return; }
-    var cats = ['Flowers', 'Wedding', 'Love', 'Party'], cur = 'Flowers';
+    var cats = ['Flowers', 'Wedding', 'Ceremony', 'Love', 'Party', 'Lettering'].filter(function (c) { return window.PG_STICKERS.some(function (x) { return x.c === c; }); }), cur = 'Flowers';
     var grid = el('div', { class: 'ps-sgrid' }), tabs = el('div', { class: 'ps-row', style: 'padding:4px 14px 10px' });
     var box = el('div', { class: 'ps-picker', role: 'dialog', 'aria-label': 'Flowers and wedding drawings' }, [
       el('div', { class: 'ps-top' }, [el('h3', { text: 'Flowers & drawings' }), el('button', { type: 'button', class: 'ps-x', 'aria-label': 'Close', text: '×', onclick: function () { box.remove(); } })]), tabs, grid]);
@@ -448,6 +454,14 @@
     S.wrap.appendChild(box); show(cur);
   }
 
+  // ---------- groups by event (styles and templates from the packs say which events they suit) ----------
+  var GROUPS = [['all', 'All'], ['haldi', 'Haldi', ['haldi']], ['mehendi', 'Mehendi', ['mehendi']], ['sangeet', 'Sangeet', ['sangeet']], ['baraat', 'Baraat', ['baraat']],
+    ['wedding', 'Wedding', ['wedding', 'pheras', 'ceremony', 'muhurtham', 'vidaai']], ['reception', 'Reception', ['reception', 'highlights']], ['cocktail', 'Cocktail', ['cocktail']]];
+  function inGroup(x, g) { if (g === 'all') return true; var G = GROUPS.filter(function (r) { return r[0] === g; })[0]; return !!(G && (x.forWhat || []).some(function (f) { return G[2].indexOf(f) > -1; })); }
+  // add ?packinfo to the gallery address to see who made each style (G = Gemini, C = ChatGPT) while testing
+  var PACKINFO = /[?&]packinfo\b/.test(location.search);
+  function label(x) { return x.name + (PACKINFO && x.by ? (x.by === 'gemini' ? ' · G' : x.by === 'chatgpt' ? ' · C' : '') : ''); }
+  var DECOPATHS = {};   // page decorations drawn as lines (album-decos.json)
   // ---------- extra templates and drawings from /app/packs (format: see the helpers' brief) ----------
   var CELLS = { plain: 1, polaroid: 1, caption: 1, arch: 1, outline: 1, neon: 1 }, DECOS = { none: 1, rule: 1, overlay: 1, film: 1, string: 1, masthead: 1, arch: 1, kasavu: 1, floral: 1, cocktail: 1 };
   var LAYS = { mosaic: 1, hero: 1, singles: 1, stagger: 1, triple: 1, pairs: 1 };
@@ -459,7 +473,7 @@
     if (!(slots && slots.length) && !LAYS[x.layout]) return false;
     TEMPLATES[x.id] = { name: String(x.name).slice(0, 30), pad: num(pg.pad, 70, 0, 300), top: num(pg.top, 180, 0, 500), bottom: num(pg.bottom, 160, 0, 500), gap: num(pg.gap, 20, 0, 120),
       cell: CELLS[x.cell] ? x.cell : 'plain', deco: DECOS[x.deco] ? x.deco : 'none', layout: LAYS[x.layout] ? x.layout : 'pairs', slots: slots && slots.length ? slots : null,
-      dark: !!x.dark, white: !!x.white, palette: null, forWhat: x.for || [] };
+      dark: !!x.dark, white: !!x.white, palette: null, forWhat: x.for || [], by: x.by || '', decoPaths: typeof x.decoPaths === 'string' ? x.decoPaths : '' };
     var P = x.palette || {}, hex = function (v) { return /^#[0-9a-f]{6}$/i.test(v || ''); };
     if (hex(P.paper) && hex(P.ink) && hex(P.accent)) { PALETTES[x.id] = { name: String(x.name).slice(0, 30), paper: P.paper, ink: P.ink, accent: P.accent, soft: hex(P.soft) ? P.soft : P.accent }; TEMPLATES[x.id].palette = x.id; }
     ORDER.push(x.id); return true;
@@ -467,7 +481,11 @@
   var packsP = null;
   function getJSON(u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : []; }).then(function (l) { return Array.isArray(l) ? l : []; }).catch(function () { return []; }); }
   function loadPacks() {
-    if (!packsP) packsP = Promise.race([getJSON('/app/packs/album-templates.json').then(function (l) { l.forEach(addTemplate); }), new Promise(function (res) { setTimeout(res, 2500); })]);
+    if (!packsP) packsP = Promise.race([Promise.all([
+      getJSON('/app/packs/album-templates.json').then(function (l) { l.forEach(addTemplate); }),
+      getJSON('/app/packs/album-decos.json').then(function (l) { l.forEach(function (d) {
+        if (d && d.id && Array.isArray(d.paths)) DECOPATHS[d.id] = d.paths.filter(function (q) { return q && /^[MmLlHhVvCcSsQqTtAaZz0-9 .,\-]+$/.test(q.d || '') && String(q.d).length < 6000; }); }); })
+    ]), new Promise(function (res) { setTimeout(res, 2500); })]);
     return packsP;
   }
   function open(opt) { return loadPacks().then(function () { return openNow(opt); }); }
@@ -485,7 +503,7 @@
     S.stage = el('div', { class: 'ps-stage' }, [S.prev]); wrap.appendChild(S.stage);
     wrap.appendChild(el('p', { class: 'ps-hint', text: 'Tip: tap a photo on the page to move it, zoom it or replace it.' }));
     var panel = el('div', { class: 'ps-panel' });
-    var fmtRow = el('div', { class: 'ps-row' }), tplRow = el('div', { class: 'ps-row' }), palRow = el('div', { class: 'ps-row' }), slideRow = el('div', { class: 'ps-row' });
+    var fmtRow = el('div', { class: 'ps-row' }), tplRow = el('div', { class: 'ps-row' }), grpRow = el('div', { class: 'ps-row' }), palRow = el('div', { class: 'ps-row' }), slideRow = el('div', { class: 'ps-row' });
     S.thumbs = el('div', { class: 'ps-row' }); S.info = el('div', { class: 'ps-lbl', style: 'margin-top:0' });
     var names = el('input', { class: 'ps-in', value: S.names, maxlength: '40', 'aria-label': 'Names' }); names.addEventListener('input', function () { S.names = names.value; draw(); });
     var date = el('input', { class: 'ps-in', value: S.date, maxlength: '30', 'aria-label': 'Date' }); date.addEventListener('input', function () { S.date = date.value; draw(); });
@@ -507,7 +525,7 @@
       S.eCol, el('div', { class: 'ps-row', style: 'padding:8px 0 0' }, [S.eReplace, S.eReset, S.eDel, el('button', { type: 'button', class: 'ps-chip on', text: 'Done', onclick: function () { select(null); } })])]);
     S.msg = el('p', { class: 'ps-msg', 'aria-live': 'polite' });
     S.postBtn = el('button', { type: 'button', class: 'ps-go', text: 'Post to Root Moment', onclick: postIt });
-    [el('div', { class: 'ps-lbl', text: 'Format' }), fmtRow, el('div', { class: 'ps-lbl', text: 'Template' }), tplRow, el('div', { class: 'ps-lbl', text: 'Colours' }), palRow,
+    [el('div', { class: 'ps-lbl', text: 'Format' }), fmtRow, el('div', { class: 'ps-lbl', text: 'Template' }), grpRow, tplRow, el('div', { class: 'ps-lbl', text: 'Colours' }), palRow,
       el('div', { class: 'ps-lbl', text: 'Photos · tap to remove, + to add from any collection' }), S.thumbs, S.info,
       el('div', { class: 'ps-lbl', text: 'Slides (album strip)' }), slideRow,
       el('div', { class: 'ps-lbl', text: 'Text' }), names, date, S.caption,
@@ -520,7 +538,11 @@
     wrap.appendChild(panel); document.body.appendChild(wrap); bindEditing();
     stickersReady().then(function () { if (S) redraw(); });
     chips(fmtRow, [{ t: 'Album strip', v: 'strip' }, { t: 'Carousel', v: 'carousel' }, { t: 'Single post', v: 'single' }], S.format, function (v) { S.format = v; draw(); });
-    chips(tplRow, ORDER.map(function (k) { return { t: TEMPLATES[k].name, v: k }; }), S.tid, function (v) { S.tid = v; if (TEMPLATES[v].palette) { S.pid = TEMPLATES[v].palette; palRow.querySelectorAll('.on').forEach(function (b) { b.classList.remove('on'); }); var pb = palRow.querySelector('[data-v="' + S.pid + '"]'); if (pb) pb.classList.add('on'); } draw(); });
+    var tplGroup = 'all', groups = GROUPS.filter(function (g) { return ORDER.some(function (k) { return inGroup(TEMPLATES[k], g[0]); }); });
+    if (groups.length > 1) chips(grpRow, groups.map(function (g) { return { t: g[1], v: g[0] }; }), 'all', function (v) { tplGroup = v; showTemplates(); }); else grpRow.style.display = 'none';
+    function showTemplates() { chips(tplRow, ORDER.filter(function (k) { return inGroup(TEMPLATES[k], tplGroup); }).map(function (k) { return { t: label(TEMPLATES[k]), v: k }; }), S.tid, pickTemplate); }
+    showTemplates();
+    function pickTemplate(v) { S.tid = v; if (TEMPLATES[v].palette) { S.pid = TEMPLATES[v].palette; palRow.querySelectorAll('.on').forEach(function (b) { b.classList.remove('on'); }); var pb = palRow.querySelector('[data-v="' + S.pid + '"]'); if (pb) pb.classList.add('on'); } draw(); }
     chips(palRow, Object.keys(PALETTES).map(function (k) { var P = PALETTES[k]; return { v: k, label: P.name, style: 'background:linear-gradient(135deg,' + P.paper + ' 50%,' + P.accent + ' 50%)' }; }), S.pid, function (v) { S.pid = v; draw(); }, 'ps-dot');
     chips(slideRow, [{ t: 'Auto', v: 0 }, { t: '2', v: 2 }, { t: '3', v: 3 }, { t: '4', v: 4 }, { t: '5', v: 5 }, { t: '6', v: 6 }, { t: '8', v: 8 }, { t: '10', v: 10 }], 0, function (v) { S.slides = v; draw(); });
     renderThumbs(); msg('Getting the photos ready…');
