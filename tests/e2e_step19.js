@@ -50,28 +50,21 @@ const srv = http.createServer((req, res) => {
   await pg.evaluate(() => PGPost.close());
   // reel maker: Marwari style uses Gemini's arch layout and circle reveal
   await pg.click('#pghReel'); await pg.waitForFunction(() => /preview/i.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 20000 });
-  console.log('reel styles:', await pg.evaluate(() => PGReel.styles.length), '| music tracks:', await pg.$$eval('.rl-chip', l => l.length));
+  console.log('reel styles:', await pg.evaluate(() => PGReel.styles.length), '| music tracks:', await pg.evaluate(() => fetch('/app/music/tracks.json').then(r => r.json()).then(j => j.tracks.length)));
   await pg.locator('.rl-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
   await pg.locator('.rl-chip', { hasText: 'Marwari · Royal Rajwada' }).click(); await pg.waitForTimeout(1500);
   await pg.screenshot({ path: '/tmp/s19_reel.png' });
   await pg.locator('.rl-chip', { hasText: '15 s' }).click(); await pg.click('.rl-go'); await pg.waitForSelector('.rl-stage video', { timeout: 90000 });
   console.log('reel made with the new layouts:', await pg.textContent('.rl-msg'));
   await pg.evaluate(() => PGReel.close());
-  // games
-  await pg.click('#pgcGames'); await pg.waitForSelector('.pgg-card', { timeout: 20000 }); await pg.waitForTimeout(500);
-  const games = await pg.$$eval('.pgg-card', l => l.map(b => b.dataset.game));
-  console.log('games:', games.join(', ')); await pg.screenshot({ path: '/tmp/s19_games.png' });
-  for (const id of games) {
-    await pg.click('.pgg-card[data-game="' + id + '"]'); await pg.waitForSelector('.pgg-play'); await pg.waitForTimeout(700);
-    for (let i = 0; i < 4; i++) { await pg.touchscreen.tap(195, 520 + i * 40); await pg.waitForTimeout(250); }
-    await pg.waitForTimeout(600);
-    const fit = await pg.$eval('.pgg-root', r => { let worst = 0; r.querySelectorAll('*').forEach(e => { const b = e.getBoundingClientRect(); if (b.width) worst = Math.max(worst, b.right - innerWidth); }); return Math.round(worst); });
-    await pg.screenshot({ path: '/tmp/s19_game_' + id + '.png' });
-    await pg.evaluate(() => { const r = document.querySelector('.pgg-play'); const x = [...r.querySelectorAll('button')].find(b => /exit|close|back|×/i.test(b.textContent + (b.getAttribute('aria-label') || ''))); if (x) x.click(); });
-    await pg.waitForTimeout(300);
-    const closed = !(await pg.$('.pgg-play'));
-    console.log(' ', id, '| sticks out on the right by:', fit, 'px | its Exit button closes it:', closed);
-    if (!closed) await pg.evaluate(() => { document.querySelector('.pgg-play').remove(); });
-  }
+  // games removed for now: the card stays hidden while the list is empty
+  console.log('Games card hidden (no games yet):', await pg.$eval('#pgcGames', e => e.classList.contains('hidden')));
+  // double-tap: first heart on, second heart off (Root Moment)
+  await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500);
+  const box = await pg.$eval('#pgmFeed .pgm-item', e => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  const mine = () => pg.evaluate(() => Object.keys(GALLERY.mine || {}).length);
+  const dbl = async () => { await pg.mouse.click(box.x, box.y); await pg.waitForTimeout(120); await pg.mouse.click(box.x, box.y); await pg.waitForTimeout(700); };
+  await dbl(); const a1 = await mine(); await dbl(); const a2 = await mine(); await dbl(); const a3 = await mine();
+  console.log('double-tap → hearts:', a1, '→ again:', a2, '→ again:', a3);
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
 });

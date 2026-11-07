@@ -14,10 +14,9 @@ Vercel (index.html + app)  ──►  Google Apps Script Web App  ──►  Goo
 | `tools/build_db.py` | Builds the database workbook from a Wix export. Re-run any time the Wix data changes. |
 | `app/gallery.html` | The wedding gallery page (HTML only). Styles: `app/gallery/gallery.css`. Scripts load in number order from `app/gallery/`: `01-core` (data, collections, filmstrip, viewer, Root Moment, start-up), `02-viewer-nav`, `03-find-me`, `04-hub`, `05-viewer-feed` (zoom, download, feed), `06-ios-height`, `07-reel-open`, `08-guests` (guests, couple, uploads, saved sets), `09-posts-albums`, `10-memory` (iPhone memory, return to place). Features add to the core with `pgAfter('renderMoments', fn)` / `pgBefore(...)` — never by wrapping functions. |
 | `app/packs/*.json` | Extra reel styles, album templates and drawings (format in the helpers' brief). Loaded by the makers; broken entries are skipped. |
-| `app/games/` | Guest games (Hub › Create › Games). `games.json` lists them; each game is one file in the helpers' brief format. |
-| `tools/music_recipes/`, `tools/render_recipes.py` | Music recipes from Gemini and ChatGPT and the tool that turns them into WAV files (then MP3 with ffmpeg). |
+| `app/games/` | Guest games (Hub › Create › Games). `games.json` lists them (empty for now — the Games card stays hidden until a game is added); each game is one file in the helpers' brief format. |
 
-Testing tip: add `&packinfo` (or `?packinfo`) to a gallery link to see who made each style, template and game (G = Gemini, C = ChatGPT).
+Testing tip: add `&packinfo` (or `?packinfo`) to a gallery link to see who made each style and template (G = Gemini, C = ChatGPT).
 | `app/reel.js`, `app/post.js`, `app/stickers.js` | Reel maker, Post / Album maker, flower & wedding drawings. |
 | `app/faces.html`, `app/faces-core.js` | Studio page that reads faces for Find me. Matching of a guest's selfie happens on the server (`findFaces`). |
 | `api/stream.js`, `api/manifest.js` | Vercel functions: guest video streaming (only approved videos of that gallery), per-wedding app manifest. |
