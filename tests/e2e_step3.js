@@ -17,7 +17,7 @@ const srv = http.createServer((req, res) => {
   }
   try {
     // client: place, then edit, then hold
-    const c = await page(); await login(c, 'http://localhost:8766/app/', 'mithil@sandboxstudios.in'); await c.waitForSelector('#v-dash:not(.hidden)');
+    const c = await page(); await login(c, 'http://localhost:8766/app/', 'beta@example.com'); await c.waitForSelector('#v-dash:not(.hidden)');
     await c.click('nav.dock button[data-go=order]'); await c.fill('#cat', 'UI Edit Test'); await c.fill('#n', '50'); await c.click('#speeds button:nth-child(4)'); await c.fill('#link', 'https://x.y'); await c.click('#placeBtn');
     await c.waitForSelector('#toast:not(.hidden)'); console.log('placed:', await c.textContent('#toast'));
     const first = c.locator('#orders .order').first();
@@ -35,7 +35,7 @@ const srv = http.createServer((req, res) => {
     const a = await page(); await login(a, 'http://localhost:8766/app/admin.html', 'adcmediaa@gmail.com'); await a.waitForSelector('#v-overview:not(.hidden)');
     await a.waitForSelector('#studios tr'); console.log('studios rows:', await a.locator('#studios tr').count(), '| totals:', (await a.textContent('#totals')).replace(/\s+/g, ' '));
     await a.screenshot({ path: '/tmp/s3_overview.png', fullPage: true });
-    await a.fill('#filter', 'sandbox'); await a.locator('#studios tr button').first().click();
+    await a.fill('#filter', 'beta'); await a.locator('#studios tr button').first().click();
     await a.waitForSelector('#v-studio:not(.hidden)'); await a.waitForFunction(() => document.querySelector('#sName').textContent.length > 0);
     await a.fill('#pAmt', '20000'); await a.fill('#pRate', '5'); await a.dispatchEvent('#pAmt', 'input');
     console.log('preview:', await a.textContent('#payPreview'));

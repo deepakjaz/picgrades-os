@@ -7,7 +7,7 @@ DRIVE.folders[W] = { name: 'Riya_Karan', access: 'ANYONE_WITH_LINK' };
 DRIVE.folders.f5R = { name: '00_Root_Moment', parent: W }; DRIVE.folders.f5W = { name: 'Wedding', parent: W };
 ['P1', 'P2'].forEach(id => DRIVE.files[id] = { name: id + '.jpg', parent: 'f5R', mime: 'image/jpeg' });
 ['P2b', 'P3', 'P4'].forEach(id => DRIVE.files[id] = { name: id + '.jpg', parent: 'f5W', mime: 'image/jpeg' });
-const client = login('team@35mmcandids.com'), admin = login('adcmediaa@gmail.com'), other = login('mithil@sandboxstudios.in');
+const client = login('alpha@example.com'), admin = login('adcmediaa@gmail.com'), other = login('beta@example.com');
 const ord = call('me', { token: client }).orders.find(o => /completed/i.test(o.status));
 const pub = call('setGallery', { token: admin, orderId: ord.orderId, folderUrl: W, title: 'Riya & Karan' });
 const gid = pub.galleryId;

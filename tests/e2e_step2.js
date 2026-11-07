@@ -10,10 +10,10 @@ const srv = http.createServer((req, res) => {
 }).listen(8765, async () => {
   const { chromium } = require('playwright');
   const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1280, height: 900 } });
-  const errors = []; pg.on('pageerror', e => errors.push(e.message)); pg.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  const errors = []; pg.on('pageerror', e => errors.push(e.message)); pg.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });   // fonts are blocked in the test
   await pg.route('**fonts.g**', r => r.abort());
   await pg.goto('http://localhost:8765/app/');
-  await pg.fill('#email', 'team@35mmcandids.com'); await pg.click('#loginBtn');
+  await pg.fill('#email', 'alpha@example.com'); await pg.click('#loginBtn');
   await pg.waitForSelector('#step2:not(.hidden)');
   const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1];
   await pg.fill('#code', code); await pg.click('#loginBtn');

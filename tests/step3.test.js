@@ -3,7 +3,7 @@ let fails = 0; const assert = (c, m) => { if (!c) { fails++; console.error('FAIL
 function login(email) { call('requestCode', { email }); const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]; return call('verifyCode', { email, code }).token; }
 const col = (tab, name) => DB[tab][0].indexOf(name);
 const coRow = name => DB.Companies.find(r => r[1] === name);
-const client = login('team@35mmcandids.com');
+const client = login('alpha@example.com');
 const admin = login('adcmediaa@gmail.com');
 const start = call('me', { token: client }).company;
 
@@ -65,31 +65,31 @@ assert(!call('holdOrder', { token: client, orderId: id3, reason: 'x' }).ok, 'com
 // --- roles
 assert(call('adminOverview', { token: client }).code === 'ROLE', 'client blocked from admin');
 assert(call('queue', { token: client }).code === 'ROLE', 'client blocked from queue');
-const other = login('mithil@sandboxstudios.in');
+const other = login('beta@example.com');
 assert(!call('cancelOrder', { token: other, orderId: id2 }).ok, 'other studio cannot touch this order');
 
 // --- admin overview
 r = call('adminOverview', { token: admin });
 assert(r.ok && r.companies.length === 21 && r.months.length === 12, 'overview: 21 studios, 12 months');
-const s35 = r.companies.find(c => c.companyName === '35mmcandids');
-assert(s35.balance === coRow('35mmcandids')[col('Companies', 'totalQuota')] - coRow('35mmcandids')[col('Companies', 'usedQuota')], 'overview balance matches sheet');
+const s35 = r.companies.find(c => c.companyName === 'Studio Alpha');
+assert(s35.balance === coRow('Studio Alpha')[col('Companies', 'totalQuota')] - coRow('Studio Alpha')[col('Companies', 'usedQuota')], 'overview balance matches sheet');
 assert(r.totals.dueINR > 0, 'total INR due: ' + r.totals.dueINR);
 // --- payment: 20,000 at 5 = 4,000 images
-const t0 = coRow('35mmcandids')[col('Companies', 'totalQuota')];
-r = call('recordPayment', { token: admin, companyName: '35mmcandids', amount: 20000, rate: 5, method: 'UPI', note: 'test' });
-assert(r.ok && r.payment.imagesAdded === 4000 && coRow('35mmcandids')[col('Companies', 'totalQuota')] === t0 + 4000, '₹20,000 at ₹5 adds 4,000 images');
+const t0 = coRow('Studio Alpha')[col('Companies', 'totalQuota')];
+r = call('recordPayment', { token: admin, companyName: 'Studio Alpha', amount: 20000, rate: 5, method: 'UPI', note: 'test' });
+assert(r.ok && r.payment.imagesAdded === 4000 && coRow('Studio Alpha')[col('Companies', 'totalQuota')] === t0 + 4000, '₹20,000 at ₹5 adds 4,000 images');
 assert(DB.Payments.length === 2 && mail[mail.length - 1].subject.indexOf('Payment received') === 0, 'payment logged + receipt emailed');
-assert(!call('recordPayment', { token: admin, companyName: '35mmcandids', amount: 0, rate: 5 }).ok, 'zero payment rejected');
-r = call('recordPayment', { token: admin, companyName: '35mmcandids', amount: 1000, rate: 3 });
+assert(!call('recordPayment', { token: admin, companyName: 'Studio Alpha', amount: 0, rate: 5 }).ok, 'zero payment rejected');
+r = call('recordPayment', { token: admin, companyName: 'Studio Alpha', amount: 1000, rate: 3 });
 assert(r.payment.imagesAdded === 333, '₹1000 at ₹3 = 333 images (rounded down)');
-r = call('adjustQuota', { token: admin, companyName: '35mmcandids', images: -333, note: 'undo test' });
+r = call('adjustQuota', { token: admin, companyName: 'Studio Alpha', images: -333, note: 'undo test' });
 assert(r.ok && DB.Payments[DB.Payments.length - 1][5] === 'Adjustment', 'manual adjustment logged');
-assert(!call('adjustQuota', { token: admin, companyName: '35mmcandids', images: 10, note: '' }).ok, 'adjustment needs a note');
-r = call('addCredits', { token: admin, companyName: '35mmcandids', points: 100, title: 'Festive bonus' });
+assert(!call('adjustQuota', { token: admin, companyName: 'Studio Alpha', images: 10, note: '' }).ok, 'adjustment needs a note');
+r = call('addCredits', { token: admin, companyName: 'Studio Alpha', points: 100, title: 'Festive bonus' });
 assert(r.ok && r.company.credits === start.credits + 100, 'credits added');
-r = call('updateCompany', { token: admin, companyName: '35mmcandids', patch: { perImageRate: 5.5, totalQuota: 999999 } });
-assert(r.ok && r.company.perImageRate === 5.5 && coRow('35mmcandids')[col('Companies', 'totalQuota')] !== 999999, 'rate updated; totalQuota cannot be edited directly');
-r = call('adminCompany', { token: admin, companyName: '35mmcandids' });
+r = call('updateCompany', { token: admin, companyName: 'Studio Alpha', patch: { perImageRate: 5.5, totalQuota: 999999 } });
+assert(r.ok && r.company.perImageRate === 5.5 && coRow('Studio Alpha')[col('Companies', 'totalQuota')] !== 999999, 'rate updated; totalQuota cannot be edited directly');
+r = call('adminCompany', { token: admin, companyName: 'Studio Alpha' });
 assert(r.ok && r.payments.length === 3 && r.orders.length > 0 && r.users.length >= 1, 'studio detail: payments, orders, users');
 r = call('queue', { token: admin });
 assert(r.ok && r.open.every(o => !/completed|cancel/i.test(o.status)), 'queue has only open orders (' + r.open.length + ')');

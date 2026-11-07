@@ -647,43 +647,7 @@ body:has(.tkg-global-nav.scrolled) .mk-counter-pill {
   color: var(--ink-soft);
 }
 
-.pg-gallery-masonry {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
 
-@media (min-width: 640px) {
-  .pg-gallery-masonry {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.pg-gallery-thumb {
-  position: relative;
-  aspect-ratio: 4 / 5;
-  background: var(--bg-box);
-  border: 1px solid var(--border-hairline);
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.pg-gallery-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.pg-gallery-thumb span {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  background: var(--bg-box);
-  border: 1px solid var(--border-hairline);
-  padding: 2px 6px;
-  font-size: 0.65rem;
-}
 
 /* ==========================================================================
    9. COMMENTS & MENU SHEETS (.reg-overlay / .overlay-backdrop from TKG)
@@ -777,17 +741,13 @@ body:has(.tkg-global-nav.scrolled) .mk-counter-pill {
   background: rgba(255, 255, 255, 0.55) !important;
 }
 
-[data-tkg-theme="dark"] .tkg-global-nav,
-.theme-dark .tkg-global-nav,
-body.dark-mode .tkg-global-nav {
+[data-tkg-theme="dark"] .tkg-global-nav {
   background: rgba(18, 18, 18, 0.72) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
-[data-tkg-theme="dark"] .tkg-global-nav.scrolled,
-.theme-dark .tkg-global-nav.scrolled,
-body.dark-mode .tkg-global-nav.scrolled {
+[data-tkg-theme="dark"] .tkg-global-nav.scrolled {
   background: rgba(18, 18, 18, 0.62) !important;
 }
 
@@ -844,15 +804,11 @@ body.dark-mode .tkg-global-nav.scrolled {
   background: rgba(250, 198, 70, 0.25) !important;
 }
 
-[data-tkg-theme="dark"] .tkg-nav-item,
-.theme-dark .tkg-nav-item,
-body.dark-mode .tkg-nav-item {
+[data-tkg-theme="dark"] .tkg-nav-item {
   color: rgba(255, 255, 255, 0.55) !important;
 }
 
-[data-tkg-theme="dark"] .tkg-nav-item.active,
-.theme-dark .tkg-nav-item.active,
-body.dark-mode .tkg-nav-item.active {
+[data-tkg-theme="dark"] .tkg-nav-item.active {
   color: #FAC646 !important;
   background: rgba(250, 198, 70, 0.22) !important;
 }
@@ -1091,7 +1047,6 @@ html.pg-dark,body.pgv-on,body.pgm-on{background:#0b0908}
 html.ios-app #view-moments,html.ios-app #view-root.active{bottom:auto;height:var(--pg-full-h,100dvh)}
 html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-stage{height:var(--pg-full-h,100dvh)}
 .fm-reel{width:100%;justify-content:center;margin-top:8px}
-.pgh-reel{background:var(--bg-box);color:var(--ink);margin-left:0}
 .pgh-wrap .pg-findme{width:100%;justify-content:center;margin:0 0 10px}
 /* ===== iPhone-style Create row ===== */
 .pgc-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px}
@@ -1388,7 +1343,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 <div class="reg-overlay fm-sheet" id="fmSheet" role="dialog" aria-modal="true" aria-labelledby="fmTitle">
   <button type="button" class="pgv-sheet-close" id="fmClose" aria-label="Close">×</button>
   <h3 class="fm-title" id="fmTitle">Find your photos</h3>
-  <p class="fm-sub">Take a selfie or choose a photo of yourself. It stays on your phone — nothing is uploaded.</p>
+  <p class="fm-sub">Take a selfie or choose a photo of yourself. The photo stays on your phone; only a face code (numbers, not a picture) is checked against this wedding's photos. Face data is deleted 12 months after the wedding.</p>
   <div class="fm-cam hidden" id="fmCam"><video id="fmVideo" playsinline muted autoplay></video><canvas id="fmOverlay"></canvas><span class="fm-hint" id="fmHint">Look at the camera</span></div>
   <div class="fm-actions" id="fmActions">
     <button type="button" class="mk-btn-peach" id="fmCamBtn">Use camera</button>
@@ -1403,6 +1358,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
     <div class="fm-save" id="fmSave"><input id="fmSaveName" maxlength="50" aria-label="Name for this collection"><button type="button" id="fmSaveBtn">Save</button></div>
     <p class="fm-saved hidden" id="fmSaved"></p>
     <button type="button" class="fm-upload fm-reel" id="fmReel">Make a reel of your photos</button>
+    <button type="button" class="fm-upload fm-reel" id="fmPost">Make an album of your photos</button>
     <button type="button" class="fm-link" id="fmAgain">Try another photo</button>
   </div>
 </div>
@@ -1421,7 +1377,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 <div class="reg-overlay fm-sheet" id="idSheet" role="dialog" aria-modal="true" aria-labelledby="idTitle">
   <button type="button" class="pgv-sheet-close" id="idClose" aria-label="Close">×</button>
   <h3 class="fm-title" id="idTitle">Tell us who you are</h3>
-  <p class="fm-sub" id="idSub">So the couple knows who is sharing. Your name and number stay with the couple and the photographer.</p>
+  <p class="fm-sub" id="idSub">So the couple knows who is sharing. Your name and number stay with the couple and the photographer, and your number is deleted 6 months after the wedding.</p>
   <label class="ios-field"><span>Your name</span><input id="idName" maxlength="40" autocomplete="name" placeholder="e.g. Meera Joshi"></label>
   <label class="ios-field"><span>Mobile number</span><input id="idPhone" maxlength="16" inputmode="tel" autocomplete="tel" placeholder="e.g. 98765 43210"></label>
   <button type="button" class="mk-btn-peach ios-wide" id="idGo">Continue</button>
@@ -1540,8 +1496,6 @@ let thumbEls = [];
 let isProgrammaticStripScroll = false;
 let programmaticStripTimer = null;
 let programmaticTargetTop = null;
-let isStageTransitioning = false;
-let stageTransitionTimer = null;
 
 function clearProgrammaticStripLock() {
   isProgrammaticStripScroll = false;
@@ -1772,40 +1726,7 @@ function selectMomentDirectly(idx, smoothStrip = true) {
 }
 
 // Mode A: Reels-style advance when user scrolls past the bottom or top boundary of the current moment
-function advanceMomentFromMainStage(direction) {
-  if (isStageTransitioning) return false;
-  const targetIdx = activeIdx + direction;
-  if (targetIdx < 0 || targetIdx >= MOMENTS.length) return false;
 
-  isStageTransitioning = true;
-  clearTimeout(stageTransitionTimer);
-
-  // Trigger subtle Reels slide animation on .mk-root-stage
-  rootStage.classList.remove('is-transitioning-next', 'is-transitioning-prev');
-  void rootStage.offsetWidth;
-  rootStage.classList.add(direction > 0 ? 'is-transitioning-next' : 'is-transitioning-prev');
-
-  // Jump main window back to top so the new moment starts at its photograph,
-  // update active moment content, and smoothly center the filmstrip thumbnail!
-  window.scrollTo({ top: 0, behavior: 'auto' });
-  clearProgrammaticStripLock();
-  isProgrammaticStripScroll = true;
-
-  applyActiveMoment(targetIdx);
-  const targetTop = centerThumbnail(targetIdx, true);
-  programmaticTargetTop = targetTop;
-  scheduleProgrammaticStripRelease(220);
-
-  // Expand dock when starting fresh at the top of the new moment
-  if (nav) nav.classList.remove('scrolled');
-
-  stageTransitionTimer = setTimeout(() => {
-    isStageTransitioning = false;
-    rootStage.classList.remove('is-transitioning-next', 'is-transitioning-prev');
-  }, 380);
-
-  return true;
-}
 
 // ---- MODE B HANDLERS: Side Filmstrip Direct Scroll & Takeover ----
 stripScroller.addEventListener('pointerdown', clearProgrammaticStripLock, { passive: true });
@@ -1862,144 +1783,9 @@ function isRootViewActive() {
   return rootView && rootView.classList.contains('active') && !document.querySelector('.reg-overlay.show');
 }
 
-function getMomentScrollBounds() {
-  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
-  const docHeight = Math.max(
-    document.body.scrollHeight,
-    document.documentElement.scrollHeight
-  );
-  const viewHeight = window.innerHeight || document.documentElement.clientHeight;
-  const maxScroll = Math.max(0, docHeight - viewHeight);
-  return {
-    scrollTop,
-    maxScroll,
-    atTop: scrollTop <= 4,
-    atBottom: scrollTop >= maxScroll - 6
-  };
-}
 
-(function initReelsMomentBoundaryScroll() {
-  return; // replaced by full-screen viewer navigation (pgViewerNav)
-  // 1. Desktop Wheel / Trackpad Boundary Pull-Through
-  let boundaryWheelAccum = 0;
-  let boundaryWheelResetTimer = null;
-  const WHEEL_BOUNDARY_THRESHOLD = 65;
 
-  window.addEventListener('wheel', (e) => {
-    if (!isRootViewActive()) return;
-    // Ignore wheel events inside the right-edge filmstrip rail
-    if (e.target && e.target.closest('#mkFilmstripRail, #mkFilmstripScroller')) return;
-
-    if (isStageTransitioning) {
-      e.preventDefault();
-      return;
-    }
-
-    const bounds = getMomentScrollBounds();
-    const goingDown = e.deltaY > 0;
-    const goingUp = e.deltaY < 0;
-
-    // Only accumulate pull-through when the user has already reached the bottom (goingDown)
-    // or is already at the top (goingUp) of the current moment!
-    if (goingDown && bounds.atBottom && activeIdx < MOMENTS.length - 1) {
-      e.preventDefault();
-      boundaryWheelAccum = Math.max(0, boundaryWheelAccum) + e.deltaY;
-      clearTimeout(boundaryWheelResetTimer);
-      boundaryWheelResetTimer = setTimeout(() => { boundaryWheelAccum = 0; }, 180);
-
-      if (boundaryWheelAccum >= WHEEL_BOUNDARY_THRESHOLD) {
-        boundaryWheelAccum = 0;
-        advanceMomentFromMainStage(1);
-      }
-    } else if (goingUp && bounds.atTop && activeIdx > 0) {
-      e.preventDefault();
-      boundaryWheelAccum = Math.min(0, boundaryWheelAccum) + e.deltaY;
-      clearTimeout(boundaryWheelResetTimer);
-      boundaryWheelResetTimer = setTimeout(() => { boundaryWheelAccum = 0; }, 180);
-
-      if (Math.abs(boundaryWheelAccum) >= WHEEL_BOUNDARY_THRESHOLD) {
-        boundaryWheelAccum = 0;
-        advanceMomentFromMainStage(-1);
-      }
-    } else {
-      // Ordinary scrolling inside the current moment's photo & story
-      boundaryWheelAccum = 0;
-    }
-  }, { passive: false });
-
-  // 2. Mobile Touch Boundary Pull-Through
-  let touchActive = false;
-  let touchLastY = 0;
-  let boundaryPullAccum = 0;
-  const TOUCH_BOUNDARY_THRESHOLD = 48;
-
-  function resetTouchState() {
-    touchActive = false;
-    touchLastY = 0;
-    boundaryPullAccum = 0;
-  }
-
-  window.addEventListener('touchstart', (e) => {
-    if (!isRootViewActive()) return;
-    if (e.target && e.target.closest('#mkFilmstripScroller, .tkg-global-nav')) {
-      resetTouchState();
-      return;
-    }
-    if (!e.touches || e.touches.length !== 1) {
-      resetTouchState();
-      return;
-    }
-    touchActive = true;
-    touchLastY = e.touches[0].clientY;
-    boundaryPullAccum = 0;
-  }, { passive: true });
-
-  window.addEventListener('touchmove', (e) => {
-    if (!touchActive || !isRootViewActive() || isStageTransitioning) return;
-    if (!e.touches || e.touches.length !== 1) {
-      resetTouchState();
-      return;
-    }
-
-    const currentY = e.touches[0].clientY;
-    const dy = touchLastY - currentY; // positive = finger dragging up (scrolling down)
-    touchLastY = currentY;
-
-    const bounds = getMomentScrollBounds();
-
-    // If at the bottom of the current moment's story and pulling further down:
-    if (dy > 0 && bounds.atBottom && activeIdx < MOMENTS.length - 1) {
-      boundaryPullAccum = Math.max(0, boundaryPullAccum) + dy;
-      if (boundaryPullAccum >= TOUCH_BOUNDARY_THRESHOLD) {
-        resetTouchState();
-        advanceMomentFromMainStage(1);
-      }
-    }
-    // If at the very top of the current moment's photo and pulling further up:
-    else if (dy < 0 && bounds.atTop && activeIdx > 0) {
-      boundaryPullAccum = Math.min(0, boundaryPullAccum) + dy;
-      if (Math.abs(boundaryPullAccum) >= TOUCH_BOUNDARY_THRESHOLD) {
-        resetTouchState();
-        advanceMomentFromMainStage(-1);
-      }
-    } else {
-      // User is scrolling normally within the current moment's photo & story
-      boundaryPullAccum = 0;
-    }
-  }, { passive: true });
-
-  window.addEventListener('touchend', (e) => {
-    if (!e.touches || e.touches.length === 0) {
-      resetTouchState();
-    } else if (e.touches.length === 1) {
-      touchActive = true;
-      touchLastY = e.touches[0].clientY;
-      boundaryPullAccum = 0;
-    }
-  }, { passive: true });
-
-  window.addEventListener('touchcancel', resetTouchState, { passive: true });
-})();
+// (old boundary scrolling from the first design removed — the viewer feed handles it)
 
 // Keyboard navigation
 function pgTyping(e) { const t = e.target; return !!(t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) || document.body.classList.contains('rl-on') || document.body.classList.contains('ps-on'); }
@@ -2605,6 +2391,7 @@ async function pgDownload(m) {
     showToast('Getting the photo…');
     const r = await fetch(pgImg(m.id, 2048)); if (!r.ok) throw new Error('fetch');
     const blob = await r.blob(); pgBlobCache[m.id] = blob;
+    const keys = Object.keys(pgBlobCache); if (keys.length > 6) delete pgBlobCache[keys[0]];   // keep only the last few photos in memory
     try { await saveBlob(blob); }
     catch (e) { if (e && e.name === 'AbortError') return; if (e && e.name === 'NotAllowedError') { showToast('Photo ready — tap download again to save'); return; } throw e; }
   } catch (e) {
@@ -2788,6 +2575,11 @@ document.getElementById('fmReel').addEventListener('click', () => {
   document.getElementById('fmClose').click();
   pgOpenReel(set ? set.photos : []);
 });
+document.getElementById('fmPost').addEventListener('click', () => {
+  const set = (GALLERY.personal || []).find(e => e.name === 'Your photos') || (GALLERY.personal || [])[0];
+  document.getElementById('fmClose').click();
+  pgOpenPost((set ? set.photos : []).slice(0, 10));
+});
 document.getElementById('pghReel').addEventListener('click', () => {
   const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
   while (pick.length < 24 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 24) pick.push(p.shift()); });
@@ -2816,7 +2608,7 @@ function pgNeedGuest(next, why) {
   if (pgGuest()) { next(); return; }
   pgIdNext = next;
   const $ = (id) => document.getElementById(id);
-  $('idSub').textContent = (why ? why + ' ' : '') + 'Your name and number stay with the couple and the photographer.';
+  $('idSub').textContent = (why ? why + ' ' : '') + 'Your name and number stay with the couple and the photographer, and your number is deleted 6 months after the wedding.';
   $('idStatus').textContent = ''; $('idBackdrop').classList.add('show'); $('idSheet').classList.add('show');
   setTimeout(() => $('idName').focus(), 250);
 }
@@ -2996,7 +2788,7 @@ function pgReloadPosts() { pgApi('getGallery').then(r => { GALLERY.guestPosts = 
     if (pgVidObs) pgVidObs.disconnect();
     pgVidObs = new IntersectionObserver((ents) => ents.forEach(en => { const v = en.target; if (en.isIntersecting && en.intersectionRatio > 0.6) { v.muted = muted; const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => {}); }); } else v.pause(); }), { threshold: [0, 0.6, 1] });
     posts.forEach((p, i) => {
-      const m = { id: p.fileId };
+      const m = { id: p.fileId, ceremony: 'guest moment', n: i + 1 };
       const item = document.createElement('div'); item.className = 'pgm-item pgm-guest'; item.dataset.pid = p.fileId;
       const blur = document.createElement('div'); blur.className = 'pgm-blur';
       let media;
@@ -3018,7 +2810,7 @@ function pgReloadPosts() { pgApi('getGallery').then(r => { GALLERY.guestPosts = 
         media.addEventListener('click', (e) => { e.stopPropagation(); if (media.paused) media.play().catch(() => {}); else media.pause(); });
       } else {
         media = document.createElement('img'); media.className = 'pgm-img'; media.alt = 'Shared by ' + p.name; media.loading = 'lazy';
-        media.src = pgImg(p.fileId, 1600); media.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.fileId, 1600); };
+        media.src = pgImg(p.fileId, PG_FULL_W); media.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.fileId, PG_FULL_W); };
         blur.style.backgroundImage = 'url("' + pgImg(p.fileId, 60) + '")';
       }
       const scrim = document.createElement('div'); scrim.className = 'pgm-scrim';
@@ -3031,6 +2823,12 @@ function pgReloadPosts() { pgApi('getGallery').then(r => { GALLERY.guestPosts = 
       note.addEventListener('click', e => { e.stopPropagation(); openNotes(m, 'Guest moment by ' + p.name); });
       share.addEventListener('click', e => { e.stopPropagation(); pgShare(); });
       acts.appendChild(like); acts.appendChild(note); acts.appendChild(share);
+      if (p.type !== 'video' && p.type !== 'album') {   // guest photos: pinch to zoom and download, like the photographer's photos
+        pgZoomable(item, media, feed);
+        const dl = document.createElement('button'); dl.type = 'button'; dl.className = 'pgm-btn'; dl.setAttribute('aria-label', 'Download photo');
+        dl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';
+        dl.addEventListener('click', e => { e.stopPropagation(); pgDownload(m); }); acts.appendChild(dl);
+      }
       let lastTap = 0;
       item.addEventListener('click', () => { const now = Date.now(); if (now - lastTap < 400) { const pop = document.createElement('div'); pop.className = 'pgm-pop'; pop.innerHTML = ICON_POP; item.appendChild(pop); setTimeout(() => pop.remove(), 850); if (!(GALLERY.mine || {})[m.id]) pgToggleLike(m); lastTap = 0; } else lastTap = now; });
       item.appendChild(blur); item.appendChild(media); item.appendChild(scrim); item.appendChild(acts);

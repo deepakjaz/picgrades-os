@@ -1,0 +1,12 @@
+{
+  "name": "picgrades-os",
+  "private": true,
+  "description": "PicGrades order system and wedding gallery app",
+  "scripts": {
+    "test": "node tests/run.js",
+    "test:quick": "node tests/run.js --quick"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
