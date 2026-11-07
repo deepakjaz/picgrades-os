@@ -1,0 +1,2 @@
+[{"id":"haldi-sunshine","name":"Haldi · Sunshine","for":["haldi"],"music":"dhol-festival","beats":[2,2,4],"layouts":["single","polaroid","grid3","punch","flying-hearts"],"trans":["flash","slide","cut"],"card":"festive","fx":{"pulse":0.02,"confetti":true,"flashEvery":8,"flash":"255,214,10","flashA":0.25},"colours":{"paper":"#FFF6D6","ink":"#4A2A00","gold":"#F2B705","gold2":"#FFD84D","deep":"#B85C00"}},
+ {"id":"broken","name":"No layouts","beats":[2],"layouts":["nope"],"trans":["cut"]}]

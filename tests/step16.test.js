@@ -48,5 +48,19 @@ advance(24 * 190); r = __nightly();
 const g = call('getGallery', { g: gid }).gallery;
 assert(r.facesRemoved === 1 && !g.faceSearch && !call('findFaces', { g: gid, d, device: 'devclean02' }).ok, '12 months after the wedding: face data removed, Find me off');
 assert(g.guestPosts.length === 1 && g.events.length === 1, 'photos and approved moments stay forever');
+// hearts: 40 phones tap, some change their mind; after packing, counts stay the same and taking a heart back still works
+{ for (let i = 0; i < 40; i++) { call('likePhoto', { g: gid, photoId: 'C1', device: 'heartdev' + i, liked: true }); if (i % 5 === 0) call('likePhoto', { g: gid, photoId: 'C1', device: 'heartdev' + i, liked: false }); }
+  call('likePhoto', { g: gid, photoId: 'C2', device: 'heartdev1', liked: true });
+  const rows = () => DB.MomentNotes.slice(1).filter(r => r.includes(gid)).length;
+  advance(1); const before = call('getGallery', { g: gid }).gallery.likes, n0 = rows();
+  advance(72); r = __nightly(); advance(1);
+  const after = call('getGallery', { g: gid }).gallery.likes, n1 = rows();
+  assert(before.C1 === 32 && after.C1 === 32 && after.C2 === 1 && n1 === 2 && n0 === 49, 'hearts packed: ' + n0 + ' rows → ' + n1 + ', counts kept (C1 ' + before.C1 + ' → ' + after.C1 + ')');
+  call('likePhoto', { g: gid, photoId: 'C1', device: 'heartdev1', liked: false }); advance(1);
+  assert(call('getGallery', { g: gid }).gallery.likes.C1 === 31, 'a phone can still take back a heart that was packed');
+  call('likePhoto', { g: gid, photoId: 'C1', device: 'heartdev1', liked: true }); advance(1);
+  assert(call('getGallery', { g: gid }).gallery.likes.C1 === 32, '…and give it again');
+  advance(72); __nightly(); advance(1);
+  assert(call('getGallery', { g: gid }).gallery.likes.C1 === 32 && rows() === 2, 'packing again keeps the same count and rows'); }
 r = __nightly(); assert(r.facesRemoved === 0 && r.phonesRemoved === 0 && r.hiddenDeleted === 0, 'running again changes nothing');
 console.log(fails ? fails + ' FAILED' : 'ALL PASSED'); process.exit(fails ? 1 : 0);

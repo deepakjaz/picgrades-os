@@ -12,7 +12,7 @@ const srv = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api') { let b = ''; req.on('data', d => b += d); req.on('end', () => res.end(JSON.stringify(call(JSON.parse(b).action, JSON.parse(b))))); return; }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
   let u = req.url.split('?')[0]; if (/^\/g\/[a-z0-9]+$/.test(u)) u = process.env.OLD ? '/../../../tmp/old_gallery.html' : '/app/gallery.html';
-  fs.readFile(u.indexOf('old_gallery') > -1 ? '/tmp/old_gallery.html' : path.join(root, u), (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', u.endsWith('.html') ? 'text/html' : 'text/javascript'); res.end(d); } });
+  fs.readFile(u.indexOf('old_gallery') > -1 ? '/tmp/old_gallery.html' : path.join(root, u), (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', u.endsWith('.html') ? 'text/html' : u.endsWith('.css') ? 'text/css' : u.endsWith('.json') ? 'application/json' : 'text/javascript'); res.end(d); } });
 }).listen(8774, async () => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = [];
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }); const pg = await ctx.newPage();
