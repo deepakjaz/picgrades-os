@@ -16,16 +16,16 @@
   };
   // style: how the page looks. cells: how photos sit. deco: little line drawings.
   var TEMPLATES = {
-    album:    { name: 'Album Classic', pad: 70, top: 170, bottom: 150, gap: 18, cell: 'plain', deco: 'rule' },
-    seamless: { name: 'Seamless', pad: 0, top: 0, bottom: 0, gap: 8, cell: 'plain', deco: 'overlay', white: true },
-    film:     { name: 'Film Strip', pad: 40, top: 260, bottom: 260, gap: 34, cell: 'plain', deco: 'film', dark: true },
-    polaroid: { name: 'Polaroid String', pad: 80, top: 260, bottom: 200, gap: 60, cell: 'polaroid', deco: 'string', singles: true },
-    magazine: { name: 'Magazine', pad: 70, top: 120, bottom: 120, gap: 16, cell: 'plain', deco: 'masthead' },
-    minimal:  { name: 'Minimal White', pad: 120, top: 200, bottom: 220, gap: 70, cell: 'caption', deco: 'none', white: true, singles: true },
-    arch:     { name: 'Arch Windows', pad: 90, top: 210, bottom: 170, gap: 50, cell: 'arch', deco: 'arch', singles: true },
-    kasavu:   { name: 'Kasavu Border', pad: 70, top: 210, bottom: 210, gap: 18, cell: 'plain', deco: 'kasavu' },
-    floral:   { name: 'Floral', pad: 90, top: 210, bottom: 170, gap: 22, cell: 'outline', deco: 'floral' },
-    cocktail: { name: 'Cocktail Night', pad: 80, top: 210, bottom: 190, gap: 26, cell: 'neon', deco: 'cocktail', dark: true }
+    album:    { name: 'Album Classic', pad: 70, top: 170, bottom: 150, gap: 18, cell: 'plain', deco: 'rule', layout: 'mosaic' },
+    seamless: { name: 'Seamless', pad: 0, top: 0, bottom: 0, gap: 8, cell: 'plain', deco: 'overlay', white: true, layout: 'hero' },
+    film:     { name: 'Film Strip', pad: 40, top: 260, bottom: 260, gap: 34, cell: 'plain', deco: 'film', dark: true, layout: 'singles' },
+    polaroid: { name: 'Polaroid String', pad: 80, top: 260, bottom: 200, gap: 60, cell: 'polaroid', deco: 'string', layout: 'stagger' },
+    magazine: { name: 'Magazine', pad: 70, top: 120, bottom: 120, gap: 16, cell: 'plain', deco: 'masthead', layout: 'triple' },
+    minimal:  { name: 'Minimal White', pad: 120, top: 200, bottom: 220, gap: 70, cell: 'caption', deco: 'none', white: true, layout: 'singles' },
+    arch:     { name: 'Arch Windows', pad: 90, top: 210, bottom: 170, gap: 50, cell: 'arch', deco: 'arch', layout: 'singles' },
+    kasavu:   { name: 'Kasavu Border', pad: 70, top: 210, bottom: 210, gap: 18, cell: 'plain', deco: 'kasavu', layout: 'pairs' },
+    floral:   { name: 'Floral', pad: 90, top: 210, bottom: 170, gap: 22, cell: 'outline', deco: 'floral', layout: 'stagger' },
+    cocktail: { name: 'Cocktail Night', pad: 80, top: 210, bottom: 190, gap: 26, cell: 'neon', deco: 'cocktail', dark: true, layout: 'mosaic' }
   };
   var ORDER = ['album', 'seamless', 'film', 'polaroid', 'magazine', 'minimal', 'arch', 'kasavu', 'floral', 'cocktail'];
   var S = null;
@@ -42,7 +42,11 @@
   function slug(t) { return String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'wedding'; }
 
   // ---------- photos ----------
-  function bitmapFromBlob(b) { return window.createImageBitmap ? createImageBitmap(b) : new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = URL.createObjectURL(b); }); }
+  // Photos are kept as small compressed files; the phone decodes them only while drawing (a big list of decoded
+  // bitmaps made iPhones reload the page).
+  var URLS = [];
+  function bitmapFromBlob(b) { return new Promise(function (res, rej) { var i = new Image(), u = URL.createObjectURL(b); URLS.push(u); i.onload = function () { res(i); }; i.onerror = rej; i.src = u; }); }
+  function freeUrls() { URLS.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} }); URLS = []; }
   function imgFromSrc(src) { return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; }); }
   function loadPhotos(ids, onProgress) {
     var out = {}, done = 0, viaServer = false, queue = ids.slice();
@@ -59,14 +63,20 @@
   }
 
   // ---------- layout: photos become columns (one tall photo, or two wide photos stacked) ----------
+  function ratio(p) { return p.w / p.h; }
   function columns(list, h, T) {
-    var cols = [], i = 0;
+    var cols = [], i = 0, k = 0, lay = T.layout || 'pairs', wide = function (p) { return p && ratio(p) > 1.15; };
+    var one = function (p, f, off) { return { kind: 'one', ids: [p.id], w: Math.max(0.55, Math.min(1.6, ratio(p))) * h * (f || 1), f: f || 1, off: off || 0 }; };
     while (i < list.length) {
-      var a = list[i], ar = a.w / a.h;
-      if (!T.singles && ar > 1.15 && list[i + 1] && list[i + 1].w / list[i + 1].h > 1.15) {
-        var ch = (h - T.gap) / 2, w = ch * (ar + list[i + 1].w / list[i + 1].h) / 2;
-        cols.push({ kind: 'pair', ids: [a.id, list[i + 1].id], w: w }); i += 2;
-      } else { cols.push({ kind: 'one', ids: [a.id], w: Math.max(0.55, Math.min(1.6, ar)) * h }); i++; }
+      var a = list[i], n1 = list[i + 1], n2 = list[i + 2];
+      if (lay === 'singles') { cols.push(one(a)); i++; }
+      else if (lay === 'stagger') { var f = k % 2 ? 0.78 : 0.9; cols.push(one(a, f, k % 2 ? 1 : 0)); i++; }
+      else if (lay === 'hero' && k === 0) { cols.push({ kind: 'one', ids: [a.id], w: Math.max(1.2, ratio(a)) * h }); i++; }
+      else if (lay === 'triple' && wide(a) && wide(n1) && wide(n2) && k % 2 === 0) { var ch3 = (h - 2 * T.gap) / 3; cols.push({ kind: 'triple', ids: [a.id, n1.id, n2.id], w: ch3 * (ratio(a) + ratio(n1) + ratio(n2)) / 3 }); i += 3; }
+      else if (lay === 'mosaic' && k % 3 === 1 && n1 && n2) { var chm = (h - T.gap) / 2; cols.push({ kind: 'bigpair', ids: [a.id, n1.id, n2.id], w: chm * 2.1 }); i += 3; }
+      else if (lay !== 'singles' && wide(a) && wide(n1)) { var ch = (h - T.gap) / 2; cols.push({ kind: 'pair', ids: [a.id, n1.id], w: ch * (ratio(a) + ratio(n1)) / 2 }); i += 2; }
+      else { cols.push(one(a)); i++; }
+      k++;
     }
     return cols;
   }
@@ -77,10 +87,12 @@
     var W = n * SW, start = T.pad + (T.deco === 'masthead' ? SW * 0.75 : 0), avail = W - start - T.pad - T.gap * Math.max(0, cols.length - 1);
     var k = avail / cols.reduce(function (t, c) { return t + c.w; }, 0), x = start, cells = [];
     cols.forEach(function (c) {
-      var w = c.w * k;
-      if (c.kind === 'pair') { var ch = (h - T.gap) / 2; cells.push({ id: c.ids[0], x: x, y: T.top, w: w, h: ch }); cells.push({ id: c.ids[1], x: x, y: T.top + ch + T.gap, w: w, h: ch }); }
-      else cells.push({ id: c.ids[0], x: x, y: T.top, w: w, h: h });
-      x += w + T.gap;
+      var w = c.w * k, g = T.gap;
+      if (c.kind === 'pair') { var ch = (h - g) / 2; cells.push({ id: c.ids[0], x: x, y: T.top, w: w, h: ch }); cells.push({ id: c.ids[1], x: x, y: T.top + ch + g, w: w, h: ch }); }
+      else if (c.kind === 'triple') { var c3 = (h - 2 * g) / 3; c.ids.forEach(function (id, j) { cells.push({ id: id, x: x, y: T.top + j * (c3 + g), w: w, h: c3 }); }); }
+      else if (c.kind === 'bigpair') { var bh = h * 0.58, sh = h - bh - g, sw = (w - g) / 2; cells.push({ id: c.ids[0], x: x, y: T.top, w: w, h: bh }); cells.push({ id: c.ids[1], x: x, y: T.top + bh + g, w: sw, h: sh }); cells.push({ id: c.ids[2], x: x + sw + g, y: T.top + bh + g, w: sw, h: sh }); }
+      else { var ch1 = h * (c.f || 1); cells.push({ id: c.ids[0], x: x, y: T.top + (c.off ? h - ch1 : 0), w: w, h: ch1 }); }
+      x += w + g;
     });
     return { W: W, n: n, cells: cells };
   }
@@ -95,9 +107,17 @@
   }
 
   // ---------- drawing ----------
-  function cover(ctx, img, x, y, w, h) {
-    var r = Math.max(w / img.width, h / img.height), dw = img.width * r, dh = img.height * r;
-    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) * 0.4, dw, dh); ctx.restore();
+  function focusOf(id) {
+    var a = S.adj[id]; if (a) return a;
+    var f = (S.opt.faces || {})[id];
+    if (f && f.length) { var tw = 0, fx = 0, fy = 0; f.forEach(function (b) { var wgt = b[2] * b[3]; tw += wgt; fx += (b[0] + b[2] / 2) * wgt; fy += (b[1] + b[3] / 2) * wgt; }); return { fx: fx / tw, fy: Math.max(0, fy / tw - 0.04), z: 1 }; }
+    return { fx: 0.5, fy: 0.4, z: 1 };
+  }
+  function cover(ctx, img, x, y, w, h, id) {   // fills the box; keeps faces (or the chosen point) in view
+    var a = focusOf(id), r = Math.max(w / img.width, h / img.height) * (a.z || 1), dw = img.width * r, dh = img.height * r;
+    var dx = Math.min(x, Math.max(x + w - dw, x + w / 2 - a.fx * dw)), dy = Math.min(y, Math.max(y + h - dh, y + h / 2 - a.fy * dh));
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.drawImage(img, dx, dy, dw, dh); ctx.restore();
+    if (S.hit) S.hit.push({ id: id, x: x, y: y, w: w, h: h, dw: dw, dh: dh });
   }
   function archPath(ctx, x, y, w, h) { var r = w / 2; ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + r); ctx.arc(x + r, y + r, r, Math.PI, 0); ctx.lineTo(x + w, y + h); ctx.closePath(); }
   // little line drawings (our own, thin, like sketches)
@@ -129,11 +149,11 @@
         var rot = ((i * 37) % 9 - 4) * 0.012, yo = (i % 2 ? 50 : -10);
         ctx.save(); ctx.translate(c.x + c.w / 2, c.y + c.h / 2 + yo); ctx.rotate(rot);
         ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 30; ctx.fillStyle = '#fff'; ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); ctx.shadowBlur = 0;
-        cover(ctx, img, -c.w / 2 + 24, -c.h / 2 + 24, c.w - 48, c.h - 150);
+        cover(ctx, img, -c.w / 2 + 24, -c.h / 2 + 24, c.w - 48, c.h - 150, c.id); if (S.hit) S.hit[S.hit.length - 1] = { id: c.id, x: c.x, y: c.y + yo, w: c.w, h: c.h, dw: S.hit[S.hit.length - 1].dw, dh: S.hit[S.hit.length - 1].dh };
         ctx.fillStyle = '#C9B48A'; ctx.fillRect(-14, -c.h / 2 - 26, 28, 52); ctx.restore(); return;
       }
-      if (T.cell === 'arch') { ctx.save(); archPath(ctx, c.x, c.y, c.w, c.h); ctx.clip(); cover(ctx, img, c.x, c.y, c.w, c.h); ctx.restore(); line(ctx, acc, 4); archPath(ctx, c.x - 14, c.y - 14, c.w + 28, c.h + 28); ctx.stroke(); return; }
-      cover(ctx, img, c.x, c.y, c.w, c.h);
+      if (T.cell === 'arch') { ctx.save(); archPath(ctx, c.x, c.y, c.w, c.h); ctx.clip(); cover(ctx, img, c.x, c.y, c.w, c.h, c.id); ctx.restore(); line(ctx, acc, 4); archPath(ctx, c.x - 14, c.y - 14, c.w + 28, c.h + 28); ctx.stroke(); return; }
+      cover(ctx, img, c.x, c.y, c.w, c.h, c.id);
       if (T.cell === 'outline') { line(ctx, acc, 3); ctx.strokeRect(c.x - 12, c.y - 12, c.w + 24, c.h + 24); }
       if (T.cell === 'neon') { ctx.save(); ctx.shadowColor = acc; ctx.shadowBlur = 30; line(ctx, acc, 5); ctx.strokeRect(c.x - 10, c.y - 10, c.w + 20, c.h + 20); ctx.restore(); }
       if (T.cell === 'caption' && opt.labels && opt.labels[c.id]) { ctx.fillStyle = '#8a8178'; ctx.font = '500 26px ' + MONO; ctx.textAlign = 'center'; ctx.fillText(String(opt.labels[c.id]).toUpperCase(), c.x + c.w / 2, c.y + c.h + 52); }
@@ -166,6 +186,25 @@
         if (T.deco === 'masthead' && s === L.n - 1) ART.sparkle(ctx, ox + SW - 100, SH - 70, 18);
       }
     }
+    if (S.petals) {
+      var cols2 = [P.accent, P.soft, '#E06B7A', '#F2A7B5'];
+      for (var q = 0; q < Math.round(W / 26); q++) {
+        var px = (q * 0.6180339 % 1) * W, py = Math.pow((q * 0.3819 + 0.13) % 1, 1.6) * SH * 0.55, pr = 9 + (q % 5) * 3, rot = q * 1.7;
+        ctx.save(); ctx.translate(px, py); ctx.rotate(rot); ctx.globalAlpha = 0.75; ctx.fillStyle = cols2[q % cols2.length];
+        ctx.beginPath(); ctx.moveTo(0, -pr); ctx.quadraticCurveTo(pr, -pr * 0.2, 0, pr); ctx.quadraticCurveTo(-pr, -pr * 0.2, 0, -pr); ctx.fill(); ctx.restore();
+      }
+    }
+    (S.stickers || []).forEach(function (st, i) {
+      var ic = (window.PG_STICKERS || []).filter(function (x) { return x.k === st.k; })[0]; if (!ic) return;
+      if (!ic.path) ic.path = new Path2D(ic.d);
+      ctx.save(); ctx.translate(st.x, st.y); ctx.rotate(st.r || 0); var sc = st.s / 24; ctx.scale(sc, sc); ctx.translate(-12, -12);
+      ctx.strokeStyle = st.col || (T.dark ? acc : P.accent); ctx.lineWidth = 1.3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(ic.path); ctx.restore();
+      if (S.hit) S.hitStickers.push({ i: i, x: st.x - st.s / 2, y: st.y - st.s / 2, w: st.s, h: st.s });
+    });
+    if (opt.preview && S.sel) {
+      var box = S.sel.type === 'sticker' ? (S.hitStickers.filter(function (h) { return h.i === S.sel.i; })[0]) : (S.hit.filter(function (h) { return h.id === S.sel.id; })[0]);
+      if (box) { ctx.save(); ctx.strokeStyle = '#E7C873'; ctx.lineWidth = 10; ctx.setLineDash([30, 18]); ctx.strokeRect(box.x - 6, box.y - 6, box.w + 12, box.h + 12); ctx.restore(); }
+    }
     // small, light watermark on the last slide
     ctx.font = '500 22px ' + MONO; ctx.textAlign = 'right'; ctx.fillStyle = T.dark ? 'rgba(255,255,255,.32)' : 'rgba(60,45,30,.32)'; ctx.fillText('PicGrades', W - 30, SH - 24);
   }
@@ -181,22 +220,29 @@
   function draw() {
     var L = build(); S.L = L;
     if (!L) { S.info.textContent = 'Choose at least one photo.'; return; }
-    S.big.width = L.W; S.big.height = SH; render(S.big.getContext('2d'), L, { labels: S.opt.labels || {} });
+    var sc = S.pscale = Math.min(0.42, 4000 / L.W);
+    S.big.width = Math.round(L.W * sc); S.big.height = Math.round(SH * sc);
+    var ctx = S.big.getContext('2d'); ctx.setTransform(sc, 0, 0, sc, 0, 0);
+    S.hit = []; S.hitStickers = [];
+    render(ctx, L, { labels: S.opt.labels || {}, preview: true });
+    S.lastHit = S.hit; S.lastHitStickers = S.hitStickers; S.hit = null; S.hitStickers = null;
     S.prev.style.aspectRatio = L.W + ' / ' + SH;
     S.seams.innerHTML = ''; for (var i = 1; i < L.n; i++) S.seams.appendChild(el('i', { style: 'left:' + (i / L.n * 100) + '%' }));
     S.info.textContent = L.n + (L.n === 1 ? ' slide' : ' slides') + ' · ' + L.cells.length + ' photos · swipe to see the whole page';
   }
-  function slides() {
-    var L = S.L, out = [];
-    for (var i = 0; i < L.n; i++) { var c = document.createElement('canvas'); c.width = SW; c.height = SH; c.getContext('2d').drawImage(S.big, i * SW, 0, SW, SH, 0, 0, SW, SH); out.push(c); }
-    return out;
+  function slide(i) {   // one full-size slide (1080×1350)
+    var c = document.createElement('canvas'); c.width = SW; c.height = SH;
+    var ctx = c.getContext('2d'); ctx.translate(-i * SW, 0); render(ctx, S.L, { labels: S.opt.labels || {} });
+    return c;
   }
+  function slides() { var out = []; for (var i = 0; i < S.L.n; i++) out.push(slide(i)); return out; }
   function toBlob(c, q) { return new Promise(function (res) { c.toBlob(res, 'image/jpeg', q || 0.92); }); }
   function msg(t) { if (S) S.msg.textContent = t || ''; }
 
   function download() {
-    var list = slides(), base = slug(S.names) + '_' + S.tid;
-    Promise.all(list.map(function (c) { return toBlob(c); })).then(function (blobs) {
+    var base = slug(S.names) + '_' + S.tid, n = S.L.n, blobs = [];
+    var one = function (i) { return i >= n ? Promise.resolve() : toBlob(slide(i)).then(function (b) { blobs.push(b); return one(i + 1); }); };
+    one(0).then(function () {
       var files = blobs.map(function (b, i) { return new File([b], base + '_' + (i + 1) + '.jpg', { type: 'image/jpeg' }); });
       var phone = /iPhone|iPad|Android/i.test(navigator.userAgent);
       if (phone && navigator.canShare && navigator.canShare({ files: files })) return navigator.share({ files: files }).catch(function () {});
@@ -206,7 +252,7 @@
   }
   function postIt() {
     var b = S.postBtn; b.disabled = true; msg('Posting to Root Moment…');
-    var data = slides().map(function (c) { return c.toDataURL('image/jpeg', 0.86); });
+    var data = []; for (var i = 0; i < S.L.n; i++) data.push(slide(i).toDataURL('image/jpeg', 0.86));
     S.opt.post({ slides: data, caption: S.caption.value || S.T_NAME() }).then(function (r) {
       msg(r.status === 'approved' ? 'Posted! It is in Root Moment and in “Posts & Albums”. Now download it for Instagram.' : 'Sent to the couple — it will appear once they approve it. You can download it for Instagram now.');
       b.textContent = r.status === 'approved' ? 'Posted ✓' : 'Sent for approval ✓';
@@ -233,6 +279,11 @@
     '.ps-go{width:100%;min-height:50px;border:0;border-radius:12px;background:#E7C873;color:#1b140c;font:700 1rem/1 inherit;cursor:pointer;margin-top:8px}.ps-go:disabled{opacity:.6}' +
     '.ps-sub{width:100%;min-height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:none;color:#fff;font:600 .9rem/1 inherit;cursor:pointer;margin-top:8px}' +
     '.ps-msg{font-size:.82rem;color:rgba(255,255,255,.78);margin:8px 0 0;min-height:1.2em}' +
+    '.ps-edit{background:#1f1a16;border:1px solid rgba(231,200,115,.4);border-radius:14px;padding:12px;margin-bottom:10px}.ps-range{width:100%;accent-color:#E7C873;height:30px}' +
+    '.ps-hint{margin:0;padding:0 14px 6px;font-size:.72rem;color:rgba(255,255,255,.55);text-align:center}' +
+    '.ps-sgrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 12px 24px;align-content:start}' +
+    '.ps-stk{aspect-ratio:1;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#f7f1e6;color:#8a6a2c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:6px}' +
+    '.ps-stk span{width:56%;display:block}.ps-stk svg{width:100%;height:auto;display:block}.ps-stk small{font:600 9px/1.1 sans-serif;color:#5a4a36;text-align:center}' +
     '.ps-picker{position:absolute;inset:0;z-index:5;background:#0b0908;display:flex;flex-direction:column}.ps-pgrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:0 3px 20px;align-content:start}' +
     '.ps-pick{position:relative;aspect-ratio:1;border:0;padding:0;background:#222;cursor:pointer}.ps-pick img{width:100%;height:100%;object-fit:cover;display:block}' +
     '.ps-pick i{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:11px;border:2px solid #fff;background:rgba(0,0,0,.25)}.ps-pick.on i{background:#E7C873;border-color:#E7C873}.ps-pick.on i::after{content:"✓";display:block;text-align:center;font:700 13px/18px sans-serif;color:#1b140c}';
@@ -251,17 +302,31 @@
     });
     S.thumbs.appendChild(el('button', { type: 'button', class: 'ps-th ps-add', 'aria-label': 'Add more photos', text: '+', onclick: picker }));
   }
-  function picker() {
-    var cols = S.opt.collections || [], cur = 0, chosen = {};
-    S.photos.forEach(function (p) { if (p.on) chosen[p.id] = true; });
+  function replaceWith(oldId, newId) {
+    var p = S.photos.filter(function (x) { return x.id === oldId; })[0]; if (!p || oldId === newId) return;
+    var other = S.photos.filter(function (x) { return x.id === newId; })[0];
+    if (other) { other.id = oldId; p.id = newId; S.sel = { type: 'photo', id: newId }; renderThumbs(); select(S.sel); return; }   // already in the album: swap places
+    p.id = newId; delete S.adj[oldId];
+    var finish = function () { S.sel = { type: 'photo', id: newId }; renderThumbs(); select(S.sel); };
+    if (S.bitmaps[newId]) return finish();
+    msg('Getting the photo ready…');
+    loadPhotos([newId], function () {}).then(function (got) { if (got[newId]) { S.bitmaps[newId] = got[newId]; msg(''); finish(); } else { p.id = oldId; msg('That photo could not be loaded.'); } });
+  }
+  function picker(replaceId) {
+    if (typeof replaceId !== 'string') replaceId = null;
+    var cols = S.opt.collections || [], cur = 0, chosen = {}, single = !!replaceId;
+    if (!single) S.photos.forEach(function (p) { if (p.on) chosen[p.id] = true; }); else chosen[replaceId] = true;
     var grid = el('div', { class: 'ps-pgrid' }), tabs = el('div', { class: 'ps-row', style: 'padding:4px 14px 10px' }), count = el('span', { style: 'margin-left:auto;font:500 .75rem "IBM Plex Mono",monospace;color:rgba(255,255,255,.7)' });
     var box = el('div', { class: 'ps-picker', role: 'dialog', 'aria-label': 'Choose photos' }, [el('div', { class: 'ps-top' }, [el('h3', { text: 'Choose photos' }), count, el('button', { type: 'button', class: 'ps-go', style: 'width:auto;margin:0;min-height:40px;padding:0 18px', text: 'Done', onclick: done })]), tabs, grid]);
-    function upd() { count.textContent = Object.keys(chosen).length + ' chosen'; }
+    function upd() { count.textContent = single ? 'Tap the new photo' : Object.keys(chosen).length + ' chosen'; }
     function show(i) {
       cur = i; tabs.querySelectorAll('.ps-chip').forEach(function (c, k) { c.classList.toggle('on', k === i); }); grid.innerHTML = '';
       cols[i].photos.forEach(function (p) {
-        var t = el('button', { type: 'button', class: 'ps-pick' + (chosen[p.id] ? ' on' : '') }, [el('img', { src: 'https://lh3.googleusercontent.com/d/' + p.id + '=w240', alt: '', loading: 'lazy' }), el('i')]);
-        t.addEventListener('click', function () { if (chosen[p.id]) delete chosen[p.id]; else chosen[p.id] = true; t.classList.toggle('on', !!chosen[p.id]); upd(); });
+        var t = el('button', { type: 'button', class: 'ps-pick' + (chosen[p.id] ? ' on' : ''), 'data-id': p.id }, [el('img', { src: 'https://lh3.googleusercontent.com/d/' + p.id + '=w240', alt: '', loading: 'lazy' }), el('i')]);
+        t.addEventListener('click', function () {
+          if (single) { box.remove(); replaceWith(replaceId, p.id); return; }
+          if (chosen[p.id]) delete chosen[p.id]; else chosen[p.id] = true; t.classList.toggle('on', !!chosen[p.id]); upd();
+        });
         grid.appendChild(t);
       });
     }
@@ -279,18 +344,93 @@
     S.wrap.appendChild(box); upd(); if (cols.length) show(0);
   }
 
+  // ---------- editing on the page ----------
+  function at(e) { var r = S.big.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * S.L.W, y: (e.clientY - r.top) / r.height * SH }; }
+  function hitAt(pt) {
+    var hs = (S.lastHitStickers || []).slice().reverse().filter(function (h) { return pt.x >= h.x && pt.x <= h.x + h.w && pt.y >= h.y && pt.y <= h.y + h.h; })[0];
+    if (hs) return { type: 'sticker', i: hs.i };
+    var hc = (S.lastHit || []).filter(function (h) { return pt.x >= h.x && pt.x <= h.x + h.w && pt.y >= h.y && pt.y <= h.y + h.h; }).pop();
+    return hc ? { type: 'photo', id: hc.id } : null;
+  }
+  var rafPending = false;
+  function redraw() { if (rafPending) return; rafPending = true; requestAnimationFrame(function () { rafPending = false; if (S) draw(); }); }
+  function select(sel) {
+    S.sel = sel; var bar = S.edit, on = !!sel;
+    bar.style.display = on ? 'block' : 'none'; S.stage.style.overflowX = on ? 'hidden' : 'auto'; S.prev.style.touchAction = on ? 'none' : 'pan-x';
+    if (on) {
+      var isP = sel.type === 'photo';
+      S.eTitle.textContent = isP ? 'Photo · drag on the page to move it, slide to zoom' : 'Drawing · drag to move, slide to resize or turn';
+      S.eZoom.min = isP ? 1 : 40; S.eZoom.max = isP ? 3 : 520; S.eZoom.step = isP ? 0.01 : 1;
+      S.eZoom.value = isP ? (focusOf(sel.id).z || 1) : S.stickers[sel.i].s;
+      S.eRot.parentNode.style.display = isP ? 'none' : ''; S.eRot.value = isP ? 0 : (S.stickers[sel.i].r || 0);
+      S.eReplace.style.display = isP ? '' : 'none'; S.eReset.style.display = isP ? '' : 'none'; S.eDel.style.display = isP ? 'none' : '';
+      S.eCol.style.display = isP ? 'none' : 'flex';
+    }
+    draw();
+  }
+  function bindEditing() {
+    var down = null;
+    S.prev.addEventListener('pointerdown', function (e) { if (!S.L) return; down = { x: e.clientX, y: e.clientY, pt: at(e), moved: false, last: at(e) }; if (S.sel) { S.prev.setPointerCapture(e.pointerId); e.preventDefault(); } });
+    S.prev.addEventListener('pointermove', function (e) {
+      if (!down || !S.sel) return;
+      var pt = at(e), dx = pt.x - down.last.x, dy = pt.y - down.last.y; down.last = pt;
+      if (Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 4) down.moved = true;
+      if (S.sel.type === 'photo') {
+        var h = (S.lastHit || []).filter(function (x) { return x.id === S.sel.id; })[0]; if (!h) return;
+        var a = Object.assign({}, focusOf(S.sel.id)); a.fx = Math.max(0, Math.min(1, a.fx - dx / h.dw)); a.fy = Math.max(0, Math.min(1, a.fy - dy / h.dh)); S.adj[S.sel.id] = a;
+      } else { var st = S.stickers[S.sel.i]; st.x += dx; st.y += dy; }
+      redraw();
+    });
+    S.prev.addEventListener('pointercancel', function () { down = null; });
+    S.prev.addEventListener('pointerup', function (e) {
+      if (!down) return; var d = down; down = null;
+      if (d.moved) return;
+      var hit = hitAt(d.pt);
+      if (!hit) { if (S.sel) select(null); return; }
+      select(hit);
+    });
+    S.eZoom.addEventListener('input', function () {
+      if (!S.sel) return;
+      if (S.sel.type === 'photo') { var a = Object.assign({}, focusOf(S.sel.id)); a.z = Number(S.eZoom.value); S.adj[S.sel.id] = a; }
+      else S.stickers[S.sel.i].s = Number(S.eZoom.value);
+      redraw();
+    });
+    S.eRot.addEventListener('input', function () { if (S.sel && S.sel.type === 'sticker') { S.stickers[S.sel.i].r = Number(S.eRot.value); redraw(); } });
+  }
+  function addSticker(k) {
+    var vis = Math.round(S.stage.scrollLeft / Math.max(1, S.big.getBoundingClientRect().width / S.L.n));
+    S.stickers.push({ k: k, x: Math.min(S.L.n - 1, vis) * SW + SW * 0.78, y: SH * 0.16, s: 150, r: 0, col: '' });
+    select({ type: 'sticker', i: S.stickers.length - 1 });
+  }
+  function stickerSheet() {
+    var cats = ['Flowers', 'Wedding', 'Love', 'Party'], cur = 'Flowers';
+    var grid = el('div', { class: 'ps-sgrid' }), tabs = el('div', { class: 'ps-row', style: 'padding:4px 14px 10px' });
+    var box = el('div', { class: 'ps-picker', role: 'dialog', 'aria-label': 'Flowers and wedding drawings' }, [
+      el('div', { class: 'ps-top' }, [el('h3', { text: 'Flowers & drawings' }), el('button', { type: 'button', class: 'ps-x', 'aria-label': 'Close', text: '×', onclick: function () { box.remove(); } })]), tabs, grid]);
+    function show(c) {
+      cur = c; tabs.querySelectorAll('.ps-chip').forEach(function (b) { b.classList.toggle('on', b.textContent === c); }); grid.innerHTML = '';
+      window.PG_STICKERS.filter(function (x) { return x.c === c; }).forEach(function (x) {
+        grid.appendChild(el('button', { type: 'button', class: 'ps-stk', 'aria-label': x.n, onclick: function () { box.remove(); addSticker(x.k); } },
+          [el('span', { html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="' + x.d + '"/></svg>' }), el('small', { text: x.n })]));
+      });
+    }
+    cats.forEach(function (c) { tabs.appendChild(el('button', { type: 'button', class: 'ps-chip', text: c, onclick: function () { show(c); } })); });
+    S.wrap.appendChild(box); show(cur);
+  }
+
   function open(opt) {
     if (S && S.wrap) close();
     if (!document.getElementById('ps-css')) document.head.appendChild(el('style', { id: 'ps-css', text: CSS }));
     S = { opt: opt, tid: 'album', pid: opt.palette || 'ivory', format: 'strip', slides: 0, art: true, names: opt.title || 'Our Wedding', date: opt.date || '',
-      photos: (opt.photos || []).slice(0, 12).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {} };
+      photos: (opt.photos || []).slice(0, 12).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, adj: {}, stickers: [], petals: false, sel: null };
     S.T_NAME = function () { return TEMPLATES[S.tid].name; };
     document.body.classList.add('ps-on');
     var wrap = S.wrap = el('div', { class: 'ps-wrap', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Make a post' });
     wrap.appendChild(el('div', { class: 'ps-top' }, [el('h3', { text: 'Post / Album' }), el('button', { type: 'button', class: 'ps-x', 'aria-label': 'Close', text: '×', onclick: close })]));
     S.big = el('canvas'); S.seams = el('div', { class: 'ps-seams' });
     S.prev = el('div', { class: 'ps-prev' }, [S.big, S.seams]);
-    wrap.appendChild(el('div', { class: 'ps-stage' }, [S.prev]));
+    S.stage = el('div', { class: 'ps-stage' }, [S.prev]); wrap.appendChild(S.stage);
+    wrap.appendChild(el('p', { class: 'ps-hint', text: 'Tip: tap a photo on the page to move it, zoom it or replace it.' }));
     var panel = el('div', { class: 'ps-panel' });
     var fmtRow = el('div', { class: 'ps-row' }), tplRow = el('div', { class: 'ps-row' }), palRow = el('div', { class: 'ps-row' }), slideRow = el('div', { class: 'ps-row' });
     S.thumbs = el('div', { class: 'ps-row' }); S.info = el('div', { class: 'ps-lbl', style: 'margin-top:0' });
@@ -298,15 +438,34 @@
     var date = el('input', { class: 'ps-in', value: S.date, maxlength: '30', 'aria-label': 'Date' }); date.addEventListener('input', function () { S.date = date.value; draw(); });
     S.caption = el('input', { class: 'ps-in', maxlength: '200', placeholder: 'Caption for Root Moment (optional)', 'aria-label': 'Caption' });
     var art = el('input', { type: 'checkbox', checked: '' }); art.addEventListener('change', function () { S.art = art.checked; draw(); });
+    var pet = el('input', { type: 'checkbox' }); pet.addEventListener('change', function () { S.petals = pet.checked; draw(); });
+    // edit bar (shows when a photo or drawing on the page is tapped)
+    S.eTitle = el('div', { class: 'ps-lbl', style: 'margin:0 0 6px' });
+    S.eZoom = el('input', { type: 'range', class: 'ps-range', 'aria-label': 'Zoom or size' });
+    S.eRot = el('input', { type: 'range', class: 'ps-range', min: '-3.14', max: '3.14', step: '0.01', 'aria-label': 'Turn' });
+    S.eReplace = el('button', { type: 'button', class: 'ps-chip', text: 'Replace photo', onclick: function () { if (S.sel) picker(S.sel.id); } });
+    S.eReset = el('button', { type: 'button', class: 'ps-chip', text: 'Reset', onclick: function () { if (S.sel) { delete S.adj[S.sel.id]; select(S.sel); } } });
+    S.eDel = el('button', { type: 'button', class: 'ps-chip', text: 'Delete', onclick: function () { if (S.sel) { S.stickers.splice(S.sel.i, 1); select(null); } } });
+    S.eCol = el('div', { class: 'ps-row', style: 'padding:4px 0 0' });
+    [['Accent', ''], ['Ink', '#2E2620'], ['White', '#FFFFFF'], ['Gold', '#C9A24A'], ['Rose', '#C76B84']].forEach(function (c) {
+      S.eCol.appendChild(el('button', { type: 'button', class: 'ps-chip', text: c[0], onclick: function () { if (S.sel && S.sel.type === 'sticker') { S.stickers[S.sel.i].col = c[1]; draw(); } } }));
+    });
+    S.edit = el('div', { class: 'ps-edit', style: 'display:none' }, [S.eTitle, S.eZoom, el('label', { class: 'ps-lbl', style: 'display:block;margin:6px 0 0' }, [el('span', { text: 'Turn' }), S.eRot]),
+      S.eCol, el('div', { class: 'ps-row', style: 'padding:8px 0 0' }, [S.eReplace, S.eReset, S.eDel, el('button', { type: 'button', class: 'ps-chip on', text: 'Done', onclick: function () { select(null); } })])]);
     S.msg = el('p', { class: 'ps-msg', 'aria-live': 'polite' });
     S.postBtn = el('button', { type: 'button', class: 'ps-go', text: 'Post to Root Moment', onclick: postIt });
     [el('div', { class: 'ps-lbl', text: 'Format' }), fmtRow, el('div', { class: 'ps-lbl', text: 'Template' }), tplRow, el('div', { class: 'ps-lbl', text: 'Colours' }), palRow,
       el('div', { class: 'ps-lbl', text: 'Photos · tap to remove, + to add from any collection' }), S.thumbs, S.info,
       el('div', { class: 'ps-lbl', text: 'Slides (album strip)' }), slideRow,
       el('div', { class: 'ps-lbl', text: 'Text' }), names, date, S.caption,
-      el('label', { class: 'ps-tog' }, [art, el('span', { text: 'Little drawings (flowers, glasses, sparkles)' })]),
+      el('div', { class: 'ps-lbl', text: 'Flowers & drawings · tap one on the page to move, resize or turn it' }),
+      el('button', { type: 'button', class: 'ps-sub', style: 'margin-top:0', text: '+ Add flowers & wedding drawings (60)', onclick: stickerSheet }),
+      el('label', { class: 'ps-tog' }, [art, el('span', { text: 'Template drawings' })]),
+      el('label', { class: 'ps-tog' }, [pet, el('span', { text: 'Rose petal shower' })]),
       S.postBtn, el('button', { type: 'button', class: 'ps-sub', text: 'Download for Instagram', onclick: download }), S.msg].forEach(function (x) { panel.appendChild(x); });
-    wrap.appendChild(panel); document.body.appendChild(wrap);
+    panel.insertBefore(S.edit, panel.firstChild);
+    wrap.appendChild(panel); document.body.appendChild(wrap); bindEditing();
+    if (!window.PG_STICKERS) { var ss = document.createElement('script'); ss.src = '/app/stickers.js'; document.head.appendChild(ss); }
     chips(fmtRow, [{ t: 'Album strip', v: 'strip' }, { t: 'Carousel', v: 'carousel' }, { t: 'Single post', v: 'single' }], S.format, function (v) { S.format = v; draw(); });
     chips(tplRow, ORDER.map(function (k) { return { t: TEMPLATES[k].name, v: k }; }), S.tid, function (v) { S.tid = v; if (TEMPLATES[v].dark && S.pid !== 'midnight') { /* keep chosen accent */ } draw(); });
     chips(palRow, Object.keys(PALETTES).map(function (k) { var P = PALETTES[k]; return { v: k, label: P.name, style: 'background:linear-gradient(135deg,' + P.paper + ' 50%,' + P.accent + ' 50%)' }; }), S.pid, function (v) { S.pid = v; draw(); }, 'ps-dot');
@@ -318,7 +477,9 @@
       S.bitmaps = r[0]; S.photos = S.photos.filter(function (p) { return S.bitmaps[p.id]; }); renderThumbs(); draw(); msg('');
     });
   }
-  function close() { if (!S) return; if (S.wrap) S.wrap.remove(); document.body.classList.remove('ps-on'); S = null; }
+  function close() { if (!S) return; if (S.wrap) S.wrap.remove(); document.body.classList.remove('ps-on'); freeUrls(); S = null; }
   window.PGPost = { open: open, close: close, templates: ORDER, palettes: Object.keys(PALETTES),
+    setFaces: function (f) { if (S) { S.opt.faces = f; draw(); } }, addSticker: function (k) { if (S) addSticker(k); },
+    state: function () { return S ? { sel: S.sel, adj: S.adj, stickers: S.stickers, photos: S.photos.map(function (p) { return p.id; }) } : null; },
     set: function (k, v) { if (S) { S[k] = v; draw(); } }, info: function () { return S && S.L ? { slides: S.L.n, cells: S.L.cells.length, W: S.L.W } : null; } };
 })();

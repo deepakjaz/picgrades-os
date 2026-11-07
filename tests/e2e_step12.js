@@ -25,7 +25,7 @@ const srv = http.createServer((req, res) => {
   console.log('create row:', (await pg.locator('.pgc-card:not(.hidden) b').allTextContents()).join(' | '));
   await pg.click('#pgcPost'); await pg.waitForSelector('.ps-wrap');
   await pg.waitForFunction(() => PGPost.info(), null, { timeout: 20000 });
-  console.log('opened:', JSON.stringify(await pg.evaluate(() => PGPost.info())), '|', await pg.textContent('.ps-panel .ps-lbl:nth-of-type(5)'));
+  console.log('opened:', JSON.stringify(await pg.evaluate(() => PGPost.info())), '|', (await pg.locator('.ps-panel .ps-lbl').allTextContents()).find(t => /PHOTOS/i.test(t)));
   await pg.screenshot({ path: '/tmp/s12_maker.png' });
   // every template: export the whole page small for the contact sheet
   const shots = {};
