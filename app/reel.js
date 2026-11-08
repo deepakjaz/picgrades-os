@@ -105,6 +105,9 @@
     '.rl-pick u{position:absolute;left:6px;bottom:6px;padding:2px 6px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font:600 11px/1.3 inherit;text-decoration:none}' +
     '.re-phone{flex:none;display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 12px;border-radius:18px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:600 13px/1 inherit}.re-phone svg{width:16px;height:16px}' +
     '.re-pnote{margin:0;padding:0 14px 8px;font:500 12px/1.4 inherit;color:rgba(255,255,255,.6)}' +
+    '.re-sel{position:absolute;border:3px solid #FAC646;border-radius:6px;box-shadow:0 0 0 2px rgba(0,0,0,.35);pointer-events:none;z-index:3}' +
+    '.re-thisone{display:flex;align-items:center;gap:12px;padding:0 0 12px}.re-thisone img{width:48px;height:64px;object-fit:cover;border-radius:6px;border:2px solid #FAC646}.re-thisone span{flex:1;font:600 14px/1.2 inherit;color:#fff}' +
+    '.re-repl{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:19px;border:0;background:#FAC646;color:#111;font:700 14px/1 inherit}.re-repl svg{width:16px;height:16px}' +
     '.re-clip{position:relative}.re-vmark{position:absolute;left:6px;top:6px;width:18px;height:18px;border-radius:9px;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}.re-vmark svg{width:10px;height:10px;color:#fff}';
 
   // ---------- loading photos (direct from Drive, else through the gallery server) ----------
@@ -258,16 +261,22 @@
     ctx.drawImage(S.blurs[id], -40, -40, W + 80, H + 80);
     ctx.fillStyle = 'rgba(10,8,6,' + (shade == null ? 0.5 : shade) + ')'; ctx.fillRect(0, 0, W, H);
   }
+  // where each photo lands on the screen, so a tap on the preview can find it (step 24)
+  function hitRec(ctx, id, x, y, w, h) {
+    if (!S.hits) return; var m = ctx.getTransform(), xs = [], ys = [];
+    [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(function (q) { xs.push(m.a * q[0] + m.c * q[1] + m.e); ys.push(m.b * q[0] + m.d * q[1] + m.f); });
+    S.hits.push({ id: id, x0: Math.max(0, Math.min.apply(0, xs)), y0: Math.max(0, Math.min.apply(0, ys)), x1: Math.min(W, Math.max.apply(0, xs)), y1: Math.min(H, Math.max.apply(0, ys)) });
+  }
   function contain(ctx, id, bx, by, bw, bh, zoom, panX) {   // whole photo, never cut
     var img = S.bitmaps[id]; if (!img) return;
     var r = Math.min(bw / img.width, bh / img.height) * (zoom || 1), w = img.width * r, h = img.height * r;
-    ctx.drawImage(img, bx + (bw - w) / 2 + (panX || 0), by + (bh - h) / 2, w, h);
+    ctx.drawImage(img, bx + (bw - w) / 2 + (panX || 0), by + (bh - h) / 2, w, h); hitRec(ctx, id, bx + (bw - w) / 2 + (panX || 0), by + (bh - h) / 2, w, h);
   }
   function cover(ctx, id, bx, by, bw, bh, zoom) {            // fills a tile (collage layouts)
     var img = S.bitmaps[id]; if (!img) return;
     var r = Math.max(bw / img.width, bh / img.height) * (zoom || 1), w = img.width * r, h = img.height * r;
     ctx.save(); ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip();
-    ctx.drawImage(img, bx + (bw - w) / 2, by + (bh - h) * 0.4, w, h); ctx.restore();
+    ctx.drawImage(img, bx + (bw - w) / 2, by + (bh - h) * 0.4, w, h); hitRec(ctx, id, bx, by, bw, bh); ctx.restore();
   }
   function pop(u) { if (u <= 0) return 0; if (u >= 1) return 1; var c = 1.70158 * 1.4; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); } // overshoot
   function scaled(ctx, cx, cy, s, fn) { ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); fn(); ctx.restore(); }
@@ -454,7 +463,7 @@
   function one(ctx, sg, t, beat) { if (sg.type === 'shot') drawShot(ctx, sg, t, beat); else drawCard(ctx, sg, t, beat, sg.type === 'end'); }
   function draw(ctx, P, t) {
     var T = S.T, fx = T.fx, segs = P.segs, beat = P.beat;
-    syncVideos(P, t);
+    syncVideos(P, t); S.hits = [];
     ctx.save();
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     if (S.fcss && S.fcss !== 'none') ctx.filter = S.fcss;   // the chosen filter + adjustments
@@ -688,7 +697,7 @@
     build(body); S.edit.appendChild(box); S.sheetEl = box;
     return body;
   }
-  function closeSheet() { if (S && S.sheetEl) { S.sheetEl.remove(); S.sheetEl = null; } }
+  function closeSheet() { if (S && S.sheetEl) { S.sheetEl.remove(); S.sheetEl = null; } if (S && S.selEl) { S.selEl.remove(); S.selEl = null; } }
   function chips(row, list, cur, onPick) {
     row.innerHTML = '';
     list.forEach(function (it) {
@@ -808,25 +817,57 @@
     });
   }
   // tap a clip on the timeline
-  function toolClip(i) {
+  function toolClip(i, slot) {
     var sg = S.P.segs[i]; if (!sg || sg.type !== 'shot') return;
-    sheet('Clip ' + (S.P.segs.filter(function (s, k) { return s.type === 'shot' && k <= i; }).length), function (b) {
+    slot = slot > 0 && slot < sg.ids.length ? slot : 0; var many = sg.ids.length > 1, vid = isVideo(sg.ids[slot]);
+    sheet('Clip ' + (S.P.segs.filter(function (s, k) { return s.type === 'shot' && k <= i; }).length) + (many ? ' · photo ' + (slot + 1) + ' of ' + sg.ids.length : ''), function (b) {
+      b.appendChild(el('div', { class: 're-thisone' }, [el('img', { src: thumbUrl(sg.ids[slot], 160), alt: '' }), el('span', { text: vid ? 'This video' : 'This photo' }),
+        el('button', { type: 'button', class: 're-repl', html: ic('replace') + '<span>Replace</span>', onclick: function () { replaceIn(i, slot); } })]));
       var row = el('div', { class: 're-clipbar' });
       var act = function (k, t, fn, off) { var bt = el('button', { type: 'button', class: 're-tool', html: ic(k) + '<span>' + t + '</span>', onclick: fn }); if (off) bt.disabled = true; row.appendChild(bt); };
-      act('replace', 'Replace', function () { closeSheet(); openPicker({ single: true, onPick: function (id) { sg.ids[0] = id; changed(); } }); });
-      act('longer', 'Longer', function () { sg.beats++; changed(); toolClip(i); }, sg.beats >= 16);
-      act('shorter', 'Shorter', function () { sg.beats = Math.max(LAYOUT_MIN[sg.layout] || 1, sg.beats - 1); changed(); toolClip(i); }, sg.beats <= (LAYOUT_MIN[sg.layout] || 1));
-      act('left', 'Move left', function () { var j = i - 1; if (S.P.segs[j] && S.P.segs[j].type === 'shot') { S.P.segs[i] = S.P.segs[j]; S.P.segs[j] = sg; changed(); toolClip(j); } }, !(S.P.segs[i - 1] && S.P.segs[i - 1].type === 'shot'));
-      act('right', 'Move right', function () { var j = i + 1; if (S.P.segs[j] && S.P.segs[j].type === 'shot') { S.P.segs[i] = S.P.segs[j]; S.P.segs[j] = sg; changed(); toolClip(j); } }, !(S.P.segs[i + 1] && S.P.segs[i + 1].type === 'shot'));
-      if (isVideo(sg.ids[0])) {
-        act('left', 'Start earlier', function () { sg.vt = Math.max(0, (sg.vt || 0) - 1); changed(); toolClip(i); seek(sg.start + 0.05); }, !(sg.vt > 0));
-        act('right', 'Start later', function () { sg.vt = Math.min(Math.max(0, S.vids[sg.ids[0]] - 1), (sg.vt || 0) + 1); sg.beats = Math.min(sg.beats, Math.max(1, Math.floor((S.vids[sg.ids[0]] - sg.vt) / S.P.beat))); changed(); toolClip(i); seek(sg.start + 0.05); }, (sg.vt || 0) >= S.vids[sg.ids[0]] - 1);
+      act('longer', 'Longer', function () { sg.beats++; changed(); toolClip(i, slot); }, sg.beats >= 16);
+      act('shorter', 'Shorter', function () { sg.beats = Math.max(LAYOUT_MIN[sg.layout] || 1, sg.beats - 1); changed(); toolClip(i, slot); }, sg.beats <= (LAYOUT_MIN[sg.layout] || 1));
+      act('left', 'Move left', function () { var j = i - 1; if (S.P.segs[j] && S.P.segs[j].type === 'shot') { S.P.segs[i] = S.P.segs[j]; S.P.segs[j] = sg; changed(); toolClip(j, slot); } }, !(S.P.segs[i - 1] && S.P.segs[i - 1].type === 'shot'));
+      act('right', 'Move right', function () { var j = i + 1; if (S.P.segs[j] && S.P.segs[j].type === 'shot') { S.P.segs[i] = S.P.segs[j]; S.P.segs[j] = sg; changed(); toolClip(j, slot); } }, !(S.P.segs[i + 1] && S.P.segs[i + 1].type === 'shot'));
+      if (vid && slot === 0) {
+        act('left', 'Start earlier', function () { sg.vt = Math.max(0, (sg.vt || 0) - 1); changed(); toolClip(i, slot); seek(sg.start + 0.05); }, !(sg.vt > 0));
+        act('right', 'Start later', function () { sg.vt = Math.min(Math.max(0, S.vids[sg.ids[0]] - 1), (sg.vt || 0) + 1); sg.beats = Math.min(sg.beats, Math.max(1, Math.floor((S.vids[sg.ids[0]] - sg.vt) / S.P.beat))); changed(); toolClip(i, slot); seek(sg.start + 0.05); }, (sg.vt || 0) >= S.vids[sg.ids[0]] - 1);
       }
       act('trash', 'Delete', function () { if (S.P.shots <= 1) { msg('A reel needs at least one clip.'); return; } S.P.segs.splice(i, 1); closeSheet(); changed(); }, S.P.shots <= 1);
       var lay = el('div', { class: 'rl-row' });
       chips(lay, Object.keys(LAYOUT_N).filter(function (k) { return LAYOUT_N[k] === 1 || LAYOUT_N[k] <= sg.ids.length; }).map(function (k) { return { t: k, v: k }; }), sg.layout, function (v) { sg.layout = v; sg.beats = Math.max(sg.beats, LAYOUT_MIN[v] || 1); changed(); });
       b.append(row, el('div', { class: 'rl-lbl', text: sg.beats + ' beats · ' + sg.dur.toFixed(1) + ' s' + (isVideo(sg.ids[0]) ? ' · video from ' + fmt(sg.vt || 0) + ' (of ' + fmt(S.vids[sg.ids[0]]) + ') · its sound is off, the reel uses the music' : '') + ' · look' }), lay);
     });
+  }
+
+  function replaceIn(i, slot) {
+    var sg = S.P.segs[i]; if (!sg) return; closeSheet();
+    openPicker({ single: true, onPick: function (id) {
+      sg.ids[slot] = id;
+      if (slot === 0) { delete sg.vt; if (isVideo(id)) { sg.layout = 'single'; sg.ids = [id]; sg.beats = videoBeats(id, S.P.beat); } }
+      if (!S.photos.some(function (p) { return p.id === id; })) S.photos.push({ id: id, on: true });
+      changed(); seek(S.P.segs[i].start + Math.min(0.6, S.P.segs[i].dur / 2)); toolClip(i, slot);
+    } });
+  }
+  // tap the paused preview: the photo under your finger gets a gold outline and its own pop-up
+  function tapPreview(e) {
+    if (!S || S.view !== 'edit' || !S.P) return;
+    if (S.raf) { stopPreview(); return; }                     // playing: the first tap pauses
+    var rc = S.canvas.getBoundingClientRect(), x = (e.clientX - rc.left) * W / rc.width, y = (e.clientY - rc.top) * H / rc.height;
+    var segs = S.P.segs, i = 0; while (i < segs.length - 1 && S.t >= segs[i + 1].start) i++;
+    var sg = segs[i]; if (sg.type !== 'shot') { selBox(null); toolTitle(); return; }
+    draw(S.canvas.getContext('2d'), S.P, S.t);
+    var hits = (S.hits || []).filter(function (h) { return sg.ids.indexOf(h.id) > -1; }), hit = null;
+    for (var k = hits.length - 1; k >= 0; k--) { var h = hits[k]; if (x >= h.x0 && x <= h.x1 && y >= h.y0 && y <= h.y1) { hit = h; break; } }
+    if (!hit && hits.length) hit = hits.reduce(function (a, h) { var da = Math.pow((a.x0 + a.x1) / 2 - x, 2) + Math.pow((a.y0 + a.y1) / 2 - y, 2), dh = Math.pow((h.x0 + h.x1) / 2 - x, 2) + Math.pow((h.y0 + h.y1) / 2 - y, 2); return dh < da ? h : a; });
+    var slot = hit ? sg.ids.indexOf(hit.id) : 0;
+    toolClip(i, slot); selBox(hit, rc);
+  }
+  function selBox(h, rc) {
+    if (S.selEl) { S.selEl.remove(); S.selEl = null; } if (!h) return;
+    var sr = S.stage.getBoundingClientRect(), k = rc.width / W;
+    S.selEl = el('div', { class: 're-sel', style: 'left:' + (rc.left - sr.left + h.x0 * k) + 'px;top:' + (rc.top - sr.top + h.y0 * k) + 'px;width:' + ((h.x1 - h.x0) * k) + 'px;height:' + ((h.y1 - h.y0) * k) + 'px' });
+    S.stage.appendChild(S.selEl);
   }
 
   // ---------- timeline ----------
@@ -967,6 +1008,8 @@
     freshPlan(); S.texts = S.texts || []; S.stks = S.stks || []; S.undo = []; S.redo = []; S.last = snapshot(); S.fcss = filterCss();
     renderTimeline(); updUndo(); seek(0.9); S.tl.scrollLeft = 0; S.t = 0;
     setTimeout(function () { renderTimeline(); seek(0); }, 60);
+    var seen = false; try { seen = localStorage.getItem('pg_re_tap') === '1'; localStorage.setItem('pg_re_tap', '1'); } catch (e) {}
+    if (!seen) { var hint = 'Tip: pause, then tap a photo on the screen to change it.'; msg(hint); setTimeout(function () { if (S && S.msg && S.msg.textContent === hint) msg(''); }, 6000); }
   }
   function play() {
     if (!S.P) return;
@@ -1086,7 +1129,7 @@
     // 3. editor
     S.stage = el('div', { class: 're-stage' });
     S.playBtn = el('button', { type: 'button', class: 're-play', 'aria-label': 'Play', html: '&#9654;', onclick: play });
-    S.canvas.addEventListener('click', function () { if (S.view === 'edit') play(); });
+    S.canvas.addEventListener('click', tapPreview);
     S.undoBtn = el('button', { type: 'button', class: 're-ib', 'aria-label': 'Undo', html: '&#8630;', onclick: undo });
     S.redoBtn = el('button', { type: 'button', class: 're-ib', 'aria-label': 'Redo', html: '&#8631;', onclick: redo });
     S.timeEl = el('div', { class: 're-time' }, [el('b', { text: '00:00' }), el('span', { text: '00:00' })]);
@@ -1151,5 +1194,5 @@
   window.PGReel = { open: open, close: close, styles: ORDER, addStyle: addStyle,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), curPlan(), t); return S ? curPlan().dur : 0; },  // used by tests
     setStyle: function (k) { if (S && TEMPLATES[k]) { if (S.view === 'edit' && S.P) applyStyle(k); else pickStyle(k); } },
-    state: function () { return S ? { view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
+    state: function () { return S ? { segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
 })();
