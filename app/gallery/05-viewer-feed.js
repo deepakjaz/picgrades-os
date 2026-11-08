@@ -49,12 +49,27 @@ function pgFileName(m) {
   const slug = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return [slug(GALLERY.title) || 'wedding', slug(m.ceremony || m.set || 'photo'), String(m.n || (MOMENTS.indexOf(m) + 1) || 1).padStart(3, '0')].join('_') + '.jpg';
 }
+// Phones: a website cannot write into the Photos app directly.
+// iPhone → the share menu, which shows "Save Image" only for a real JPEG (Google sometimes sends WebP, so we turn every photo into JPEG first).
+// Android → a normal download (lands in Downloads and shows in the gallery); its share menu often has no save option.
+const PG_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+async function pgAsJpeg(blob) {
+  if (blob && blob.type === 'image/jpeg') return blob;
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img, 0, 0);
+    const out = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.94)); c.width = c.height = 1;
+    return out || blob;
+  } finally { URL.revokeObjectURL(url); }
+}
 async function pgDownload(m) {
   if (!m) return;
-  const name = pgFileName(m), phone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const name = pgFileName(m);
   const saveBlob = (blob) => {
-    const file = new File([blob], name, { type: blob.type || 'image/jpeg' });
-    if (phone && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] });
+    const file = new File([blob], name, { type: 'image/jpeg' });
+    if (PG_IOS && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] });
     const url = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000); showToast('Photo saved');
@@ -63,7 +78,7 @@ async function pgDownload(m) {
     if (pgBlobCache[m.id]) { await saveBlob(pgBlobCache[m.id]); return; }
     showToast('Getting the photo…');
     const r = await fetch(pgImg(m.id, 2048)); if (!r.ok) throw new Error('fetch');
-    const blob = await r.blob(); pgBlobCache[m.id] = blob;
+    const blob = await pgAsJpeg(await r.blob()); pgBlobCache[m.id] = blob;
     const keys = Object.keys(pgBlobCache); if (keys.length > 6) delete pgBlobCache[keys[0]];   // keep only the last few photos in memory
     try { await saveBlob(blob); }
     catch (e) { if (e && e.name === 'AbortError') return; if (e && e.name === 'NotAllowedError') { showToast('Photo ready — tap download again to save'); return; } throw e; }

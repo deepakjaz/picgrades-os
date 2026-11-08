@@ -253,8 +253,17 @@
     S.stage.style.paddingLeft = S.stage.style.paddingRight = Math.max(8, (sw - slideW) / 2) + 'px';
     S.seams.innerHTML = '';
     for (var i = 0; i < L.n; i++) { S.seams.appendChild(el('b', { class: 'pe-snap', style: 'left:' + (i / L.n * 100) + '%' })); if (i && S.format === 'strip') S.seams.appendChild(el('i', { style: 'left:' + (i / L.n * 100) + '%' })); }
-    dots();
+    dots(); commitSoon();
   }
+  // ---------- undo / redo: every change is a step; a drag or a burst of typing counts as one ----------
+  function snap() { return JSON.stringify({ tid: S.tid, pid: S.pid, format: S.format, per: S.per, slides: S.slides, art: S.art, petals: S.petals, names: S.names, date: S.date, filter: S.filter, fcss: S.fcss, shape: S.shape, photos: S.photos, adj: S.adj, stickers: S.stickers }); }
+  var commitT = null;
+  function commitSoon() { clearTimeout(commitT); commitT = setTimeout(commit, 350); }
+  function commit() { if (!S || S.view !== 'edit') return; var now = snap(); if (S.lastSnap == null) { S.lastSnap = now; return updUndo(); } if (now === S.lastSnap) return; S.undo.push(S.lastSnap); if (S.undo.length > 60) S.undo.shift(); S.redo = []; S.lastSnap = now; updUndo(); }
+  function restore(js) { var o = JSON.parse(js); Object.keys(o).forEach(function (k) { S[k] = o[k]; }); setShape(o.shape); S.lastSnap = js; S.sel = null; if (S.edit) S.edit.style.display = 'none'; closeSheet(); clearTimeout(commitT); draw(); clearTimeout(commitT); updUndo(); }
+  function undo() { clearTimeout(commitT); commit(); if (!S.undo.length) return; S.redo.push(S.lastSnap); restore(S.undo.pop()); }
+  function redo() { if (!S.redo.length) return; S.undo.push(S.lastSnap); restore(S.redo.pop()); }
+  function updUndo() { if (S.undoBtn) { S.undoBtn.disabled = !S.undo.length; S.redoBtn.disabled = !S.redo.length; } }
   function slide(i) {   // one full-size slide (1080×1350)
     var c = document.createElement('canvas'); c.width = SW; c.height = SH;
     var ctx = c.getContext('2d'); ctx.translate(-i * SW, 0); render(ctx, S.L, { labels: S.opt.labels || {} });
@@ -299,6 +308,7 @@
     '.pe-bar{flex:none;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px}' +
     '.pe-title{flex:1;text-align:center;font:700 16px/1 "Plus Jakarta Sans",system-ui,sans-serif}' +
     '.pe-ib{flex:none;width:40px;height:40px;border-radius:20px;border:0;background:rgba(255,255,255,.08);color:#fff;display:grid;place-items:center;cursor:pointer}.pe-ib svg{width:22px;height:22px}' +
+    '.pe-ur{width:36px;height:36px}.pe-ur svg{width:19px;height:19px}.pe-ur:disabled{opacity:.3}' +
     '.pe-next{flex:none;height:38px;padding:0 16px;border-radius:12px;border:0;background:#fff;color:#111;font:800 15px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}.pe-next:disabled{opacity:.4}' +
     '.pe-logo{flex:1;display:flex;align-items:center;gap:7px;font:700 15px/1 "Plus Jakarta Sans",system-ui,sans-serif}.pe-logo svg{width:26px;height:26px;color:#fff}' +
     '.pe-stage1{position:relative;flex:none;height:44vh;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden}' +
@@ -478,6 +488,7 @@
     shape: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M5 8h14M5 16h14"/>',
     replace: '<path d="M4 4h6v6H4zM14 14h6v6h-6z"/><path d="M14 7h3a3 3 0 0 1 3 3v1M10 17H7a3 3 0 0 1-3-3v-1"/>',
     phone: '<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>',
+    undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>', redo: '<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/>',
     grid: '<rect x="3" y="3" width="5" height="7"/><rect x="9.5" y="3" width="5" height="7"/><rect x="16" y="3" width="5" height="7"/><rect x="3" y="14" width="5" height="7"/><rect x="9.5" y="14" width="5" height="7"/><rect x="16" y="14" width="5" height="7"/>'
   };
   function ic(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON[k] || '') + '</svg>'; }
@@ -759,8 +770,11 @@
       msg('Sharing is not available here — use Download, then post the images in this order.');
     });
   }
+  var IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
   function download() {
     files().then(function (fs) {
+      // iPhone: only the share menu can put images in Photos ("Save Images"); a normal download goes to the Files app
+      if (IOS && navigator.canShare && navigator.canShare({ files: fs })) { msg('Choose “Save Images” to put them in Photos.'); return navigator.share({ files: fs }).catch(function () {}); }
       fs.forEach(function (f, i) { setTimeout(function () { var a = el('a', { href: URL.createObjectURL(f), download: f.name }); document.body.appendChild(a); a.click(); a.remove(); }, i * 350); });
       msg(fs.length + (fs.length === 1 ? ' image' : ' images') + ' saved — post them in this order.');
     });
@@ -779,7 +793,7 @@
     if (S && S.wrap) close();
     if (!document.getElementById('ps-css')) document.head.appendChild(el('style', { id: 'ps-css', text: CSS + PE_CSS }));
     S = { opt: opt, tid: 'album', pid: opt.palette || 'ivory', format: 'carousel', mode: opt.mode === 'album' ? 'album' : 'post', per: 1, slides: 0, art: true, names: opt.title || 'Our Wedding', date: opt.date || '',
-      photos: (opt.photos || []).slice(0, MAXPICK).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, adj: {}, stickers: [], petals: false, sel: null, thumbs: {}, filter: 'none', fcss: '', view: 'pick' };
+      photos: (opt.photos || []).slice(0, MAXPICK).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, adj: {}, stickers: [], petals: false, sel: null, thumbs: {}, filter: 'none', fcss: '', view: 'pick', undo: [], redo: [], lastSnap: null };
     setShape(opt.shape || '34');
     S.T_NAME = function () { return TEMPLATES[S.tid].name; };
     document.body.classList.add('ps-on');
@@ -806,9 +820,11 @@
       el('label', { class: 'ps-lbl', style: 'display:block;margin:6px 0 0' }, [el('span', { text: 'Turn' }), S.eRot]), S.eCol,
       el('div', { class: 'ps-row', style: 'padding:8px 0 0' }, [S.eReset, S.eDel, el('button', { type: 'button', class: 'pe-done', style: 'margin-left:auto', text: 'Done', onclick: function () { select(null); } })])]);
     S.toolsEl = el('div', { class: 'pe-tools' });
+    S.undoBtn = el('button', { type: 'button', class: 'pe-ib pe-ur', 'aria-label': 'Undo', html: ic('undo'), onclick: undo });
+    S.redoBtn = el('button', { type: 'button', class: 'pe-ib pe-ur', 'aria-label': 'Redo', html: ic('redo'), onclick: redo });
     S.vEdit.append(
       el('div', { class: 'pe-bar' }, [el('button', { type: 'button', class: 'pe-ib', 'aria-label': 'Back', html: ic('back'), onclick: function () { show('pick'); paintPick(); } }),
-        el('div', { class: 'pe-logo', html: LOGO + '<span>Post Edits</span>' }), el('button', { type: 'button', class: 'pe-next', text: 'Next', onclick: goShare })]),
+        el('div', { class: 'pe-logo', html: LOGO + '<span>Post Edits</span>' }), S.undoBtn, S.redoBtn, el('button', { type: 'button', class: 'pe-next', text: 'Next', onclick: goShare })]),
       S.stage, el('div', { class: 'pe-dotrow' }, [S.dotsEl, S.slideNo]),
       el('p', { class: 'pe-tip', text: 'Tap a photo on the post to move it, zoom it or replace it.' }), S.edit, S.toolsEl);
     // share screen
@@ -830,7 +846,7 @@
   function close() { if (!S) return; if (S.wrap) S.wrap.remove(); document.body.classList.remove('ps-on'); freeUrls(); S = null; }
   window.PGPost = { addTemplate: addTemplate, open: open, close: close, templates: ORDER, palettes: Object.keys(PALETTES),
     setFaces: function (f) { if (S) { S.opt.faces = f; if (S.view === 'edit') draw(); } }, addSticker: function (k) { if (S) addSticker(k); },
-    state: function () { return S ? { view: S.view, mode: S.mode, format: S.format, shape: S.shape, H: SH, filter: S.filter, per: S.per, sel: S.sel, adj: S.adj, stickers: S.stickers, photos: S.photos.map(function (p) { return p.id; }) } : null; },
+    state: function () { return S ? { undo: S.undo.length, redo: S.redo.length, names: S.names, tid: S.tid, view: S.view, mode: S.mode, format: S.format, shape: S.shape, H: SH, filter: S.filter, per: S.per, sel: S.sel, adj: S.adj, stickers: S.stickers, photos: S.photos.map(function (p) { return p.id; }) } : null; },
     set: function (k, v) { if (!S) return; if (k === 'shape') setShape(v); else S[k] = v; if (S.view === 'edit') draw(); },
     info: function () { return S && S.L ? { slides: S.L.n, cells: S.L.cells.length, W: S.L.W, H: SH, hits: (S.lastHit || []).map(function (h) { return { id: h.id, x: h.x, y: h.y, w: h.w, h: h.h }; }) } : null; } };
 })();
