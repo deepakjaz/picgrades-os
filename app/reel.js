@@ -39,7 +39,9 @@
     '.re-ins{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;background:#000}' +
     '.re-ins-slot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}.re-ins-slot canvas{height:100%;max-width:100%;object-fit:contain}' +
     '.re-ins-info{position:absolute;left:0;right:0;bottom:0;padding:60px 16px calc(env(safe-area-inset-bottom,0px) + 18px);background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.75));display:grid;gap:6px}' +
-    '.re-mute{position:absolute;right:14px;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:2;display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:20px;border:0;background:rgba(0,0,0,.6);color:#fff;font:700 13px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}' +
+    '.re-cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 12px 10px}.re-cats::-webkit-scrollbar{display:none}' +
+    '.re-cat{flex:none;height:32px;padding:0 14px;border-radius:16px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;font:700 13px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}.re-cat.on{background:#fff;color:#111;border-color:#fff}' +
+    '.re-mute{position:absolute;right:14px;top:calc(env(safe-area-inset-top,0px) + 106px);z-index:2;display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:20px;border:0;background:rgba(0,0,0,.6);color:#fff;font:700 13px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}' +
     '.re-mute svg{width:20px;height:20px}.re-mute.on{padding:0 10px}.re-mute.glow{background:#FAC646;color:#111;animation:reGlow 1.4s ease-in-out infinite}' +
     '@keyframes reGlow{0%,100%{box-shadow:0 0 0 0 rgba(250,198,70,.7)}50%{box-shadow:0 0 0 10px rgba(250,198,70,0)}}' +
     '.re-ins-info b{font-size:19px}.re-ins-info span{font-size:13px;color:rgba(255,255,255,.8)}' +
@@ -54,6 +56,9 @@
     '.re-tlwrap{flex:none;position:relative;background:#121010}' +
     '.re-tl{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}.re-tl::-webkit-scrollbar{display:none}' +
     '.re-tl-in{position:relative;padding:6px 0}' +
+    '.re-r-fx{height:26px}.re-fxb{background:linear-gradient(90deg,rgba(250,198,70,.35),rgba(255,79,121,.35))!important;color:#fff}.re-fxb.off{background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.6)}' +
+    '.re-fxrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)}.re-fxrow span{font-size:14px}' +
+    '.re-fxbtn{height:34px;padding:0 14px;border-radius:17px;border:0;background:#D33A2C;color:#fff;font:700 13px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}.re-fxbtn.off{background:#FAC646;color:#111}' +
     '.re-row{position:relative;height:34px;margin:3px 0}.re-r-clip{height:52px}' +
     '.re-head{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;border-radius:1px;pointer-events:none;box-shadow:0 0 6px rgba(0,0,0,.6)}' +
     '.re-blk{position:absolute;top:0;bottom:0;border:0;border-radius:8px;padding:0 8px;display:flex;align-items:center;gap:2px;overflow:hidden;color:#fff;font:700 12px/1 inherit;white-space:nowrap;cursor:pointer;text-align:left}' +
@@ -397,9 +402,28 @@
     lines.forEach(function (l, i) { ctx.fillText(l, x, y + i * lh); });
     return lines.length;
   }
-  function drawCard(ctx, sg, t, beat, isEnd) {
+  function drawCard(ctx, sg, t, beat, isEnd) { try { drawCard0(ctx, sg, t, beat, isEnd); } finally { delete ctx.fillText; } }
+  // the card's names and date / "Photos by" line: drawn where they were dragged, remembered so a tap can find them
+  function keyText(ctx, pre, sub) {
+    var orig = CanvasRenderingContext2D.prototype.fillText;
+    ctx.fillText = function (str, x, y) {
+      var key = sub && str === sub ? 'sub' : /made with PicGrades|^PicGrades$/.test(str) ? null : 'names';
+      if (!key) return orig.call(ctx, str, x, y);
+      var o = (S.tx || {})[pre + key] || {}, X = x + (o.dx || 0), Y = y + (o.dy || 0);
+      orig.call(ctx, str, X, Y);
+      if (S.textHits) {
+        var w = ctx.measureText(str).width, a = ctx.textAlign, fs = +((/(\d+)px/.exec(ctx.font) || [0, 40])[1]), x0 = a === 'center' ? X - w / 2 : a === 'right' || a === 'end' ? X - w : X;
+        var m = ctx.getTransform(), pts = [[x0 - 12, Y - fs * 0.9], [x0 + w + 12, Y - fs * 0.9], [x0 - 12, Y + fs * 0.3], [x0 + w + 12, Y + fs * 0.3]], xs = [], ys = [];
+        pts.forEach(function (q) { xs.push(m.a * q[0] + m.c * q[1] + m.e); ys.push(m.b * q[0] + m.d * q[1] + m.f); });
+        S.textHits.push({ key: pre + key, x0: Math.min.apply(0, xs), y0: Math.min.apply(0, ys), x1: Math.max.apply(0, xs), y1: Math.max.apply(0, ys) });
+      }
+    };
+  }
+  function drawCard0(ctx, sg, t, beat, isEnd) {
     var T = S.T, a = ease((t - sg.start) / (beat * (isEnd ? 1 : 1.5))), lt = t - sg.start;
-    var sub = isEnd ? (S.studio ? 'Photos by ' + S.studio : '') : S.date;
+    var pre = isEnd ? 'end.' : 'title.', subO = (S.tx || {})[pre + 'sub'] || {};
+    var sub = subO.text != null ? subO.text : isEnd ? (S.studio ? 'Photos by ' + S.studio : '') : S.date;
+    keyText(ctx, pre, sub);
     ctx.save(); ctx.textAlign = 'center';
     switch (T.card) {
       case 'kasavu':
@@ -463,10 +487,17 @@
   }
 
   // ---------- one frame ----------
+  // the style's effects, minus the ones removed in the Effects layer
+  var FX_LIST = [['confetti', 'Confetti falling'], ['leak', 'Light glow'], ['flash', 'Flashes on the beat'], ['shake', 'Shake on the beat'], ['pulse', 'Zoom on the beat']];
+  function fxHas(k, f) { f = f || S.T.fx; return k === 'flash' ? !!f.flashEvery : !!f[k]; }
+  function fxOf() {
+    var f = S.T.fx, o = S.view === 'edit' || S.view === 'export' ? (S.fxOff || {}) : {};
+    return { pulse: o.pulse ? 0 : f.pulse, shake: o.shake ? 0 : f.shake, flashEvery: o.flash ? 0 : f.flashEvery, flash: f.flash, flashA: f.flashA, leak: !o.leak && f.leak, confetti: !o.confetti && f.confetti, rgb: f.rgb };
+  }
   function one(ctx, sg, t, beat) { if (sg.type === 'shot') drawShot(ctx, sg, t, beat); else drawCard(ctx, sg, t, beat, sg.type === 'end'); }
   function draw(ctx, P, t) {
-    var T = S.T, fx = T.fx, segs = P.segs, beat = P.beat;
-    syncVideos(P, t); S.hits = [];
+    var T = S.T, fx = fxOf(), segs = P.segs, beat = P.beat;
+    syncVideos(P, t); S.hits = []; S.textHits = [];
     ctx.save();
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     if (S.fcss && S.fcss !== 'none') ctx.filter = S.fcss;   // the chosen filter + adjustments
@@ -653,10 +684,10 @@
     P.dur = t; P.used = Object.keys(used).length; P.shots = P.segs.filter(function (s) { return s.type === 'shot'; }).length;
   }
   function freshPlan() { S.P = plan(); S.P.segs.forEach(function (sg) { sg.beats = Math.max(1, Math.round(sg.dur / S.P.beat)); }); relayout(); }
-  function snapshot() { return JSON.stringify({ segs: S.P.segs, texts: S.texts, stks: S.stks, filter: S.filter, adj: S.adj, tid: S.tid, track: S.track ? S.track.id : '', names: S.names, date: S.date, endCard: S.endCard }); }
+  function snapshot() { return JSON.stringify({ tx: S.tx || {}, fxOff: S.fxOff || {}, segs: S.P.segs, texts: S.texts, stks: S.stks, filter: S.filter, adj: S.adj, tid: S.tid, track: S.track ? S.track.id : '', names: S.names, date: S.date, endCard: S.endCard }); }
   function changed() { if (!S || !S.P) return; S.undo.push(S.last); if (S.undo.length > 50) S.undo.shift(); S.redo = []; S.last = snapshot(); relayout(); renderTimeline(); seek(Math.min(S.t, S.P.dur - 0.01)); updUndo(); }
   function restore(js) {
-    var o = JSON.parse(js); S.P.segs = o.segs; S.texts = o.texts; S.stks = o.stks; S.filter = o.filter; S.adj = o.adj; S.tid = o.tid; S.T = TEMPLATES[o.tid] || S.T;
+    var o = JSON.parse(js); S.tx = o.tx || {}; S.fxOff = o.fxOff || {}; S.P.segs = o.segs; S.texts = o.texts; S.stks = o.stks; S.filter = o.filter; S.adj = o.adj; S.tid = o.tid; S.T = TEMPLATES[o.tid] || S.T;
     S.track = S.tracks.filter(function (t) { return t.id === o.track; })[0] || null; S.names = o.names; S.date = o.date; S.endCard = o.endCard; S.fcss = filterCss();
     relayout(); renderTimeline(); seek(Math.min(S.t, S.P.dur - 0.01)); updUndo();
   }
@@ -795,7 +826,7 @@
         slider('Saturation', -60, 60, a.s || 0, function (v) { a.s = v; upd(); }), slider('Warmth', 0, 60, a.w || 0, function (v) { a.w = v; upd(); }));
     }, changed);
   }
-  function applyStyle(v) { stopPreview(); pickStyle(v); freshPlan(); changed(); seek(0); }
+  function applyStyle(v) { stopPreview(); S.fxOff = {}; pickStyle(v); freshPlan(); changed(); seek(0); }
   function toolStyle() {
     sheet('Style', function (b) {
       b.appendChild(el('p', { class: 're-hint', text: 'A new style rebuilds the layouts and transitions. Your text, drawings and filter stay.' }));
@@ -814,6 +845,40 @@
       b.append(el('div', { class: 'rl-lbl', text: 'Names on the opening card' }), names, el('div', { class: 'rl-lbl', text: 'Date' }), date,
         el('label', { class: 'rl-tog' }, [end, el('span', { text: 'Ending card with the photographer’s name (the small watermark always stays)' })]));
     }, changed);
+  }
+  // one piece of card text: change the words, drag it on the screen, or put it back
+  function toolCardText(key) {
+    var isNames = /names$/.test(key), isEnd = key.indexOf('end.') === 0;
+    sheet(isNames ? 'Names' : isEnd ? 'Ending line' : 'Date', function (b) {
+      var cur = isNames ? S.names : ((S.tx || {})[key] || {}).text != null ? S.tx[key].text : isEnd ? (S.studio ? 'Photos by ' + S.studio : '') : S.date;
+      var inp = el('input', { class: 'rl-in', value: cur, maxlength: '50', 'aria-label': 'Text' });
+      inp.addEventListener('input', function () {
+        if (isNames) S.names = inp.value || ' ';
+        else if (!isEnd) S.date = inp.value;
+        else { S.tx = Object.assign({}, S.tx); S.tx[key] = Object.assign({}, S.tx[key], { text: inp.value }); }
+        seek(S.t);
+      });
+      b.append(el('div', { class: 'rl-lbl', text: 'Change the words' }), inp,
+        el('p', { class: 're-hint', text: 'Drag it on the screen to place it anywhere. Only the reel changes — not the event or file names.' }),
+        el('button', { type: 'button', class: 'rl-sub', text: 'Put it back where it was', onclick: function () { S.tx = Object.assign({}, S.tx); var o = Object.assign({}, S.tx[key]); delete o.dx; delete o.dy; S.tx[key] = o; changed(); toolCardText(key); } }));
+    }, changed);
+  }
+  function bindTextDrag() {   // paused on a title card: drag its words
+    var d = null;
+    var pt = function (e) { var rc = S.canvas.getBoundingClientRect(); return { x: (e.clientX - rc.left) * W / rc.width, y: (e.clientY - rc.top) * H / rc.height }; };
+    S.canvas.addEventListener('pointerdown', function (e) {
+      if (S.view !== 'edit' || S.raf || !S.P) return;
+      var p = pt(e), h = (S.textHits || []).filter(function (h) { return p.x >= h.x0 && p.x <= h.x1 && p.y >= h.y0 && p.y <= h.y1; }).pop();
+      if (!h) return; d = { key: h.key, last: p, moved: false }; S.canvas.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    S.canvas.addEventListener('pointermove', function (e) {
+      if (!d) return; var p = pt(e), dx = p.x - d.last.x, dy = p.y - d.last.y; d.last = p;
+      if (Math.abs(dx) + Math.abs(dy) < 0.5) return; d.moved = true;
+      S.tx = Object.assign({}, S.tx); var o = Object.assign({}, S.tx[d.key]); o.dx = (o.dx || 0) + dx; o.dy = (o.dy || 0) + dy; S.tx[d.key] = o;
+      if (S.selEl) { S.selEl.remove(); S.selEl = null; } seek(S.t);
+    });
+    var up = function () { if (!d) return; if (d.moved) { S.noTap = true; changed(); setTimeout(function () { S.noTap = false; }, 0); } d = null; };
+    S.canvas.addEventListener('pointerup', up); S.canvas.addEventListener('pointercancel', up);
   }
   function toolLength() {
     sheet('Length', function (b) {
@@ -857,11 +922,17 @@
   }
   // tap the paused preview: the photo under your finger gets a gold outline and its own pop-up
   function tapPreview(e) {
-    if (!S || S.view !== 'edit' || !S.P) return;
+    if (!S || S.view !== 'edit' || !S.P || S.noTap) return;
     if (S.raf) { stopPreview(); return; }                     // playing: the first tap pauses
     var rc = S.canvas.getBoundingClientRect(), x = (e.clientX - rc.left) * W / rc.width, y = (e.clientY - rc.top) * H / rc.height;
     var segs = S.P.segs, i = 0; while (i < segs.length - 1 && S.t >= segs[i + 1].start) i++;
-    var sg = segs[i]; if (sg.type !== 'shot') { selBox(null); toolTitle(); return; }
+    var sg = segs[i];
+    if (sg.type !== 'shot') {
+      draw(S.canvas.getContext('2d'), S.P, S.t);
+      var th = (S.textHits || []).filter(function (h) { return x >= h.x0 && x <= h.x1 && y >= h.y0 && y <= h.y1; }).pop();
+      if (th) { toolCardText(th.key); selBox(th, rc); return; }
+      selBox(null); toolTitle(); return;
+    }
     draw(S.canvas.getContext('2d'), S.P, S.t);
     var hits = (S.hits || []).filter(function (h) { return sg.ids.indexOf(h.id) > -1; }), hit = null;
     for (var k = hits.length - 1; k >= 0; k--) { var h = hits[k]; if (x >= h.x0 && x <= h.x1 && y >= h.y0 && y <= h.y1) { hit = h; break; } }
@@ -876,15 +947,36 @@
     S.stage.appendChild(S.selEl);
   }
 
+  function toolEffects() {
+    sheet('Effects', function (b) {
+      var list = FX_LIST.filter(function (e) { return fxHas(e[0]); });
+      list.forEach(function (e) {
+        var off = !!(S.fxOff || {})[e[0]];
+        var row = el('div', { class: 're-fxrow' }, [el('span', { text: e[1] }),
+          el('button', { type: 'button', class: 're-fxbtn' + (off ? ' off' : ''), 'data-fx': e[0], text: off ? 'Add back' : 'Remove', onclick: function () { S.fxOff = Object.assign({}, S.fxOff); if (off) delete S.fxOff[e[0]]; else S.fxOff[e[0]] = 1; changed(); toolEffects(); } })]);
+        b.appendChild(row);
+      });
+      if (list.length > 1) b.appendChild(el('button', { type: 'button', class: 'rl-sub', text: 'Remove all effects', onclick: function () { S.fxOff = {}; list.forEach(function (e) { S.fxOff[e[0]] = 1; }); changed(); toolEffects(); } }));
+      b.appendChild(el('p', { class: 're-pnote', style: 'padding:8px 0 0', text: 'These come with the style. Undo brings them back too.' }));
+    });
+  }
   // ---------- timeline ----------
   function renderTimeline() {
     if (!S || !S.tlIn) return;
     var P = S.P, pad = Math.round(S.tl.clientWidth / 2) || 180, w = Math.ceil(P.dur * PX);
     S.tlIn.style.width = (pad * 2 + w + 120) + 'px'; S.pad = pad;
-    var rows = S.tlIn.querySelectorAll('.re-row'); rows.forEach(function (r) { r.innerHTML = ''; });
+    var fxRow = S.tlIn.querySelector('.re-r-fx'); fxRow.innerHTML = '';
+    var rows = S.tlIn.querySelectorAll('.re-row:not(.re-r-fx)'); rows.forEach(function (r) { r.innerHTML = ''; });
     var place = function (row, start, dur, cls, html, onTap) { var d = el('button', { type: 'button', class: 're-blk ' + cls, html: html, style: 'left:' + (pad + start * PX) + 'px;width:' + Math.max(18, dur * PX - 3) + 'px', onclick: onTap }); row.appendChild(d); return d; };
     (S.texts || []).forEach(function (x) { place(rows[0], x.start, x.dur, 're-txt', '<span>' + String(x.text).replace(/[<&]/g, ' ').slice(0, 40) + '</span>', function () { stopPreview(); toolText(x); }); });
     (S.stks || []).forEach(function (x) { var d = (window.PG_STICKERS || []).filter(function (s) { return s.k === x.k; })[0]; place(rows[1], x.start, x.dur, 're-stkb', '<span>' + (d ? d.n : 'Drawing') + '</span>', function () { stopPreview(); toolSticker(x); }); });
+    // effects that come with the style: one layer; tap to remove them (or bring them back)
+    var have = FX_LIST.filter(function (e) { return fxHas(e[0]); });
+    if (have.length) {
+      var on = have.filter(function (e) { return !(S.fxOff || {})[e[0]]; });
+      place(fxRow, 0, P.dur, 're-fxb' + (on.length ? '' : ' off'), '<span>✦ ' + (on.length ? on.map(function (e) { return e[1]; }).join(' · ') : 'Effects removed · tap to bring back') + '</span>', function () { stopPreview(); toolEffects(); });
+    }
+    fxRow.style.display = have.length ? '' : 'none';
     // music: bars that pulse on every beat (the cuts follow these)
     var au = place(rows[2], 0, P.dur, 're-aud', '<span>' + (S.track ? '♪ ' + String(S.track.title).replace(/[<&]/g, ' ') : 'No music · tap to add') + '</span>', function () { stopPreview(); toolAudio(); });
     if (S.track) { var beats = Math.floor(P.dur / P.beat), bars = ''; for (var k = 0; k < beats; k++) bars += '<i style="left:' + (k * P.beat * PX) + 'px;height:' + (k % 4 === 0 ? 70 : 38) + '%"></i>'; au.insertAdjacentHTML('beforeend', bars); }
@@ -1163,22 +1255,25 @@
     S.ownInput.addEventListener('change', function () { var f = this.files[0]; this.value = ''; addOwnMusic(f); });
 
     // 1. styles feed
-    var groupSel = el('select', { class: 're-colsel re-grp', 'aria-label': 'Event' });
-    GROUPS.filter(function (g) { return ORDER.some(function (k) { return inGroup(TEMPLATES[k], g[0]); }); }).forEach(function (g) { groupSel.appendChild(el('option', { value: g[0], text: g[1] === 'All' ? 'All styles' : g[1] })); });
-    groupSel.addEventListener('change', function () { S.group = groupSel.value; showInspo(); });
+    // categories as tabs over the endless feed (each style says which events it suits)
+    var cats = el('div', { class: 're-cats', role: 'tablist' });
+    GROUPS.filter(function (g) { return ORDER.some(function (k) { return inGroup(TEMPLATES[k], g[0]); }); }).forEach(function (g) {
+      cats.appendChild(el('button', { type: 'button', role: 'tab', class: 're-cat' + ((S.group || 'all') === g[0] ? ' on' : ''), 'data-g': g[0], text: g[1], onclick: function () {
+        S.group = g[0]; cats.querySelectorAll('.re-cat').forEach(function (b) { b.classList.toggle('on', b.dataset.g === g[0]); }); showInspo(); } }));
+    });
     S.feed = el('div', { class: 're-feed' });
     var inspo = el('div', { class: 're-view re-v-inspo' }, [
-      el('div', { class: 're-bar re-bar-float' }, [el('button', { type: 'button', class: 're-ib', 'aria-label': 'Close', text: '×', onclick: x }), el('div', { class: 're-logo', html: LOGO + '<span>Reel Edits</span>' }), groupSel]),
+      el('div', { class: 're-bar-float' }, [el('div', { class: 're-bar' }, [el('button', { type: 'button', class: 're-ib', 'aria-label': 'Close', text: '×', onclick: x }), el('div', { class: 're-logo', html: LOGO + '<span>Reel Edits</span>' })]), cats]),
       S.feed]);
 
     // 3. editor
     S.stage = el('div', { class: 're-stage' });
     S.playBtn = el('button', { type: 'button', class: 're-play', 'aria-label': 'Play', html: '&#9654;', onclick: play });
-    S.canvas.addEventListener('click', tapPreview);
+    S.canvas.addEventListener('click', tapPreview); bindTextDrag();
     S.undoBtn = el('button', { type: 'button', class: 're-ib', 'aria-label': 'Undo', html: '&#8630;', onclick: undo });
     S.redoBtn = el('button', { type: 'button', class: 're-ib', 'aria-label': 'Redo', html: '&#8631;', onclick: redo });
     S.timeEl = el('div', { class: 're-time' }, [el('b', { text: '00:00' }), el('span', { text: '00:00' })]);
-    S.tl = el('div', { class: 're-tl' }); S.tlIn = el('div', { class: 're-tl-in' }, [el('div', { class: 're-row re-r-txt' }), el('div', { class: 're-row re-r-stk' }), el('div', { class: 're-row re-r-aud' }), el('div', { class: 're-row re-r-clip' })]);
+    S.tl = el('div', { class: 're-tl' }); S.tlIn = el('div', { class: 're-tl-in' }, [el('div', { class: 're-row re-r-fx' }), el('div', { class: 're-row re-r-txt' }), el('div', { class: 're-row re-r-stk' }), el('div', { class: 're-row re-r-aud' }), el('div', { class: 're-row re-r-clip' })]);
     S.tl.appendChild(S.tlIn);
     S.tl.addEventListener('scroll', function () { if (Math.abs(S.tl.scrollLeft - (S.progLeft == null ? -9 : S.progLeft)) < 1.5) return; S.progLeft = null; if (S.raf) stopPreview(); seek(S.tl.scrollLeft / PX, true); }, { passive: true });
     var tools = el('div', { class: 're-tools' });
@@ -1236,8 +1331,17 @@
     if (S.buffers) delete S.buffers.own;   // your own music is let go right away
     freeVideos(); freeUrls(); S = null;    // photos and videos from the phone are let go too — nothing is uploaded or kept
   }
-  window.PGReel = { open: open, close: close, styles: ORDER, addStyle: addStyle,
+  // the phone's back gesture: one step back inside Reel Edits; true = still open
+  function back() {
+    if (!S) return false;
+    if (S.sheetEl) { closeSheet(); return true; }
+    var pk = S.wrap.querySelector('.rl-picker'); if (pk) { var bb = pk.querySelector('.re-ib'); if (bb) bb.click(); else pk.remove(); return !!S; }
+    if (S.view === 'export') { if (!S.busy) backToEdit(); return true; }
+    if (S.view === 'edit') { var eb = S.wrap.querySelector('.re-v-edit .re-ib'); if (eb) eb.click(); return !!S; }   // asks before leaving the reel
+    close(); return false;
+  }
+  window.PGReel = { back: back, open: open, close: close, styles: ORDER, addStyle: addStyle,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), curPlan(), t); return S ? curPlan().dur : 0; },  // used by tests
     setStyle: function (k) { if (S && TEMPLATES[k]) { if (S.view === 'edit' && S.P) applyStyle(k); else pickStyle(k); } },
-    state: function () { return S ? { sound: !!S.inspoSound, soundPlaying: !!S.inspoAud, segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
+    state: function () { return S ? { tx: S.tx || {}, names: S.names, date: S.date, textHits: (S.textHits || []).slice(), t: S.t, fxOff: S.fxOff || {}, sound: !!S.inspoSound, soundPlaying: !!S.inspoAud, segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
 })();

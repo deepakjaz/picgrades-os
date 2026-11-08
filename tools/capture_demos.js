@@ -43,7 +43,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('#pghReel'); await require('../tests/reel_helper').toEditor(pg); await pg.evaluate(() => PGReel.frame(4.2)); await pg.waitForTimeout(400); await shot('reel');
   await pg.evaluate(() => PGReel.close());
   const PE = require('../tests/post_helper'); await PE.toEdit(pg, 'album');
-  await PE.template(pg, 'Royal · Palace Arch'); await PE.petals(pg); await shot('album');
+  await PE.template(pg, 'Royal · Palace Arch'); await pg.waitForTimeout(500); await shot('album');
   await pg.evaluate(() => PGPost.close());
   await pg.click('#pgcUpload'); await shot('upload');
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
