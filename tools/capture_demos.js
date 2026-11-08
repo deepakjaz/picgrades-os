@@ -40,7 +40,7 @@ const srv = http.createServer((req, res) => {
   await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(800); await shot('viewer');
   await pg.evaluate(() => switchView('moments')); await shot('moments');
   await pg.evaluate(() => switchView('hub')); await pg.waitForTimeout(400);
-  await pg.click('#pghReel'); await pg.waitForFunction(() => /preview/i.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 20000 }); await pg.waitForTimeout(1500); await shot('reel');
+  await pg.click('#pghReel'); await require('../tests/reel_helper').toEditor(pg); await pg.evaluate(() => PGReel.frame(4.2)); await pg.waitForTimeout(400); await shot('reel');
   await pg.evaluate(() => PGReel.close());
   await pg.click('#pgcPost'); await pg.waitForSelector('.ps-wrap'); await pg.waitForFunction(() => PGPost.info(), null, { timeout: 20000 });
   await pg.locator('.ps-chip', { hasText: 'Royal · Palace Arch' }).click(); await pg.locator('.ps-tog', { hasText: 'Rose petal' }).locator('input').check(); await shot('album');

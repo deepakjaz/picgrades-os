@@ -1,4 +1,5 @@
 // Browser test (step 17): extra templates, styles and drawings from /app/packs load into the makers; broken entries are skipped.
+const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
@@ -44,10 +45,11 @@ const srv = http.createServer((req, res) => {
   await pg.locator('.ps-sub', { hasText: 'Add flowers' }).click(); await pg.waitForSelector('.ps-sgrid');
   console.log('drawings:', await pg.evaluate(() => PG_STICKERS.length), '| pack drawing added:', await pg.evaluate(() => PG_STICKERS.some(s => s.k === 'haldi-bowl')), '| unsafe one skipped:', await pg.evaluate(() => !PG_STICKERS.some(s => s.k === 'evil')));
   await pg.evaluate(() => PGPost.close());
-  await pg.click('#pghReel'); await pg.waitForFunction(() => /preview/i.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 20000 });
+  await pg.click('#pghReel'); await pg.waitForSelector('.rl-wrap[data-view=inspo]', { timeout: 30000 });
   const styles = await pg.evaluate(() => PGReel.styles.slice());
   console.log('reel styles:', styles.join(', '), '| broken skipped:', !styles.includes('broken'), '| unknown layout dropped:', await pg.evaluate(() => { PGReel.setStyle('haldi-sunshine'); return true; }));
-  await pg.locator('.rl-chip', { hasText: 'Haldi · Sunshine' }).first().click(); await pg.waitForTimeout(1200);
+  console.log('pack style in the feed:', await pg.locator('.re-ins[data-style="haldi-sunshine"]').count());
+  await RE.toEditor(pg, 'haldi-sunshine'); console.log('editor style:', await pg.evaluate(() => PGReel.state().style)); await pg.waitForTimeout(800);
   await pg.screenshot({ path: '/tmp/s17_reel_pack.png' });
   await pg.evaluate(() => PGReel.close());
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);

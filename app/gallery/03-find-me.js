@@ -2,9 +2,11 @@
 // Part of the wedding gallery (app/gallery.html). Files load in number order; features hook into the core with pgAfter / pgBefore.
 function pgMonogram() {
   const el = document.getElementById('pgMono'); if (!el || !GALLERY) return;
-  if (GALLERY.logoUrl) { el.innerHTML = '<img alt="" src="' + pgEsc(GALLERY.logoUrl) + '">'; return; }
+  if (GALLERY.logoUrl) { el.innerHTML = '<img alt="" src="' + pgEsc(GALLERY.logoUrl) + '">'; return; }   // (the nav keeps "PG" when a logo picture is used)
   const parts = String(GALLERY.title || '').split(/\s*(?:&|\band\b|\+|\/|,|·)\s*/i).map(x => x.trim()).filter(Boolean);
   el.textContent = parts.length >= 2 ? parts[0][0].toUpperCase() + '&' + parts[1][0].toUpperCase() : String(GALLERY.title || 'PG').slice(0, 2).toUpperCase();
+  // the Hub button in the nav bar shows the same initials (it follows light / dark like the header button)
+  const nav = document.getElementById('pgNavMono'); if (nav) { nav.textContent = el.textContent || 'PG'; nav.setAttribute('font-size', el.textContent.length > 3 ? '10' : el.textContent.length > 2 ? '12' : '14'); }
 }
 (function pgFindMe() {
   const $ = (id) => document.getElementById(id);

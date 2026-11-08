@@ -1,4 +1,5 @@
 // Browser test (step 19): the Gemini + ChatGPT packs in the app — styles grouped by event, new reel layouts, page decorations, drawings tabs, and all 7 games at iPhone size.
+const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
@@ -49,13 +50,13 @@ const srv = http.createServer((req, res) => {
   await pg.locator('.ps-chip', { hasText: /^Ceremony$/ }).last().click(); await pg.waitForTimeout(200); await pg.screenshot({ path: '/tmp/s19_stickers.png' });
   await pg.evaluate(() => PGPost.close());
   // reel maker: Marwari style uses Gemini's arch layout and circle reveal
-  await pg.click('#pghReel'); await pg.waitForFunction(() => /preview/i.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 20000 });
+  await pg.click('#pghReel'); await RE.toEditor(pg);
   console.log('reel styles:', await pg.evaluate(() => PGReel.styles.length), '| music tracks:', await pg.evaluate(() => fetch('/app/music/tracks.json').then(r => r.json()).then(j => j.tracks.length)));
-  await pg.locator('.rl-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
-  await pg.locator('.rl-chip', { hasText: 'Marwari · Royal Rajwada' }).click(); await pg.waitForTimeout(1500);
+  await pg.click('.re-tool[data-tool=style]'); await pg.locator('.re-sheet .rl-chip', { hasText: 'Marwari · Royal Rajwada' }).click(); await pg.click('.re-sh-done'); await pg.waitForTimeout(1500);
+  console.log('style now:', await pg.evaluate(() => PGReel.state().style));
   await pg.screenshot({ path: '/tmp/s19_reel.png' });
-  await pg.locator('.rl-chip', { hasText: '15 s' }).click(); await pg.click('.rl-go'); await pg.waitForSelector('.rl-stage video', { timeout: 90000 });
-  console.log('reel made with the new layouts:', await pg.textContent('.rl-msg'));
+  await RE.setLength(pg, '15 s');
+  console.log('reel made with the new layouts:', await RE.exportReel(pg));
   await pg.evaluate(() => PGReel.close());
   // games removed for now: the card stays hidden while the list is empty
   console.log('Games card hidden (no games yet):', await pg.$eval('#pgcGames', e => e.classList.contains('hidden')));
