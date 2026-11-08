@@ -42,8 +42,8 @@ const srv = http.createServer((req, res) => {
   await pg.evaluate(() => switchView('hub')); await pg.waitForTimeout(400);
   await pg.click('#pghReel'); await require('../tests/reel_helper').toEditor(pg); await pg.evaluate(() => PGReel.frame(4.2)); await pg.waitForTimeout(400); await shot('reel');
   await pg.evaluate(() => PGReel.close());
-  await pg.click('#pgcPost'); await pg.waitForSelector('.ps-wrap'); await pg.waitForFunction(() => PGPost.info(), null, { timeout: 20000 });
-  await pg.locator('.ps-chip', { hasText: 'Royal · Palace Arch' }).click(); await pg.locator('.ps-tog', { hasText: 'Rose petal' }).locator('input').check(); await shot('album');
+  const PE = require('../tests/post_helper'); await PE.toEdit(pg, 'album');
+  await PE.template(pg, 'Royal · Palace Arch'); await PE.petals(pg); await shot('album');
   await pg.evaluate(() => PGPost.close());
   await pg.click('#pgcUpload'); await shot('upload');
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);

@@ -1,4 +1,5 @@
 // Browser test (step 19): the Gemini + ChatGPT packs in the app — styles grouped by event, new reel layouts, page decorations, drawings tabs, and all 7 games at iPhone size.
+const PE = require('./post_helper');
 const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
@@ -35,17 +36,17 @@ const srv = http.createServer((req, res) => {
   pg.on('pageerror', e => errors.push(e.message));
   await pg.goto('http://localhost:8782/g/' + pub.galleryId + '?couple=' + ck + '&packinfo'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(500);
   // album maker
-  await pg.click('#pgcPost'); await pg.waitForSelector('.ps-wrap'); await pg.waitForFunction(() => PGPost.info(), null, { timeout: 20000 });
+  await PE.toEdit(pg, 'album'); await PE.tool(pg, 'template');
   console.log('album templates:', await pg.evaluate(() => PGPost.templates.length));
-  const groups = await pg.$$eval('.ps-row:nth-of-type(1) .ps-chip', l => l.map(b => b.textContent));
-  await pg.locator('.ps-chip', { hasText: /^Haldi$/ }).click(); await pg.waitForTimeout(200);
-  console.log('Haldi templates:', (await pg.$$eval('.ps-chip', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
-  await pg.locator('.ps-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
-  await pg.locator('.ps-chip', { hasText: 'Royal · Palace Arch' }).click(); await pg.waitForTimeout(600);
+  const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => b.textContent));
+  await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click(); await pg.waitForTimeout(200);
+  console.log('Haldi templates:', (await pg.$$eval('.pe-sheet .ps-chip', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
+  await pg.locator('.pe-sheet .ps-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
+  await pg.locator('.pe-sheet .ps-chip', { hasText: 'Royal · Palace Arch' }).click(); await pg.waitForTimeout(600); await PE.done(pg);
   await pg.screenshot({ path: '/tmp/s19_album_arch.png' });
-  await pg.locator('.ps-chip', { hasText: /^All$/ }).first().click(); await pg.locator('.ps-chip', { hasText: 'Classic Heirloom' }).click(); await pg.waitForTimeout(600);
+  await PE.template(pg, 'Classic Heirloom', 'All');
   await pg.screenshot({ path: '/tmp/s19_album_chatgpt.png' });
-  await pg.locator('.ps-sub', { hasText: 'Add flowers' }).click(); await pg.waitForSelector('.ps-sgrid');
+  await PE.drawings(pg);
   console.log('drawings:', await pg.evaluate(() => PG_STICKERS.length), '| tabs:', (await pg.$$eval('.ps-sheet .ps-chip, .ps-stabs .ps-chip', l => l.map(b => b.textContent))).join(', '));
   await pg.locator('.ps-chip', { hasText: /^Ceremony$/ }).last().click(); await pg.waitForTimeout(200); await pg.screenshot({ path: '/tmp/s19_stickers.png' });
   await pg.evaluate(() => PGPost.close());

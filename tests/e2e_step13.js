@@ -1,4 +1,5 @@
 // Browser test (step 13): Hub first in the nav, far photos let go, album editing (tap/drag/zoom/replace, drawings, petals, layouts differ), your own music in reels.
+const PE = require('./post_helper');
 const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
@@ -45,34 +46,31 @@ const srv = http.createServer((req, res) => {
   console.log('reels photos in memory:', await pg.$$eval('#pgmFeed .pgm-item img', l => l.filter(i => i.src && !i.src.startsWith('data:')).length), 'of', await pg.locator('#pgmFeed .pgm-item').count());
   await pg.click('.tkg-nav-item[data-nav=hub]'); await pg.waitForTimeout(300);
   // album editor
-  await pg.click('#pgcPost'); await pg.waitForSelector('.ps-wrap'); await pg.waitForFunction(() => PGPost.info(), null, { timeout: 20000 }); await pg.waitForTimeout(300);
+  await PE.toEdit(pg, 'album');
   const sigs = {};
-  for (const t of await pg.evaluate(() => PGPost.templates)) { await pg.evaluate(t => PGPost.set('tid', t), t); sigs[t] = JSON.stringify(await pg.evaluate(() => PGPost.info())); }
+  for (const t of await pg.evaluate(() => PGPost.templates)) { await pg.evaluate(t => PGPost.set('tid', t), t); sigs[t] = JSON.stringify(await pg.evaluate(() => { const i = PGPost.info(); return [i.slides, i.cells, i.W, i.hits.map(h => [Math.round(h.x), Math.round(h.y), Math.round(h.w)])]; })); }
   console.log('templates with their own layout:', new Set(Object.values(sigs)).size, 'of', Object.keys(sigs).length);
   await pg.evaluate(() => PGPost.set('tid', 'album')); await pg.waitForTimeout(300);
-  const box = await pg.$eval('.ps-prev canvas', c => { const r = c.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
-  const hit = await pg.evaluate(() => { const s = PGPost.state(); const h = (s.lastHit || [])[0]; return h; });
-  const cw = await pg.$eval('.ps-prev canvas', c => c.width);
-  const px = hit ? box.x + (hit.x + hit.w / 2) / cw * box.w : box.x + box.w * 0.08, py = hit ? box.y + (hit.y + hit.h / 2) / cw * box.w : box.y + box.h * 0.45;
-  await pg.mouse.click(px, py); await pg.waitForTimeout(300);
-  console.log('tap a photo selects it:', JSON.stringify(await pg.evaluate(() => PGPost.state().sel)), '| edit bar:', await pg.isVisible('.ps-edit'));
+  const { x: px, y: py } = await PE.tapPhoto(pg, 0);
+  console.log('tap a photo selects it:', JSON.stringify(await pg.evaluate(() => PGPost.state().sel)), '| edit bar:', await pg.isVisible('.pe-pop'));
   await pg.mouse.move(px, py); await pg.mouse.down(); await pg.mouse.move(px + 30, py + 20, { steps: 6 }); await pg.mouse.up();
-  await pg.$eval('.ps-edit .ps-range', r => { r.value = 1.8; r.dispatchEvent(new Event('input')); }); await pg.waitForTimeout(200);
+  await pg.$eval('.pe-pop .ps-range', r => { r.value = 1.8; r.dispatchEvent(new Event('input')); }); await pg.waitForTimeout(200);
   await pg.screenshot({ path: '/tmp/s13_edit.png' });
   console.log('drag + zoom saved for that photo:', JSON.stringify(await pg.evaluate(() => { const s = PGPost.state(); return s.sel && s.adj[s.sel.id]; })));
   const before = await pg.evaluate(() => PGPost.state().sel.id);
-  await pg.locator('.ps-chip', { hasText: 'Replace photo' }).click(); await pg.waitForSelector('.ps-picker'); await pg.evaluate(() => { const used = PGPost.state().photos; [...document.querySelectorAll('.ps-pick')].find(b => !used.includes(b.dataset.id)).click(); }); await pg.waitForTimeout(1500);
+  await pg.click('.pe-repl'); await pg.waitForSelector('.pe-picker'); await pg.evaluate(() => { const used = PGPost.state().photos; [...document.querySelectorAll('.pe-picker .pe-pick')].find(b => !used.includes(b.dataset.id)).click(); }); await pg.waitForTimeout(1500);
   console.log('replaced:', before, '→', await pg.evaluate(() => (PGPost.state().sel || {}).id), '| old still in list:', await pg.evaluate(b => PGPost.state().photos.includes(b), before));
-  const done = pg.locator('.ps-chip', { hasText: 'Done' }); if (await done.count()) await done.first().click();
-  await pg.locator('.ps-sub', { hasText: 'Add flowers' }).click(); await pg.waitForSelector('.ps-sgrid');
+  await PE.done(pg);
+  await PE.drawings(pg);
   console.log('drawings to choose:', await pg.evaluate(() => PG_STICKERS.length), '| shown in first tab:', await pg.locator('.ps-stk').count());
   await pg.screenshot({ path: '/tmp/s13_stickers.png' });
   await pg.locator('.ps-stk').nth(19).click(); await pg.waitForTimeout(300);
   console.log('drawing added + selected:', JSON.stringify(await pg.evaluate(() => [PGPost.state().stickers.length, PGPost.state().sel])));
-  await pg.$eval('.ps-edit .ps-range', r => { r.value = 260; r.dispatchEvent(new Event('input')); });
-  if (await done.count()) await done.first().click();
-  await pg.locator('.ps-tog', { hasText: 'Rose petal' }).locator('input').check(); await pg.waitForTimeout(300);
+  await pg.$eval('.pe-pop .ps-range', r => { r.value = 260; r.dispatchEvent(new Event('input')); });
+  await PE.done(pg);
+  await PE.petals(pg); await pg.waitForTimeout(300);
   await pg.screenshot({ path: '/tmp/s13_page.png' });
+  await PE.toShare(pg);
   const dls = []; pg.on('download', d => dls.push(d)); await pg.locator('.ps-sub', { hasText: 'Download' }).click(); await pg.waitForTimeout(4000);
   if (dls[0]) await dls[0].saveAs('/tmp/s13_slide1.jpg'); console.log('slides saved:', dls.length);
   await pg.evaluate(() => PGPost.close());

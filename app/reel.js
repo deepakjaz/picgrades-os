@@ -39,6 +39,9 @@
     '.re-ins{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;background:#000}' +
     '.re-ins-slot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}.re-ins-slot canvas{height:100%;max-width:100%;object-fit:contain}' +
     '.re-ins-info{position:absolute;left:0;right:0;bottom:0;padding:60px 16px calc(env(safe-area-inset-bottom,0px) + 18px);background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.75));display:grid;gap:6px}' +
+    '.re-mute{position:absolute;right:14px;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:2;display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:20px;border:0;background:rgba(0,0,0,.6);color:#fff;font:700 13px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}' +
+    '.re-mute svg{width:20px;height:20px}.re-mute.on{padding:0 10px}.re-mute.glow{background:#FAC646;color:#111;animation:reGlow 1.4s ease-in-out infinite}' +
+    '@keyframes reGlow{0%,100%{box-shadow:0 0 0 0 rgba(250,198,70,.7)}50%{box-shadow:0 0 0 10px rgba(250,198,70,0)}}' +
     '.re-ins-info b{font-size:19px}.re-ins-info span{font-size:13px;color:rgba(255,255,255,.8)}' +
     '.re-use{margin-top:8px;height:50px;border-radius:14px;border:0;background:#fff;color:#111;font:800 16px/1 inherit;cursor:pointer}' +
     // editor
@@ -589,8 +592,11 @@
     if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: S.names }).catch(function () {}); return; }
     downloadResult();
   }
+  var IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
   function downloadResult() {
     var f = S.result; if (!f) return;
+    // iPhone: only the share menu can put a video in Photos ("Save Video"); a normal download goes to the Files app
+    if (IOS && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f] }).catch(function () {}); return; }
     var u = URL.createObjectURL(f), a = el('a', { href: u, download: f.name }); document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(u); }, 10000);
   }
@@ -921,13 +927,51 @@
     feed.scrollTop = 0;
   }
   function pickStyle(k) { S.tid = k; S.T = TEMPLATES[k]; var rec = S.tracks.filter(function (t) { return t.id === S.T.music; })[0]; if (rec && !(S.track && S.track.own)) S.track = rec; }
-  function previewStyle(k, card) {   // the style plays silently in the visible card (one canvas, moved from card to card)
+  // the visible style plays in its card (one canvas and one sound button, moved from card to card).
+  // Sound starts muted; the button glows until it is tapped. Once unmuted, every style plays with its music —
+  // and only the one on screen: scrolling on, leaving the feed or switching apps stops it.
+  function previewStyle(k, card) {
     if (S.view !== 'inspo') return;
-    stopLoop(); pickStyle(k); card.querySelector('.re-ins-slot').appendChild(S.canvas);
-    var P = plan(), t0 = performance.now(), ctx = S.canvas.getContext('2d');
-    (function loop() { if (!S || S.view !== 'inspo') return; var t = ((performance.now() - t0) / 1000) % Math.max(1, Math.min(P.dur, 12)); draw(ctx, P, t); S.loop = requestAnimationFrame(loop); })();
+    stopLoop(); pickStyle(k); S.inspoK = k; S.inspoCard = card;
+    card.querySelector('.re-ins-slot').appendChild(S.canvas); card.appendChild(muteBtn()); paintMute();
+    var P = plan(), L = Math.max(1, Math.min(P.dur, 12)), t0 = performance.now(), ctx = S.canvas.getContext('2d'), my = S.inspoRun = {};
+    var clockNow = function () { return (performance.now() - t0) / 1000; };
+    if (S.inspoSound) {
+      var tr = S.tracks.filter(function (t) { return t.id === TEMPLATES[k].music; })[0];
+      loadTrack(tr).then(function (buf) {
+        if (!buf || !S || S.inspoRun !== my || !S.inspoSound || S.view !== 'inspo') return;
+        var ac = audioCtx(); if (ac.resume) ac.resume();
+        var src = ac.createBufferSource(), g = ac.createGain(), at = ac.currentTime + 0.05, from = Math.min(tr.beat0 || 0, Math.max(0, buf.duration - L));
+        src.buffer = buf; src.loop = true; src.loopStart = from; src.loopEnd = Math.min(buf.duration, from + L);
+        src.connect(g); g.connect(ac.destination); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(1, at + 0.25);
+        src.start(at, from); S.inspoAud = { src: src, g: g };
+        clockNow = function () { return Math.max(0, ac.currentTime - at); };   // pictures follow the music
+      }).catch(function () {});
+    }
+    (function loop() { if (!S || S.view !== 'inspo' || S.inspoRun !== my) return; draw(ctx, P, clockNow() % L); S.loop = requestAnimationFrame(loop); })();
   }
-  function stopLoop() { if (S && S.loop) { cancelAnimationFrame(S.loop); S.loop = 0; } }
+  function stopInspoSound() {
+    if (S && S.inspoAud) { var a = S.inspoAud, ac = S.ac; S.inspoAud = null; try { a.g.gain.setTargetAtTime(0.0001, ac.currentTime, 0.05); a.src.stop(ac.currentTime + 0.2); } catch (e) { try { a.src.stop(); } catch (e2) {} } }
+  }
+  function stopLoop() { if (S) { if (S.loop) { cancelAnimationFrame(S.loop); S.loop = 0; } S.inspoRun = null; stopInspoSound(); } }
+  var SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4V5z"/>';
+  function muteBtn() {
+    if (!S.muteEl) S.muteEl = el('button', { type: 'button', class: 're-mute', onclick: function (e) {
+      e.stopPropagation(); S.inspoSound = !S.inspoSound; S.soundTried = true;
+      if (S.inspoSound) { var ac = audioCtx(); if (ac.resume) ac.resume(); }   // the tap itself lets the phone play sound
+      if (S.inspoK && S.inspoCard) previewStyle(S.inspoK, S.inspoCard);
+    } });
+    return S.muteEl;
+  }
+  function paintMute() {
+    var on = !!S.inspoSound, b = S.muteEl; if (!b) return;
+    b.innerHTML = SPK + (on ? '<path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>' : '<path d="M16 9l5 6M21 9l-5 6"/></svg><span>Tap for sound</span>');
+    b.setAttribute('aria-label', on ? 'Mute' : 'Turn sound on'); b.classList.toggle('on', on); b.classList.toggle('glow', !on && !S.soundTried);
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (!S || S.view !== 'inspo') return;
+    if (document.hidden) stopLoop(); else if (S.inspoK && S.inspoCard) previewStyle(S.inspoK, S.inspoCard);
+  });
 
   // ---------- 2. choose photos (numbered, like a phone photo picker) ----------
   function openPicker(o) {
@@ -1194,5 +1238,5 @@
   window.PGReel = { open: open, close: close, styles: ORDER, addStyle: addStyle,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), curPlan(), t); return S ? curPlan().dur : 0; },  // used by tests
     setStyle: function (k) { if (S && TEMPLATES[k]) { if (S.view === 'edit' && S.P) applyStyle(k); else pickStyle(k); } },
-    state: function () { return S ? { segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
+    state: function () { return S ? { sound: !!S.inspoSound, soundPlaying: !!S.inspoAud, segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
 })();
