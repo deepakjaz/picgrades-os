@@ -1,4 +1,5 @@
 // Browser test: Post / Album maker — every template, formats, post to Root Moment as the couple, album in Root Moment + "Posts & Albums", download.
+const PE = require('./post_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
@@ -23,9 +24,8 @@ const srv = http.createServer((req, res) => {
   await pg.route('https://lh3.googleusercontent.com/**', r => { const id = r.request().url().match(/\/d\/([^=]+)/)[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id), headers: { 'Access-Control-Allow-Origin': '*' } }); });
   await pg.goto('http://localhost:8776/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(700);
   console.log('create row:', (await pg.locator('.pgc-card:not(.hidden) b').allTextContents()).join(' | '));
-  await pg.click('#pgcPost'); await pg.waitForSelector('.ps-wrap');
-  await pg.waitForFunction(() => PGPost.info(), null, { timeout: 20000 });
-  console.log('opened:', JSON.stringify(await pg.evaluate(() => PGPost.info())), '|', (await pg.locator('.ps-panel .ps-lbl').allTextContents()).find(t => /PHOTOS/i.test(t)));
+  await PE.toEdit(pg);
+  console.log('opened:', JSON.stringify(await pg.evaluate(() => { const i = PGPost.info(); delete i.hits; return i; })), '| tools:', (await pg.locator('.pe-tool span').allTextContents()).join(', '));
   await pg.screenshot({ path: '/tmp/s12_maker.png' });
   // every template: export the whole page small for the contact sheet
   const shots = {};
@@ -35,17 +35,20 @@ const srv = http.createServer((req, res) => {
   }
   fs.writeFileSync('/tmp/s12_templates.json', JSON.stringify(shots));
   await pg.evaluate(() => PGPost.set('tid', 'album'));
-  for (const f of ['carousel', 'single', 'strip']) { await pg.evaluate(f => PGPost.set('format', f), f); console.log('format', f, JSON.stringify(await pg.evaluate(() => PGPost.info()))); }
-  // add photos from another collection
-  await pg.click('.ps-add'); await pg.waitForSelector('.ps-picker'); await pg.locator('.ps-picker .ps-chip').nth(2).click(); await pg.locator('.ps-pick:not(.on)').first().click(); await pg.click('.ps-picker .ps-go'); await pg.waitForTimeout(1500);
-  console.log('after adding:', JSON.stringify(await pg.evaluate(() => PGPost.info())));
+  for (const f of ['carousel', 'single', 'strip']) { await pg.evaluate(f => PGPost.set('format', f), f); console.log('format', f, JSON.stringify(await pg.evaluate(() => { const i = PGPost.info(); delete i.hits; return i; }))); }
+  await pg.evaluate(() => PGPost.set('format', 'carousel'));
+  // add photos from another collection: back to New post, choose one more, Next
+  await pg.click('.pe-v-edit .pe-ib'); const opts = await pg.$$eval('.pe-v-pick .pe-colsel option', l => l.map(o => o.value)); await pg.selectOption('.pe-v-pick .pe-colsel', opts[Math.min(2, opts.length - 1)]);
+  await pg.locator('.pe-v-pick .pe-pick:not(.on)').first().click(); await pg.click('.pe-v-pick .pe-next'); await pg.waitForSelector('.pe-wrap[data-view=edit]'); await pg.waitForTimeout(1500);
+  console.log('after adding:', JSON.stringify(await pg.evaluate(() => { const i = PGPost.info(); delete i.hits; return i; })));
   // download
+  await PE.toShare(pg);
   const dls = []; pg.on('download', d => dls.push(d.suggestedFilename()));
   await pg.locator('.ps-sub', { hasText: 'Download' }).click(); await pg.waitForTimeout(4000);
   console.log('downloads:', dls.length, dls.slice(0, 3).join(', '));
   // post as the couple
-  await pg.click('.ps-go'); await pg.waitForFunction(() => /Posted|Sent/.test(document.querySelector('.ps-msg').textContent), null, { timeout: 20000 });
-  console.log('post:', await pg.textContent('.ps-msg'));
+  await pg.click('.ps-go'); await pg.waitForFunction(() => /Posted|Sent/.test(document.querySelector('.pe-msg').textContent), null, { timeout: 20000 });
+  console.log('post:', await pg.textContent('.pe-msg'));
   await pg.evaluate(() => PGPost.close()); await pg.waitForTimeout(800);
   await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(600);
   const albumItem = pg.locator('.pgm-guest').filter({ has: pg.locator('.pgm-album') });

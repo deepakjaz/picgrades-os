@@ -1,4 +1,5 @@
 // Browser test (step 17): extra templates, styles and drawings from /app/packs load into the makers; broken entries are skipped.
+const PE = require('./post_helper');
 const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
@@ -36,13 +37,13 @@ const srv = http.createServer((req, res) => {
   pg.on('pageerror', e => errors.push(e.message)); await pg.route('**fonts.g**', r => r.abort());
   await pg.route('https://lh3.googleusercontent.com/**', r => { const id = r.request().url().match(/\/d\/([^=]+)/)[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id), headers: { 'Access-Control-Allow-Origin': '*' } }); });
   await pg.goto('http://localhost:8781/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(500);
-  await pg.click('#pgcPost'); await pg.waitForSelector('.ps-wrap'); await pg.waitForFunction(() => PGPost.info(), null, { timeout: 20000 });
+  await PE.toEdit(pg, 'album');
   const tpls = await pg.evaluate(() => PGPost.templates.slice());
   console.log('album templates:', tpls.length, '| pack template added:', tpls.includes('mehendi-garden'), '| broken one skipped:', !tpls.includes('bad-slots'));
-  await pg.locator('.ps-chip', { hasText: 'Mehendi Garden' }).click(); await pg.waitForTimeout(500);
-  console.log('its own colours chosen:', await pg.evaluate(() => !!document.querySelector('.ps-dot.on[data-v="mehendi-garden"]')), '| layout:', JSON.stringify(await pg.evaluate(() => PGPost.info())));
+  await PE.template(pg, 'Mehendi Garden'); await PE.tool(pg, 'colours');
+  console.log('its own colours chosen:', await pg.evaluate(() => !!document.querySelector('.ps-dot.on[data-v="mehendi-garden"]')), '| layout:', JSON.stringify(await pg.evaluate(() => { const i = PGPost.info(); delete i.hits; return i; }))); await PE.done(pg);
   await pg.screenshot({ path: '/tmp/s17_album_pack.png' });
-  await pg.locator('.ps-sub', { hasText: 'Add flowers' }).click(); await pg.waitForSelector('.ps-sgrid');
+  await PE.drawings(pg);
   console.log('drawings:', await pg.evaluate(() => PG_STICKERS.length), '| pack drawing added:', await pg.evaluate(() => PG_STICKERS.some(s => s.k === 'haldi-bowl')), '| unsafe one skipped:', await pg.evaluate(() => !PG_STICKERS.some(s => s.k === 'evil')));
   await pg.evaluate(() => PGPost.close());
   await pg.click('#pghReel'); await pg.waitForSelector('.rl-wrap[data-view=inspo]', { timeout: 30000 });
