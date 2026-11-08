@@ -101,7 +101,11 @@
     '.rl-pgrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 10px);align-content:start}' +
     '.rl-pick{position:relative;aspect-ratio:3/4;border:0;padding:0;background:#222;cursor:pointer}.rl-pick img{width:100%;height:100%;object-fit:cover;display:block}' +
     '.rl-pick i{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:12px;border:2px solid #fff;background:rgba(0,0,0,.25);font:800 12px/20px inherit;font-style:normal;text-align:center;color:#111}' +
-    '.rl-pick.on i{background:#FAC646;border-color:#FAC646}.rl-pick.on img{opacity:.75}';
+    '.rl-pick.on i{background:#FAC646;border-color:#FAC646}.rl-pick.on img{opacity:.75}' +
+    '.rl-pick u{position:absolute;left:6px;bottom:6px;padding:2px 6px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font:600 11px/1.3 inherit;text-decoration:none}' +
+    '.re-phone{flex:none;display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 12px;border-radius:18px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:600 13px/1 inherit}.re-phone svg{width:16px;height:16px}' +
+    '.re-pnote{margin:0;padding:0 14px 8px;font:500 12px/1.4 inherit;color:rgba(255,255,255,.6)}' +
+    '.re-clip{position:relative}.re-vmark{position:absolute;left:6px;top:6px;width:18px;height:18px;border-radius:9px;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}.re-vmark svg{width:10px;height:10px;color:#fff}';
 
   // ---------- loading photos (direct from Drive, else through the gallery server) ----------
   // Photos are kept as small compressed files; the phone decodes them only while drawing (a big list of decoded
@@ -130,6 +134,59 @@
     }
     return next().then(function () { return out; });
   }
+
+  // ---------- photos and videos from the phone (step 23) ----------
+  // They never leave the phone: read straight from the file, kept only while Reel Edits is open, freed on close.
+  var PHONE_MAX = 40, VIDEO_MAX = 10, CLIP_MAX = 8;   // files per reel · videos per reel · seconds a video clip starts with
+  function isPhone(id) { return String(id).indexOf('ph:') === 0; }
+  function isVideo(id) { return !!(S && S.vids && S.vids[id]); }
+  function thumbUrl(id, w) { return isPhone(id) ? (S.thumbs[id] || '') : 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+  function smallThumb(src, w, h) { var c = document.createElement('canvas'), r = Math.min(1, 240 / Math.max(w, h)); c.width = Math.max(1, Math.round(w * r)); c.height = Math.max(1, Math.round(h * r)); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); }
+  function vidHolder() { if (!S.vidBox) { S.vidBox = el('div', { 'aria-hidden': 'true', style: 'position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none' }); S.wrap.appendChild(S.vidBox); } return S.vidBox; }
+  function loadPhoneFile(f) {
+    var id = 'ph:' + (S.phoneN = (S.phoneN || 0) + 1), u = URL.createObjectURL(f); URLS.push(u);
+    if (/^video\//.test(f.type) || /\.(mov|mp4|m4v|webm)$/i.test(f.name)) {
+      return new Promise(function (res, rej) {
+        var v = document.createElement('video'), done = false;
+        v.muted = true; v.defaultMuted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.preload = 'auto'; v.loop = false;
+        var fail = function () { if (!done) { done = true; rej(new Error('video')); } };
+        setTimeout(fail, 20000); v.onerror = fail;
+        v.addEventListener('loadeddata', function () {
+          if (done) return; v.width = v.videoWidth; v.height = v.videoHeight;
+          v.addEventListener('seeked', function once() { v.removeEventListener('seeked', once); if (done) return; done = true;
+            try { S.thumbs[id] = smallThumb(v, v.videoWidth, v.videoHeight); } catch (e) { S.thumbs[id] = ''; }
+            v.addEventListener('seeked', function () { if (S && !S.raf && !S.busy) seek(S.t, true); });   // paused: show the new frame once it is ready
+            S.bitmaps[id] = v; S.vids[id] = Math.max(0.5, v.duration || 1); res(id);
+          });
+          try { v.currentTime = Math.min(0.1, (v.duration || 1) / 2); } catch (e) { fail(); }
+        });
+        vidHolder().appendChild(v); v.src = u;
+      });
+    }
+    return imgFromSrc(u).then(function (im) {   // phone photos are made smaller first (a 12 MP photo would eat the phone's memory)
+      var r = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+      c.width = Math.round(im.naturalWidth * r); c.height = Math.round(im.naturalHeight * r); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      S.thumbs[id] = smallThumb(c, c.width, c.height);
+      return new Promise(function (res) { c.toBlob(function (b) { c.width = c.height = 1; res(b); }, 'image/jpeg', 0.88); });
+    }).then(bitmapFromBlob).then(function (im) { S.bitmaps[id] = im; return id; });
+  }
+  function videoBeats(id, beat) { return Math.max(2, Math.min(16, Math.round(Math.min(S.vids[id] || CLIP_MAX, CLIP_MAX) / beat))); }
+  // videos follow the reel's clock: playing while the reel plays or is being made, still on the right frame when paused
+  function syncVideos(P, t) {
+    if (!S.vids) return; var live = !!S.raf || !!S.busy, want = {};
+    P.segs.forEach(function (sg) {
+      if (sg.type !== 'shot' || t < sg.start - 0.6 || t > sg.start + sg.dur + 0.1) return;
+      sg.ids.forEach(function (id) { if (S.vids[id] && want[id] == null) want[id] = Math.min(S.vids[id] - 0.05, Math.max(0, (sg.vt || 0) + Math.max(0, t - sg.start))); });
+    });
+    Object.keys(S.vids).forEach(function (id) {
+      var v = S.bitmaps[id]; if (!v) return;
+      if (want[id] == null) { if (!v.paused) v.pause(); return; }
+      if (live) { if (Math.abs(v.currentTime - want[id]) > 0.3) v.currentTime = want[id]; if (v.paused && want[id] < S.vids[id] - 0.1) { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); } }
+      else { if (!v.paused) v.pause(); if (Math.abs(v.currentTime - want[id]) > 0.04 && !v.seeking) v.currentTime = want[id]; }
+    });
+  }
+  function pauseVideos() { if (S && S.vids) Object.keys(S.vids).forEach(function (id) { var v = S.bitmaps[id]; if (v && !v.paused) v.pause(); }); }
+  function freeVideos() { if (S && S.vids) Object.keys(S.vids).forEach(function (id) { var v = S.bitmaps[id]; if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) {} } }); }
 
   // ---------- templates ----------
   // layouts: how photos are placed in one shot. trans: how one shot changes to the next. fx: effects on the beat.
@@ -162,8 +219,12 @@
     var r = rng(S.seed), pick = function (a) { return a[Math.floor(r() * a.length)]; }, k = 0, used = {};
     while (ids.length && t < bodyEnd - beat * 0.5) {
       var layout = pick(T.layouts), n = LAYOUT_N[layout], beats = Math.max(pick(T.beats), LAYOUT_MIN[layout] || 1);
+      var first = ids[k % ids.length];
+      if (isVideo(first)) { layout = 'single'; n = 1; beats = videoBeats(first, beat); }
       beats = Math.min(beats, Math.round((bodyEnd - t) / beat)); if (beats < 1) break;
-      var ph = []; for (var j = 0; j < n; j++) { var id = ids[k % ids.length]; ph.push(id); used[id] = 1; k++; }
+      var ph = [first]; used[first] = 1; k++;
+      for (var j = 1, tries = 0; j < n && tries < ids.length * 2; tries++) { var id = ids[k % ids.length]; k++; if (isVideo(id)) continue; ph.push(id); used[id] = 1; j++; }
+      if (ph.length < n) { layout = 'single'; ph = [first]; }
       segs.push({ type: 'shot', layout: layout, ids: ph, start: t, dur: beats * beat, trans: segs.length === 1 ? 'fade' : pick(T.trans), k: segs.length, r: r() });
       t += beats * beat;
     }
@@ -393,6 +454,7 @@
   function one(ctx, sg, t, beat) { if (sg.type === 'shot') drawShot(ctx, sg, t, beat); else drawCard(ctx, sg, t, beat, sg.type === 'end'); }
   function draw(ctx, P, t) {
     var T = S.T, fx = T.fx, segs = P.segs, beat = P.beat;
+    syncVideos(P, t);
     ctx.save();
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     if (S.fcss && S.fcss !== 'none') ctx.filter = S.fcss;   // the chosen filter + adjustments
@@ -456,7 +518,7 @@
   function clock(aud) { var ac = S.ac; var base = aud ? aud.t0 : null; var p0 = performance.now(); return function () { return aud && ac ? ac.currentTime - base : (performance.now() - p0) / 1000; }; }
 
   // ---------- preview ----------
-  function stopPreview() { if (!S) return; if (S.raf) cancelAnimationFrame(S.raf); S.raf = 0; if (S.aud) { try { S.aud.src.stop(); } catch (e) {} S.aud = null; } if (S.playBtn) S.playBtn.innerHTML = '&#9654;'; }
+  function stopPreview() { if (!S) return; if (S.raf) cancelAnimationFrame(S.raf); S.raf = 0; if (S.aud) { try { S.aud.src.stop(); } catch (e) {} S.aud = null; } if (S.playBtn) S.playBtn.innerHTML = '&#9654;'; pauseVideos(); }
 
 
   // ---------- export ----------
@@ -553,7 +615,9 @@
     shorter: '<path d="M3 12h7M14 12h7M7 8l4 4-4 4M17 8l-4 4 4 4"/>',
     left: '<path d="M15 6l-6 6 6 6"/>', right: '<path d="M9 6l6 6-6 6"/>',
     trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
-    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>'
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+    play: '<path d="M8 5v14l11-7z" fill="currentColor"/>',
+    phone: '<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>'
   };
   function ic(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[k] + '</svg>'; }
   function fmt(t) { t = Math.max(0, t); var m = Math.floor(t / 60), s = Math.floor(t % 60); return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
@@ -700,7 +764,7 @@
   function toolFilters() {
     sheet('Filters', function (b) {
       var row = el('div', { class: 're-filters' });
-      var thumb = S.P.segs.filter(function (s) { return s.type === 'shot'; })[0], src = thumb ? 'https://lh3.googleusercontent.com/d/' + thumb.ids[0] + '=w160' : '';
+      var thumb = S.P.segs.filter(function (s) { return s.type === 'shot'; })[0], src = thumb ? thumbUrl(thumb.ids[0], 160) : '';
       FILTERS.forEach(function (f) {
         var bt = el('button', { type: 'button', class: 're-filter' + (S.filter === f[0] ? ' on' : ''), onclick: function () { S.filter = f[0]; S.fcss = filterCss(); row.querySelectorAll('.re-filter').forEach(function (x) { x.classList.remove('on'); }); bt.classList.add('on'); seek(S.t); } },
           [el('img', { src: src, alt: '', style: 'filter:' + (f[2] || 'none') }), el('span', { text: f[1] })]);
@@ -754,10 +818,14 @@
       act('shorter', 'Shorter', function () { sg.beats = Math.max(LAYOUT_MIN[sg.layout] || 1, sg.beats - 1); changed(); toolClip(i); }, sg.beats <= (LAYOUT_MIN[sg.layout] || 1));
       act('left', 'Move left', function () { var j = i - 1; if (S.P.segs[j] && S.P.segs[j].type === 'shot') { S.P.segs[i] = S.P.segs[j]; S.P.segs[j] = sg; changed(); toolClip(j); } }, !(S.P.segs[i - 1] && S.P.segs[i - 1].type === 'shot'));
       act('right', 'Move right', function () { var j = i + 1; if (S.P.segs[j] && S.P.segs[j].type === 'shot') { S.P.segs[i] = S.P.segs[j]; S.P.segs[j] = sg; changed(); toolClip(j); } }, !(S.P.segs[i + 1] && S.P.segs[i + 1].type === 'shot'));
+      if (isVideo(sg.ids[0])) {
+        act('left', 'Start earlier', function () { sg.vt = Math.max(0, (sg.vt || 0) - 1); changed(); toolClip(i); seek(sg.start + 0.05); }, !(sg.vt > 0));
+        act('right', 'Start later', function () { sg.vt = Math.min(Math.max(0, S.vids[sg.ids[0]] - 1), (sg.vt || 0) + 1); sg.beats = Math.min(sg.beats, Math.max(1, Math.floor((S.vids[sg.ids[0]] - sg.vt) / S.P.beat))); changed(); toolClip(i); seek(sg.start + 0.05); }, (sg.vt || 0) >= S.vids[sg.ids[0]] - 1);
+      }
       act('trash', 'Delete', function () { if (S.P.shots <= 1) { msg('A reel needs at least one clip.'); return; } S.P.segs.splice(i, 1); closeSheet(); changed(); }, S.P.shots <= 1);
       var lay = el('div', { class: 'rl-row' });
       chips(lay, Object.keys(LAYOUT_N).filter(function (k) { return LAYOUT_N[k] === 1 || LAYOUT_N[k] <= sg.ids.length; }).map(function (k) { return { t: k, v: k }; }), sg.layout, function (v) { sg.layout = v; sg.beats = Math.max(sg.beats, LAYOUT_MIN[v] || 1); changed(); });
-      b.append(row, el('div', { class: 'rl-lbl', text: sg.beats + ' beats · ' + sg.dur.toFixed(1) + ' s · look' }), lay);
+      b.append(row, el('div', { class: 'rl-lbl', text: sg.beats + ' beats · ' + sg.dur.toFixed(1) + ' s' + (isVideo(sg.ids[0]) ? ' · video from ' + fmt(sg.vt || 0) + ' (of ' + fmt(S.vids[sg.ids[0]]) + ') · its sound is off, the reel uses the music' : '') + ' · look' }), lay);
     });
   }
 
@@ -774,7 +842,7 @@
     var au = place(rows[2], 0, P.dur, 're-aud', '<span>' + (S.track ? '♪ ' + String(S.track.title).replace(/[<&]/g, ' ') : 'No music · tap to add') + '</span>', function () { stopPreview(); toolAudio(); });
     if (S.track) { var beats = Math.floor(P.dur / P.beat), bars = ''; for (var k = 0; k < beats; k++) bars += '<i style="left:' + (k * P.beat * PX) + 'px;height:' + (k % 4 === 0 ? 70 : 38) + '%"></i>'; au.insertAdjacentHTML('beforeend', bars); }
     P.segs.forEach(function (sg, i) {
-      var html = sg.type === 'shot' ? sg.ids.slice(0, 3).map(function (id) { return '<img alt="" loading="lazy" src="https://lh3.googleusercontent.com/d/' + id + '=w120">'; }).join('') : '<span>' + (sg.type === 'title' ? 'Title' : 'Ending') + '</span>';
+      var html = sg.type === 'shot' ? sg.ids.slice(0, 3).map(function (id) { return '<img alt="" loading="lazy" src="' + thumbUrl(id, 120) + '">'; }).join('') + (isVideo(sg.ids[0]) ? '<b class="re-vmark">' + ic('play') + '</b>' : '') : '<span>' + (sg.type === 'title' ? 'Title' : 'Ending') + '</span>';
       place(rows[3], sg.start, sg.dur, 're-clip' + (sg.type !== 'shot' ? ' re-card' : ''), html, function () { stopPreview(); if (sg.type === 'shot') toolClip(i); else toolTitle(); });
     });
     var add = el('button', { type: 'button', class: 're-blk re-addclip', html: ic('add') + '<span>Add clip</span>', style: 'left:' + (pad + w + 8) + 'px', onclick: function () { stopPreview(); openPicker({ add: true }); } });
@@ -825,17 +893,43 @@
     o = o || {};
     stopLoop(); stopPreview();
     var cols = (S.opt.collections || []).slice(); if (!cols.length) cols = [{ name: 'Your photos', photos: S.photos.map(function (p) { return { id: p.id }; }) }];
+    if (S.phoneCol) cols.push(S.phoneCol);
     var order = o.single ? [] : o.add ? [] : S.photos.filter(function (p) { return p.on; }).map(function (p) { return p.id; });
     var grid = el('div', { class: 'rl-pgrid' }), sel = el('select', { class: 're-colsel', 'aria-label': 'Collection' }), next = el('button', { type: 'button', class: 're-next', text: o.single ? 'Use' : 'Next' });
     cols.forEach(function (c, i) { sel.appendChild(el('option', { value: String(i), text: c.name + ' (' + c.photos.length + ')' })); });
     var count = el('span', { class: 'rl-pcount' });
+    // from your phone: photos and videos are read here only — nothing is uploaded, all of it is let go when Reel Edits closes
+    var pin = el('input', { type: 'file', accept: 'image/*,video/*', multiple: '', class: 're-pin', style: 'display:none' });
+    var pbtn = el('button', { type: 'button', class: 're-phone', html: ic('phone') + '<span>From your phone</span>', onclick: function () { pin.click(); } });
+    var pnote = el('p', { class: 're-pnote', text: 'Photos and videos from your phone stay on your phone — nothing is uploaded, and they are let go when you close Reel Edits.' });
+    var phoneRow = el('div', {}, [el('div', { class: 'rl-row', style: 'padding:0 14px 6px' }, [pbtn]), pnote, pin]);
+    pin.addEventListener('change', function () {
+      var files = Array.prototype.slice.call(pin.files || []); pin.value = ''; if (!files.length) return;
+      var have = S.phoneCol ? S.phoneCol.photos.length : 0, vids = Object.keys(S.vids).length, skip = 0;
+      files = files.filter(function (f) { var v = /^video\//.test(f.type) || /\.(mov|mp4|m4v|webm)$/i.test(f.name); if (have >= PHONE_MAX || (v && vids >= VIDEO_MAX)) { skip++; return false; } have++; if (v) vids++; return true; });
+      pbtn.disabled = true; var done = 0, bad = 0, got = [];
+      var step = function () {
+        if (!files.length) {
+          pbtn.disabled = false; pbtn.querySelector('span').textContent = 'From your phone';
+          if (!S.phoneCol) { S.phoneCol = { name: 'From your phone', photos: [] }; cols.push(S.phoneCol); sel.appendChild(el('option', { value: String(cols.length - 1) })); }
+          got.forEach(function (id) { S.phoneCol.photos.push({ id: id }); });
+          if (o.single) { if (got.length) order = [got[0]]; } else order = got.concat(order).slice(0, 80);   // what you bring from the phone comes first in the reel
+          var ix = cols.indexOf(S.phoneCol); sel.options[ix].textContent = S.phoneCol.name + ' (' + S.phoneCol.photos.length + ')'; sel.value = String(ix); show(ix);
+          pnote.textContent = (bad ? bad + ' file(s) could not be opened on this phone. ' : '') + (skip ? 'Up to ' + PHONE_MAX + ' files and ' + VIDEO_MAX + ' videos per reel. ' : '') + 'They stay on your phone — nothing is uploaded.';
+          return;
+        }
+        pbtn.querySelector('span').textContent = 'Opening ' + (++done) + '…';
+        loadPhoneFile(files.shift()).then(function (id) { got.push(id); }, function () { bad++; }).then(step);
+      };
+      step();
+    });
     var box = el('div', { class: 'rl-picker', role: 'dialog', 'aria-label': 'Choose photos' }, [
-      el('div', { class: 're-bar' }, [el('button', { type: 'button', class: 're-ib', 'aria-label': 'Back', html: ic('left'), onclick: function () { box.remove(); if (!S.P) showInspo(); } }), sel, count, next]), grid]);
+      el('div', { class: 're-bar' }, [el('button', { type: 'button', class: 're-ib', 'aria-label': 'Back', html: ic('left'), onclick: function () { box.remove(); if (!S.P) showInspo(); } }), sel, count, next]), phoneRow, grid]);
     function upd() { count.textContent = o.single ? 'Choose one' : order.length + ' chosen'; grid.querySelectorAll('.rl-pick').forEach(function (t) { var n = order.indexOf(t.dataset.id); t.classList.toggle('on', n > -1); t.querySelector('i').textContent = n > -1 ? String(n + 1) : ''; }); next.disabled = !order.length; }
     function show(i) {
       grid.innerHTML = '';
       (cols[i].photos || []).forEach(function (p) {
-        var t = el('button', { type: 'button', class: 'rl-pick', 'data-id': p.id }, [el('img', { src: 'https://lh3.googleusercontent.com/d/' + p.id + '=w240', alt: '', loading: 'lazy' }), el('i')]);
+        var t = el('button', { type: 'button', class: 'rl-pick', 'data-id': p.id }, [el('img', { src: thumbUrl(p.id, 240), alt: '', loading: 'lazy' }), el('i')].concat(isVideo(p.id) ? [el('u', { text: '▶ ' + fmt(S.vids[p.id]) })] : []));
         t.addEventListener('click', function () { var n = order.indexOf(p.id); if (o.single) order = [p.id]; else if (n > -1) order.splice(n, 1); else if (order.length < 80) order.push(p.id); upd(); });
         grid.appendChild(t);
       });
@@ -853,7 +947,7 @@
         if (o.single) { o.onPick(ok[0]); return; }
         if (o.add) {   // new clips at the end, before the ending card
           var at = S.P.segs.filter(function (s) { return s.type !== 'end'; }).length;
-          ok.forEach(function (id, k) { S.P.segs.splice(at + k, 0, { type: 'shot', layout: 'single', ids: [id], beats: Math.max(2, S.T.beats[0] || 2), trans: S.T.trans[k % S.T.trans.length], r: Math.random() }); if (!S.photos.some(function (p) { return p.id === id; })) S.photos.push({ id: id, on: true }); });
+          ok.forEach(function (id, k) { S.P.segs.splice(at + k, 0, { type: 'shot', layout: 'single', ids: [id], beats: isVideo(id) ? videoBeats(id, S.P.beat) : Math.max(2, S.T.beats[0] || 2), trans: S.T.trans[k % S.T.trans.length], r: Math.random() }); if (!S.photos.some(function (p) { return p.id === id; })) S.photos.push({ id: id, on: true }); });
           changed(); seek(S.P.segs[at].start + 0.1); return;
         }
         var have = {}; S.photos = ok.map(function (id) { have[id] = 1; return { id: id, on: true }; });
@@ -969,7 +1063,7 @@
   function openNow(opt) {
     if (S && S.wrap) close();
     if (!document.getElementById('rl-css')) document.head.appendChild(el('style', { id: 'rl-css', text: CSS }));
-    S = { opt: opt, tid: opt.style && TEMPLATES[opt.style] ? opt.style : 'south', seed: Math.floor(Math.random() * 1e9), T: null, photos: opt.photos.slice(0, 80).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, blurs: {}, buffers: {},
+    S = { opt: opt, tid: opt.style && TEMPLATES[opt.style] ? opt.style : 'south', seed: Math.floor(Math.random() * 1e9), T: null, photos: opt.photos.slice(0, 80).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, blurs: {}, buffers: {}, vids: {}, thumbs: {},
       names: opt.title || 'Our Wedding', date: opt.date || '', studio: opt.studio || '', length: 30, endCard: true, tracks: [], track: null,
       texts: [], stks: [], filter: 'none', adj: {}, fcss: 'none', t: 0, undo: [], redo: [], group: 'all' };
     S.T = TEMPLATES[S.tid];
@@ -1052,7 +1146,7 @@
     if (S.wrap) S.wrap.remove(); document.body.classList.remove('rl-on');
     if (S.ac && S.ac.close) S.ac.close().catch(function () {});
     if (S.buffers) delete S.buffers.own;   // your own music is let go right away
-    freeUrls(); S = null;
+    freeVideos(); freeUrls(); S = null;    // photos and videos from the phone are let go too — nothing is uploaded or kept
   }
   window.PGReel = { open: open, close: close, styles: ORDER, addStyle: addStyle,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), curPlan(), t); return S ? curPlan().dur : 0; },  // used by tests
