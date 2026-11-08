@@ -1,4 +1,5 @@
 // Browser test (step 13): Hub first in the nav, far photos let go, album editing (tap/drag/zoom/replace, drawings, petals, layouts differ), your own music in reels.
+const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
@@ -76,13 +77,13 @@ const srv = http.createServer((req, res) => {
   if (dls[0]) await dls[0].saveAs('/tmp/s13_slide1.jpg'); console.log('slides saved:', dls.length);
   await pg.evaluate(() => PGPost.close());
   // reels: your own music
-  await pg.click('#pghReel'); await pg.waitForFunction(() => /preview/i.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 20000 });
-  await pg.setInputFiles('.rl-wrap input[type=file]', '/tmp/my_song.mp3');
-  await pg.waitForFunction(() => /beats per minute|could not/i.test(document.querySelector('.rl-msg').textContent), null, { timeout: 20000 });
-  console.log('own music:', await pg.textContent('.rl-msg'), '| track:', await pg.evaluate(() => JSON.stringify(PGReel.state ? PGReel.state().track : null)));
+  await pg.click('#pghReel'); await RE.toEditor(pg);
+  await pg.click('.re-tool[data-tool=audio]'); await pg.setInputFiles('.rl-wrap input[type=file]', '/tmp/my_song.mp3');
+  await pg.waitForFunction(() => /beats per minute|could not/i.test(document.querySelector('.re-v-edit .rl-msg').textContent), null, { timeout: 20000 });
+  console.log('own music:', await pg.textContent('.re-v-edit .rl-msg'), '| track:', await pg.evaluate(() => JSON.stringify(PGReel.state ? PGReel.state().track : null)));
   await pg.screenshot({ path: '/tmp/s13_reel.png' });
-  await pg.locator('.rl-chip', { hasText: '15 s' }).click(); await pg.click('.rl-go'); await pg.waitForSelector('.rl-stage video', { timeout: 90000 });
-  console.log('reel made with own music:', await pg.evaluate(() => new Promise(res => { const v = document.querySelector('.rl-stage video'); const go = () => res(Math.round(v.duration * 10) / 10 + ' s'); if (v.readyState >= 1 && isFinite(v.duration)) go(); else { v.onloadedmetadata = go; setTimeout(go, 4000); } })));
+  await pg.click('.re-sh-done'); await RE.setLength(pg, '15 s'); await RE.exportReel(pg);
+  console.log('reel made with own music:', (await RE.videoInfo(pg))[2] + ' s');
   await pg.evaluate(() => PGReel.close()); console.log('after closing, own music kept anywhere:', await pg.evaluate(() => PGReel.state()), '| calls to server after album:', JSON.stringify([...new Set(ACTS.slice(ACTS.lastIndexOf('getGallery')))]));
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
 });

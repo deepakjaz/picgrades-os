@@ -1,4 +1,5 @@
 // Browser test for the Hub: hero slideshow, stats, events with changing photos, most loved, recent notes, notes wall, Root Moment mix.
+const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..');
@@ -45,12 +46,14 @@ const srv = http.createServer((req, res) => {
     if (vp.name === 'mobile') {
       await pg.click('#pghReel'); await pg.waitForSelector('.rl-wrap', { timeout: 8000 }).catch(() => {});
       console.log('open mode: reel opens with no name asked:', await pg.isVisible('.rl-wrap'), '| name sheet:', await pg.isVisible('#idSheet.show'));
-      await pg.waitForFunction(() => /preview/.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 20000 });
-      await pg.click('.rl-add'); await pg.waitForSelector('.rl-picker');
-      console.log('picker tabs:', (await pg.locator('.rl-ptabs .rl-chip').allTextContents()).join(' | '));
-      for (const t of ['Cocktail', 'Wedding', 'Sangeet', 'Haldi', 'Reception']) { await pg.locator('.rl-ptabs .rl-chip', { hasText: t }).click(); if (await pg.locator('.rl-pick:not(.on)').count()) { await pg.locator('.rl-pick:not(.on)').first().click(); console.log('added one from', t); break; } }
-      const before = await pg.locator('.rl-th:not(.rl-add)').count(); await pg.click('.rl-pdone'); await pg.waitForTimeout(1200);
-      console.log('photos before/after adding a photo:', before, '→', await pg.locator('.rl-th:not(.rl-add)').count());
+      await RE.toEditor(pg);
+      const before = await pg.locator('.re-clip:not(.re-card)').count();
+      await pg.click('.re-addclip'); await pg.waitForSelector('.rl-picker');
+      console.log('picker collections:', (await pg.$$eval('.rl-picker .re-colsel option', l => l.map(o => o.textContent))).join(' | '));
+      const opts = await pg.$$eval('.rl-picker .re-colsel option', l => l.map(o => o.value));
+      for (const v of opts) { await pg.selectOption('.rl-picker .re-colsel', v); await pg.waitForTimeout(150); if (await pg.locator('.rl-pick:not(.on)').count()) { await pg.locator('.rl-pick:not(.on)').first().click(); console.log('added one from', await pg.$eval('.rl-picker .re-colsel', s => s.selectedOptions[0].textContent)); break; } }
+      await pg.click('.rl-picker .re-next'); await pg.waitForSelector('.rl-picker', { state: 'detached' }); await pg.waitForTimeout(1200);
+      console.log('photos before/after adding a photo:', before, '→', await pg.locator('.re-clip:not(.re-card)').count());
       await pg.screenshot({ path: '/tmp/s11_reel_added.png' });
       await pg.evaluate(() => PGReel.close());
       await pg.click('#pghNotes .pgh-note >> nth=0'); await pg.waitForTimeout(500);

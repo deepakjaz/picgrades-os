@@ -1,4 +1,5 @@
 // Browser test for the reel maker: open from a collection, preview, make a 15 s video, download it. Also the server photo path.
+const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures');
@@ -33,38 +34,40 @@ const srv = http.createServer((req, res) => {
       await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(500);
       await pg.click('#pgvReel');
     } else await pg.click('#pghReel');
-    await pg.waitForFunction(() => /preview/.test((document.querySelector('.rl-msg') || {}).textContent || ''), null, { timeout: 30000 });
-    console.log(mode, '| reel opened:', await pg.locator('.rl-th').count(), 'photos |', await pg.textContent('.rl-wrap .rl-lbl:nth-of-type(1)'), '| music:', (await pg.locator('.rl-chip').allTextContents()).slice(0, 3).join(' / '), '|', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'));
+    if (mode === 'server') { await pg.waitForSelector('.rl-wrap[data-view=inspo]', { timeout: 30000 }); console.log(mode, '| reel opened on the styles feed:', await pg.locator('.re-ins').count(), 'styles'); await ctx.close(); continue; }
+    await RE.toEditor(pg);
+    let st0 = await pg.evaluate(() => PGReel.state());
+    console.log(mode, '| reel opened:', st0.shots, 'shots |', Math.round(st0.dur), 's | style:', st0.style, '| music:', st0.track && st0.track.title);
     await pg.screenshot({ path: '/tmp/s8_reel_' + mode + '.png' });
-    if (mode === 'server') { await ctx.close(); continue; }
     // every style: frames from the title, the photos and a transition
-    for (const st of await pg.evaluate(() => PGReel.styles)) {
-      await pg.locator('.rl-chip', { hasText: { south: 'South', soft: 'Soft', dynamic: 'Dynamic', travel: 'Travel', festival: 'Festival', party: 'Party' }[st] }).first().click();
-      await pg.waitForTimeout(150);
+    for (const st of await pg.evaluate(() => PGReel.styles.slice(0, 6))) {
+      await pg.evaluate(k => PGReel.setStyle(k), st); await pg.waitForTimeout(150);
       const shots = [];
-      for (const t of [2.2, 4.1, 5.3, 6.6, 8.2, 10.4]) { await pg.evaluate(t => PGReel.frame(t), t); shots.push(await pg.$eval('.rl-stage canvas', c => c.toDataURL('image/jpeg', 0.6))); }
+      for (const t of [2.2, 4.1, 5.3, 6.6, 8.2, 10.4]) { await pg.evaluate(t => PGReel.frame(t), t); shots.push(await pg.$eval('.re-stage canvas', c => c.toDataURL('image/jpeg', 0.6))); }
       fs.writeFileSync('/tmp/s9_' + st + '.json', JSON.stringify(shots));
-      console.log('style', st, '|', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'), '| music:', await pg.textContent('.rl-chip.on >> nth=1'));
+      const s2 = await pg.evaluate(() => PGReel.state()); console.log('style', s2.style, '|', s2.shots, 'shots | music:', s2.track && s2.track.title);
     }
-    await pg.locator('.rl-chip', { hasText: 'Party' }).first().click();
     console.log('nav hidden while reel open:', !(await pg.isVisible('.tkg-global-nav')));
     // add photos from other collections
-    await pg.click('.rl-add'); await pg.waitForSelector('.rl-picker');
-    console.log('picker tabs:', (await pg.locator('.rl-ptabs .rl-chip').allTextContents()).join(' | '), '|', await pg.textContent('.rl-pcount'));
+    const before = await pg.locator('.re-clip:not(.re-card)').count();
+    await pg.click('.re-addclip'); await pg.waitForSelector('.rl-picker');
+    console.log('picker collections:', (await pg.$$eval('.rl-picker .re-colsel option', l => l.map(o => o.textContent))).join(' | '));
     await pg.locator('.rl-pick').nth(0).click(); await pg.locator('.rl-pick').nth(1).click();
     await pg.screenshot({ path: '/tmp/s11_picker.png' });
-    await pg.click('.rl-pdone'); await pg.waitForTimeout(1500);
-    console.log('after picker:', await pg.locator('.rl-th:not(.rl-add)').count(), 'photos |', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'));
-    await pg.click('.rl-play'); await pg.waitForTimeout(3200); await pg.screenshot({ path: '/tmp/s8_preview_title.png' });
-    await pg.waitForTimeout(2500); await pg.screenshot({ path: '/tmp/s8_preview_photo.png' });
-    await pg.locator('.rl-chip', { hasText: '15 s' }).click();
-    await pg.locator('.rl-th').nth(2).click(); console.log('after removing one:', await pg.textContent('.rl-wrap .rl-panel div > .rl-lbl[style]'));
-    const t0 = Date.now(); await pg.click('.rl-go');
-    await pg.waitForTimeout(7000); await pg.screenshot({ path: '/tmp/s8_making.png' }); console.log('status on preview:', await pg.isVisible('.rl-status.on'), await pg.textContent('.rl-status span'));
-    await pg.waitForSelector('.rl-stage video', { timeout: 60000 });
-    console.log('made in', Math.round((Date.now() - t0) / 1000), 's |', await pg.textContent('.rl-msg'));
-    const info = await pg.evaluate(() => new Promise(res => { const v = document.querySelector('.rl-stage video'); const go = () => res([v.videoWidth, v.videoHeight, Math.round(v.duration * 10) / 10]); if (v.readyState >= 1 && isFinite(v.duration)) go(); else { v.onloadedmetadata = go; setTimeout(go, 4000); } }));
-    console.log('video:', JSON.stringify(info));
+    await pg.click('.rl-picker .re-next'); await pg.waitForSelector('.rl-picker', { state: 'detached' }); await pg.waitForTimeout(1500);
+    console.log('clips before/after picker:', before, '→', await pg.locator('.re-clip:not(.re-card)').count());
+    await pg.click('.re-play'); await pg.waitForTimeout(3200); await pg.screenshot({ path: '/tmp/s8_preview_title.png' });
+    await pg.waitForTimeout(2500); await pg.screenshot({ path: '/tmp/s8_preview_photo.png' }); await pg.click('.re-play');
+    await RE.setLength(pg, '15 s');
+    const n1 = await pg.locator('.re-clip:not(.re-card)').count();
+    await pg.locator('.re-clip:not(.re-card)').nth(2).click(); await pg.locator('.re-sheet .re-tool', { hasText: 'Delete' }).click(); await pg.waitForTimeout(300);
+    if (await pg.isVisible('.re-sh-done')) await pg.click('.re-sh-done');
+    console.log('clips after deleting one:', n1, '→', await pg.locator('.re-clip:not(.re-card)').count());
+    const t0 = Date.now(); await pg.click('.re-v-edit .re-next');
+    await pg.waitForTimeout(7000); await pg.screenshot({ path: '/tmp/s8_making.png' }); console.log('status while making:', await pg.textContent('.re-v-export .rl-msg'));
+    await pg.waitForSelector('.re-v-export video', { timeout: 60000 });
+    console.log('made in', Math.round((Date.now() - t0) / 1000), 's |', await pg.textContent('.re-v-export .rl-msg'));
+    console.log('video:', JSON.stringify(await RE.videoInfo(pg)));
     const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 8000 }).catch(() => null), pg.locator('.rl-sub', { hasText: 'Download' }).click()]);
     if (dl) { const p = '/tmp/' + dl.suggestedFilename(); await dl.saveAs(p); console.log('download:', dl.suggestedFilename(), fs.statSync(p).size, 'bytes'); }
     await pg.screenshot({ path: '/tmp/s8_done.png' });
