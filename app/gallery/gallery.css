@@ -1096,7 +1096,7 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
    Open: every icon 24 px and centred; Hub is bigger (38 px badge).
    Curled into the circle while scrolling: the four icons shrink to 16 px, Hub keeps its full size in the middle. */
 .tkg-global-nav{height:58px!important;width:min(370px,calc(100vw - 28px))!important}
-.tkg-global-nav.scrolled{width:132px!important;height:132px!important}
+.tkg-global-nav.scrolled{width:120px!important;height:120px!important}
 .tkg-nav-item{width:50px!important;height:42px!important}
 .tkg-nav-item:nth-child(1){transform:translate(calc(-50% - 132px),-50%)!important}
 .tkg-nav-item:nth-child(2){transform:translate(calc(-50% - 66px),-50%)!important}
@@ -1108,10 +1108,10 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 .tkg-global-nav .tkg-nav-item.tkg-nav-hub > svg{width:38px!important;height:38px!important}
 .tkg-global-nav.scrolled .tkg-nav-item{width:32px!important;height:28px!important}
 .tkg-global-nav.scrolled .tkg-nav-item > svg,.tkg-global-nav.scrolled .tkg-nav-item .tkg-moments-icon-stack{width:16px!important;height:16px!important}
-.tkg-global-nav.scrolled .tkg-nav-item:nth-child(1){transform:translate(calc(-50% - 46px),-50%)!important}
-.tkg-global-nav.scrolled .tkg-nav-item:nth-child(2){transform:translate(-50%,calc(-50% - 42px))!important}
-.tkg-global-nav.scrolled .tkg-nav-item:nth-child(4){transform:translate(-50%,calc(-50% + 42px))!important}
-.tkg-global-nav.scrolled .tkg-nav-item:nth-child(5){transform:translate(calc(-50% + 46px),-50%)!important}
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(1){transform:translate(calc(-50% - 40px),-50%)!important}
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(2){transform:translate(-50%,calc(-50% - 40px))!important}
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(4){transform:translate(-50%,calc(-50% + 40px))!important}
+.tkg-global-nav.scrolled .tkg-nav-item:nth-child(5){transform:translate(calc(-50% + 40px),-50%)!important}
 .tkg-global-nav.scrolled .tkg-nav-item.tkg-nav-hub{width:60px!important;height:50px!important}
 .tkg-global-nav.scrolled .tkg-nav-item.tkg-nav-hub > svg{width:38px!important;height:38px!important}
 
