@@ -32,7 +32,7 @@ const srv = http.createServer((req, res) => {
     await pg.evaluate(() => localStorage.setItem('pg_token', 'staff-test')); // photographer/PicGrades: reels without Find me
     if (mode === 'direct') {
       await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(500);
-      await pg.click('#pgvReel');
+      await pg.evaluate(() => pgOpenReel(MOMENTS.map(m => ({ id: m.id }))));   // the viewer's reel button is gone (step 28); same opener as Find me → Reel
     } else await pg.click('#pghReel');
     if (mode === 'server') { await pg.waitForSelector('.rl-wrap[data-view=inspo]', { timeout: 30000 }); console.log(mode, '| reel opened on the styles feed:', await pg.locator('.re-ins').count(), 'styles'); await ctx.close(); continue; }
     await RE.toEditor(pg);

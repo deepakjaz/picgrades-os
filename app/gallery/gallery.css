@@ -969,7 +969,7 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 .pgh-now{font:500 .72rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;opacity:.9;min-height:1em;transition:opacity .4s}
 .pgh-wrap{padding-top:22px}
 .pgh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-hairline);border:1px solid var(--border-hairline);margin-bottom:18px}
-.pgh-stats div{background:var(--bg-box);padding:12px 8px;text-align:center}
+.pgh-stats div,.pgh-stats button{background:var(--bg-box);padding:12px 8px;text-align:center;border:0;color:inherit;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s}.pgh-stats button:active{background:var(--border-hairline)}
 .pgh-stats b{display:block;font-family:var(--font-serif);font-weight:400;font-size:1.6rem;line-height:1.1}
 .pgh-stats span{font:500 .6rem/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
 .pgh-sec{margin-top:26px}

@@ -15,7 +15,7 @@ function pgOpenPost(photos) {
   const labels = {}; (GALLERY.events || []).forEach(e => e.photos.forEach(p => { labels[p.id] = e.name; }));
   pgPostLoad.then(() => PGPost.open({
     photos: photos, title: GALLERY.title, date: pgDate(GALLERY.eventDate), collections: pgAllCollections(), labels, api: pgApi,
-    openReel: (ph) => pgOpenReel(ph),
+    openReel: (ph) => pgOpenReel(ph),   // photos chosen in Post Edits go straight in
     recent: ((GALLERY && GALLERY.guestPosts) || []).map(p => String(p.fileId || '').split(',')[0]).filter(Boolean).slice(0, 8),
     post: (data) => new Promise((res, rej) => {
       const send = () => { let token = ''; try { token = localStorage.getItem('pg_token') || ''; } catch (e) {}

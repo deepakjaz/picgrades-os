@@ -44,6 +44,7 @@ const srv = http.createServer((req, res) => {
   const third = await pg.$eval('.re-ins:nth-child(3)', e => e.dataset.style);
   await pg.locator('.re-ins:nth-child(3) .re-use').click(); await pg.waitForSelector('.rl-picker'); await pg.waitForTimeout(500);
   console.log('picker numbers:', (await pg.$$eval('.rl-pick.on i', l => l.map(i => i.textContent))).join(','), '| collections:', await pg.$$eval('.re-colsel option', l => l.length));
+  for (let k = 0, n = Math.min(8, await pg.locator('.rl-pick').count()); k < n; k++) await pg.locator('.rl-pick').nth(k).click();   // step 28: the Hub reel starts with nothing chosen
   await pg.locator('.rl-pick').nth(1).click(); await pg.waitForTimeout(200); await pg.screenshot({ path: '/tmp/s22_picker.png' });
   await pg.locator('.rl-pick').nth(1).click();
   await pg.click('.rl-picker .re-next'); await pg.waitForSelector('.rl-wrap[data-view=edit]'); await pg.waitForTimeout(900);

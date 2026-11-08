@@ -979,7 +979,8 @@
     stopLoop(); stopPreview();
     var cols = (S.opt.collections || []).slice(); if (!cols.length) cols = [{ name: 'Your photos', photos: S.photos.map(function (p) { return { id: p.id }; }) }];
     if (S.phoneCol) cols.push(S.phoneCol);
-    var order = o.single ? [] : o.add ? [] : S.photos.filter(function (p) { return p.on; }).map(function (p) { return p.id; });
+    // opt.choose: the photos given are only for the style previews — you pick the reel's photos yourself (up to 80)
+    var order = o.single || o.add || (S.opt.choose && !S.P) ? [] : S.photos.filter(function (p) { return p.on; }).map(function (p) { return p.id; });
     var grid = el('div', { class: 'rl-pgrid' }), sel = el('select', { class: 're-colsel', 'aria-label': 'Collection' }), next = el('button', { type: 'button', class: 're-next', text: o.single ? 'Use' : 'Next' });
     cols.forEach(function (c, i) { sel.appendChild(el('option', { value: String(i), text: c.name + ' (' + c.photos.length + ')' })); });
     var count = el('span', { class: 'rl-pcount' });
@@ -1010,7 +1011,7 @@
     });
     var box = el('div', { class: 'rl-picker', role: 'dialog', 'aria-label': 'Choose photos' }, [
       el('div', { class: 're-bar' }, [el('button', { type: 'button', class: 're-ib', 'aria-label': 'Back', html: ic('left'), onclick: function () { box.remove(); if (!S.P) showInspo(); } }), sel, count, next]), phoneRow, grid]);
-    function upd() { count.textContent = o.single ? 'Choose one' : order.length + ' chosen'; grid.querySelectorAll('.rl-pick').forEach(function (t) { var n = order.indexOf(t.dataset.id); t.classList.toggle('on', n > -1); t.querySelector('i').textContent = n > -1 ? String(n + 1) : ''; }); next.disabled = !order.length; }
+    function upd() { count.textContent = o.single ? 'Choose one' : order.length ? order.length + ' chosen' : 'Choose up to 80'; grid.querySelectorAll('.rl-pick').forEach(function (t) { var n = order.indexOf(t.dataset.id); t.classList.toggle('on', n > -1); t.querySelector('i').textContent = n > -1 ? String(n + 1) : ''; }); next.disabled = !order.length; }
     function show(i) {
       grid.innerHTML = '';
       (cols[i].photos || []).forEach(function (p) {
