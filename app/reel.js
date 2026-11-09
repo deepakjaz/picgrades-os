@@ -203,9 +203,9 @@
   // layouts: how photos are placed in one shot. trans: how one shot changes to the next. fx: effects on the beat.
   var SERIF = '"Cormorant Garamond", Georgia, serif', MONO = '"IBM Plex Mono", monospace', SANS = '"Plus Jakarta Sans", system-ui, sans-serif';
   var TEMPLATES = {
-    south: { name: 'South · Kasavu', music: 'kasavu-morning', beats: [4], layouts: ['single'], trans: ['slide', 'fade'], card: 'kasavu', frame: true,
+    south: { name: 'South · Kasavu', music: 'road-trip', beats: [4], layouts: ['single'], trans: ['slide', 'fade'], card: 'kasavu', frame: true,
       fx: { pulse: 0.012, flashEvery: 8, flash: '231,200,115', flashA: 0.18 }, paper: '#F3EAD9', ink: '#3B2A1A', gold: '#C9A24A', gold2: '#E7C873', deep: '#5B1F14' },
-    soft: { name: 'Soft', music: 'kasavu-morning', beats: [4, 6], layouts: ['single', 'single', 'duo'], trans: ['fade', 'zoomfade'], card: 'minimal',
+    soft: { name: 'Soft', music: 'road-trip', beats: [4, 6], layouts: ['single', 'single', 'duo'], trans: ['fade', 'zoomfade'], card: 'minimal',
       fx: { pulse: 0, leak: true }, paper: '#F6EFEA', ink: '#2B2522', gold: '#B89A6A', deep: '#7A5C4A' },
     dynamic: { name: 'Dynamic', music: 'cocktail-night', beats: [2, 2, 1], layouts: ['punch', 'split2', 'single', 'grid3', 'punch'], trans: ['cut', 'whip', 'zoom', 'cut'], card: 'bold',
       fx: { pulse: 0.03, shake: 10, flashEvery: 4, flash: '255,255,255', flashA: 0.35 }, paper: '#0E0E0E', ink: '#FFFFFF', gold: '#FFD23F', deep: '#FFD23F' },
@@ -1226,7 +1226,7 @@
     var beats = (x.beats || []).map(Number).filter(function (b) { return b >= 1 && b <= 8; });
     if (!lay.length || !tr.length || !beats.length) return false;
     var fx = x.fx || {};
-    TEMPLATES[x.id] = { name: String(x.name).slice(0, 30), music: x.music || 'kasavu-morning', beats: beats, layouts: lay, trans: tr, card: KNOWN.cards[x.card] ? x.card : 'minimal', frame: !!x.frame,
+    TEMPLATES[x.id] = { name: String(x.name).slice(0, 30), music: x.music || 'road-trip', beats: beats, layouts: lay, trans: tr, card: KNOWN.cards[x.card] ? x.card : 'minimal', frame: !!x.frame,
       fx: { pulse: Math.min(0.05, +fx.pulse || 0), shake: Math.min(16, +fx.shake || 0), flashEvery: +fx.flashEvery || 0, flash: /^\d+,\d+,\d+$/.test(fx.flash || '') ? fx.flash : '255,255,255',
         flashA: Math.min(0.4, +fx.flashA || 0), leak: !!fx.leak, confetti: !!fx.confetti, rgb: !!fx.rgb },
       paper: hex(c.paper, '#F6EFEA'), ink: hex(c.ink, '#2B2522'), gold: hex(c.gold, '#B89A6A'), gold2: hex(c.gold2, hex(c.gold, '#B89A6A')), deep: hex(c.deep, '#7A5C4A'), forWhat: x.for || [], by: x.by || '' };

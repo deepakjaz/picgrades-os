@@ -1,17 +1,6 @@
 {
  "tracks": [
   {
-   "id": "kasavu-morning",
-   "title": "Kasavu Morning (veena)",
-   "file": "/app/music/kasavu-morning.mp3",
-   "bpm": 84,
-   "beat0": 0.0,
-   "seconds": 64,
-   "region": "south",
-   "credit": "",
-   "licence": "PicGrades original (made in-house)"
-  },
-  {
    "id": "temple-procession",
    "title": "Temple Procession (nadaswaram)",
    "file": "/app/music/temple-procession.mp3",
