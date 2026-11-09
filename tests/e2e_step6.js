@@ -86,7 +86,7 @@ const srv = http.createServer((req, res) => {
     console.log('iphone | lands on hub:', await pg.isVisible('#view-hub'), '| install card:', await pg.isVisible('#pghInstall'), '| manifest:', await pg.getAttribute('link[rel=manifest]', 'href'), '| app title:', await pg.getAttribute('#pgAppTitle', 'content'));
     await pg.click('#pghInstallBtn'); await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/s7_ios_install.png' });
     console.log('iphone | steps sheet:', await pg.isVisible('#iosSheet.show'));
-    await pg.click('#iosClose'); await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500); await pg.click('.pgx-mgrid .pgx-cell >> nth=0'); await pg.waitForTimeout(400); 
+    await pg.click('#iosClose'); await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500); 
     console.log('iphone | reel buttons:', await pg.locator('.pgm-item').first().locator('.pgm-btn').count(), '| full screen button hidden (iPhone cannot):', !(await pg.isVisible('#pgvFull')));
     await pg.screenshot({ path: '/tmp/s7_reel_iphone.png' });
     await pg.locator('.pgm-item').first().locator('.pgm-btn').first().click(); await pg.click('.pg-collection-none', { timeout: 1 }).catch(() => {});

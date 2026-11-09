@@ -16,6 +16,7 @@
       if (m.dark != null) document.documentElement.setAttribute('data-tkg-theme', m.dark ? 'dark' : 'light');
       if (!m.view || typeof GALLERY === 'undefined' || !GALLERY) return;
       if (m.view === 'photo') { const ev = (GALLERY.events || [])[0]; if (ev) openCollection(ev.name, 0); }
+      else if (m.view === 'event') { const ev = (GALLERY.events || [])[0]; if (ev && window.pgOpenEvent) pgOpenEvent(ev.name); }
       else switchViewFromNav(m.view);
       window.scrollTo(0, 0);
     });
@@ -65,7 +66,7 @@
   }
   function saveLook(part, box, done) {
     call('coupleLook', 'setLook', part)
-      .then(r => { GALLERY.theme = r.theme; GALLERY.layout = r.layout; showLook(); paintLook(box); showToast('Applied — every guest sees it now'); if (done) done(true); })
+      .then(r => { GALLERY.theme = r.theme; GALLERY.layout = r.layout; GALLERY.pages = r.pages || {}; showLook(); if (window.PGGrids) PGGrids.refresh(); paintLook(box); showToast('Applied — every guest sees it now'); if (done) done(true); })
       .catch(err => { showToast(err.message); if (done) done(false); });
   }
 
@@ -98,34 +99,52 @@
     b.setAttribute('aria-label', (l ? l.name : 'Original Hub') + (cur ? ' (in use)' : ' — preview'));
     return b;
   }
+  // Pages (step 36): the style of the page inside each event
+  const PAGE_STYLE = { collage: ['Collage', 'Each photo keeps its own shape, like a classic gallery'], mosaic: ['Mosaic', 'Big and small tiles mixed'], grid: ['Grid', 'All photos the same size'] };
+  const curStyle = () => ((GALLERY.pages || {}).event) || 'collage';
+  function styleCard(k, cur) {
+    const b = h('button', 'pgcp-layout pgcp-style' + (cur ? ' on' : '')); b.type = 'button'; b.dataset.eventstyle = k;
+    const mini = h('span', 'pgcp-mini pgcp-mini-' + k);
+    const pat = k === 'mosaic' ? [[2, 2], [1, 1], [1, 1], [1, 2], [1, 1], [2, 1], [1, 1]] : k === 'grid' ? Array(8).fill([1, 1]) : null;
+    if (pat) pat.forEach(([c, r]) => { const i = h('i'); i.style.gridColumn = 'span ' + c; i.style.gridRow = 'span ' + r; mini.appendChild(i); });
+    else [[3, 5, 2], [4, 2, 4], [2, 4, 3]].forEach(col => { const cEl = h('span', 'pgcp-ccol'); col.forEach(n => { const i = h('i'); i.style.height = (n * 9) + 'px'; cEl.appendChild(i); }); mini.appendChild(cEl); });
+    b.append(mini, h('b', '', PAGE_STYLE[k][0]), h('small', '', cur ? 'In use' : 'Tap to preview'));
+    b.setAttribute('aria-label', PAGE_STYLE[k][0] + ' — ' + PAGE_STYLE[k][1]);
+    return b;
+  }
   function paintLook(box) {
     if (!box || !box.isConnected) return;
     const th = box.querySelector('.pgcp-themes'), la = box.querySelector('.pgcp-layouts'); if (!th || !la) return;
     const themes = window.PGTheme ? PGTheme.list() : [], layouts = window.PGLayout ? PGLayout.list() : [];
     th.innerHTML = ''; th.appendChild(themeCard(ORIGINAL_T, !GALLERY.theme)); themes.forEach(t => th.appendChild(themeCard(t, GALLERY.theme === t.id)));
     la.innerHTML = ''; la.appendChild(layoutCard(null, !GALLERY.layout)); layouts.forEach(l => la.appendChild(layoutCard(l, GALLERY.layout === l.id)));
+    const ps = box.querySelector('.pgcp-pagestyles'); if (ps) { ps.innerHTML = ''; Object.keys(PAGE_STYLE).forEach(k => ps.appendChild(styleCard(k, curStyle() === k))); }
   }
   function lookPane() {
     const p = h('div', 'pgcp-pane', '<h4>Theme</h4><p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' +
-      '<h4>Hub layout</h4><p class="pgcp-note">How the Hub is arranged. Tap one to preview it.</p><div class="pgcp-row pgcp-layouts"></div>');
+      '<h4>Hub layout</h4><p class="pgcp-note">How the Hub is arranged. Tap one to preview it.</p><div class="pgcp-row pgcp-layouts"></div>' +
+      '<h4>Event page</h4><p class="pgcp-note">How the photos look inside each event. Tap one to preview it.</p><div class="pgcp-row pgcp-pagestyles"></div>');
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }
+      const st = e.target.closest('.pgcp-style'); if (st) { preview({ pages: { event: st.dataset.eventstyle } }, p.parentNode); return; }
       const l = e.target.closest('.pgcp-layout'); if (l) preview({ layout: l.dataset.layout }, p.parentNode);
     });
     return p;
   }
 
   // ---- the preview window ----
-  const PAGES = [['hub', 'Hub'], ['gallery', 'Gallery'], ['photo', 'Photo'], ['moments', 'Moments'], ['rooms', 'Notes']];
+  const PAGES = [['hub', 'Hub'], ['gallery', 'Events'], ['event', 'Event'], ['photo', 'Photo'], ['moments', 'Moments'], ['rooms', 'Notes']];
   function preview(want, box) {
     const themes = window.PGTheme ? PGTheme.list() : [], layouts = window.PGLayout ? PGLayout.list() : [];
     const lay = 'layout' in want ? layouts.find(x => x.id === want.layout) || null : layouts.find(x => x.id === GALLERY.layout) || null;
     // a layout comes with its own theme; "Keep my theme" tries it with the wedding's current theme instead
-    const state = { layout: lay ? lay.id : '', theme: 'theme' in want ? want.theme : (GALLERY.theme || ''), page: 'hub', dark: document.documentElement.getAttribute('data-tkg-theme') === 'dark' };
+    const state = { layout: lay ? lay.id : '', theme: 'theme' in want ? want.theme : (GALLERY.theme || ''), page: 'pages' in want ? 'event' : 'hub', dark: document.documentElement.getAttribute('data-tkg-theme') === 'dark',
+      event: want.pages && want.pages.event || curStyle() };
     const withOwn = 'layout' in want && lay && lay.theme && themes.some(t => t.id === lay.theme);
     if (withOwn) state.theme = lay.theme;
     const nameOf = () => {
       const t = themes.find(x => x.id === state.theme), l = layouts.find(x => x.id === state.layout);
+      if ('pages' in want) return 'Event page · ' + PAGE_STYLE[state.event][0];
       return 'layout' in want ? (l ? l.name : 'Original Hub') + ' · ' + (t ? t.name : 'Original theme') : (t ? t.name : 'Original');
     };
     const wrap = h('div', 'pgcp-pv'); wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-label', 'Preview');
@@ -139,7 +158,7 @@
     const post = m => { try { fr.contentWindow.postMessage(Object.assign({ pg: 'preview' }, m), location.origin); } catch (e) {} };
     const load = () => {
       wait.hidden = false;
-      fr.src = location.pathname + '?pgpreview=1&theme=' + encodeURIComponent(state.theme || 'original') + '&layout=' + encodeURIComponent(state.layout || 'original') + '#hub';
+      fr.src = location.pathname + '?pgpreview=1&theme=' + encodeURIComponent(state.theme || 'original') + '&layout=' + encodeURIComponent(state.layout || 'original') + '&eventstyle=' + encodeURIComponent(state.event) + '#hub';
       wrap.querySelector('.pgcp-pv-name').textContent = nameOf();
     };
     const onMsg = e => { if (e.origin === location.origin && e.source === fr.contentWindow && (e.data || {}).pg === 'preview-ready') { wait.hidden = true; post({ view: state.page, dark: state.dark }); } };
@@ -159,11 +178,11 @@
     }
     const close = () => { window.removeEventListener('message', onMsg); wrap.remove(); };
     wrap.querySelector('.pgcp-pv-back').addEventListener('click', close);
-    const same = state.theme === (GALLERY.theme || '') && state.layout === (GALLERY.layout || '');
+    const same = 'pages' in want ? state.event === curStyle() : state.theme === (GALLERY.theme || '') && state.layout === (GALLERY.layout || '');
     const ap = wrap.querySelector('.pgcp-pv-apply');
     if (same) { ap.textContent = 'This is in use now'; ap.disabled = true; }
     ap.addEventListener('click', () => {
-      const part = 'layout' in want ? { layout: state.layout, theme: state.theme } : { theme: state.theme };
+      const part = 'pages' in want ? { pages: JSON.stringify({ event: state.event }) } : 'layout' in want ? { layout: state.layout, theme: state.theme } : { theme: state.theme };
       ap.disabled = true; ap.textContent = 'Applying…';
       saveLook(part, box, ok => { if (ok) close(); else { ap.disabled = false; ap.textContent = 'Apply to the wedding'; } });
     });

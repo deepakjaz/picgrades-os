@@ -1322,3 +1322,20 @@ body.pgm-grid .pgx-togrid{display:none}
 @media (min-width:1100px){body.pgm-grid .pgx-mgrid{padding-left:40px;padding-right:40px}}
 #view-event{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
 .pgx-togrid{width:38px;justify-content:center}.pgx-togrid svg{width:18px;height:18px}
+/* event page styles (step 36): collage (own shapes, like Pixieset) · mosaic (big and small tiles) · grid */
+.pgx-body{container-type:inline-size}
+.pgx-grid{--gap:4px}.pgx-grid[data-cols="4"],.pgx-grid[data-cols="5"]{--gap:2px}
+@media (min-width:600px){.pgx-grid{--gap:8px}.pgx-grid[data-cols="4"],.pgx-grid[data-cols="5"]{--gap:6px}}
+.pgx-collage{display:flex;align-items:flex-start;gap:var(--gap)}
+.pgx-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:var(--gap)}
+.pgx-collage .pgx-cell{aspect-ratio:auto;min-height:140px;display:block;width:100%}
+.pgx-collage .pgx-cell.ready{min-height:0}
+.pgx-collage .pgx-cell img{height:auto}
+.pgx-mosaic{grid-auto-rows:calc((100cqw - (var(--c) - 1) * var(--gap)) / var(--c));grid-auto-flow:row dense;gap:var(--gap)}
+.pgx-mosaic .pgx-cell{aspect-ratio:auto;height:100%}
+.pgx-grid.pgx-grid{gap:var(--gap)}
+.pgcp-mini-collage{display:flex!important;gap:3px;align-items:flex-start}
+.pgcp-ccol{flex:1;display:flex;flex-direction:column;gap:3px}.pgcp-ccol i{display:block;border-radius:3px;background:var(--border-hairline)}
+.pgcp-ccol:nth-child(2) i:first-child{background:var(--cta-peach);opacity:.75}
+.pgcp-mini-mosaic i:first-child{background:var(--cta-peach);opacity:.75}
+.pgcp-mini-grid{grid-auto-rows:20px!important}

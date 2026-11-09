@@ -63,6 +63,12 @@ const srv = http.createServer((req, res) => {
   let G = call('getGallery', { g: pub.galleryId }).gallery;
   console.log('layout saved:', G.layout, '+ kept theme:', G.theme, '| Hub shows it:', await pg.evaluate(() => PGLayout.current()));
   await pg.screenshot({ path: '/tmp/s34_panel_look2.png' });
+  // event page style (step 36): preview on the Event page, then Apply
+  await pg.locator('.pgcp-style[data-eventstyle="mosaic"]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-style[data-eventstyle="mosaic"]'); await pvReady();
+  console.log('event style preview:', await pg.textContent('.pgcp-pv-name'), '| preview shows', await inFrame(() => (document.querySelector('#view-event.active .pgx-grid') || {}).className), '| wedding unchanged:', JSON.stringify(call('getGallery', { g: pub.galleryId }).gallery.pages));
+  await pg.screenshot({ path: '/tmp/s36_pv_mosaic.png' });
+  await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
+  console.log('Apply → saved', JSON.stringify(call('getGallery', { g: pub.galleryId }).gallery.pages), '| this phone', await pg.evaluate(() => PGGrids.eventStyle()));
   await pg.click('.pgcp-tabs [data-tab=functions]'); await pg.waitForTimeout(300);
   console.log('functions tab: switches', await pg.locator('.pgcp-sheet .pgf-sw').count(), '| no Plan switches for the couple:', !(await pg.locator('.pgcp-plan').count()));
   await pg.screenshot({ path: '/tmp/s34_panel_functions.png' });

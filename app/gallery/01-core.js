@@ -579,8 +579,8 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     GALLERY.likes = res.gallery.likes || {}; GALLERY.notes = res.gallery.notes || {}; GALLERY.recentNotes = res.gallery.recentNotes; GALLERY.isCouple = res.gallery.isCouple;
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate;
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
-    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
-    GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {};
+    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
+    GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {};
     if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
     GALLERY.guestPosts = res.gallery.guestPosts || [];
