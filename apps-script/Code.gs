@@ -151,7 +151,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step34-control-panel',
+    version: 'step36-page-styles',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -867,7 +867,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout'];   // theme / layout: the wedding's look, chosen in the app's Control Panel ('' = the original look)
+  'features', 'allowed', 'theme', 'layout', 'pages'];   // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
    // features: the couple's / photographer's on-off per function (JSON); allowed: PicGrades' master switches by plan (JSON, empty = all allowed)   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
@@ -1027,7 +1027,7 @@ function getGallery_(p) {
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
   m.features = featuresOf_(g);
-  m.theme = lookId_(g.theme); m.layout = lookId_(g.layout);
+  m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages);
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   return { gallery: m };
@@ -1432,11 +1432,19 @@ function saveLook_(g, p) {
   var out = {};
   if ('theme' in p) out.theme = lookId_(p.theme);
   if ('layout' in p) out.layout = lookId_(p.layout);
-  if (!('theme' in out) && !('layout' in out)) return { ok: false, error: 'Choose a theme or a layout.' };
+  if ('pages' in p) { var cur = pagesOf_(g.pages), want = pagesOf_(p.pages); Object.keys(want).forEach(function (k) { cur[k] = want[k]; }); out.pages = JSON.stringify(cur); }
+  if (!('theme' in out) && !('layout' in out) && !('pages' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
   out.updatedAt = fmt_(new Date());
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, out);
-  return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout) };
+  return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages) };
+}
+// Page styles (step 36): which style each page uses. Only known pages and styles are kept.
+var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'] };
+function pagesOf_(v) {
+  var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = {};
+  Object.keys(PAGE_STYLES).forEach(function (k) { if (PAGE_STYLES[k].indexOf(String(o[k])) > -1) out[k] = String(o[k]); });
+  return out;
 }
 /** Couple link: change the wedding's look. */
 function coupleLook_(p) { return saveLook_(coupleGallery_(p), p); }
@@ -1446,7 +1454,7 @@ function setLook_(p, user) { var x = staffGallery_(p.g, user); return saveLook_(
 function myRole_(p, user) {
   var x = staffGallery_(p.g, user), role = String(user.role || '').toLowerCase();
   return { role: isStaff_(user) ? 'picgrades' : 'photographer', canLock: role === 'admin', name: user.name || '', companyName: x.g.companyName || '',
-    features: featuresOf_(x.g), allowed: jsonObj_(x.g.allowed), theme: lookId_(x.g.theme), layout: lookId_(x.g.layout) };
+    features: featuresOf_(x.g), allowed: jsonObj_(x.g.allowed), theme: lookId_(x.g.theme), layout: lookId_(x.g.layout), pages: pagesOf_(x.g.pages) };
 }
 
 /** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.

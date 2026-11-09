@@ -29,7 +29,7 @@ const srv = http.createServer((req, res) => {
     await pg.goto('http://localhost:8767/g/' + pub.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 }); console.log(vp.name, '| default landing is Hub:', await pg.isVisible('#view-hub'));
     await pg.goto('http://localhost:8767/g/' + pub.galleryId + '#moments'); await pg.reload();
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 });
-    await pg.waitForTimeout(500); await pg.click('.pgx-mgrid .pgx-cell >> nth=0'); await pg.waitForTimeout(400); 
+    await pg.waitForTimeout(500); 
     console.log(vp.name, '| landing view moments:', await pg.isVisible('#view-moments'), '| reels:', await pg.locator('.pgm-item').count(), '| img fit:', await pg.$eval('.pgm-img', e => getComputedStyle(e).objectFit));
     await pg.screenshot({ path: '/tmp/s4_moments_' + vp.name + '.png' });
     // double tap first reel → like

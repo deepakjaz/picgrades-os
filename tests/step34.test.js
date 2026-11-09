@@ -40,5 +40,5 @@ assert(call('coupleFeatures', { g: gid, coupleKey: ck, features: { reel: 'on' } 
 r = call('setAllowed', { token: admin, g: gid, allowed: { reel: 'on' } });
 assert(r.features.reel === 'on', 'PicGrades allows it again');
 if (own) assert(!call('setAllowed', { token: ptok, g: gid, allowed: { reel: 'off' } }).ok, 'only PicGrades admins hold the master switches');
-assert(call('health', {}).version === 'step34-control-panel', 'backend version step34-control-panel');
+assert(/^step3[4-9]/.test(call('health', {}).version), 'backend version is step34 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 34 checks passed');
