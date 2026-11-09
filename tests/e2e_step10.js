@@ -58,7 +58,7 @@ const srv = http.createServer((req, res) => {
   console.log('guest notice:', await pg.isVisible('#pgNotice'), '|', await pg.textContent('#pgNoticeT'), '|', await pg.textContent('#pgNoticeP'));
   await pg.screenshot({ path: '/tmp/s10_notice.png' });
   console.log('status now:', (await pg.locator('#pgcMine em').allTextContents()).join(','));
-  await pg.click('#pgNoticeX'); await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500);
+  await pg.click('#pgNoticeX'); await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500); await pg.click('.pgx-mgrid .pgx-cell >> nth=0'); await pg.waitForTimeout(400); 
   const n = await pg.locator('.pgm-guest').count(); await pg.locator('.pgm-guest').last().scrollIntoViewIfNeeded(); await pg.waitForTimeout(900);
   console.log('guest moments in Root Moment:', n, '| video playing:', await pg.evaluate(() => { const v = document.querySelector('.pgm-guest video'); return v ? !v.paused : 'no video'; }), '| by:', await pg.locator('.pgm-guest .pgm-by').first().textContent());
   await pg.screenshot({ path: '/tmp/s10_guest_reel.png' });

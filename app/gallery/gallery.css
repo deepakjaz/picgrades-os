@@ -1286,3 +1286,39 @@ body.pg-nav4 .tkg-global-nav.scrolled .tkg-nav-item:nth-child(4){transform:trans
 .pgcp-pv-apply:disabled{opacity:.55}
 /* inside the preview window: no sheets popping up over the page */
 html.pg-previewing .reg-overlay:not(.show){visibility:hidden}
+
+/* ---------- Photo grids (step 35): event page like Pixieset, Moments like Instagram; 2–5 in a row ---------- */
+.pgx-grid{display:grid;grid-template-columns:repeat(var(--c,2),minmax(0,1fr));gap:4px;touch-action:pan-y}
+.pgx-grid[data-cols="4"],.pgx-grid[data-cols="5"]{gap:2px}
+.pgx-cell{position:relative;aspect-ratio:4/5;overflow:hidden;border:0;padding:0;margin:0;background:var(--border-hairline);cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:0}
+.pgx-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform var(--pg-motion,240ms) ease,opacity .3s}
+@media (hover:hover){.pgx-cell:hover img{transform:scale(1.035)}}
+.pgx-play{position:absolute;top:8px;right:8px;width:22px;height:22px;color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}.pgx-play svg{width:100%;height:100%}
+.pgx-cols{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--border-hairline)}
+.pgx-cols button{width:40px;height:32px;border:0;border-radius:9px;background:none;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pgx-cols button span{display:flex;gap:2px}.pgx-cols button i{width:3px;height:13px;border-radius:1px;background:currentColor;opacity:.75}
+.pgx-cols button.on{background:var(--bg-box);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}.pgx-cols button.on i{opacity:1}
+.pgx-cols.dark{background:rgba(255,255,255,.12)}.pgx-cols.dark button{color:rgba(255,255,255,.7)}.pgx-cols.dark button.on{background:rgba(255,255,255,.92);color:#111}
+/* the event page */
+#view-event .pgx-page{max-width:1680px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 64px) 0 0}
+.pgx-top{padding:0 12px}
+.pgx-back{display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 12px 0 6px;border-radius:18px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:600 13px var(--font-sans);cursor:pointer}
+.pgx-back svg{width:18px;height:18px}
+.pgx-head{padding:14px 16px 4px}.pgx-head .pg-module-title{margin:2px 0 4px}
+.pgx-sub{margin:0;font-size:.8rem;color:var(--ink-soft)}
+.pgx-bar{display:flex;justify-content:flex-end;padding:8px 12px 10px}
+.pgx-body{padding:0 2px}
+@media (min-width:600px){.pgx-top{padding:0 24px}.pgx-head{padding:18px 28px 6px}.pgx-bar{padding:8px 24px 14px}.pgx-body{padding:0 24px}.pgx-grid{gap:8px}.pgx-grid[data-cols="4"],.pgx-grid[data-cols="5"]{gap:6px}.pgx-cell{border-radius:6px}}
+@media (min-width:1100px){.pgx-head .pg-module-title{font-size:2.6rem}.pgx-head{display:flex;flex-direction:column;padding:26px 40px 6px}.pgx-top{padding:0 40px}.pgx-bar{padding:0 40px 18px}.pgx-body{padding:0 40px}}
+/* Moments: grid first, tap a photo = the full-screen feed at that photo */
+.pgx-mgrid{display:none}
+body.pgm-grid #pgmFeed{display:none}
+body.pgm-grid .pgx-mgrid{display:block;position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top,0px) + 76px) 2px calc(112px + env(safe-area-inset-bottom,0px));box-sizing:border-box}
+.pgx-mbar{display:flex;justify-content:flex-end;padding:0 10px 10px;max-width:1680px;margin:0 auto}
+.pgx-mbody{max-width:1680px;margin:0 auto}
+.pgx-mgrid .pgx-cell{background:#1c1917}
+body.pgm-grid .pgx-togrid{display:none}
+@media (min-width:600px){body.pgm-grid .pgx-mgrid{padding-left:24px;padding-right:24px}}
+@media (min-width:1100px){body.pgm-grid .pgx-mgrid{padding-left:40px;padding-right:40px}}
+#view-event{padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+.pgx-togrid{width:38px;justify-content:center}.pgx-togrid svg{width:18px;height:18px}

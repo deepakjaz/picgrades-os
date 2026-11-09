@@ -50,7 +50,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('.ps-go'); await pg.waitForFunction(() => /Posted|Sent/.test(document.querySelector('.pe-msg').textContent), null, { timeout: 20000 });
   console.log('post:', await pg.textContent('.pe-msg'));
   await pg.evaluate(() => PGPost.close()); await pg.waitForTimeout(800);
-  await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(600);
+  await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(600); await pg.click('.pgx-mgrid .pgx-cell >> nth=0'); await pg.waitForTimeout(400); 
   const albumItem = pg.locator('.pgm-guest').filter({ has: pg.locator('.pgm-album') });
   console.log('album in Root Moment:', await albumItem.count(), '| slides:', await albumItem.first().locator('.pgm-album img').count());
   await albumItem.first().scrollIntoViewIfNeeded(); await pg.waitForTimeout(500);

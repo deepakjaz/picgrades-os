@@ -87,6 +87,7 @@ function pgStatTap(k) {
     const likes = GALLERY.likes || {}, loved = pgAllPhotos().filter(x => likes[x.p.id] > 0).sort((a, b) => likes[b.p.id] - likes[a.p.id]).map(x => x.p);
     if (!loved.length) { showToast('No hearts yet — double-tap a photo you love'); return; }
     // a short-lived set, only for this viewing (not added to the gallery's collections)
+    if (window.pgOpenEvent) return pgOpenEvent('Loved photos', loved);   // a grid of them (step 35), opened for this viewing only
     GALLERY.personal = (GALLERY.personal || []).filter(x => !x.loved).concat([{ name: 'Loved photos', photos: loved, loved: true }]);
     openCollection('Loved photos', 0);
     GALLERY.personal = GALLERY.personal.filter(x => !x.loved);
@@ -111,7 +112,7 @@ function pgRenderHub() {
     t.appendChild(c);
     const h = document.createElement('h4'); h.textContent = ev.name; const sm = document.createElement('small'); sm.textContent = ev.photos.length + ' photos';
     t.appendChild(h); t.appendChild(sm);
-    t.addEventListener('click', () => openCollection(ev.name, 0));
+    t.addEventListener('click', () => (window.pgOpenEvent ? pgOpenEvent(ev.name) : openCollection(ev.name, 0)));
     row.appendChild(t);
   });
   // most loved

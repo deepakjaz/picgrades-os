@@ -29,7 +29,7 @@ const srv = http.createServer((req, res) => {
     await pg.goto('http://localhost:8767/g/' + pub.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 }); console.log(vp.name, '| default landing is Hub:', await pg.isVisible('#view-hub'));
     await pg.goto('http://localhost:8767/g/' + pub.galleryId + '#moments'); await pg.reload();
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 });
-    await pg.waitForTimeout(500);
+    await pg.waitForTimeout(500); await pg.click('.pgx-mgrid .pgx-cell >> nth=0'); await pg.waitForTimeout(400); 
     console.log(vp.name, '| landing view moments:', await pg.isVisible('#view-moments'), '| reels:', await pg.locator('.pgm-item').count(), '| img fit:', await pg.$eval('.pgm-img', e => getComputedStyle(e).objectFit));
     await pg.screenshot({ path: '/tmp/s4_moments_' + vp.name + '.png' });
     // double tap first reel → like
@@ -52,7 +52,7 @@ const srv = http.createServer((req, res) => {
     await pg.mouse.move(vp.width / 2, vp.height / 2); await pg.mouse.wheel(0, 2000); await pg.waitForTimeout(500);
     console.log(vp.name, '| collections page scrolled to:', await pg.evaluate(() => scrollY), '| Cocktail visible:', await pg.locator('.pg-collection', { hasText: 'Cocktail' }).isVisible());
     await pg.screenshot({ path: '/tmp/s4_collections_scrolled_' + vp.name + '.png' });
-    await pg.locator('.pg-collection', { hasText: 'Wedding' }).click(); await pg.waitForTimeout(600);
+    await pg.locator('.pg-collection', { hasText: 'Wedding' }).click(); await pg.waitForTimeout(600); await pg.click('#view-event .pgx-cell >> nth=0'); await pg.waitForTimeout(500); 
     const sheetHidden = await pg.$eval('#mkEditorialSheet', e => e.getBoundingClientRect().top >= innerHeight - 2);
     console.log(vp.name, '| viewer full screen:', await pg.$eval('#pgvFeed', e => Math.round(e.getBoundingClientRect().height)) === vp.height, '| text hidden:', sheetHidden, '| nav hidden:', !(await pg.isVisible('.tkg-global-nav')), '| counter:', await pg.textContent('#pgvCount'), '| fit:', await pg.$eval('.pgv-item img', e => getComputedStyle(e).objectFit));
     await pg.screenshot({ path: '/tmp/s4_viewer_' + vp.name + '.png' });

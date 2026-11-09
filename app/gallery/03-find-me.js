@@ -104,7 +104,7 @@ function pgMonogram() {
     im.onerror = () => { status('That file could not be opened. Choose a JPG or PNG photo.'); URL.revokeObjectURL(url); };
     im.src = url;
   });
-  $('fmOpen').addEventListener('click', () => { if (!lastResult) return; close(); openCollection(lastResult, 0); });
+  $('fmOpen').addEventListener('click', () => { if (!lastResult) return; close(); if (window.pgOpenEvent) pgOpenEvent(lastResult); else openCollection(lastResult, 0); });
   $('fmAgain').addEventListener('click', reset);
   $('fmClose').addEventListener('click', close);
   back.addEventListener('click', close);

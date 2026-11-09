@@ -102,7 +102,7 @@ function pgRenderMine(posts) {
   });
   if (posts) pgRenderMine.posts = posts;
   box.innerHTML = rows.join(''); box.classList.toggle('hidden', !rows.length);
-  box.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => { const s = (pgStore('sets') || []).find(x => x.code === b.dataset.set); if (s) openCollection(s.name, 0); }));
+  box.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => { const s = (pgStore('sets') || []).find(x => x.code === b.dataset.set); if (s) pgOpenEvent(s.name); }));
 }
 function pgNotice(t, p) { const n = document.getElementById('pgNotice'); document.getElementById('pgNoticeT').textContent = t; document.getElementById('pgNoticeP').textContent = p; n.classList.remove('hidden'); }
 document.getElementById('pgNoticeX').addEventListener('click', () => document.getElementById('pgNotice').classList.add('hidden'));
@@ -257,5 +257,5 @@ pgAfter('pgRenderHub', () => {
   if (pgStore('couple') && !GALLERY.isCouple) pgApi('coupleQueue').then(() => { GALLERY.isCouple = true; if (window.pgCoupleInit) pgCoupleInit(); }).catch(() => pgStore('couple', null));
   else if (window.pgCoupleInit) pgCoupleInit();
   const code = new URLSearchParams(location.search).get('set');
-  if (code) pgApi('getSet', { code }).then(r => { pgAddSavedSet({ code, name: r.name, ids: r.ids }); openCollection(r.name, 0); }).catch(e => showToast(e.message));
+  if (code) pgApi('getSet', { code }).then(r => { pgAddSavedSet({ code, name: r.name, ids: r.ids }); pgOpenEvent(r.name); }).catch(e => showToast(e.message));
 });

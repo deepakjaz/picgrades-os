@@ -71,7 +71,7 @@
     else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); go(-1); }
   });
 
-  document.getElementById('pgvBack').addEventListener('click', () => switchView('gallery'));
+  document.getElementById('pgvBack').addEventListener('click', () => switchView(window.pgViewerBackTo ? pgViewerBackTo() : 'gallery'));   // back to the event's grid (step 35)
   likeEl.addEventListener('click', () => { const m = MOMENTS[activeIdx]; if (m) pgToggleLike(m); });
   document.getElementById('pgvNote').addEventListener('click', () => document.getElementById('mkCommentBtn').click());
   document.getElementById('pgvShare').addEventListener('click', pgShare);
