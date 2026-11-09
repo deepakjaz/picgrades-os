@@ -44,7 +44,7 @@
   }
   function choose() {
     const q = new URLSearchParams(location.search).get('theme');
-    const id = q || store('pg_theme_pick') || (window.GALLERY && GALLERY.theme) || '';
+    const id = q || store('pg_theme_pick') || (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.theme) || '';
     return THEMES.find(t => t.id === id) || null;
   }
   // start in the last theme at once (no flash), then load the list
