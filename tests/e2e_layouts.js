@@ -57,8 +57,7 @@ const srv = http.createServer((req, res) => {
   // functions still work from the blocks
   await pg.evaluate(() => { PGLayout.apply('bento-concierge'); switchViewFromNav('hub'); });
   const tap = async (sel) => { await pg.locator(sel).first().scrollIntoViewIfNeeded(); await pg.locator(sel).first().click(); await pg.waitForTimeout(600); };
-  await tap('#pgLay .pgl-stat'); console.log('number Photos → page:', await pg.evaluate(() => document.querySelector('.pg-view.active').id));
-  await pg.evaluate(() => switchViewFromNav('hub'));
+  console.log('no number box in the starting layouts (step 33):', await pg.evaluate(() => PGLayout.list().every(l => !l.blocks.some(b => b.block === 'stats'))));
   await tap('#pgLay .pgl-evt'); console.log('event → viewer:', await pg.evaluate(() => document.querySelector('.pg-view.active').id + ' / ' + CURRENT_SET));
   await pg.evaluate(() => switchViewFromNav('hub'));
   await tap('#pgLay .pgl-reel'); await pg.waitForSelector('.rl-wrap', { timeout: 30000 }); console.log('Reel tile → Reel Edits opens:', true); await pg.evaluate(() => PGReel.close());

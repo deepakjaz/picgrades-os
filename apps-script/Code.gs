@@ -64,7 +64,8 @@ var PUBLIC_ROUTES = {
   myPosts: myPosts_,
   coupleQueue: coupleQueue_,
   couplePost: couplePost_,
-  coupleThanks: coupleThanks_
+  coupleThanks: coupleThanks_,
+  coupleFeatures: coupleFeatures_
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -80,7 +81,8 @@ var USER_ROUTES = {
   facesStatus: facesStatus_,
   saveFaces: saveFaces_,
   facesProxy: facesProxy_,
-  sendGallery: sendGallery_
+  sendGallery: sendGallery_,
+  setFeatures: setFeatures_
 };
 
 // Admin or editor (order queue + delivery)
@@ -145,7 +147,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step21-studio',
+    version: 'step33-switches',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -860,7 +862,8 @@ function ensureColumns_(name, cols) {
 var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDate', 'folderId', 'folderUrl', 'manifestFileId',
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
-  'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio'];   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
+  'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
+  'features', 'allowed'];   // features: the couple's / photographer's on-off per function (JSON); allowed: PicGrades' master switches by plan (JSON, empty = all allowed)   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
 var ROOT_FOLDER_RE = /^0*_?root[ _-]*moments?$/i;
@@ -1018,6 +1021,7 @@ function getGallery_(p) {
   m.mine = {};   // each phone remembers its own hearts (no per-phone scan on the server)
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
+  m.features = featuresOf_(g);
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   return { gallery: m };
@@ -1134,7 +1138,7 @@ function facesStatus_(p, user) {
   return {
     gallery: { galleryId: g.galleryId, title: g.title, studio: g.companyName, catalogName: o.catalogName,
       status: g.facesStatus || '', faceCount: Number(g.faceCount || 0), sentAt: g.sentAt || '', sentTo: g.sentTo || '',
-      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g) },
+      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g), features: featuresOf_(g) },
     photos: photos, faces: f
   };
 }
@@ -1376,6 +1380,33 @@ function coupleThanks_(p) {
   updateRowByNumber_('Galleries', g._row, { thanksNote: text });
   return { thanks: text };
 }
+
+// ---------- Feature switches (step 33) ----------
+// Each function of a wedding app can be switched on or off. Root Moment itself is always on.
+// Three levels: PicGrades' master switches ('allowed', by plan — set later from the admin side) → the photographer and the couple ('features').
+// A function PicGrades has not allowed is 'locked': nobody else can switch it on.
+var FEATURE_KEYS = ['findme', 'reel', 'post', 'upload', 'notes', 'hearts', 'download', 'share', 'install'];
+function jsonObj_(s) { try { var o = JSON.parse(String(s || '') || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch (e) { return {}; } }
+/** on / off / locked for every function of this wedding. */
+function featuresOf_(g) {
+  var f = jsonObj_(g.features), a = jsonObj_(g.allowed), out = {};
+  FEATURE_KEYS.forEach(function (k) { out[k] = a[k] === 'off' ? 'locked' : f[k] === 'off' ? 'off' : 'on'; });
+  return out;
+}
+function saveFeatures_(g, input) {
+  var want = typeof input === 'string' ? jsonObj_(input) : (input || {}), cur = jsonObj_(g.features), a = jsonObj_(g.allowed);
+  FEATURE_KEYS.forEach(function (k) {
+    if (!(k in want) || a[k] === 'off') return;   // locked ones stay as they are
+    cur[k] = String(want[k]) === 'off' ? 'off' : 'on';
+  });
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { features: JSON.stringify(cur) }); g.features = JSON.stringify(cur);
+  return { features: featuresOf_(g) };
+}
+/** Couple link: switch functions on or off. */
+function coupleFeatures_(p) { return saveFeatures_(coupleGallery_(p), p.features); }
+/** Photographer (logged in, own studio only) or PicGrades staff: switch functions on or off. */
+function setFeatures_(p, user) { var x = staffGallery_(p.g, user); return saveFeatures_(x.g, p.features); }
 
 /** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.
  *  Only photos of a published gallery; at most 4 per call and 150 per device per hour. */
