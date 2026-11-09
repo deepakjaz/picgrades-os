@@ -1,7 +1,6 @@
 // Themes (step 31): the whole app's skin — colours (light and dark), fonts, corner roundness, glass, motion.
 // The themes live in /app/themes/themes.json (designed by Gemini "G" and ChatGPT "C", checked and merged by tools/merge_designs.py).
-// Which theme: ?theme=<id> in the link → the test menu choice → the wedding's own theme (GALLERY.theme, set later in the control panel).
-// Test menu: open the gallery with ?themes once; a small "Theme" button then stays until you close it.
+// Which theme: the wedding's own theme (GALLERY.theme, chosen in the Control Panel, step 34). ?theme=<id> in the link previews one on this phone only.
 // Part of the wedding gallery (app/gallery.html). Files load in number order.
 (function pgThemes() {
   let THEMES = [];
@@ -42,41 +41,25 @@
     store('pg_theme_cache', JSON.stringify(t));   // the next visit starts in this theme straight away
     if (window.pgThemeMenuPaint) pgThemeMenuPaint();
   }
+  const galleryKnown = () => typeof GALLERY !== 'undefined' && !!GALLERY;
   function choose() {
     const q = new URLSearchParams(location.search).get('theme');
-    const id = q || store('pg_theme_pick') || (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.theme) || '';
+    const id = q || (galleryKnown() ? GALLERY.theme || '' : '');
     return THEMES.find(t => t.id === id) || null;
   }
+  function clear() { store('pg_theme_cache', null); const s = document.getElementById('pgThemeVars'); if (s) s.remove(); delete document.documentElement.dataset.pgTheme; }
+  // the wedding's theme (or the original look); before the gallery has loaded, the cached theme stays to avoid a flash
+  function sync() { if (!THEMES.length) return; const t = choose(); if (t) { if (document.documentElement.dataset.pgTheme !== t.id) apply(t); } else if (galleryKnown()) clear(); }
+  ['pg_theme_pick', 'pg_theme_test'].forEach(k => store(k, null));   // old test-menu choices no longer override the wedding
   // start in the last theme at once (no flash), then load the list
   try { const c = JSON.parse(store('pg_theme_cache') || 'null'); if (c && c.id) apply(c); } catch (e) {}
   const ready = fetch('/app/themes/themes.json').then(r => r.json()).then(d => {
     THEMES = (d.themes || []).filter(t => t && t.id && t.light && t.dark && t.fonts);
-    const t = choose(); if (t) apply(t); else { const s = document.getElementById('pgThemeVars'); if (s && !store('pg_theme_pick')) { s.remove(); store('pg_theme_cache', null); delete document.documentElement.dataset.pgTheme; } }
-    return THEMES;
+    sync(); return THEMES;
   }).catch(() => []);
-  window.PGTheme = { ready, list: () => THEMES.slice(), apply: id => { const t = THEMES.find(x => x.id === id); if (t) { store('pg_theme_pick', id); apply(t); } return !!t; },
-    reset: () => { store('pg_theme_pick', null); store('pg_theme_cache', null); const s = document.getElementById('pgThemeVars'); if (s) s.remove(); delete document.documentElement.dataset.pgTheme; if (window.pgThemeMenuPaint) pgThemeMenuPaint(); },
-    current: () => document.documentElement.dataset.pgTheme || '' };
-
-  // ---- test menu (only with ?themes; stays until closed) ----
-  if (new URLSearchParams(location.search).has('themes')) store('pg_theme_test', '1');
-  if (store('pg_theme_test') !== '1') return;
-  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'pg-thbtn'; btn.textContent = 'Theme';
-  const sheet = document.createElement('div'); sheet.className = 'pg-thsheet'; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Test themes');
-  document.body.append(btn, sheet);
-  btn.addEventListener('click', () => sheet.classList.toggle('show'));
-  window.pgThemeMenuPaint = function () {
-    const cur = PGTheme.current();
-    btn.textContent = 'Theme · ' + ((THEMES.find(t => t.id === cur) || {}).name || 'Original');
-    sheet.innerHTML = '<div class="pg-thtop"><b>Test themes</b><button type="button" data-x="1" aria-label="Close test menu">Hide menu</button></div>' +
-      '<button type="button" class="pg-throw' + (cur ? '' : ' on') + '" data-id=""><i style="background:#F6EFEA"></i><i style="background:#B8431D"></i><span>Original<small>current app look</small></span></button>' +
-      THEMES.map(t => `<button type="button" class="pg-throw${t.id === cur ? ' on' : ''}" data-id="${t.id}"><i style="background:${t.light.bg}"></i><i style="background:${t.light.accent}"></i><i style="background:${t.dark.bg}"></i>` +
-        `<span style="font-family:'${t.fonts.display}',serif">${t.name}<small>${t.fonts.display} + ${t.fonts.body} · by ${t.by === 'G' ? 'Gemini' : 'ChatGPT'}</small></span></button>`).join('');
-  };
-  sheet.addEventListener('click', e => {
-    const x = e.target.closest('[data-x]'); if (x) { store('pg_theme_test', null); btn.remove(); sheet.remove(); return; }
-    const r = e.target.closest('.pg-throw'); if (!r) return;
-    if (r.dataset.id) PGTheme.apply(r.dataset.id); else PGTheme.reset();
-  });
-  ready.then(() => pgThemeMenuPaint());
+  pgAfter('pgRenderHub', sync);
+  // apply(id) shows a theme on this phone straight away (the Control Panel saves it for the wedding); '' = the original look
+  window.PGTheme = { ready, list: () => THEMES.slice(), sync, current: () => document.documentElement.dataset.pgTheme || '',
+    apply: id => { const t = THEMES.find(x => x.id === id); if (t) apply(t); else if (!id) clear(); return !!t || !id; },
+    reset: () => clear() };
 })();

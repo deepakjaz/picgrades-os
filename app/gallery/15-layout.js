@@ -1,12 +1,11 @@
 // Hub layouts (step 32): the Hub drawn from a layout — which blocks, in what order, what size, which style.
 // Layouts live in /app/themes/layouts.json (5 by Gemini "G", 5 by ChatGPT "C"). Blocks sit on a 4-column grid (iPhone-widget style).
 // Every block only shows things and then uses the Hub's existing buttons and helpers, so each function works exactly as before.
-// Which layout: ?layout=<id> → the test menu choice → the wedding's own layout (GALLERY.layout, set later in the control panel).
+// Which layout: the wedding's own layout (GALLERY.layout, chosen in the Control Panel, step 34). ?layout=<id> in the link previews one on this phone only.
 // No layout = the original Hub, untouched. The photographer's own page (/p/…) keeps its Hub.
 // Part of the wedding gallery (app/gallery.html). Files load in number order.
 (function pgLayouts() {
   let LAYOUTS = [], cur = null;
-  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } };
   const SIZE = { S: [1, 1], W: [2, 1], M: [2, 2], L: [4, 2], XL: [4, 3], XXL: [4, 4] };
   const $ = id => document.getElementById(id);
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
@@ -136,29 +135,14 @@
   }
   function choose() {
     const q = new URLSearchParams(location.search).get('layout');
-    const id = q || store('pg_layout_pick') || (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.layout) || '';
+    const id = q || (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.layout) || '';
     return LAYOUTS.find(l => l.id === id) || null;
   }
+  try { localStorage.removeItem('pg_layout_pick'); } catch (e) {}   // old test-menu choice no longer overrides the wedding
   const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
   pgAfter('pgRenderHub', () => { if (LAYOUTS.length) { cur = choose(); render(); } });
+  // apply(id) shows a layout straight away (the Control Panel saves it for the wedding); '' = the original Hub
   window.PGLayout = { ready, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render,
-    apply: (id, withTheme) => { const l = LAYOUTS.find(x => x.id === id); if (!l) return false; store('pg_layout_pick', id); cur = l; if (withTheme !== false && l.theme && window.PGTheme) PGTheme.apply(l.theme); render(); paintMenu(); return true; },
-    reset: () => { store('pg_layout_pick', null); cur = null; render(); paintMenu(); } };
-
-  // ---- test menu (shows with the Theme test button: open once with ?themes) ----
-  let btn = null, sheet = null;
-  function paintMenu() {
-    if (!btn) return;
-    btn.textContent = 'Layout · ' + (cur ? cur.name : 'Original');
-    sheet.innerHTML = '<div class="pg-thtop"><b>Test Hub layouts</b><small style="font:500 11px system-ui;color:#777">a layout also brings its theme</small></div>' +
-      '<button type="button" class="pg-throw' + (cur ? '' : ' on') + '" data-id=""><span>Original Hub<small>today’s layout</small></span></button>' +
-      LAYOUTS.map(l => `<button type="button" class="pg-throw${cur && cur.id === l.id ? ' on' : ''}" data-id="${l.id}"><span>${esc(l.name)}<small>${esc(l.idea || '')} · ${l.blocks.length} blocks · theme ${esc(l.theme)} · by ${l.by === 'G' ? 'Gemini' : 'ChatGPT'}</small></span></button>`).join('');
-  }
-  if (store('pg_theme_test') === '1' || new URLSearchParams(location.search).has('themes')) {
-    btn = h('button', 'pg-thbtn pg-laybtn', 'Layout'); btn.type = 'button'; sheet = h('div', 'pg-thsheet pg-laysheet'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Test layouts');
-    document.body.append(btn, sheet);
-    btn.addEventListener('click', () => { sheet.classList.toggle('show'); const ts = document.querySelector('.pg-thsheet:not(.pg-laysheet)'); if (ts) ts.classList.remove('show'); });
-    sheet.addEventListener('click', e => { const r = e.target.closest('.pg-throw'); if (!r) return; if (r.dataset.id) PGLayout.apply(r.dataset.id); else PGLayout.reset(); sheet.classList.remove('show'); switchViewFromNav('hub'); window.scrollTo(0, 0); });
-    ready.then(paintMenu);
-  }
+    apply: id => { const l = LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
+    reset: () => { cur = null; render(); } };
 })();

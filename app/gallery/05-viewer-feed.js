@@ -219,7 +219,8 @@ async function pgDownload(m) {
     document.getElementById('pgAppTitle').setAttribute('content', String(GALLERY.title || 'Wedding Gallery').slice(0, 30));
     if (!document.querySelector('link[rel=manifest]')) {
       const l = document.createElement('link'); l.rel = 'manifest';
-      l.href = '/api/manifest?g=' + encodeURIComponent(GALLERY_ID) + '&n=' + encodeURIComponent(GALLERY.title || 'Wedding Gallery');
+      const ck = typeof pgStore === 'function' ? pgStore('couple') : null;   // the couple's installed app opens in couple mode
+      l.href = '/api/manifest?g=' + encodeURIComponent(GALLERY_ID) + '&n=' + encodeURIComponent(GALLERY.title || 'Wedding Gallery') + (ck ? '&c=' + encodeURIComponent(ck) : '');
       document.head.appendChild(l);
     }
   };

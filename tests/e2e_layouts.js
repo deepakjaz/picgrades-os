@@ -35,13 +35,13 @@ const srv = http.createServer((req, res) => {
   pg.on('pageerror', e => errors.push(e.message));
   await pg.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
   const FONTS = await require('./fonts_local').install(pg);
-  await pg.goto('http://localhost:8797/g/' + pub.galleryId + '?themes&couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(800);
+  await pg.goto('http://localhost:8797/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(800);
   await pg.waitForFunction(() => window.PGLayout && PGLayout.list().length, null, { timeout: 15000 });
   // give the test wedding hearts, notes and face search so every block shows
   await pg.evaluate(() => { const a = pgAllPhotos().map(x => x.p.id); GALLERY.faceSearch = true; GALLERY.likes = { [a[3]]: 9, [a[7]]: 6, [a[1]]: 4, [a[11]]: 2 }; GALLERY.notes = { [a[3]]: 2 };
     GALLERY.recentNotes = [{ name: 'Mira Kapoor', text: 'The morning light in the courtyard was unforgettable. Wishing you endless joy.', at: '', photoId: a[3] }, { name: 'Rohit', text: 'What a celebration!', at: '', photoId: a[7] }]; GALLERY.city = 'Udaipur'; pgRenderHub(); });
   const list = await pg.evaluate(() => PGLayout.list().map(l => ({ id: l.id, name: l.name, n: l.blocks.length, theme: l.theme })));
-  console.log('layouts:', list.length, '| layout button:', await pg.textContent('.pg-laybtn'));
+  console.log('layouts:', list.length, '| no test menu any more:', !(await pg.locator('.pg-laybtn').count()));
   for (const l of list) {
     await pg.evaluate(id => { PGLayout.apply(id); document.documentElement.setAttribute('data-tkg-theme', 'light'); switchViewFromNav('hub'); window.scrollTo(0, 0); }, l.id);
     await pg.evaluate(() => document.fonts.ready); await pg.waitForTimeout(700);

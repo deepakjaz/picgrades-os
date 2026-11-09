@@ -2,7 +2,7 @@
 // The backend sends GALLERY.features = { findme, reel, post, upload, notes, hearts, download, share, install } → 'on' | 'off' | 'locked'.
 // 'locked' = PicGrades has not given this function (by plan); it behaves like off and the couple cannot switch it on.
 // Off means gone everywhere: its buttons and Hub blocks hide, and the function itself refuses to run (double-tap heart, etc.).
-// The couple switches them from the Hub ("Functions"); the photographer from their login (admin page). Both for now.
+// The couple, the photographer and PicGrades switch them in the Control Panel (the gear in the bottom bar, 17-control.js).
 // Part of the wedding gallery (app/gallery.html). Files load in number order.
 (function pgFeatures() {
   const KEYS = [
@@ -52,40 +52,6 @@
     for (const [k] of KEYS) if (!on(k) && e.target.closest && e.target.closest(HIDE[k])) { e.preventDefault(); e.stopImmediatePropagation(); return; }
   }, true);
 
-  // ---- the couple's switches (Hub › Functions) ----
-  let btn = null;
-  function sheet() {
-    const back = document.createElement('div'); back.className = 'overlay-backdrop show';
-    const box = document.createElement('div'); box.className = 'reg-overlay show pgf-sheet'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Functions');
-    const close = () => { box.remove(); back.remove(); };
-    back.addEventListener('click', close);
-    box.innerHTML = '<div class="reg-overlay-handle"></div><h3 class="fm-title">Functions</h3><p class="pgf-sub">Switch off anything you don’t want in your wedding app. Root Moment and your photos are always there. Changes reach every guest straight away.</p>';
-    const list = document.createElement('div'); list.className = 'pgf-list';
-    KEYS.forEach(([k, name, line]) => {
-      const st = (GALLERY.features || {})[k] || 'on', locked = st === 'locked';
-      const row = document.createElement('label'); row.className = 'pgf-row' + (locked ? ' locked' : '');
-      row.innerHTML = '<div><b>' + name + '</b><small>' + (locked ? 'Not included in this gallery’s plan' : line) + '</small></div>';
-      const sw = document.createElement('input'); sw.type = 'checkbox'; sw.className = 'pgf-sw'; sw.checked = st === 'on'; sw.disabled = locked; sw.dataset.k = k; sw.setAttribute('aria-label', name);
-      sw.addEventListener('change', () => {
-        const before = GALLERY.features[k]; GALLERY.features[k] = sw.checked ? 'on' : 'off'; paint(); if (window.pgRenderHub) pgRenderHub();
-        pgApi('coupleFeatures', { features: JSON.stringify({ [k]: sw.checked ? 'on' : 'off' }) })
-          .then(r => { GALLERY.features = r.features; paint(); showToast(name + (sw.checked ? ' is on' : ' is off')); })
-          .catch(err => { GALLERY.features[k] = before; sw.checked = before === 'on'; paint(); if (window.pgRenderHub) pgRenderHub(); showToast(err.message); });
-      });
-      row.appendChild(sw); list.appendChild(row);
-    });
-    const done = document.createElement('button'); done.type = 'button'; done.className = 'mk-btn-peach ios-wide'; done.textContent = 'Done'; done.addEventListener('click', close);
-    box.append(list, done); document.body.append(back, box);
-  }
-  function coupleButton() {
-    if (btn || typeof GALLERY === 'undefined' || !GALLERY || GALLERY.isStudio || !(window.pgIsCouple ? pgIsCouple() : GALLERY.isCouple)) return;
-    btn = document.createElement('button'); btn.type = 'button'; btn.className = 'pgf-open'; btn.id = 'pgfOpen';
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Functions</span>';
-    btn.addEventListener('click', sheet);
-    document.getElementById('view-hub').appendChild(btn);
-  }
-  pgAfter('pgRenderHub', () => { if (!GALLERY.features) GALLERY.features = {}; paint(); guards(); coupleButton(); });
-  const ci = window.pgCoupleInit;   // the couple link is confirmed a moment after the page opens
-  window.pgCoupleInit = function () { const r = ci ? ci.apply(this, arguments) : undefined; coupleButton(); return r; };
-  window.PGFeatures = { keys: () => KEYS.map(k => k[0]), on, paint, open: sheet };
+  pgAfter('pgRenderHub', () => { if (!GALLERY.features) GALLERY.features = {}; paint(); guards(); });
+  window.PGFeatures = { keys: () => KEYS.map(k => k[0]), list: () => KEYS.map(k => k.slice()), on, paint };
 })();

@@ -29,5 +29,5 @@ f = call('getGallery', { g: gid }).gallery.features;
 assert(f.post === 'locked', 'a function PicGrades has not allowed shows as locked');
 r = call('coupleFeatures', { g: gid, coupleKey: ck, features: { post: 'on' } });
 assert(r.features.post === 'locked', 'the couple cannot switch on a locked function');
-assert(call('health', {}).version === 'step33-switches', 'backend version step33-switches');
+assert(/^step3[3-9]/.test(call('health', {}).version), 'backend version is step33 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 33 checks passed');
