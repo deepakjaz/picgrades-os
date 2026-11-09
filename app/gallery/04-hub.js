@@ -75,13 +75,31 @@ function pgRenderNotes() {
   if (list.length) wall.replaceChildren(...list.map(pgNoteEl));
   else { const e = document.createElement('div'); e.className = 'pgh-empty'; e.textContent = 'No notes yet. Open any photo and tap the note icon to leave the first blessing.'; wall.replaceChildren(e); }
 }
+// The four numbers on the Hub open what they count.
+function pgStatTap(k) {
+  if (k === 'photos' || k === 'events') return switchViewFromNav('gallery');
+  if (k === 'notes') {
+    const sec = document.getElementById('pghNotesSec');
+    if (sec && !sec.classList.contains('hidden')) return sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return switchViewFromNav('rooms');
+  }
+  if (k === 'hearts') {
+    const likes = GALLERY.likes || {}, loved = pgAllPhotos().filter(x => likes[x.p.id] > 0).sort((a, b) => likes[b.p.id] - likes[a.p.id]).map(x => x.p);
+    if (!loved.length) { showToast('No hearts yet — double-tap a photo you love'); return; }
+    // a short-lived set, only for this viewing (not added to the gallery's collections)
+    GALLERY.personal = (GALLERY.personal || []).filter(x => !x.loved).concat([{ name: 'Loved photos', photos: loved, loved: true }]);
+    openCollection('Loved photos', 0);
+    GALLERY.personal = GALLERY.personal.filter(x => !x.loved);
+  }
+}
 let pgHeroTimer = null;
 function pgRenderHub() {
   const all = pgAllPhotos();
   const likes = GALLERY.likes || {}, notesN = GALLERY.notes || {};
   const totalLikes = Object.values(likes).reduce((t, v) => t + v, 0), totalNotes = Object.values(notesN).reduce((t, v) => t + v, 0);
-  const stat = (v, l) => '<div><b>' + Number(v).toLocaleString('en-IN') + '</b><span>' + l + '</span></div>';
+  const stat = (v, l) => '<button type="button" data-stat="' + l.toLowerCase() + '"><b>' + Number(v).toLocaleString('en-IN') + '</b><span>' + l + '</span></button>';
   document.getElementById('pghStats').innerHTML = stat(all.length, 'Photos') + stat((GALLERY.events || []).length, 'Events') + stat(totalLikes, 'Hearts') + stat(totalNotes, 'Notes');
+  document.querySelectorAll('#pghStats [data-stat]').forEach(b => b.addEventListener('click', () => pgStatTap(b.dataset.stat)));
   document.getElementById('pghStudio').textContent = GALLERY.studio || 'Your photographer';
   document.getElementById('pgHubTitle').textContent = GALLERY.title || 'Wedding Hub';
   document.getElementById('pgHubEyebrow').textContent = 'Wedding Hub' + (pgDate(GALLERY.eventDate) ? ' · ' + pgDate(GALLERY.eventDate) : '');

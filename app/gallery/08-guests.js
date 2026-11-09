@@ -44,11 +44,11 @@ document.addEventListener('click', (e) => {
 }, true);
 // Reels: couple and photographer anytime; guests after their name + Find me (when face search is on)
 const _openReel = pgOpenReel;
-pgOpenReel = function (photos) {
-  if (pgOpenMode() || pgIsCouple() || pgIsStaff()) return _openReel(photos);
+pgOpenReel = function (photos, choose) {
+  if (pgOpenMode() || pgIsCouple() || pgIsStaff()) return _openReel(photos, choose);
   pgNeedGuest(() => {
     if (GALLERY.faceSearch && !pgStore('found')) { showToast('First find your photos — then make your reel'); setTimeout(() => document.getElementById('pgcFind').click(), 300); return; }
-    _openReel(photos);
+    _openReel(photos, choose);
   }, 'Tell us who you are to make a reel.');
 };
 

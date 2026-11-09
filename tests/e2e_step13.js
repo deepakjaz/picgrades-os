@@ -68,7 +68,7 @@ const srv = http.createServer((req, res) => {
   console.log('drawing added + selected:', JSON.stringify(await pg.evaluate(() => [PGPost.state().stickers.length, PGPost.state().sel])));
   await pg.$eval('.pe-pop .ps-range', r => { r.value = 260; r.dispatchEvent(new Event('input')); });
   await PE.done(pg);
-  await PE.petals(pg); await pg.waitForTimeout(300);
+  await pg.waitForTimeout(300);
   await pg.screenshot({ path: '/tmp/s13_page.png' });
   await PE.toShare(pg);
   const dls = []; pg.on('download', d => dls.push(d)); await pg.locator('.ps-sub', { hasText: 'Download' }).click(); await pg.waitForTimeout(4000);

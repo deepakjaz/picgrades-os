@@ -63,7 +63,7 @@ const srv = http.createServer((req, res) => {
   console.log('shape 4:5 → page height', (await pg.evaluate(() => PGPost.info())).H);
   await pg.click('.pe-tool[data-tool=order]'); const o1 = (await pg.evaluate(() => PGPost.state().photos)).slice(0, 2); await pg.locator('.pe-ord').nth(0).locator('button[aria-label="Move later"]').click();
   const o2 = (await pg.evaluate(() => PGPost.state().photos)).slice(0, 2); console.log('order swapped first two:', o1[0] === o2[1] && o1[1] === o2[0]); await pg.click('.pe-sheet .pe-done');
-  await pg.click('.pe-tool[data-tool=template]'); await pg.locator('.pe-sheet .ps-chip').nth(10).click(); await pg.click('.pe-sheet .pe-done');
+  await pg.click('.pe-tool[data-tool=template]'); await pg.locator('.pe-sheet .pe-tpl').nth(10).click(); await pg.click('.pe-sheet .pe-done');
   // tap a photo on slide 1 → pop-up → Replace
   const hit = await pg.evaluate(() => { const c = document.querySelector('.pe-stage canvas'), r = c.getBoundingClientRect(), I = PGPost.info(); return { r: { x: r.x, y: r.y, w: r.width, h: r.height }, W: I.W, H: I.H }; });
   const h0 = (await pg.evaluate(() => PGPost.info().hits)).filter(h => h.x < 1080)[0];

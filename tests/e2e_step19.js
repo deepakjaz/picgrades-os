@@ -40,9 +40,9 @@ const srv = http.createServer((req, res) => {
   console.log('album templates:', await pg.evaluate(() => PGPost.templates.length));
   const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => b.textContent));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click(); await pg.waitForTimeout(200);
-  console.log('Haldi templates:', (await pg.$$eval('.pe-sheet .ps-chip', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
+  console.log('Haldi templates:', (await pg.$$eval('.pe-sheet .pe-tpl span', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
-  await pg.locator('.pe-sheet .ps-chip', { hasText: 'Royal · Palace Arch' }).click(); await pg.waitForTimeout(600); await PE.done(pg);
+  await pg.locator('.pe-sheet .pe-tpl', { hasText: 'Royal · Palace Arch' }).click(); await pg.waitForTimeout(600); await PE.done(pg);
   await pg.screenshot({ path: '/tmp/s19_album_arch.png' });
   await PE.template(pg, 'Classic Heirloom', 'All');
   await pg.screenshot({ path: '/tmp/s19_album_chatgpt.png' });
