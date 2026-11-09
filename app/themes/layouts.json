@@ -1,0 +1,571 @@
+{
+ "layouts": [
+  {
+   "id": "magazine-cover",
+   "name": "Magazine Cover",
+   "idea": "Full-screen editorial portrait cover with an asymmetric glass Bento studio tray.",
+   "theme": "ivory-glass",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XXL",
+     "variant": "full-bleed"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "inline"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "reel",
+     "size": "S",
+     "variant": "glass"
+    },
+    {
+     "block": "post",
+     "size": "S",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass",
+     "stack": true
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "carousel"
+    },
+    {
+     "block": "loved",
+     "size": "L",
+     "variant": "strip"
+    },
+    {
+     "block": "notes",
+     "size": "L",
+     "variant": "cards"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "banner"
+    }
+   ],
+   "by": "G"
+  },
+  {
+   "id": "bento-concierge",
+   "name": "Bento Concierge",
+   "idea": "Structured iOS widget grid with split-screen hero and balanced 2x2 photo cards.",
+   "theme": "udaipur-sandstone",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XL",
+     "variant": "split"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "stats",
+     "size": "W",
+     "variant": "tiles"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass",
+     "stack": true
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "grid-2"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "post",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "notes",
+     "size": "L",
+     "variant": "bubbles"
+    },
+    {
+     "block": "studio",
+     "size": "W",
+     "variant": "card"
+    },
+    {
+     "block": "install",
+     "size": "W",
+     "variant": "card"
+    }
+   ],
+   "by": "G"
+  },
+  {
+   "id": "archive-monograph",
+   "name": "Archive Monograph",
+   "idea": "Fine-art monograph aesthetic with a 3-photo triptych, single-row dock, and numbered index list.",
+   "theme": "malabar-kasavu",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XL",
+     "variant": "collage-3"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "row"
+    },
+    {
+     "block": "findme",
+     "size": "S",
+     "variant": "icon"
+    },
+    {
+     "block": "reel",
+     "size": "S",
+     "variant": "icon"
+    },
+    {
+     "block": "post",
+     "size": "S",
+     "variant": "icon"
+    },
+    {
+     "block": "upload",
+     "size": "S",
+     "variant": "icon"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "list"
+    },
+    {
+     "block": "loved",
+     "size": "XL",
+     "variant": "mosaic"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "card"
+    }
+   ],
+   "by": "G"
+  },
+  {
+   "id": "atelier-scrapbook",
+   "name": "Atelier Scrapbook",
+   "idea": "Tactile layered polaroid stack and cascading event deck with warm editorial cards.",
+   "theme": "jaipur-rose",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XL",
+     "variant": "polaroid-stack"
+    },
+    {
+     "block": "findme",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "stack"
+    },
+    {
+     "block": "reel",
+     "size": "W",
+     "variant": "photo"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "photo"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "tiles"
+    },
+    {
+     "block": "notes",
+     "size": "L",
+     "variant": "cards"
+    },
+    {
+     "block": "studio",
+     "size": "W",
+     "variant": "card"
+    },
+    {
+     "block": "review",
+     "size": "W",
+     "variant": "card"
+    }
+   ],
+   "by": "G"
+  },
+  {
+   "id": "cinema-panorama",
+   "name": "Cinema Panorama",
+   "idea": "Five-frame mosaic wall paired with wide glass action strips and high-contrast gallery cards.",
+   "theme": "midnight-velvet",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XXL",
+     "variant": "collage-5"
+    },
+    {
+     "block": "findme",
+     "size": "W",
+     "variant": "photo"
+    },
+    {
+     "block": "stats",
+     "size": "W",
+     "variant": "inline"
+    },
+    {
+     "block": "reel",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "post",
+     "size": "S",
+     "variant": "icon"
+    },
+    {
+     "block": "upload",
+     "size": "S",
+     "variant": "icon"
+    },
+    {
+     "block": "events",
+     "size": "L",
+     "variant": "carousel"
+    },
+    {
+     "block": "loved",
+     "size": "XL",
+     "variant": "mosaic"
+    },
+    {
+     "block": "install",
+     "size": "L",
+     "variant": "pill"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "banner"
+    }
+   ],
+   "by": "G"
+  },
+  {
+   "id": "magazine-cover-c",
+   "name": "Magazine Cover",
+   "idea": "An immersive cover photograph leads into editorial stats, creative tools and event chapters.",
+   "theme": "ivory-glass-c",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XL",
+     "variant": "full-bleed"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "inline"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "glass"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "carousel"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "banner"
+    },
+    {
+     "block": "loved",
+     "size": "L",
+     "variant": "strip"
+    }
+   ],
+   "by": "C"
+  },
+  {
+   "id": "photo-collage-wall",
+   "name": "Photo Collage Wall",
+   "idea": "A private exhibition wall gives event photography priority, with compact creative actions beneath.",
+   "theme": "gallery-museum",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "L",
+     "variant": "collage-5"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "tiles"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "grid-2"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "icon"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "icon"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "card"
+    },
+    {
+     "block": "notes",
+     "size": "L",
+     "variant": "cards"
+    }
+   ],
+   "by": "C"
+  },
+  {
+   "id": "ios-widget-home",
+   "name": "Widget Home",
+   "idea": "A calm widget rhythm makes the home screen immediately useful without feeling like a dashboard.",
+   "theme": "rose-editorial",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "L",
+     "variant": "split"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "row"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "glass"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "glass"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "list"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "card"
+    },
+    {
+     "block": "install",
+     "size": "W",
+     "variant": "pill"
+    },
+    {
+     "block": "review",
+     "size": "W",
+     "variant": "card"
+    }
+   ],
+   "by": "C"
+  },
+  {
+   "id": "editorial-timeline",
+   "name": "Editorial Timeline",
+   "idea": "The home page reads like a visual sequence from the couple's portrait to event chapters and family notes.",
+   "theme": "sandalwood",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XL",
+     "variant": "slideshow"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "inline"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "stack"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "icon"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "notes",
+     "size": "L",
+     "variant": "bubbles"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "banner"
+    }
+   ],
+   "by": "C"
+  },
+  {
+   "id": "cinematic-one-photo",
+   "name": "Cinematic One Photo",
+   "idea": "An oversized portrait and quiet dark surfaces feel like the opening frame of a wedding film.",
+   "theme": "midnight-cinema",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XXL",
+     "variant": "full-bleed"
+    },
+    {
+     "block": "stats",
+     "size": "L",
+     "variant": "inline"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "glass"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "glass"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "carousel"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "banner"
+    },
+    {
+     "block": "loved",
+     "size": "L",
+     "variant": "mosaic"
+    }
+   ],
+   "by": "C"
+  }
+ ]
+}
