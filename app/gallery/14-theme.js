@@ -4,7 +4,9 @@
 // Part of the wedding gallery (app/gallery.html). Files load in number order.
 (function pgThemes() {
   let THEMES = [];
-  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } };
+  // ?pgpreview: the Control Panel's preview window (17-control.js) — it never touches what this phone keeps
+  const PREVIEW = new URLSearchParams(location.search).has('pgpreview');
+  const store = (k, v) => { if (PREVIEW && v !== undefined) return null; try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } };
   const hexRgb = h => { h = String(h || '#000').replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) || 0); };
   const mix = (a, b, t) => { const x = hexRgb(a), y = hexRgb(b); return '#' + x.map((v, i) => Math.round(v * (1 - t) + y[i] * t).toString(16).padStart(2, '0')).join(''); };
   const lum = h => { const f = c => (c /= 255) <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); const [r, g, b] = hexRgb(h); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
@@ -44,15 +46,16 @@
   const galleryKnown = () => typeof GALLERY !== 'undefined' && !!GALLERY;
   function choose() {
     const q = new URLSearchParams(location.search).get('theme');
+    if (q === 'original') return null;   // preview of the original look
     const id = q || (galleryKnown() ? GALLERY.theme || '' : '');
     return THEMES.find(t => t.id === id) || null;
   }
   function clear() { store('pg_theme_cache', null); const s = document.getElementById('pgThemeVars'); if (s) s.remove(); delete document.documentElement.dataset.pgTheme; }
   // the wedding's theme (or the original look); before the gallery has loaded, the cached theme stays to avoid a flash
-  function sync() { if (!THEMES.length) return; const t = choose(); if (t) { if (document.documentElement.dataset.pgTheme !== t.id) apply(t); } else if (galleryKnown()) clear(); }
+  function sync() { if (!THEMES.length) return; const t = choose(); if (t) { if (document.documentElement.dataset.pgTheme !== t.id) apply(t); } else if (galleryKnown() || PREVIEW) clear(); }
   ['pg_theme_pick', 'pg_theme_test'].forEach(k => store(k, null));   // old test-menu choices no longer override the wedding
   // start in the last theme at once (no flash), then load the list
-  try { const c = JSON.parse(store('pg_theme_cache') || 'null'); if (c && c.id) apply(c); } catch (e) {}
+  if (!PREVIEW) try { const c = JSON.parse(store('pg_theme_cache') || 'null'); if (c && c.id) apply(c); } catch (e) {}
   const ready = fetch('/app/themes/themes.json').then(r => r.json()).then(d => {
     THEMES = (d.themes || []).filter(t => t && t.id && t.light && t.dark && t.fonts);
     sync(); return THEMES;

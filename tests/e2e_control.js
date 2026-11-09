@@ -32,14 +32,36 @@ const srv = http.createServer((req, res) => {
   await pg.goto(URL + '?couple=' + ck); await boot(pg); await pg.waitForFunction(() => PGControl.role() !== 'guest', null, { timeout: 10000 });
   console.log('couple: role', await pg.evaluate(() => PGControl.role()), '| gear shown:', await gearShown(pg), '| bar', JSON.stringify(await navBox(pg)));
   await pg.screenshot({ path: '/tmp/s34_couple_bar.png', clip: { x: 0, y: 744, width: 390, height: 100 } });
-  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet .pgcp-theme'); await pg.waitForTimeout(400);
-  console.log('panel: badge', await pg.textContent('.pgcp-badge'), '| themes', await pg.locator('.pgcp-theme').count(), '| layouts', await pg.locator('.pgcp-layout').count(), '| studio screen not opened:', await pg.evaluate(() => !document.getElementById('view-studio').classList.contains('active')));
+  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet .pgcp-tcard'); await pg.waitForTimeout(500);
+  console.log('panel: badge', await pg.textContent('.pgcp-badge'), '| theme cards', await pg.locator('.pgcp-tcard').count(), '| layouts', await pg.locator('.pgcp-layout').count(), '| studio screen not opened:', await pg.evaluate(() => !document.getElementById('view-studio').classList.contains('active')));
   await pg.screenshot({ path: '/tmp/s34_panel_look.png' });
-  await pg.click('.pgcp-theme[data-theme="jaipur-rose"]'); await pg.waitForTimeout(700);
-  console.log('theme saved:', call('getGallery', { g: pub.galleryId }).gallery.theme, '| shown now:', await pg.evaluate(() => PGTheme.current()));
-  await pg.locator('.pgcp-layout[data-layout="bento-concierge"]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-layout[data-layout="bento-concierge"]'); await pg.waitForTimeout(800);
+  // tap a theme → preview window; nothing changes for guests yet
+  const pvReady = async () => { await pg.waitForSelector('.pgcp-pv'); await pg.waitForSelector('.pgcp-pv-wait[hidden]', { state: 'attached', timeout: 20000 }); await pg.waitForTimeout(900); };
+  await pg.click('.pgcp-tcard[data-theme="jaipur-rose"]'); await pvReady();
+  const inFrame = fn => pg.frameLocator('.pgcp-pv iframe').locator('html').evaluate(fn);
+  console.log('preview open:', await pg.textContent('.pgcp-pv-name'), '| preview shows', await inFrame(() => document.documentElement.dataset.pgTheme), '| as a guest:', await inFrame(() => PGControl.role()),
+    '| wedding unchanged:', call('getGallery', { g: pub.galleryId }).gallery.theme === '', '| this page unchanged:', await pg.evaluate(() => !PGTheme.current()));
+  await pg.screenshot({ path: '/tmp/s34b_pv_hub.png' });
+  for (const v of ['gallery', 'photo', 'rooms']) { await pg.click('.pgcp-pv-pages [data-page=' + v + ']'); await pg.waitForTimeout(900); await pg.screenshot({ path: '/tmp/s34b_pv_' + v + '.png' }); }
+  console.log('preview page switch (photo → root view):', await (async () => { await pg.click('.pgcp-pv-pages [data-page=photo]'); await pg.waitForTimeout(700); return inFrame(() => document.querySelector('.pg-view.active').id); })());
+  await pg.click('.pgcp-pv-dark'); await pg.waitForTimeout(500);
+  console.log('dark in preview:', await inFrame(() => document.documentElement.getAttribute('data-tkg-theme')), '| this page still', await pg.evaluate(() => document.documentElement.getAttribute('data-tkg-theme') || 'light'));
+  await pg.click('.pgcp-pv-pages [data-page=hub]'); await pg.waitForTimeout(700); await pg.screenshot({ path: '/tmp/s34b_pv_dark.png' });
+  console.log('cache untouched by the preview:', await pg.evaluate(() => !localStorage.getItem('pg_theme_cache')));
+  await pg.click('.pgcp-pv-back'); await pg.waitForTimeout(300);
+  console.log('Back = no change:', !(await pg.locator('.pgcp-pv').count()), call('getGallery', { g: pub.galleryId }).gallery.theme === '');
+  await pg.click('.pgcp-tcard[data-theme="jaipur-rose"]'); await pvReady();
+  await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
+  console.log('Apply: saved', call('getGallery', { g: pub.galleryId }).gallery.theme, '| shown now:', await pg.evaluate(() => PGTheme.current()), '| preview closed:', !(await pg.locator('.pgcp-pv').count()), '| card says In use:', await pg.textContent('.pgcp-tcard.on small'));
+  // a layout: preview with its own theme, or keep mine
+  await pg.locator('.pgcp-layout[data-layout="bento-concierge"]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-layout[data-layout="bento-concierge"]'); await pvReady();
+  console.log('layout preview:', await pg.textContent('.pgcp-pv-name'), '| keep-my-theme offered:', await pg.isVisible('.pgcp-pv-keep'), '| preview layout', await inFrame(() => PGLayout.current()));
+  await pg.screenshot({ path: '/tmp/s34b_pv_layout.png' });
+  await pg.click('.pgcp-pv-keep input'); await pvReady();
+  console.log('keep my theme → preview theme', await inFrame(() => document.documentElement.dataset.pgTheme), '|', await pg.textContent('.pgcp-pv-name'));
+  await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
   let G = call('getGallery', { g: pub.galleryId }).gallery;
-  console.log('layout saved:', G.layout, '+ its theme:', G.theme, '| Hub shows it:', await pg.evaluate(() => PGLayout.current()));
+  console.log('layout saved:', G.layout, '+ kept theme:', G.theme, '| Hub shows it:', await pg.evaluate(() => PGLayout.current()));
   await pg.screenshot({ path: '/tmp/s34_panel_look2.png' });
   await pg.click('.pgcp-tabs [data-tab=functions]'); await pg.waitForTimeout(300);
   console.log('functions tab: switches', await pg.locator('.pgcp-sheet .pgf-sw').count(), '| no Plan switches for the couple:', !(await pg.locator('.pgcp-plan').count()));
@@ -95,7 +117,8 @@ const srv = http.createServer((req, res) => {
   await st.screenshot({ path: '/tmp/s34_panel_picgrades.png' });
   await st.click('input[data-plan=post]'); await st.waitForTimeout(700);
   console.log('… unlocked again:', call('getGallery', { g: pub.galleryId }).gallery.features.post);
-  await st.click('.pgcp-tabs [data-tab=look]'); await st.waitForTimeout(300); await st.click('.pgcp-theme[data-theme="midnight-velvet"]'); await st.waitForTimeout(700);
+  await st.click('.pgcp-tabs [data-tab=look]'); await st.waitForTimeout(300); await st.click('.pgcp-tcard[data-theme="midnight-velvet"]');
+  await st.waitForSelector('.pgcp-pv-wait[hidden]', { state: 'attached', timeout: 20000 }); await st.click('.pgcp-pv-apply'); await st.waitForTimeout(900);
   console.log('PicGrades changed the theme (last change wins):', call('getGallery', { g: pub.galleryId }).gallery.theme);
   await ctx3.close();
   // the couple's phone sees the newest look after reopening

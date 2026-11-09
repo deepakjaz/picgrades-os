@@ -135,6 +135,7 @@
   }
   function choose() {
     const q = new URLSearchParams(location.search).get('layout');
+    if (q === 'original') return null;   // preview of the original Hub
     const id = q || (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.layout) || '';
     return LAYOUTS.find(l => l.id === id) || null;
   }
