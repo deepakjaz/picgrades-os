@@ -19,5 +19,8 @@ assert(r.pages.event === 'grid' && r.theme === 'jaipur-rose', 'PicGrades changes
 const g = call('getGallery', { g: gid }).gallery;
 assert(g.pages.event === 'grid' && g.theme === 'jaipur-rose' && g.layout === '', 'guests get the page style; layout untouched');
 assert(call('myRole', { token: admin, g: gid }).pages.event === 'grid', 'the Control Panel sees the saved style');
-assert(call('health', {}).version === 'step36-page-styles', 'backend version step36-page-styles');
+r = call('coupleLook', { g: gid, coupleKey: ck, pages: JSON.stringify({ events: 'shapes' }) });
+assert(r.pages.events === 'shapes' && r.pages.event === 'grid', 'Events page style saved (step 37) without touching the event page style');
+assert(!('events' in call('coupleLook', { g: gid, coupleKey: ck, pages: { events: 'nope' } }).pages) === false, 'an unknown Events style keeps the saved one');
+assert(/^step3[6-9]/.test(call('health', {}).version), 'backend version is step36 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 36 checks passed');
