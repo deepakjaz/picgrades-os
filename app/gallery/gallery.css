@@ -1210,3 +1210,16 @@ body.pg-lay-on #view-hub > :not(#pgLay){display:none!important}
 .pg-laybtn{left:auto;right:10px}
 .pgl-sW.pgl-stats-inline,.pgl-sW.pgl-stats-row{grid-template-columns:1fr 1fr}.pgl-sW.pgl-stats-row .pgl-stat+.pgl-stat{border-left:0}.pgl-sW .pgl-stat b{font-size:17px}.pgl-sW.pgl-stats-inline .pgl-stat{gap:4px}
 .pgl-stats .pgl-stat b{font-size:clamp(22px,6.4vw,30px)}.pgl-sW.pgl-stats .pgl-stat b{font-size:17px}
+
+/* ---------- Feature switches (step 33) ---------- */
+.pgf-open{display:flex;align-items:center;gap:8px;margin:6px auto 110px;height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:600 13px/1 var(--font-sans);cursor:pointer}
+.pgf-open svg{width:18px;height:18px}
+.pgf-sub{font-size:.78rem;color:var(--ink-soft);margin:4px 0 12px;line-height:1.45}
+.pgf-list{display:flex;flex-direction:column;border:1px solid var(--border-hairline);border-radius:var(--pg-radius,14px);overflow:hidden;margin-bottom:14px;max-height:52vh;overflow-y:auto}
+.pgf-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;background:var(--bg-box);border-top:1px solid var(--border-hairline);cursor:pointer}.pgf-row:first-child{border-top:0}
+.pgf-row b{display:block;font:600 14px/1.2 var(--font-sans);color:var(--ink)}.pgf-row small{display:block;margin-top:3px;font-size:11.5px;line-height:1.35;color:var(--ink-soft)}
+.pgf-row.locked{opacity:.55;cursor:default}
+.pgf-sw{flex:none;appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:var(--border-hairline);position:relative;cursor:pointer;transition:background .2s;margin:0}
+.pgf-sw:before{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.pgf-sw:checked{background:#2E9D5B}.pgf-sw:checked:before{transform:translateX(18px)}.pgf-sw:disabled{cursor:default}
+body.pg-lay-on #view-hub > #pgfOpen{display:flex!important}

@@ -30,6 +30,10 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-top:10px}.thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#222}
 .msg{margin:10px 0 0;font-size:14px}.bad{color:#FFB4A8}
 .hidden{display:none!important}
+.feat-list{display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.12);border-radius:12px;overflow:hidden;max-width:520px}
+.feat-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);cursor:pointer}.feat-row:first-child{border-top:0}
+.feat-row b{display:block;font-size:14px}.feat-row small{display:block;font-size:12px;opacity:.65;margin-top:2px}.feat-row.locked{opacity:.5}
+.feat-row input{width:20px;height:20px;accent-color:#2E9D5B}
 </style>
 </head>
 <body>
@@ -79,6 +83,10 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     <h2 style="margin-top:22px">Couple link</h2>
     <p class="muted" style="margin:0 0 10px">Send this private link only to the bride and groom. With it they approve the photos and videos guests share in Root Moment, and write their thank-you note.</p>
     <div class="row"><input id="coupleLink" readonly style="flex:1 1 260px" aria-label="Couple link"><button class="mini" id="coupleCopy" type="button">Copy</button></div>
+    <h2 style="margin-top:22px">Functions</h2>
+    <p class="muted" style="margin:0 0 10px">Switch off anything this couple doesn't want in their wedding app. Root Moment and the photos are always there. The couple can change these too, from their Hub.</p>
+    <div id="featList" class="feat-list"></div>
+    <p class="msg muted" id="featMsg"></p>
   </section>
 </div>
 
@@ -254,6 +262,25 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     void c;
   });
 
+  // Functions (step 33): the same switches the couple has; locked = not in this gallery's PicGrades plan
+  var FEATS = [['findme', 'Find me', 'Guests find their own photos by face'], ['reel', 'Reel Edits', 'Reels with music'], ['post', 'Post Edits', 'Posts, carousels, album strips'],
+    ['upload', 'Add a moment', 'Guests add photos/videos to Root Moment'], ['notes', 'Notes', 'Blessings on photos'], ['hearts', 'Hearts', 'Love a photo, Most loved'],
+    ['download', 'Downloads', 'Save photos to the phone'], ['share', 'Share', 'Share the gallery link'], ['install', 'Add to Home Screen', 'Keep it as an app']];
+  function paintFeatures(f) {
+    var box = $('featList'); box.innerHTML = '';
+    FEATS.forEach(function (x) {
+      var st = f[x[0]] || 'on', row = document.createElement('label'); row.className = 'feat-row' + (st === 'locked' ? ' locked' : '');
+      row.innerHTML = '<span><b>' + x[1] + '</b><small>' + (st === 'locked' ? 'Not in this gallery\u2019s plan' : x[2]) + '</small></span>';
+      var sw = document.createElement('input'); sw.type = 'checkbox'; sw.checked = st === 'on'; sw.disabled = st === 'locked'; sw.setAttribute('data-k', x[0]); sw.setAttribute('aria-label', x[1]);
+      sw.addEventListener('change', function () {
+        var body = {}; body[x[0]] = sw.checked ? 'on' : 'off'; $('featMsg').textContent = 'Saving…';
+        api('setFeatures', { features: JSON.stringify(body) }).then(function (r) { paintFeatures(r.features); $('featMsg').textContent = x[1] + (sw.checked ? ' is on.' : ' is off.'); })
+          .catch(function (e) { sw.checked = !sw.checked; $('featMsg').textContent = e.message; });
+      });
+      row.appendChild(sw); box.appendChild(row);
+    });
+  }
+
   api('facesStatus').then(function (r) {
     S.gallery = r.gallery; S.photos = r.photos; S.faces = r.faces;
     $('title').textContent = r.gallery.title;
@@ -264,6 +291,7 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     $('coupleCopy').onclick = function () { $('coupleLink').select(); if (navigator.clipboard) navigator.clipboard.writeText($('coupleLink').value).then(function () { $('coupleCopy').textContent = 'Copied'; }); };
     if (r.gallery.sentAt) $('sendMsg').textContent = 'Last sent to ' + r.gallery.sentTo + ' at ' + dmyhm(r.gallery.sentAt) + '.';
     ['readCard'].forEach(function (id) { $(id).classList.remove('hidden'); });
+    paintFeatures(r.gallery.features || {});
     paint(); if (counts().faces) showPeople();
   }).catch(function (e) { $('title').textContent = 'Face reading'; fail(e.message); });
 })();

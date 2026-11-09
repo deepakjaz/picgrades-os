@@ -22,7 +22,9 @@ for root, by in ((G, 'G'), (C, 'C')):
     ren = {t: t + '-' + by.lower() for t in ('ivory-glass',)} if by == 'C' else {}
     for l in one(root, 'layouts.json')['layouts']:
         if any(x['id'] == l['id'] for x in layouts): l['id'] += '-' + by.lower()
-        l['theme'] = ren.get(l['theme'], l['theme']); l['by'] = by; layouts.append(l)
+        l['theme'] = ren.get(l['theme'], l['theme']); l['by'] = by
+        l['blocks'] = [x for x in l['blocks'] if x['block'] != 'stats']   # the number box is optional, not in the starting layouts (Deepak, 2026-11-09)
+        layouts.append(l)
 os.makedirs('app/themes', exist_ok=True)
 json.dump({'themes': themes}, open('app/themes/themes.json', 'w'), indent=1, ensure_ascii=False)
 json.dump({'layouts': layouts}, open('app/themes/layouts.json', 'w'), indent=1, ensure_ascii=False)

@@ -111,6 +111,8 @@
 
   // when a block has nothing to show (or its feature is off for this person), it steps aside
   function visible(k) {
+    const feat = k === 'loved' ? 'hearts' : k;   // switched-off functions leave the Hub (step 33)
+    if (window.pgFeatureOn && ['findme', 'reel', 'post', 'upload', 'notes', 'install', 'hearts'].indexOf(feat) > -1 && !pgFeatureOn(feat)) return false;
     if (k === 'findme') return !!GALLERY.faceSearch;
     if (k === 'review') return !$('pgcReview') || !$('pgcReview').classList.contains('hidden');
     if (k === 'install') return !$('pghInstall') || !$('pghInstall').classList.contains('hidden');

@@ -12,11 +12,6 @@
      "variant": "full-bleed"
     },
     {
-     "block": "stats",
-     "size": "L",
-     "variant": "inline"
-    },
-    {
      "block": "findme",
      "size": "M",
      "variant": "photo"
@@ -77,11 +72,6 @@
      "variant": "photo"
     },
     {
-     "block": "stats",
-     "size": "W",
-     "variant": "tiles"
-    },
-    {
      "block": "upload",
      "size": "W",
      "variant": "glass",
@@ -130,11 +120,6 @@
      "block": "hero",
      "size": "XL",
      "variant": "collage-3"
-    },
-    {
-     "block": "stats",
-     "size": "L",
-     "variant": "row"
     },
     {
      "block": "findme",
@@ -211,11 +196,6 @@
      "variant": "photo"
     },
     {
-     "block": "stats",
-     "size": "L",
-     "variant": "tiles"
-    },
-    {
      "block": "notes",
      "size": "L",
      "variant": "cards"
@@ -248,11 +228,6 @@
      "block": "findme",
      "size": "W",
      "variant": "photo"
-    },
-    {
-     "block": "stats",
-     "size": "W",
-     "variant": "inline"
     },
     {
      "block": "reel",
@@ -304,11 +279,6 @@
      "variant": "full-bleed"
     },
     {
-     "block": "stats",
-     "size": "L",
-     "variant": "inline"
-    },
-    {
      "block": "findme",
      "size": "M",
      "variant": "photo"
@@ -358,11 +328,6 @@
      "variant": "collage-5"
     },
     {
-     "block": "stats",
-     "size": "L",
-     "variant": "tiles"
-    },
-    {
      "block": "events",
      "size": "XL",
      "variant": "grid-2"
@@ -410,11 +375,6 @@
      "block": "hero",
      "size": "L",
      "variant": "split"
-    },
-    {
-     "block": "stats",
-     "size": "L",
-     "variant": "row"
     },
     {
      "block": "findme",
@@ -471,11 +431,6 @@
      "variant": "slideshow"
     },
     {
-     "block": "stats",
-     "size": "L",
-     "variant": "inline"
-    },
-    {
      "block": "events",
      "size": "XL",
      "variant": "stack"
@@ -523,11 +478,6 @@
      "block": "hero",
      "size": "XXL",
      "variant": "full-bleed"
-    },
-    {
-     "block": "stats",
-     "size": "L",
-     "variant": "inline"
     },
     {
      "block": "findme",
