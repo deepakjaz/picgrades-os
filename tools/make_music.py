@@ -113,7 +113,7 @@ def wav(path, x):
 
 if __name__ == '__main__' and len(sys.argv) == 2:
     out = sys.argv[1]; meta = {}
-    for slug, title, bpm, sa, lead in [('temple-procession', 'Temple Procession (nadaswaram)', 104, 155.56, 'reed')]:
+    for slug, title, bpm, sa, lead in []:   # the veena and nadaswaram tracks were removed on request (2026-11-09)
         x, m = track(slug, bpm, sa, 64, lead); wav(f'{out}/{slug}.wav', x); m['title'] = title; meta[slug] = m
         print(slug, 'peak', round(float(np.abs(x).max()), 3), 'rms', round(float(np.sqrt((x ** 2).mean())), 3))
     json.dump(meta, open(f'{out}/meta.json', 'w'), indent=1)

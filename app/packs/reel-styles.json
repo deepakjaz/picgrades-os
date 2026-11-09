@@ -255,7 +255,7 @@
    "reception"
   ],
   "region": "all",
-  "music": "temple-procession",
+  "music": "dhol-festival",
   "beats": [
    2,
    4,
@@ -466,7 +466,7 @@
    "wedding"
   ],
   "region": "east",
-  "music": "temple-procession",
+  "music": "dhol-festival",
   "beats": [
    4,
    2,
@@ -509,7 +509,7 @@
    "baraat"
   ],
   "region": "west",
-  "music": "temple-procession",
+  "music": "dhol-festival",
   "beats": [
    2,
    4,
@@ -1053,7 +1053,7 @@
    "reception"
   ],
   "region": "north",
-  "music": "temple-procession",
+  "music": "dhol-festival",
   "beats": [
    2,
    2,
@@ -1092,7 +1092,7 @@
    "reception"
   ],
   "region": "east",
-  "music": "temple-procession",
+  "music": "dhol-festival",
   "beats": [
    4,
    2,
@@ -1129,7 +1129,7 @@
    "baraat"
   ],
   "region": "west",
-  "music": "temple-procession",
+  "music": "dhol-festival",
   "beats": [
    2,
    4,

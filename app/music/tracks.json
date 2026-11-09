@@ -1,17 +1,6 @@
 {
  "tracks": [
   {
-   "id": "temple-procession",
-   "title": "Temple Procession (nadaswaram)",
-   "file": "/app/music/temple-procession.mp3",
-   "bpm": 104,
-   "beat0": 0.0,
-   "seconds": 64,
-   "region": "south",
-   "credit": "",
-   "licence": "PicGrades original (made in-house)"
-  },
-  {
    "id": "cocktail-night",
    "title": "Cocktail Night (party)",
    "file": "/app/music/cocktail-night.mp3",
