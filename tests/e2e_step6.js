@@ -86,11 +86,11 @@ const srv = http.createServer((req, res) => {
     console.log('iphone | lands on hub:', await pg.isVisible('#view-hub'), '| install card:', await pg.isVisible('#pghInstall'), '| manifest:', await pg.getAttribute('link[rel=manifest]', 'href'), '| app title:', await pg.getAttribute('#pgAppTitle', 'content'));
     await pg.click('#pghInstallBtn'); await pg.waitForTimeout(400); await pg.screenshot({ path: '/tmp/s7_ios_install.png' });
     console.log('iphone | steps sheet:', await pg.isVisible('#iosSheet.show'));
-    await pg.click('#iosClose'); await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500);
+    await pg.click('#iosClose'); await pg.click('.tkg-nav-item[data-nav=moments]'); await pg.waitForTimeout(500); await pg.click('.pgx-mgrid .pgx-cell >> nth=0'); await pg.waitForTimeout(400); 
     console.log('iphone | reel buttons:', await pg.locator('.pgm-item').first().locator('.pgm-btn').count(), '| full screen button hidden (iPhone cannot):', !(await pg.isVisible('#pgvFull')));
     await pg.screenshot({ path: '/tmp/s7_reel_iphone.png' });
     await pg.locator('.pgm-item').first().locator('.pgm-btn').first().click(); await pg.click('.pg-collection-none', { timeout: 1 }).catch(() => {});
-    await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(600);
+    await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(600); await pg.click('#view-event .pgx-cell >> nth=0'); await pg.waitForTimeout(500); 
     console.log('iphone | viewer fullscreen btn visible:', await pg.isVisible('#pgvFull'));
     await pg.screenshot({ path: '/tmp/s7_viewer_iphone.png' });
     await ctx.close();
@@ -102,7 +102,7 @@ const srv = http.createServer((req, res) => {
     await pg.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync(path.join(__dirname, 'fixtures', 'sample1.jpg')) }));
     await pg.goto('http://localhost:8772/g/' + A.galleryId + '#moments'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(400);
     console.log('iphone app | reels height:', await pg.$eval('#view-moments', e => e.getBoundingClientRect().height), await pg.$eval('.pgm-item', e => e.getBoundingClientRect().height), '| page dark:', await pg.evaluate(() => getComputedStyle(document.documentElement).backgroundColor));
-    await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(500);
+    await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(500); await pg.click('#view-event .pgx-cell >> nth=0'); await pg.waitForTimeout(500); 
     console.log('iphone app | viewer height:', await pg.$eval('#view-root', e => e.getBoundingClientRect().height), await pg.$eval('.pgv-item', e => e.getBoundingClientRect().height));
     await pg.click('#pgvBack'); await pg.waitForTimeout(300); console.log('iphone app | gallery page light again:', await pg.evaluate(() => getComputedStyle(document.documentElement).backgroundColor));
     await ctx.close();

@@ -154,7 +154,7 @@ function renderGalleries() {
     const h = document.createElement('h3'); h.textContent = ev.name;
     const sm = document.createElement('small'); sm.textContent = ev.photos.length + ' photos';
     card.appendChild(cover); card.appendChild(h); card.appendChild(sm);
-    card.addEventListener('click', () => openCollection(ev.name, 0));
+    card.addEventListener('click', () => (window.pgOpenEvent ? pgOpenEvent(ev.name) : openCollection(ev.name, 0)));
     wrap.appendChild(card);
   });
 }
@@ -525,7 +525,7 @@ function switchView(viewKey) {
 
   document.body.classList.toggle('pgm-on', viewKey === 'moments');
   document.querySelectorAll('.tkg-nav-item').forEach(item => {
-    const match = item.dataset.nav === (viewKey === 'root' ? 'gallery' : viewKey);
+    const match = item.dataset.nav === (viewKey === 'root' || viewKey === 'event' ? 'gallery' : viewKey);
     item.classList.toggle('active', match);
     if (match) item.setAttribute('aria-current', 'page');
     else item.removeAttribute('aria-current');

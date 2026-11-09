@@ -85,7 +85,7 @@
     head.querySelector('button').addEventListener('click', () => switchViewFromNav('gallery'));
     const box = h('div', 'pgl-ev pgl-ev-' + v);
     D.events.forEach((ev, i) => {
-      const t = h('button', 'pgl-evt'); t.type = 'button'; t.addEventListener('click', () => openCollection(ev.name, 0));
+      const t = h('button', 'pgl-evt'); t.type = 'button'; t.addEventListener('click', () => pgOpenEvent(ev.name));
       if (v === 'list') { t.appendChild(h('span', 'pgl-num', String(i + 1).padStart(2, '0'))); const th = h('div', 'pgl-evth'); th.appendChild(img((ev.photos[0] || {}).id, 200)); t.appendChild(th); t.appendChild(h('div', 'pgl-evtx', '<b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); }
       else { const c = h('div', 'pgl-evc'); rot(c, ev.photos, 700); t.appendChild(c); t.appendChild(h('div', 'pgl-evlab', '<b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); }
       box.appendChild(t);

@@ -41,15 +41,15 @@ const srv = http.createServer((req, res) => {
   console.log('start:', await view());
   // pages
   await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(400);
-  await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(700);
+  await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(700); await pg.click('#view-event .pgx-cell >> nth=0'); await pg.waitForTimeout(500); 
   console.log('Hub → Gallery → photo viewer:', await view());
   await back(); console.log('back →', await view());
   await back(); console.log('back →', await view());
   // a sheet over the viewer
-  await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(300); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(700);
+  await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(300); await pg.locator('.pg-collection').first().click(); await pg.waitForTimeout(700); await pg.click('#view-event .pgx-cell >> nth=0'); await pg.waitForTimeout(500); 
   await pg.click('#pgvNote'); await pg.waitForTimeout(400); console.log('notes sheet open:', await pg.$eval('#commentSheet', e => e.classList.contains('show')));
   await back(); console.log('back → sheet closed:', !(await pg.$eval('#commentSheet', e => e.classList.contains('show'))), '| still in', await view());
-  await back(); await back(); console.log('back, back →', await view());
+  await back(); await back(); await back(); console.log('back, back, back (viewer → event grid → events → Hub) →', await view());
   // Reel Edits
   await pg.click('#pghReel'); await pg.waitForSelector('.rl-wrap[data-view=inspo]', { timeout: 30000 }); await pg.waitForTimeout(500);
   await pg.locator('.re-ins .re-use').first().click(); await pg.waitForSelector('.rl-picker');
