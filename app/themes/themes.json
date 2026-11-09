@@ -1,0 +1,484 @@
+{
+ "themes": [
+  {
+   "id": "ivory-glass",
+   "name": "Ivory Glass",
+   "mood": "Sunlit limestone, warm silk, and frosted crystal.",
+   "fonts": {
+    "display": "Cormorant Garamond",
+    "body": "Plus Jakarta Sans"
+   },
+   "radius": {
+    "tile": 22,
+    "button": 14,
+    "sheet": 28
+   },
+   "glass": {
+    "blur": 20,
+    "opacity": 0.65,
+    "border": 0.35
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F7F3EE",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#1C1815",
+    "ink2": "#635A52",
+    "line": "#E6DFD6",
+    "accent": "#8F6B32",
+    "accent2": "#6E4F3A",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#0F0D0C",
+    "surface": "#1A1715",
+    "glass": "#26221F",
+    "ink": "#F5F0EA",
+    "ink2": "#A89E94",
+    "line": "#2E2925",
+    "accent": "#D6B476",
+    "accent2": "#C29B78",
+    "onAccent": "#14110F"
+   },
+   "icons": "line",
+   "by": "G"
+  },
+  {
+   "id": "udaipur-sandstone",
+   "name": "Udaipur Sandstone",
+   "mood": "Warm palace terracotta, desert parchment, and aged brass.",
+   "fonts": {
+    "display": "Instrument Serif",
+    "body": "DM Sans"
+   },
+   "radius": {
+    "tile": 16,
+    "button": 12,
+    "sheet": 24
+   },
+   "glass": {
+    "blur": 16,
+    "opacity": 0.68,
+    "border": 0.3
+   },
+   "shadow": "lifted",
+   "motion": {
+    "duration": 260,
+    "easing": "cubic-bezier(.22,1,.36,1)"
+   },
+   "light": {
+    "bg": "#F5ECE2",
+    "surface": "#FCF8F3",
+    "glass": "#FCF8F3",
+    "ink": "#241612",
+    "ink2": "#69524A",
+    "line": "#E2D3C3",
+    "accent": "#9E3B24",
+    "accent2": "#8A6628",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#140E0C",
+    "surface": "#211815",
+    "glass": "#2C201C",
+    "ink": "#F7EDE4",
+    "ink2": "#B59F95",
+    "line": "#382924",
+    "accent": "#E57A5E",
+    "accent2": "#D8B06A",
+    "onAccent": "#140E0C"
+   },
+   "icons": "line",
+   "by": "G"
+  },
+  {
+   "id": "malabar-kasavu",
+   "name": "Malabar Kasavu",
+   "mood": "Unbleached handloom cotton, temple teakwood, and woven zari.",
+   "fonts": {
+    "display": "Newsreader",
+    "body": "Inter"
+   },
+   "radius": {
+    "tile": 12,
+    "button": 10,
+    "sheet": 22
+   },
+   "glass": {
+    "blur": 14,
+    "opacity": 0.72,
+    "border": 0.25
+   },
+   "shadow": "none",
+   "motion": {
+    "duration": 220,
+    "easing": "cubic-bezier(.25,.8,.25,1)"
+   },
+   "light": {
+    "bg": "#F4EFE4",
+    "surface": "#FAF7F0",
+    "glass": "#FAF7F0",
+    "ink": "#1E1912",
+    "ink2": "#5E5548",
+    "line": "#DFD6C5",
+    "accent": "#856220",
+    "accent2": "#28543C",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#11100C",
+    "surface": "#1C1A14",
+    "glass": "#26231B",
+    "ink": "#F3EFE4",
+    "ink2": "#A69E8E",
+    "line": "#302C22",
+    "accent": "#DFB968",
+    "accent2": "#68A884",
+    "onAccent": "#11100C"
+   },
+   "icons": "duotone",
+   "by": "G"
+  },
+  {
+   "id": "jaipur-rose",
+   "name": "Jaipur Rose",
+   "mood": "Soft sandstone blush, espresso ink, and muted rosewood.",
+   "fonts": {
+    "display": "Playfair Display",
+    "body": "Plus Jakarta Sans"
+   },
+   "radius": {
+    "tile": 24,
+    "button": 16,
+    "sheet": 30
+   },
+   "glass": {
+    "blur": 22,
+    "opacity": 0.6,
+    "border": 0.4
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 250,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F8F0EE",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#231719",
+    "ink2": "#6B5558",
+    "line": "#E8D8D5",
+    "accent": "#8E3A49",
+    "accent2": "#8A6A46",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#130D0E",
+    "surface": "#1F1618",
+    "glass": "#2B1E21",
+    "ink": "#F7ECEE",
+    "ink2": "#B39B9E",
+    "line": "#362629",
+    "accent": "#E28B9B",
+    "accent2": "#D4B28C",
+    "onAccent": "#130D0E"
+   },
+   "icons": "filled-soft",
+   "by": "G"
+  },
+  {
+   "id": "midnight-velvet",
+   "name": "Midnight Velvet",
+   "mood": "Architectural gallery alabaster paired with deep obsidian evening elegance.",
+   "fonts": {
+    "display": "Bodoni Moda",
+    "body": "Inter"
+   },
+   "radius": {
+    "tile": 18,
+    "button": 12,
+    "sheet": 26
+   },
+   "glass": {
+    "blur": 20,
+    "opacity": 0.62,
+    "border": 0.3
+   },
+   "shadow": "lifted",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F3F2F0",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#141413",
+    "ink2": "#595855",
+    "line": "#E0DFDC",
+    "accent": "#1F1E1C",
+    "accent2": "#8A6D3B",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#0B0B0C",
+    "surface": "#151517",
+    "glass": "#202024",
+    "ink": "#F5F5F7",
+    "ink2": "#9E9EA6",
+    "line": "#28282D",
+    "accent": "#D8B978",
+    "accent2": "#A39B8B",
+    "onAccent": "#0B0B0C"
+   },
+   "icons": "line",
+   "by": "G"
+  },
+  {
+   "id": "ivory-glass-c",
+   "name": "Ivory Glass",
+   "mood": "Warm editorial calm with ivory surfaces and restrained champagne accents.",
+   "fonts": {
+    "display": "Cormorant Garamond",
+    "body": "Inter"
+   },
+   "radius": {
+    "tile": 22,
+    "button": 14,
+    "sheet": 28
+   },
+   "glass": {
+    "blur": 18,
+    "opacity": 0.55,
+    "border": 0.35
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F7F3EE",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#211B17",
+    "ink2": "#655A51",
+    "line": "#E7DFD6",
+    "accent": "#A77C43",
+    "accent2": "#725442",
+    "onAccent": "#111111"
+   },
+   "dark": {
+    "bg": "#0F0D0C",
+    "surface": "#1A1715",
+    "glass": "#28231F",
+    "ink": "#F5EEE7",
+    "ink2": "#BEB1A5",
+    "line": "#39312B",
+    "accent": "#D5B77F",
+    "accent2": "#C49A7A",
+    "onAccent": "#17120D"
+   },
+   "icons": "line",
+   "by": "C"
+  },
+  {
+   "id": "gallery-museum",
+   "name": "Gallery Museum",
+   "mood": "Quiet stone, ink and bronze create the feeling of a private photography exhibition.",
+   "fonts": {
+    "display": "DM Serif Display",
+    "body": "DM Sans"
+   },
+   "radius": {
+    "tile": 16,
+    "button": 12,
+    "sheet": 24
+   },
+   "glass": {
+    "blur": 14,
+    "opacity": 0.62,
+    "border": 0.28
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 220,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F2F0EB",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#20201D",
+    "ink2": "#5D5B54",
+    "line": "#DEDBD2",
+    "accent": "#8A704D",
+    "accent2": "#5D665D",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#111210",
+    "surface": "#1D1F1B",
+    "glass": "#292C26",
+    "ink": "#F1F0E9",
+    "ink2": "#B9B9AD",
+    "line": "#373A32",
+    "accent": "#C5A878",
+    "accent2": "#A9B3A1",
+    "onAccent": "#171811"
+   },
+   "icons": "line",
+   "by": "C"
+  },
+  {
+   "id": "rose-editorial",
+   "name": "Rose Editorial",
+   "mood": "Muted rose paper with a refined, romantic magazine sensibility.",
+   "fonts": {
+    "display": "Playfair Display",
+    "body": "Manrope"
+   },
+   "radius": {
+    "tile": 24,
+    "button": 15,
+    "sheet": 30
+   },
+   "glass": {
+    "blur": 20,
+    "opacity": 0.52,
+    "border": 0.32
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 260,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F7F0ED",
+    "surface": "#FFFCFA",
+    "glass": "#FFFCFA",
+    "ink": "#281C1B",
+    "ink2": "#665553",
+    "line": "#E9DCD8",
+    "accent": "#A66F70",
+    "accent2": "#80615D",
+    "onAccent": "#111111"
+   },
+   "dark": {
+    "bg": "#140F10",
+    "surface": "#211819",
+    "glass": "#302326",
+    "ink": "#F7EFEC",
+    "ink2": "#C2AEAA",
+    "line": "#413033",
+    "accent": "#D49A9B",
+    "accent2": "#C3A09A",
+    "onAccent": "#1B1112"
+   },
+   "icons": "line",
+   "by": "C"
+  },
+  {
+   "id": "midnight-cinema",
+   "name": "Midnight Cinema",
+   "mood": "A cinematic charcoal canvas lets bright wedding photographs carry the emotion.",
+   "fonts": {
+    "display": "Cormorant Garamond",
+    "body": "Plus Jakarta Sans"
+   },
+   "radius": {
+    "tile": 20,
+    "button": 13,
+    "sheet": 26
+   },
+   "glass": {
+    "blur": 16,
+    "opacity": 0.48,
+    "border": 0.3
+   },
+   "shadow": "lifted",
+   "motion": {
+    "duration": 230,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F1F1EF",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#1B1D1E",
+    "ink2": "#565D60",
+    "line": "#DDE0E0",
+    "accent": "#657B83",
+    "accent2": "#8A755E",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#0B0D0F",
+    "surface": "#171B1E",
+    "glass": "#252B30",
+    "ink": "#F2F4F3",
+    "ink2": "#B3BEC1",
+    "line": "#343D42",
+    "accent": "#A8C0C4",
+    "accent2": "#D0B48E",
+    "onAccent": "#101719"
+   },
+   "icons": "line",
+   "by": "C"
+  },
+  {
+   "id": "sandalwood",
+   "name": "Sandalwood",
+   "mood": "A grounded Indian editorial palette of parchment, deep brown and muted olive.",
+   "fonts": {
+    "display": "Libre Baskerville",
+    "body": "Lato"
+   },
+   "radius": {
+    "tile": 18,
+    "button": 13,
+    "sheet": 26
+   },
+   "glass": {
+    "blur": 12,
+    "opacity": 0.58,
+    "border": 0.3
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F5F1E8",
+    "surface": "#FFFEFA",
+    "glass": "#FFFEFA",
+    "ink": "#28221A",
+    "ink2": "#62584A",
+    "line": "#E4DCCB",
+    "accent": "#98794A",
+    "accent2": "#68745B",
+    "onAccent": "#111111"
+   },
+   "dark": {
+    "bg": "#11100D",
+    "surface": "#1E1B16",
+    "glass": "#2A261F",
+    "ink": "#F4EFE5",
+    "ink2": "#BDB3A1",
+    "line": "#3B352A",
+    "accent": "#C7A875",
+    "accent2": "#A9B596",
+    "onAccent": "#18140E"
+   },
+   "icons": "line",
+   "by": "C"
+  }
+ ]
+}

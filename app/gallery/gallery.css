@@ -1116,3 +1116,19 @@ html.ios-app .pgm-feed,html.ios-app .pgm-item,html.ios-app #view-root .mk-root-s
 .tkg-global-nav.scrolled .tkg-nav-item.tkg-nav-hub > svg{width:38px!important;height:38px!important}
 
 .pgm-pop.off,.pgv-pop.off{color:#fff}   /* double-tap that takes a heart back */
+
+/* ---------- Themes (step 31): only when a theme is chosen (html[data-pg-theme]); without one the app keeps its original look ---------- */
+html[data-pg-theme] .tkg-global-nav{background:var(--pg-glass)!important;-webkit-backdrop-filter:blur(var(--pg-glass-blur)) saturate(170%)!important;backdrop-filter:blur(var(--pg-glass-blur)) saturate(170%)!important;border-color:var(--pg-glass-line)!important}
+html[data-pg-theme] .pgh-stats,html[data-pg-theme] .pgh-notes,html[data-pg-theme] .pgh-studio,html[data-pg-theme] .pgh-install,html[data-pg-theme] .pgh-empty{border-radius:var(--pg-radius);overflow:hidden}
+html[data-pg-theme] .pgc-card,html[data-pg-theme] .pgc-pill,html[data-pg-theme] .fm-busy,html[data-pg-theme] .up-done,html[data-pg-theme] .cp-item{border-radius:var(--pg-radius)}
+html[data-pg-theme] .pg-collection .pg-cover,html[data-pg-theme] .pgh-tile .pgh-img,html[data-pg-theme] .pgh-tile img{border-radius:var(--pg-radius)}
+html[data-pg-theme] .ios-wide,html[data-pg-theme] .pgh-install button{border-radius:var(--pg-radius-btn)}
+html[data-pg-theme] .reg-overlay{border-top-left-radius:var(--pg-radius-sheet);border-top-right-radius:var(--pg-radius-sheet)}
+html[data-pg-theme] .pgc-card{transition:transform var(--pg-motion) var(--pg-ease)}
+/* test menu */
+.pg-thbtn{position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:100001;height:32px;padding:0 12px;border-radius:16px;border:0;background:rgba(0,0,0,.72);color:#fff;font:700 12px/1 var(--font-sans);cursor:pointer}
+.pg-thsheet{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 48px);z-index:100001;max-height:70vh;overflow:auto;background:#fff;color:#111;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:8px;display:none}
+.pg-thsheet.show{display:block}
+.pg-thtop{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 10px;font:700 14px/1 system-ui,sans-serif}.pg-thtop button{border:0;background:#eee;border-radius:12px;padding:6px 10px;font:600 12px system-ui;cursor:pointer}
+.pg-throw{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;padding:8px;border-radius:12px;text-align:left;cursor:pointer;color:#111}.pg-throw.on{background:#f3ead9}
+.pg-throw i{flex:none;width:20px;height:20px;border-radius:6px;border:1px solid rgba(0,0,0,.12)}.pg-throw span{margin-left:6px;font-size:17px;line-height:1.15}.pg-throw small{display:block;font:500 11px/1.3 system-ui,sans-serif;color:#777}
