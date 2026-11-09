@@ -35,13 +35,11 @@ const srv = http.createServer((req, res) => {
   pg.on('pageerror', e => errors.push(e.message));
   await pg.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
   const FONTS = await require('./fonts_local').install(pg);
-  await pg.goto('http://localhost:8796/g/' + pub.galleryId + '?themes&couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(800);
+  await pg.goto('http://localhost:8796/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(800);
   const v = (n) => pg.evaluate(n => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), n);
   const orig = await v('--bg-cream');
   await pg.waitForFunction(() => window.PGTheme && PGTheme.list().length, null, { timeout: 15000 });
-  console.log('local fonts for screenshots:', FONTS, '| test button:', await pg.textContent('.pg-thbtn'));
-  await pg.click('.pg-thbtn'); console.log('menu rows:', await pg.locator('.pg-throw').count(), '(Original + themes)');
-  await pg.screenshot({ path: '/tmp/s31_menu.png' }); await pg.click('.pg-thbtn');
+  console.log('local fonts for screenshots:', FONTS, '| no test menu any more:', !(await pg.locator('.pg-thbtn').count()));
   const list = await pg.evaluate(() => PGTheme.list().map(t => ({ id: t.id, name: t.name, by: t.by, bg: t.light.bg, dbg: t.dark.bg, fonts: t.fonts })));
   const lum = h => { h = h.replace('#', ''); const f = c => (c /= 255) <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); return .2126 * f(parseInt(h.slice(0, 2), 16)) + .7152 * f(parseInt(h.slice(2, 4), 16)) + .0722 * f(parseInt(h.slice(4, 6), 16)); };
   const cr = (a, b) => { const x = lum(a), y = lum(b); return ((Math.max(x, y) + .05) / (Math.min(x, y) + .05)).toFixed(1); };
@@ -61,8 +59,10 @@ const srv = http.createServer((req, res) => {
   }
   await pg.evaluate(() => PGTheme.reset()); await pg.waitForTimeout(150);
   console.log('Original look back:', (await v('--bg-cream')) === orig, '| no theme attribute:', await pg.evaluate(() => !document.documentElement.dataset.pgTheme));
-  await pg.evaluate(() => PGTheme.apply('udaipur-sandstone')); await pg.reload(); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
-  console.log('after reload the chosen theme stays:', await pg.evaluate(() => document.documentElement.dataset.pgTheme));
-  await pg.evaluate(() => PGTheme.reset());
+  await pg.evaluate(() => PGTheme.apply('udaipur-sandstone')); await pg.reload(); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(600);
+  console.log('a theme only tried on this phone does not stick (the wedding decides):', await pg.evaluate(() => !document.documentElement.dataset.pgTheme));
+  call('coupleLook', { g: pub.galleryId, coupleKey: ck, theme: 'udaipur-sandstone' }); await pg.reload(); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(600);
+  console.log('after the wedding saves a theme, it shows:', await pg.evaluate(() => document.documentElement.dataset.pgTheme));
+  call('coupleLook', { g: pub.galleryId, coupleKey: ck, theme: '' });
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
 });

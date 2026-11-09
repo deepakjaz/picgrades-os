@@ -488,7 +488,8 @@ document.getElementById('mkShareBtn').addEventListener('click', pgShare);
 
   window.addEventListener('scroll', () => {
     const current = window.scrollY || document.documentElement.scrollTop || 0;
-    if (current <= 4) nav.classList.remove('scrolled');
+    const atEnd = current + window.innerHeight >= document.documentElement.scrollHeight - 24;   // at the bottom the full bar comes back (the page has room for it)
+    if (current <= 4 || (atEnd && current > 0)) nav.classList.remove('scrolled');
     else if (current - lastWinY > 6) nav.classList.add('scrolled');
     else if (current - lastWinY < -6) nav.classList.remove('scrolled');
     lastWinY = current;
@@ -497,7 +498,8 @@ document.getElementById('mkShareBtn').addEventListener('click', pgShare);
   if (stripScroller) {
     stripScroller.addEventListener('scroll', () => {
       const current = stripScroller.scrollTop;
-      if (current <= 4) nav.classList.remove('scrolled');
+      const atEnd = current + stripScroller.clientHeight >= stripScroller.scrollHeight - 24;
+      if (current <= 4 || (atEnd && current > 0)) nav.classList.remove('scrolled');
       else if (current - lastStripY > 6) nav.classList.add('scrolled');
       else if (current - lastStripY < -6) nav.classList.remove('scrolled');
       lastStripY = current;
@@ -576,6 +578,10 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     // already showing the kept copy: bring in new hearts, notes and approved posts without moving the guest
     GALLERY.likes = res.gallery.likes || {}; GALLERY.notes = res.gallery.notes || {}; GALLERY.recentNotes = res.gallery.recentNotes; GALLERY.isCouple = res.gallery.isCouple;
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate;
+    // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
+    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
+    GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {};
+    if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
     GALLERY.guestPosts = res.gallery.guestPosts || [];
     if (newPosts && !document.getElementById('view-moments').classList.contains('active')) { ROOT_SET = buildRootSet(); renderMoments(); }

@@ -65,7 +65,8 @@ var PUBLIC_ROUTES = {
   coupleQueue: coupleQueue_,
   couplePost: couplePost_,
   coupleThanks: coupleThanks_,
-  coupleFeatures: coupleFeatures_
+  coupleFeatures: coupleFeatures_,
+  coupleLook: coupleLook_
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -82,7 +83,9 @@ var USER_ROUTES = {
   saveFaces: saveFaces_,
   facesProxy: facesProxy_,
   sendGallery: sendGallery_,
-  setFeatures: setFeatures_
+  setFeatures: setFeatures_,
+  setLook: setLook_,
+  myRole: myRole_
 };
 
 // Admin or editor (order queue + delivery)
@@ -99,7 +102,8 @@ var ADMIN_ROUTES = {
   recordPayment: recordPayment_,
   adjustQuota: adjustQuota_,
   addCredits: addCredits_,
-  updateCompany: updateCompany_
+  updateCompany: updateCompany_,
+  setAllowed: setAllowed_
 };
 
 function route_(action, params) {
@@ -147,7 +151,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step33-switches',
+    version: 'step34-control-panel',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -863,7 +867,8 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed'];   // features: the couple's / photographer's on-off per function (JSON); allowed: PicGrades' master switches by plan (JSON, empty = all allowed)   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
+  'features', 'allowed', 'theme', 'layout'];   // theme / layout: the wedding's look, chosen in the app's Control Panel ('' = the original look)
+   // features: the couple's / photographer's on-off per function (JSON); allowed: PicGrades' master switches by plan (JSON, empty = all allowed)   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
 var ROOT_FOLDER_RE = /^0*_?root[ _-]*moments?$/i;
@@ -1022,6 +1027,7 @@ function getGallery_(p) {
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
   m.features = featuresOf_(g);
+  m.theme = lookId_(g.theme); m.layout = lookId_(g.layout);
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   return { gallery: m };
@@ -1407,6 +1413,41 @@ function saveFeatures_(g, input) {
 function coupleFeatures_(p) { return saveFeatures_(coupleGallery_(p), p.features); }
 /** Photographer (logged in, own studio only) or PicGrades staff: switch functions on or off. */
 function setFeatures_(p, user) { var x = staffGallery_(p.g, user); return saveFeatures_(x.g, p.features); }
+
+/** PicGrades (admin): master switches by plan. A function set 'off' here is locked for the couple and the photographer. */
+function setAllowed_(p, user) {
+  var g = findGallery_(p.g); if (!g) throw new Error('Gallery not found.');
+  var want = typeof p.allowed === 'string' ? jsonObj_(p.allowed) : (p.allowed || {}), cur = jsonObj_(g.allowed);
+  FEATURE_KEYS.forEach(function (k) { if (k in want) { if (String(want[k]) === 'off') cur[k] = 'off'; else delete cur[k]; } });
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { allowed: JSON.stringify(cur) }); g.allowed = JSON.stringify(cur);
+  return { features: featuresOf_(g), allowed: cur };
+}
+
+// ---------- Control Panel (step 34) ----------
+// The gear in the app's bottom bar opens the Control Panel for PicGrades, the photographer and the couple (guests never see it).
+// It holds the wedding's look (theme + Hub layout) and the function switches. Whoever changes something last wins.
+function lookId_(v) { v = String(v || '').trim().toLowerCase(); return /^[a-z0-9-]{1,40}$/.test(v) ? v : ''; }
+function saveLook_(g, p) {
+  var out = {};
+  if ('theme' in p) out.theme = lookId_(p.theme);
+  if ('layout' in p) out.layout = lookId_(p.layout);
+  if (!('theme' in out) && !('layout' in out)) return { ok: false, error: 'Choose a theme or a layout.' };
+  out.updatedAt = fmt_(new Date());
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, out);
+  return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout) };
+}
+/** Couple link: change the wedding's look. */
+function coupleLook_(p) { return saveLook_(coupleGallery_(p), p); }
+/** Photographer (own studio only) or PicGrades staff: change the wedding's look. */
+function setLook_(p, user) { var x = staffGallery_(p.g, user); return saveLook_(x.g, p); }
+/** Logged in: who you are for this wedding — 'picgrades' (staff) or 'photographer' (its own studio). Anyone else gets an error. */
+function myRole_(p, user) {
+  var x = staffGallery_(p.g, user), role = String(user.role || '').toLowerCase();
+  return { role: isStaff_(user) ? 'picgrades' : 'photographer', canLock: role === 'admin', name: user.name || '', companyName: x.g.companyName || '',
+    features: featuresOf_(x.g), allowed: jsonObj_(x.g.allowed), theme: lookId_(x.g.theme), layout: lookId_(x.g.layout) };
+}
 
 /** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.
  *  Only photos of a published gallery; at most 4 per call and 150 per device per hour. */

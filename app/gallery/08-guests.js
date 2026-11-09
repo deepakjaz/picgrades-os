@@ -5,7 +5,10 @@ const PGK = (k) => 'pg_' + k + '_' + GALLERY_ID;
 function pgStore(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(PGK(k)) || 'null'); localStorage.setItem(PGK(k), JSON.stringify(v)); } catch (e) { return null; } }
 (function pgCoupleFromLink() {
   const q = new URLSearchParams(location.search), ck = q.get('couple');
-  if (ck && GALLERY_ID) { pgStore('couple', ck); q.delete('couple'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+  // iPhone's "Add to Home Screen" keeps the address shown, so on iPhone Safari the couple key stays in it: the couple's home-screen app opens in couple mode.
+  // (The home-screen app has its own storage, separate from Safari.) Elsewhere it is tidied away; Share always sends the plain link.
+  const keep = /iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone;
+  if (ck && GALLERY_ID) { pgStore('couple', ck); if (!keep) { q.delete('couple'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } }
 })();
 const _pgApi = pgApi;
 pgApi = function (action, body) { const ck = pgStore('couple'); return _pgApi(action, Object.assign(ck ? { coupleKey: ck } : {}, body || {})); };
