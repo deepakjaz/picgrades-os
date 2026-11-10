@@ -103,7 +103,7 @@
     EV = { name, photos };
     document.getElementById('pgxEyebrow').textContent = GALLERY.title || '';
     document.getElementById('pgxTitle').textContent = name;
-    document.getElementById('pgxSub').textContent = photos.length + (photos.length === 1 ? ' photo' : ' photos') + (GALLERY.studio ? ' · Photographed by ' + GALLERY.studio : '');
+    document.getElementById('pgxSub').textContent = GALLERY.studio ? 'Photographed by ' + GALLERY.studio : '';
     paintEvent(); paintCols(); switchView('event');
   };
   // the viewer's back arrow returns to the grid it came from

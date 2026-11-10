@@ -37,10 +37,8 @@ const srv = http.createServer((req, res) => {
   await pg.goto('http://localhost:8791/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(800);
   const box = (k) => pg.locator('#pghStats [data-stat=' + k + ']');
   console.log('boxes:', (await pg.locator('#pghStats button').allTextContents()).join(' | '));
-  await box('events').click(); await pg.waitForTimeout(500); console.log('Events → page:', await pg.evaluate(() => document.querySelector('.pg-view.active').id));
-  await pg.evaluate(() => switchViewFromNav('hub')); await pg.waitForTimeout(400);
-  await box('photos').click(); await pg.waitForTimeout(500); console.log('Photos → page:', await pg.evaluate(() => document.querySelector('.pg-view.active').id));
-  await pg.evaluate(() => switchViewFromNav('hub')); await pg.waitForTimeout(400);
+  // step 49: the Photos and Events numbers are gone from the app (they live in the Control Panel)
+  console.log('no Photos / Events boxes:', await box('events').count() === 0 && await box('photos').count() === 0);
   await box('hearts').click(); await pg.waitForTimeout(400); console.log('Hearts with none yet → toast:', await pg.evaluate(() => (document.querySelector('.toast, #toast, .pg-toast') || {}).textContent || ''));
   // give some hearts, then tap Hearts
   const ids = await pg.evaluate(() => { const a = pgAllPhotos().map(x => x.p.id); GALLERY.likes = { [a[5]]: 2, [a[9]]: 7, [a[1]]: 4 }; pgRenderHub(); return [a[9], a[1], a[5]]; });

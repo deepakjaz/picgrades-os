@@ -72,7 +72,7 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/s5_result.png' });
   console.log('album button in Find me:', await pg.isVisible('#fmPost'));
   await pg.click('#fmOpen'); await pg.waitForTimeout(600); console.log('Find me results open as a grid:', await pg.isVisible('#view-event'), await pg.textContent('#pgxTitle')); await pg.click('#view-event .pgx-cell >> nth=0'); await pg.waitForTimeout(500);
-  console.log('viewer opened:', await pg.isVisible('#view-root'), await pg.textContent('#pgvCount'));
+  console.log('viewer opened:', await pg.isVisible('#view-root'), await pg.getAttribute('#pgvCount', 'data-pos'));
   await pg.screenshot({ path: '/tmp/s5_yourphotos_viewer.png' });
   await pg.click('#pgvBack'); await pg.waitForTimeout(400);
   console.log('collections:', (await pg.locator('.pg-collection h3').allTextContents()).join(', '));

@@ -35,6 +35,9 @@ const srv = http.createServer((req, res) => {
   await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-design'); await pg.click('.pgcp-design'); await pg.waitForSelector('.pged .pged-card'); await pg.waitForTimeout(900);
   console.log('editor open: cards', await pg.locator('.pged-card').count(), '| screen', await pg.textContent('.pged-screens .on'), '| from', await pg.evaluate(() => PGHubEditor.draft().base), '|', await check());
   await pg.screenshot({ path: '/tmp/s44_editor.png' });
+  // every card of the starting layout must survive opening the editor (step 49 regression: the Events card had been commented out)
+  const lost = await pg.evaluate(() => { const lay = PGLayout.find(PGHubEditor.draft().base); const have = PGHubEditor.draft().blocks.map(b => b.block); return lay ? lay.blocks.map(b => b.block).filter(k => have.indexOf(k) < 0) : []; });
+  console.log(lost.length ? 'FAIL cards lost when the editor opened: ' + lost.join(',') : 'all layout cards kept in the editor (incl. Events)');
   // select the 2nd card and make it Large
   await pg.locator('.pged-card').nth(1).click(); await pg.waitForTimeout(300);
   const name = await pg.textContent('.pged-tools .pged-trow b');

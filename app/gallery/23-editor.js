@@ -13,8 +13,9 @@
   const COLS = { phone: 4, tall: 8, wide: 12 }, FRAME = { phone: 390, tall: 820, wide: 1440 }, LABEL = { phone: 'Phone', tall: 'Tablet', wide: 'Laptop' };
   const CARDS = {
     hero: ['Cover photos', ['full-bleed', 'slideshow', 'collage-3', 'collage-5', 'polaroid-stack', 'split']],
-    findme: ['Find me', ['photo', 'icon', 'glass']], reel: ['Reel Edits', ['icon', 'photo', 'glass']], post: ['Post Edits', ['icon', 'photo', 'glass']],
-    upload: ['Add a moment', ['icon', 'photo', 'glass']], events: ['Events', ['carousel', 'grid-2', 'mosaic-slideshow', 'list', 'stack', 'editorial-bands']],
+    findme: ['Find me', ['photo', 'icon', 'glass', 'slideshow']], reel: ['Reel Edits', ['icon', 'photo', 'glass', 'slideshow']], post: ['Post Edits', ['icon', 'photo', 'glass', 'slideshow']],
+    upload: ['Add a moment', ['icon', 'photo', 'glass', 'slideshow']],   // 'slideshow' is used by 14 cards in the ready layouts (step 49 audit)
+    events: ['Events', ['carousel', 'grid-2', 'mosaic-slideshow', 'list', 'stack', 'editorial-bands']],
     loved: ['Most loved', ['strip', 'mosaic']], notes: ['Notes', ['cards', 'bubbles']], studio: ['Photographer', ['card', 'banner']],
     install: ['Add to Home Screen', ['card', 'pill']], review: ['Thank the photographer', ['card', 'pill']]
   };
@@ -71,11 +72,11 @@
       list.forEach((b, i) => { b.pos[scr] = P[i]; });
     });
     blocks.forEach(b => delete b._src);
-    return { base: lay.id || '', blocks, header: ((GALLERY.pages || {}).header) || 'right' };
+    return { base: lay.id || '', blocks, header: ((GALLERY.pages || {}).header) || 'right', modeside: ((GALLERY.pages || {}).modeside) || 'right' };
   }
   function startDraft() {
     const saved = loadDraft(); if (saved && saved.blocks && saved.blocks.length) return saved;
-    if (GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.blocks.length) return Object.assign(clone(GALLERY.custom), { header: (GALLERY.pages || {}).header || 'right' });
+    if (GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.blocks.length) return Object.assign(clone(GALLERY.custom), { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' });
     const lay = PGLayout.find(GALLERY.layout) || PGLayout.list()[0];
     return fromLayout(lay);
   }
@@ -96,6 +97,7 @@
       '<button type="button" class="pged-btn pged-prev">Preview</button><button type="button" class="pged-btn pged-pub">Publish</button></div>' +
       '<div class="pged-bar"><div class="pged-seg pged-screens" role="tablist">' + Object.keys(COLS).map(s => '<button type="button" data-scr="' + s + '">' + LABEL[s] + '</button>').join('') + '</div>' +
       '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="right">Right</button></div>' +
+      '<div class="pged-seg pged-mode" aria-label="Light / dark button"><span>Light/dark</span><button type="button" data-mode="left">Left</button><button type="button" data-mode="right">Right</button></div>' +
       '<button type="button" class="pged-btn pged-add">+ Add card</button><select class="pged-from" aria-label="Start from a layout"></select></div>' +
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
       '<div class="pged-tools" hidden></div>';
@@ -107,6 +109,7 @@
     el.querySelector('.pged-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.redo.pop()); E.sel = -1; paintUndo(); commit(); });
     el.querySelector('.pged-screens').addEventListener('click', e => { const b = e.target.closest('[data-scr]'); if (b) { E.scr = b.dataset.scr; E.sel = -1; draw(); } });
     el.querySelector('.pged-logo').addEventListener('click', e => { const b = e.target.closest('[data-logo]'); if (!b) return; snapshot(); E.d.header = b.dataset.logo; commit(); });
+    el.querySelector('.pged-mode').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (!b) return; snapshot(); E.d.modeside = b.dataset.mode; commit(); });   // step 49: the light/dark button moves on its own
     el.querySelector('.pged-add').addEventListener('click', addSheet);
     el.querySelector('.pged-prev').addEventListener('click', preview);
     el.querySelector('.pged-pub').addEventListener('click', publish);
@@ -123,6 +126,7 @@
     const el = E.el, scr = E.scr, d = E.d, cols = COLS[scr];
     el.querySelectorAll('[data-scr]').forEach(b => b.classList.toggle('on', b.dataset.scr === scr));
     el.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === (d.header || 'right')));
+    el.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === (d.modeside || 'right')));
     const canvas = el.querySelector('.pged-canvas'), frame = el.querySelector('.pged-frame'), grid = el.querySelector('.pged-grid');
     const W = FRAME[scr], k = Math.min(1, (canvas.clientWidth - 24) / W);
     grid.style.width = W + 'px'; grid.style.transform = 'scale(' + k + ')';
@@ -223,8 +227,10 @@
   // ---- preview on this phone, then publish ----
   let banner = null;
   function applyHeader() {
-    const d = previewing ? loadDraft() : null, side = (d && d.header) || ((typeof GALLERY !== 'undefined' && GALLERY && GALLERY.pages) || {}).header || 'right';
+    const d = previewing ? loadDraft() : null, pg = (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.pages) || {};
+    const side = (d && d.header) || pg.header || 'right', mode = (d && d.modeside) || pg.modeside || 'right';
     document.body.classList.toggle('pg-logo-left', side === 'left');
+    document.body.classList.toggle('pg-mode-left', mode === 'left');
   }
   function preview() {
     store(E.d); close(); previewing = true; PGLayout.refresh(); applyHeader(); switchViewFromNav('hub'); window.scrollTo(0, 0);
@@ -240,7 +246,7 @@
   }
   function publish() {
     const d = E ? E.d : loadDraft(); if (!d || !d.blocks.length) { showToast('Add at least one card first'); return; }
-    const body = { layout: 'custom', custom: JSON.stringify({ base: d.base || '', blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide })) }), pages: JSON.stringify({ header: d.header || 'right' }) };
+    const body = { layout: 'custom', custom: JSON.stringify({ base: d.base || '', blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide })) }), pages: JSON.stringify({ header: d.header || 'right', modeside: d.modeside || 'right' }) };
     const btn = E ? E.el.querySelector('.pged-pub') : null; if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
     PGControl.save(body).then(r => {
       GALLERY.layout = r.layout; GALLERY.custom = r.custom; GALLERY.pages = r.pages || GALLERY.pages; if (r.theme != null) GALLERY.theme = r.theme;

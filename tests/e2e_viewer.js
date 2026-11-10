@@ -53,11 +53,23 @@ const srv = http.createServer((req, res) => {
   await pg.evaluate(() => pgOpenEvent(GALLERY.events[0].name)); await pg.waitForTimeout(500);
   await pg.click('#view-event .pgx-cell[data-i="1"]'); await pg.waitForTimeout(700);
   console.log('default photo view:', await pg.evaluate(() => document.querySelector('.pg-view.active').id), '| classic open:', !!(await pg.locator('.pgcv').count()));
+  // swiping through the big photos (step 41): the photo on screen is never blank, also when the swipe stops between two photos
+  const shown = () => pg.evaluate(() => { const f = document.getElementById('pgvFeed'), i = Math.round(f.scrollTop / f.clientHeight), im = f.querySelectorAll('.pgv-item img')[i];
+    return { at: i + 1, loaded: !!(im && im.src && !im.src.startsWith('data:')), full: !!(im && /=w(1[0-9]{3}|2[0-9]{3})/.test(im.src)) }; });
+  const blanks = [];
+  for (let k = 1; k <= 12; k++) {   // one long swipe: a new photo every ~60 ms, never stopping
+    await pg.evaluate(k => { const f = document.getElementById('pgvFeed'); f.scrollTop = k * f.clientHeight; }, k); await pg.waitForTimeout(60);
+    const x = await shown(); if (!x.loaded) blanks.push(x.at);
+  }
+  console.log('long swipe through 12 photos: blank photos on screen:', JSON.stringify(blanks));
+  await pg.waitForTimeout(700); console.log('after the swipe stops:', JSON.stringify(await shown()));
+  await pg.evaluate(() => { const f = document.getElementById('pgvFeed'); f.scrollTop = 20.5 * f.clientHeight; }); await pg.waitForTimeout(900);
+  console.log('stopped between photos 21 and 22:', JSON.stringify(await pg.evaluate(() => { const f = document.getElementById('pgvFeed'), ims = f.querySelectorAll('.pgv-item img'); return [20, 21].map(i => !!ims[i].src && !ims[i].src.startsWith('data:')); })));
   await pg.click('#pgvBack'); await pg.waitForTimeout(500);
   // classic
   await pg.evaluate(() => { GALLERY.pages = { viewer: 'classic' }; });
   await pg.click('#view-event .pgx-cell[data-i="1"]'); await pg.waitForTimeout(900);
-  const cv = () => pg.evaluate(() => ({ open: !!document.querySelector('.pgcv'), count: (document.querySelector('.pgcv-count') || {}).textContent, view: document.querySelector('.pg-view.active').id, img: (document.querySelector('.pgcv-img') || {}).naturalWidth }));
+  const cv = () => pg.evaluate(() => ({ open: !!document.querySelector('.pgcv'), count: ((document.querySelector('.pgcv-count') || {}).dataset || {}).pos, view: document.querySelector('.pg-view.active').id, img: (document.querySelector('.pgcv-img') || {}).naturalWidth }));
   console.log('classic photo view:', JSON.stringify(await cv()));
   await pg.screenshot({ path: '/tmp/s38_classic_phone.png' });
   await pg.click('.pgcv-next'); await pg.waitForTimeout(500); console.log('next →', (await cv()).count);
@@ -80,7 +92,7 @@ const srv = http.createServer((req, res) => {
   await p2.goto(URL); await boot(p2); await p2.evaluate(() => { GALLERY.pages = { viewer: 'classic' }; pgOpenEvent(GALLERY.events[0].name); }); await p2.waitForTimeout(500);
   await p2.click('#view-event .pgx-cell[data-i="0"]'); await p2.waitForTimeout(800);
   await p2.keyboard.press('ArrowRight'); await p2.waitForTimeout(500);
-  console.log('laptop: arrow key →', await p2.textContent('.pgcv-count'));
+  console.log('laptop: arrow key →', await p2.getAttribute('.pgcv-count', 'data-pos'));
   await p2.screenshot({ path: '/tmp/s38_classic_laptop.png' });
   await p2.evaluate(() => document.documentElement.setAttribute('data-tkg-theme', 'dark')); await p2.waitForTimeout(300); await p2.screenshot({ path: '/tmp/s38_classic_laptop_dark.png' });
   await p2.keyboard.press('Escape'); await p2.waitForTimeout(300); console.log('Esc closes:', !(await p2.locator('.pgcv').count()));
