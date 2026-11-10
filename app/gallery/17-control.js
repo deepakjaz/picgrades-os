@@ -254,6 +254,34 @@
     return p;
   }
 
+  // ---- Photographer (step 42): who photographed this wedding; PicGrades also decides whether its own name shows ----
+  const PF = [['name', 'Name shown as “Photographed by”', 'e.g. WFA'], ['instagram', 'Instagram', '@handle or link'], ['website', 'Website', 'www…'],
+    ['phone', 'Phone / WhatsApp', '+91 …'], ['email', 'Email', ''], ['city', 'City', ''], ['about', 'About', 'A line or two about the photographer']];
+  function photogPane() {
+    const cur = Object.assign({}, GALLERY.photographer || (STAFF && STAFF.photographer) || {});
+    const p = h('div', 'pgcp-pane', '<p class="pgcp-note">Who photographed this wedding. It shows as “Photographed by” in the Hub, on the photographer page and on every photo. Leave the name empty to show the studio of the order' + (STAFF && STAFF.studio ? ' (' + esc(STAFF.studio) + ')' : '') + '.</p>');
+    const form = h('form', 'pgcp-form');
+    PF.forEach(([k, label, ph]) => { const l = h('label', '', esc(label)); const i = h(k === 'about' ? 'textarea' : 'input'); i.name = k; i.placeholder = ph; i.value = cur[k] || ''; if (k === 'email') i.type = 'email'; if (k === 'phone') i.inputMode = 'tel'; l.appendChild(i); form.appendChild(l); });
+    if (ROLE === 'picgrades') {
+      const row = h('div', 'pgf-row', '<div><b>Show “Gallery by PicGrades”</b><small>Turn off for clients who cannot show our name</small></div>');
+      const sw = h('input', 'pgf-sw'); sw.type = 'checkbox'; sw.name = 'credit'; sw.checked = GALLERY.credit !== false; sw.setAttribute('aria-label', 'Show Gallery by PicGrades');
+      row.appendChild(sw); form.appendChild(row);
+    }
+    const save = h('button', 'mk-btn-peach ios-wide', 'Save photographer'); save.type = 'submit'; form.appendChild(save);
+    form.addEventListener('submit', e => {
+      e.preventDefault(); const body = { photographer: JSON.stringify(PF.reduce((o, [k]) => { o[k] = form.elements[k].value; return o; }, {})) };
+      if (form.elements.credit) body.credit = form.elements.credit.checked ? 'on' : 'off';
+      save.disabled = true; save.textContent = 'Saving…';
+      pgApi('setPhotographer', Object.assign({ token: token() }, body)).then(r => {
+        GALLERY.photographer = r.photographer; GALLERY.credit = r.credit; GALLERY.studio = r.photographer.name || r.studio || GALLERY.studio;
+        if (STAFF) { STAFF.photographer = r.photographer; STAFF.credit = r.credit; }
+        document.body.classList.toggle('pg-nocredit', r.credit === false);
+        if (window.pgRenderHub) pgRenderHub(); showToast('Saved — every guest sees it now');
+      }).catch(err => showToast(err.message)).finally(() => { save.disabled = false; save.textContent = 'Save photographer'; });
+    });
+    p.appendChild(form); return p;
+  }
+
   // ---- the panel ----
   let tab = 'look', repaint = () => {};
   function open() {
@@ -264,11 +292,12 @@
     const who = WHO[ROLE] || WHO.couple;
     const head = h('div', 'pgcp-head', '<div class="reg-overlay-handle"></div><div class="pgcp-top"><h3 class="fm-title">Control Panel</h3><span class="pgcp-badge">' + who[0] + '</span></div>' +
       '<p class="pgcp-who">' + who[1] + (ROLE === 'demo' ? ' Your changes stay on this phone only, so everyone can play — <button type="button" class="pgcp-reset">start again</button>.' : ' Changes are saved for this wedding and reach every guest straight away.') + '</p>' +
-      '<div class="pgcp-tabs" role="tablist"><button type="button" role="tab" data-tab="look">Look</button><button type="button" role="tab" data-tab="functions">Functions</button></div>');
+      '<div class="pgcp-tabs' + (STAFF ? ' three' : '') + '" role="tablist"><button type="button" role="tab" data-tab="look">Look</button><button type="button" role="tab" data-tab="functions">Functions</button>' + (STAFF ? '<button type="button" role="tab" data-tab="photographer">Photographer</button>' : '') + '</div>');
     const body = h('div', 'pgcp-body'), done = h('button', 'mk-btn-peach ios-wide', 'Done'); done.type = 'button'; done.addEventListener('click', close);
     repaint = () => {
       head.querySelectorAll('[data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-      body.innerHTML = ''; body.appendChild(tab === 'look' ? lookPane() : funcPane()); body.dataset.tab = tab;
+      if (tab === 'photographer' && !STAFF) tab = 'look';
+      body.innerHTML = ''; body.appendChild(tab === 'look' ? lookPane() : tab === 'photographer' ? photogPane() : funcPane()); body.dataset.tab = tab;
       if (tab === 'look') { paintLook(body); Promise.all([window.PGTheme && PGTheme.ready, window.PGLayout && PGLayout.ready]).then(() => paintLook(body)); }
     };
     const rs = head.querySelector('.pgcp-reset');

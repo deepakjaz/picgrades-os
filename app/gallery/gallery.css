@@ -1461,3 +1461,27 @@ body.pgcv-on{overflow:hidden}body.pgcv-on .tkg-global-nav,body.pgcv-on .pg-totop
 #pgLay:not([data-screen="phone"]) .pgl-sM .pgl-actin,#pgLay:not([data-screen="phone"]) .pgl-sL .pgl-actin{padding:18px}
 .pgcp-pv-phone.laptop{border-radius:10px}
 .pgcp-pv-pages{overflow-x:auto;scrollbar-width:none;justify-content:safe center}.pgcp-pv-pages::-webkit-scrollbar{display:none}.pgcp-pv-pages button{flex:none}
+
+/* ---------- the wedding's photographer + PicGrades credit (step 42) ---------- */
+body.pg-nocredit .mk-brand-dash,body.pg-nocredit .mk-brand-pg{display:none}
+.pgh-ig,.pgl-ig{display:block;font:500 12px var(--font-sans);color:var(--ink-faint);margin-top:2px;letter-spacing:0}
+.pgh-studio b{display:block}
+.pgp{margin:6px 0 18px}
+.pgp-city{margin:0 0 6px;font:600 11px var(--font-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.pgp-about{margin:0 0 16px;font-size:.95rem;line-height:1.6;color:var(--ink-soft);max-width:60ch}
+.pgp-acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pgp-act{display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--pg-radius,16px);border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);text-decoration:none;min-height:44px}
+.pgp-act i{flex:none;width:38px;height:38px;border-radius:12px;background:var(--cta-peach);color:var(--cta-peach-ink,#fff);display:flex;align-items:center;justify-content:center}
+.pgp-act i svg{width:20px;height:20px}
+.pgp-act span{min-width:0;display:flex;flex-direction:column}.pgp-act b{font:600 13.5px var(--font-sans)}.pgp-act small{font-size:11.5px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (hover:hover){.pgp-act:hover{border-color:var(--cta-peach)}}
+.pgp-credit{text-align:center;margin:28px 0 8px;font:500 11px var(--font-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+.pgp-credit b{font-weight:700;color:var(--ink-soft)}
+/* Control Panel › Photographer */
+.pgcp-form{display:flex;flex-direction:column;gap:10px}
+.pgcp-form label{display:flex;flex-direction:column;gap:4px;font:600 12px var(--font-sans);color:var(--ink-soft)}
+.pgcp-form input:not(.pgf-sw),.pgcp-form textarea{font:400 15px var(--font-sans);padding:11px 12px;border-radius:12px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);width:100%;box-sizing:border-box}
+.pgcp-form textarea{min-height:76px;resize:vertical}
+.pgcp-form .pgf-row{margin-top:6px}
+.pgcp-tabs.three{grid-template-columns:1fr 1fr 1.25fr}
+.pgcp-form .pgf-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.pgcp-form .pgf-row > div{flex:1;min-width:0}.pgcp-form .pgf-row b{font:600 14px var(--font-sans);color:var(--ink)}

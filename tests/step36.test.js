@@ -24,5 +24,5 @@ assert(r.pages.events === 'shapes' && r.pages.event === 'grid', 'Events page sty
 assert(!('events' in call('coupleLook', { g: gid, coupleKey: ck, pages: { events: 'nope' } }).pages) === false, 'an unknown Events style keeps the saved one');
 r = call('coupleLook', { g: gid, coupleKey: ck, pages: JSON.stringify({ viewer: 'classic' }) });
 assert(r.pages.viewer === 'classic' && r.pages.events === 'shapes', 'photo view style saved (step 38), others kept');
-assert(/^step3[6-9]/.test(call('health', {}).version), 'backend version is step36 or later');
+assert(+(call('health', {}).version.match(/^step(\d+)/) || [0, 0])[1] >= 36, 'backend version is step36 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 36 checks passed');

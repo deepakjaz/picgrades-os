@@ -160,7 +160,7 @@
     D.notes.slice(0, b.variant === 'bubbles' ? 2 : 4).forEach(n => { const t = h('button', 'pgl-note'); t.type = 'button'; t.appendChild(img(n.photoId, 160)); t.appendChild(h('div', '', '<p>“' + esc(n.text) + '”</p><small>— ' + esc(n.name) + '</small>')); t.addEventListener('click', () => pgOpenPhoto(n.photoId)); box.appendChild(t); });
     el.append(head, box);
   };
-  B.studio = (el, b, D) => { tapOn(el, () => switchViewFromNav('studio')); el.classList.add('pgl-studio-' + b.variant); el.innerHTML = '<div><small>Photographed by</small><b>' + esc(D.studio) + '</b></div><em>' + ic('arrow') + '</em>'; };
+  B.studio = (el, b, D) => { tapOn(el, () => switchViewFromNav('studio')); el.classList.add('pgl-studio-' + b.variant); const ig = (GALLERY.photographer || {}).instagram; el.innerHTML = '<div><small>Photographed by</small><b>' + esc(D.studio) + '</b>' + (ig ? '<small class="pgl-ig">@' + esc(ig) + '</small>' : '') + '</div><em>' + ic('arrow') + '</em>'; };
 
   // when a block has nothing to show (or its feature is off for this person), it steps aside
   function visible(k) {

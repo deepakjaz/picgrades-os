@@ -86,7 +86,8 @@ var USER_ROUTES = {
   setFeatures: setFeatures_,
   setLook: setLook_,
   myRole: myRole_,
-  setDemo: setDemo_
+  setDemo: setDemo_,
+  setPhotographer: setPhotographer_
 };
 
 // Admin or editor (order queue + delivery)
@@ -152,7 +153,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step39-demo-mode',
+    version: 'step42-photographer',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -868,7 +869,8 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo'];   // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit'];   // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
+   // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
    // features: the couple's / photographer's on-off per function (JSON); allowed: PicGrades' master switches by plan (JSON, empty = all allowed)   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
@@ -1030,6 +1032,7 @@ function getGallery_(p) {
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
   m.features = featuresOf_(g);
   m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
+  m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   return { gallery: m };
@@ -1441,6 +1444,30 @@ function saveLook_(g, p) {
   updateRowByNumber_('Galleries', g._row, out);
   return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages) };
 }
+// The wedding's photographer (step 42): shown as "Photographed by", on the photographer page and in the Hub.
+// Empty = the studio of the order. Set in the app's Control Panel by PicGrades or the wedding's photographer.
+var PHOTOGRAPHER_FIELDS = { name: 60, instagram: 40, website: 120, phone: 24, email: 80, city: 60, about: 400 };
+function photographerOf_(v) {
+  var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = {};
+  Object.keys(PHOTOGRAPHER_FIELDS).forEach(function (k) { var s = String(o[k] == null ? '' : o[k]).trim().slice(0, PHOTOGRAPHER_FIELDS[k]); if (s) out[k] = s; });
+  if (out.instagram) { var m = out.instagram.match(/instagram\.com\/([A-Za-z0-9._]+)/); out.instagram = (m ? m[1] : out.instagram).replace(/^@/, '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 30); if (!out.instagram) delete out.instagram; }
+  if (out.website && !/^https?:\/\//i.test(out.website)) out.website = 'https://' + out.website;
+  if (out.website && !/^https?:\/\/[^\s<>"]+\.[^\s<>"]+$/i.test(out.website)) delete out.website;
+  if (out.phone) { out.phone = out.phone.replace(/-/g, ' ').replace(/[^0-9+ ]/g, '').replace(/ +/g, ' ').trim(); if (!out.phone) delete out.phone; }
+  if (out.email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(out.email)) delete out.email;
+  return out;
+}
+/** PicGrades staff or the wedding's photographer: who photographed it, and (PicGrades only) whether PicGrades' name shows. */
+function setPhotographer_(p, user) {
+  var x = staffGallery_(p.g, user), patch = {};
+  if ('photographer' in p) patch.photographer = JSON.stringify(photographerOf_(p.photographer));
+  if ('credit' in p) { if (!isStaff_(user)) throw new Error('Only PicGrades can change this.'); patch.credit = /^(off|no|false|0)$/i.test(String(p.credit)) ? 'off' : ''; }
+  if (!Object.keys(patch).length) return { ok: false, error: 'Nothing to change.' };
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', x.g._row, patch);
+  var g = Object.assign({}, x.g, patch);
+  return { photographer: photographerOf_(g.photographer), credit: String(g.credit || '').toLowerCase() !== 'off', studio: x.g.companyName || '' };
+}
 // Demo wedding (step 39): anyone with the link gets the Control Panel to try every setting; their changes stay on their own phone.
 function isDemo_(g) { return /^(yes|true|1|on)$/i.test(String(g.demo || '').trim()); }
 /** Photographer (own studio) or PicGrades staff: make this wedding a demo, or a normal wedding again. */
@@ -1465,7 +1492,8 @@ function setLook_(p, user) { var x = staffGallery_(p.g, user); return saveLook_(
 function myRole_(p, user) {
   var x = staffGallery_(p.g, user), role = String(user.role || '').toLowerCase();
   return { role: isStaff_(user) ? 'picgrades' : 'photographer', canLock: role === 'admin', name: user.name || '', companyName: x.g.companyName || '',
-    features: featuresOf_(x.g), allowed: jsonObj_(x.g.allowed), theme: lookId_(x.g.theme), layout: lookId_(x.g.layout), pages: pagesOf_(x.g.pages) };
+    features: featuresOf_(x.g), allowed: jsonObj_(x.g.allowed), theme: lookId_(x.g.theme), layout: lookId_(x.g.layout), pages: pagesOf_(x.g.pages),
+    photographer: photographerOf_(x.g.photographer), studio: x.g.companyName || '', credit: String(x.g.credit || '').toLowerCase() !== 'off' };
 }
 
 /** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.

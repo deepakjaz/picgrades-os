@@ -16,5 +16,5 @@ assert(call('getGallery', { g: gid }).gallery.demo === true, 'the app knows it i
 assert(call('facesStatus', { token: admin, g: gid }).gallery.demo === true, 'the photographer page shows the switch on');
 r = call('setDemo', { token: admin, g: gid, on: '' });
 assert(r.demo === false && call('getGallery', { g: gid }).gallery.demo === false, 'and off again');
-assert(call('health', {}).version === 'step39-demo-mode', 'backend version step39-demo-mode');
+assert(/^step(39|[4-9]\d)/.test(call('health', {}).version), 'backend version is step39 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 39 checks passed');
