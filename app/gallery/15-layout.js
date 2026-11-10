@@ -1,5 +1,9 @@
 // Hub layouts (step 32): the Hub drawn from a layout — which blocks, in what order, what size, which style.
-// Layouts live in /app/themes/layouts.json (5 by Gemini "G", 5 by ChatGPT "C"). Blocks sit on a 4-column grid (iPhone-widget style).
+// Layouts live in /app/themes/layouts.json. Blocks sit on a grid of square cells that grows with the screen (step 40):
+//   phone (narrower than 600 px) — 4 columns · tall (tablets, upright big screens, phone sideways) — 8 · wide (laptop, TV) — 12.
+// A block gives its size for each: "phone": [cols, rows], "tall": [...], "wide": [...] (the brief-v2 packs). Older layouts give
+// one phone size ("size": S / W / M / L / XL / XXL); their tall and wide sizes are worked out here, so every layout fills a big screen.
+// "hide": ["phone"] etc. leaves a block out on that screen.
 // Every block only shows things and then uses the Hub's existing buttons and helpers, so each function works exactly as before.
 // Which layout: the wedding's own layout (GALLERY.layout, chosen in the Control Panel, step 34). ?layout=<id> in the link previews one on this phone only.
 // No layout = the original Hub, untouched. The photographer's own page (/p/…) keeps its Hub.
@@ -7,6 +11,44 @@
 (function pgLayouts() {
   let LAYOUTS = [], cur = null;
   const SIZE = { S: [1, 1], W: [2, 1], M: [2, 2], L: [4, 2], XL: [4, 3], XXL: [4, 4] };
+  const SCREEN = { phone: { cols: 4, gap: 10, pad: 16, max: 480 }, tall: { cols: 8, gap: 12, pad: 24, max: 1120 }, wide: { cols: 12, gap: 14, pad: 40, max: 1680 } };
+  const screenOf = () => { const w = window.innerWidth, ht = window.innerHeight; return w < 600 ? 'phone' : w >= 1100 && w >= ht ? 'wide' : 'tall'; };
+  // big-screen sizes for the older (phone-only) layouts: same order, more room
+  const WIDE_OF = { hero: { XXL: [8, 5], XL: [8, 5], L: [8, 4], M: [6, 4] }, act: { S: [2, 2], W: [4, 2], M: [4, 3], L: [6, 3] },
+    events: [12, 4], loved: [6, 3], notes: [6, 3], studio: [12, 1], stats: [12, 1] };
+  const ACTS = ['findme', 'reel', 'post', 'upload', 'install', 'review'];
+  function sizeOf(b, scr) {
+    if (Array.isArray(b[scr]) && b[scr].length === 2) return b[scr].map(Number);
+    const p = SIZE[b.size] || (Array.isArray(b.phone) ? b.phone : SIZE.W);
+    if (scr === 'phone') return p;
+    if (scr === 'tall') return b.block === 'studio' || b.block === 'stats' ? [8, 1] : [p[0] * 2, p[1] * 2];
+    if (b.block === 'hero') return WIDE_OF.hero[b.size] || [8, 5];
+    if (ACTS.indexOf(b.block) > -1) return WIDE_OF.act[b.size] || [3, 2];
+    if (b.block === 'events' && b.variant === 'list') return [6, 4];
+    return WIDE_OF[b.block] || [4, 2];
+  }
+  // a size letter for the block's styling (small tiles hide their second line), from its real size on this screen
+  function letterOf(d, u, gap) {
+    const w = d[0] * u + (d[0] - 1) * gap, ht = d[1] * u + (d[1] - 1) * gap;
+    return w < 120 || ht < 96 ? 'S' : ht < 170 ? 'W' : w < 360 ? 'M' : ht < 420 ? 'L' : ht < 620 ? 'XL' : 'XXL';
+  }
+  // the older (phone-only) layouts on a laptop / TV: the hero on the left, the action tiles filling the space beside it
+  // exactly, then each list across the page (two side by side when they pair up), so no holes are left
+  function planWide(list) {
+    const plan = new Map(), acts = list.filter(b => ACTS.indexOf(b.block) > -1), hero = list.find(b => b.block === 'hero');
+    let cells = 0; acts.forEach(b => { const big = b.size && b.size !== 'S'; plan.set(b, big ? [4, 2] : [2, 2]); cells += big ? 2 : 1; });   // in 2×2 squares
+    if (cells % 2) { const last = acts.filter(b => plan.get(b)[0] === 2).pop(); if (last) { plan.set(last, [4, 2]); cells++; } }
+    if (hero) plan.set(hero, [acts.length ? 8 : 12, Math.max(4, cells)]);
+    const rest = list.filter(b => b !== hero && acts.indexOf(b) < 0);
+    for (let i = 0; i < rest.length; i++) {
+      const b = rest[i], nx = rest[i + 1], pairable = x => x && ['loved', 'notes'].indexOf(x.block) > -1;   // the photographer stays a slim banner
+      if (b.block === 'events') plan.set(b, b.variant === 'list' && pairable(nx) ? [6, 4] : [12, b.variant === 'list' ? 3 : 4]);
+      else if (pairable(b) && pairable(nx)) { plan.set(b, [6, 3]); plan.set(nx, [6, 3]); i++; }
+      else plan.set(b, b.block === 'studio' ? [12, 1] : [12, 3]);
+      if (b.block === 'events' && b.variant === 'list' && pairable(nx)) { plan.set(nx, [6, 4]); i++; }
+    }
+    return plan;
+  }
   const $ = id => document.getElementById(id);
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const esc = s => pgEsc(String(s == null ? '' : s));
@@ -76,16 +118,28 @@
   };
   const action = (el, b, D, k) => {
     const a = ACT[k]; tapOn(el, a[2]); el.classList.add('pgl-act-' + b.variant);
-    if (b.variant === 'photo') { rot(el, picks(D, 8), 600); el.appendChild(h('div', 'pgl-scrim')); }
-    el.appendChild(h('div', 'pgl-actin', '<i>' + ic(k) + '</i><div><b>' + a[0] + '</b>' + (b.size === 'S' ? '' : '<small>' + a[1] + '</small>') + '</div>' + (b.size === 'S' ? '' : '<em>' + ic('arrow') + '</em>')));
+    if (b.variant === 'photo' || b.variant === 'slideshow') { rot(el, picks(D, 8), 700); el.appendChild(h('div', 'pgl-scrim')); el.classList.add('pgl-act-photo'); }
+    const small = b._letter === 'S';
+    el.appendChild(h('div', 'pgl-actin', '<i>' + ic(k) + '</i><div><b>' + a[0] + '</b>' + (small ? '' : '<small>' + a[1] + '</small>') + '</div>' + (small ? '' : '<em>' + ic('arrow') + '</em>')));
   };
   ['findme', 'reel', 'post', 'upload', 'install', 'review'].forEach(k => { B[k] = (el, b, D) => action(el, b, D, k); });
   B.events = (el, b, D) => {
     const v = b.variant, head = h('div', 'pgl-head', '<h3>Events</h3><button type="button" class="pgl-more">All ' + D.events.length + ' →</button>');
     head.querySelector('button').addEventListener('click', () => switchViewFromNav('gallery'));
     const box = h('div', 'pgl-ev pgl-ev-' + v);
-    D.events.forEach((ev, i) => {
+    // mosaic of slideshows: the first event big (2×2), then as many as fill whole rows (the rest are one tap away in "All")
+    let shownN = D.events.length;
+    if (v === 'mosaic-slideshow') {
+      // columns and count so that every row is full: n events take n + 3 cells (the first is 2×2), at least 2 rows
+      const max = { phone: 2, tall: 4, wide: 6 }[screenOf()], n = D.events.length; let best = null;
+      for (let c = max; c >= 2 && !best; c--) for (let m = n; m >= 1; m--) if ((m + 3) % c === 0 && m + 3 >= 2 * c) { best = [c, m]; break; }
+      if (best) { box.style.gridTemplateColumns = 'repeat(' + best[0] + ',minmax(0,1fr))'; shownN = best[1]; }
+    }
+    // a grid of events on a big screen fills its block: up to 4 in one row, more in two rows
+    if (v === 'grid-2' && screenOf() !== 'phone') { const n = D.events.length; box.style.setProperty('--evc', n <= 4 ? n : Math.ceil(n / 2)); box.classList.add('pgl-ev-fill'); }
+    D.events.slice(0, shownN).forEach((ev, i) => {
       const t = h('button', 'pgl-evt'); t.type = 'button'; t.addEventListener('click', () => pgOpenEvent(ev.name));
+      if (v === 'editorial-bands') { const c = h('div', 'pgl-evc'); rot(c, ev.photos, 1100); t.appendChild(c); t.appendChild(h('div', 'pgl-evlab', '<small>' + String(i + 1).padStart(2, '0') + '</small><b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); box.appendChild(t); return; }
       if (v === 'list') { t.appendChild(h('span', 'pgl-num', String(i + 1).padStart(2, '0'))); const th = h('div', 'pgl-evth'); th.appendChild(img((ev.photos[0] || {}).id, 200)); t.appendChild(th); t.appendChild(h('div', 'pgl-evtx', '<b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); }
       else { const c = h('div', 'pgl-evc'); rot(c, ev.photos, 700); t.appendChild(c); t.appendChild(h('div', 'pgl-evlab', '<b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); }
       box.appendChild(t);
@@ -117,22 +171,36 @@
     if (k === 'install') return !$('pghInstall') || !$('pghInstall').classList.contains('hidden');
     return true;
   }
+  let shownOn = '';   // which screen the layout was drawn for (it is drawn again when that changes)
+  function fit(box) {
+    const scr = screenOf(), S = SCREEN[scr], wv = Math.min(($('view-hub') || document.body).clientWidth || window.innerWidth, S.max);
+    const u = (wv - 2 * S.pad - S.gap * (S.cols - 1)) / S.cols;
+    box.style.setProperty('--cols', S.cols); box.style.setProperty('--gap', S.gap + 'px'); box.style.setProperty('--pad', S.pad + 'px');
+    box.style.setProperty('--max', S.max + 'px'); box.style.setProperty('--u', Math.max(40, u).toFixed(1) + 'px'); box.dataset.screen = scr;
+  }
   function render() {
     const view = $('view-hub'); if (!view || typeof GALLERY === 'undefined' || !GALLERY) return;
     let box = $('pgLay');
     if (!cur || GALLERY.isStudio) { document.body.classList.remove('pg-lay-on'); if (box) box.remove(); return; }
     if (!box) { box = h('div', 'pgl-grid'); box.id = 'pgLay'; view.prepend(box); }
     box.dataset.layout = cur.id; box.innerHTML = ''; document.body.classList.add('pg-lay-on');
-    const D = data();
-    (cur.blocks || []).forEach(b => {
-      if (!B[b.block] || !visible(b.block)) return;
-      const sz = SIZE[b.size] || SIZE.W, el = h('section', 'pgl-b pgl-' + b.block + ' pgl-v-' + b.variant + ' pgl-s' + b.size);
-      const rows = b.block === 'stats' ? 1 : b.block === 'studio' ? Math.min(sz[1], 1) : sz[1];   // numbers and the photographer read best one row high
-      el.style.gridColumn = 'span ' + sz[0]; el.style.gridRow = 'span ' + rows; el.dataset.block = b.block;
+    const D = data(), scr = screenOf(); shownOn = scr; fit(box);
+    const u = parseFloat(box.style.getPropertyValue('--u')), gap = SCREEN[scr].gap;
+    const shown = (cur.blocks || []).filter(b0 => B[b0.block] && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
+      && !(b0.block === 'loved' && !D.loved.length) && !(b0.block === 'notes' && !D.notes.length));
+    const wide = scr === 'wide' && shown.some(b0 => !Array.isArray(b0.wide)) ? planWide(shown) : null;
+    shown.forEach(b0 => {
+      const sz = (wide && wide.get(b0)) || sizeOf(b0, scr), letter = b0.size && scr === 'phone' ? b0.size : letterOf(sz, u, gap), b = Object.assign({}, b0, { _letter: letter });
+      const cols = Math.min(sz[0], SCREEN[scr].cols), legacy = !Array.isArray(b0[scr]) && !wide;
+      const rows = legacy && (b.block === 'stats' || b.block === 'studio') ? 1 : sz[1];   // numbers and the photographer read best one row high
+      const el = h('section', 'pgl-b pgl-' + b.block + ' pgl-v-' + b.variant + ' pgl-s' + letter);
+      el.style.gridColumn = 'span ' + cols; el.style.gridRow = 'span ' + rows; el.dataset.block = b.block;
       if (B[b.block](el, b, D) === false) return;
       box.appendChild(el);
     });
   }
+  let rz = 0;
+  window.addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const box = $('pgLay'); if (!box || !cur) return; if (screenOf() !== shownOn) render(); else fit(box); }); });
   function choose() {
     const q = new URLSearchParams(location.search).get('layout');
     if (q === 'original') return null;   // preview of the original Hub

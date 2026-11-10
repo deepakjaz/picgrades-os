@@ -173,7 +173,7 @@
     };
     const wrap = h('div', 'pgcp-pv'); wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-label', 'Preview');
     wrap.innerHTML = '<div class="pgcp-pv-top"><button type="button" class="pgcp-pv-back" aria-label="Back">‹ Back</button><div class="pgcp-pv-name"></div>' +
-      '<button type="button" class="pgcp-pv-dark" aria-pressed="false">Dark</button></div>' +
+      '<button type="button" class="pgcp-pv-size" aria-label="Preview on a phone or a laptop"></button><button type="button" class="pgcp-pv-dark" aria-pressed="false">Dark</button></div>' +
       '<div class="pgcp-pv-stage"><div class="pgcp-pv-phone"><iframe title="Preview" loading="eager"></iframe><div class="pgcp-pv-wait">Opening preview…</div></div></div>' +
       '<div class="pgcp-pv-pages" role="tablist"></div>' +
       '<div class="pgcp-pv-foot"><label class="pgcp-pv-keep" hidden><input type="checkbox"> Keep my current theme</label>' +
@@ -210,10 +210,15 @@
       ap.disabled = true; ap.textContent = 'Applying…';
       saveLook(part, box, ok => { if (ok) close(); else { ap.disabled = false; ap.textContent = ROLE === 'demo' ? 'Apply on this phone' : 'Apply to the wedding'; } });
     });
-    // the preview is a real phone-sized page (390 × 844), scaled down to fit this screen
-    const stage = wrap.querySelector('.pgcp-pv-stage'), phone = wrap.querySelector('.pgcp-pv-phone');
-    const fit = () => { if (!wrap.isConnected) return window.removeEventListener('resize', fit); const r = stage.getBoundingClientRect(), k = Math.min(r.width / 390, r.height / 844, 1);
-      phone.style.width = Math.floor(390 * k) + 'px'; phone.style.height = Math.floor(844 * k) + 'px'; fr.style.transform = 'scale(' + k + ')'; };
+    // the preview is a real page at phone size (390 × 844) or laptop size (1440 × 900), scaled down to fit this screen
+    const stage = wrap.querySelector('.pgcp-pv-stage'), phone = wrap.querySelector('.pgcp-pv-phone'), sizeBtn = wrap.querySelector('.pgcp-pv-size');
+    const DEV = { phone: [390, 844], laptop: [1440, 900] };
+    let dev = window.innerWidth >= 1000 ? 'laptop' : 'phone';
+    const fit = () => { if (!wrap.isConnected) return window.removeEventListener('resize', fit); const [W, H] = DEV[dev], r = stage.getBoundingClientRect(), k = Math.min(r.width / W, r.height / H, 1);
+      fr.style.width = W + 'px'; fr.style.height = H + 'px'; phone.classList.toggle('laptop', dev === 'laptop');
+      phone.style.width = Math.floor(W * k) + 'px'; phone.style.height = Math.floor(H * k) + 'px'; fr.style.transform = 'scale(' + k + ')'; };
+    const paintSize = () => { sizeBtn.textContent = dev === 'phone' ? 'Laptop' : 'Phone'; sizeBtn.title = 'See it on a ' + sizeBtn.textContent.toLowerCase(); };
+    sizeBtn.addEventListener('click', () => { dev = dev === 'phone' ? 'laptop' : 'phone'; paintSize(); fit(); }); paintSize();
     window.addEventListener('resize', fit);
     document.body.appendChild(wrap); fit(); load();
   }
