@@ -27,6 +27,7 @@ const srv = http.createServer((req, res) => {
     // even ids = portrait, odd = landscape
     await pg.route('https://lh3.googleusercontent.com/**', r => { const n = parseInt(r.request().url().match(/IMG(\d+)/)[1], 10); r.fulfill({ contentType: 'image/jpeg', body: fs.readFileSync(path.join(__dirname, 'fixtures', 'sample' + (n % 2 ? 1 : 2) + '.jpg')) }); });
     await pg.goto('http://localhost:8767/g/' + pub.galleryId); await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 }); console.log(vp.name, '| default landing is Hub:', await pg.isVisible('#view-hub'));
+    await pg.evaluate(() => sessionStorage.clear());   // a reload goes back to where you were (the Hub); this test opens Moments by its link
     await pg.goto('http://localhost:8767/g/' + pub.galleryId + '#moments'); await pg.reload();
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached', timeout: 10000 });
     await pg.waitForTimeout(500); 
@@ -83,8 +84,12 @@ const srv = http.createServer((req, res) => {
       await pg.mouse.wheel(0, -120); await pg.waitForTimeout(900); console.log('wheel up ->', await pg.textContent('#pgvCount'));
       await pg.click('#pgvZoom'); await pg.waitForTimeout(200); console.log('zoom button:', await pg.evaluate(() => { const f = document.getElementById('pgvFeed'), i = Math.round(f.scrollTop / f.clientHeight); return document.querySelectorAll('.pgv-item img')[i].style.transform; }));
       await pg.click('#pgvZoom'); await pg.waitForTimeout(200);
+      // step 45: a guest who has not used Find me is asked to request the photo (no download); the couple downloads it
+      await pg.click('#pgvSave'); await pg.waitForTimeout(400); console.log('guest download → first asks who they are (to request it):', await pg.isVisible('#idSheet.show')); await pg.click('#idClose'); await pg.waitForTimeout(300);
+      await pg.evaluate(() => { GALLERY.isCouple = true; });
       const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 8000 }).catch(() => null), pg.click('#pgvSave')]);
       console.log('download:', dl ? dl.suggestedFilename() : 'none');
+      await pg.evaluate(() => { GALLERY.isCouple = false; });
       await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(500); console.log('arrow down ->', await pg.textContent('#pgvCount'));
     }
     await pg.waitForTimeout(800);

@@ -62,5 +62,5 @@ const r2 = call('askDownload', Object.assign({ g: gid, ids: ['Q2'], email: 'neha
 call('dlDecide', { g: gid, token: admin, reqId: r2.reqId, decision: 'decline' });
 q = call('dlRequests', { g: gid, coupleKey: ck });
 assert(!q.waiting.length && q.decided.length === 2 && q.decided.some(x => x.status === 'declined'), 'declined requests move to the decided list');
-assert(call('health', {}).version === 'step45-findme-download', 'backend version step45-findme-download');
+assert(+(call('health', {}).version.match(/^step(\d+)/) || [0, 0])[1] >= 45, 'backend version is step45 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 45 checks passed');

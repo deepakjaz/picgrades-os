@@ -26,5 +26,5 @@ const g = call('getGallery', { g: gid }).gallery;
 assert(g.layout === 'custom' && g.custom.blocks.length === 3 && g.pages.header === 'left', 'every guest gets the own Hub');
 assert(!call('coupleLook', { g: gid, coupleKey: ck, custom: JSON.stringify({ blocks: [] }) }).ok, 'an empty Hub cannot be published');
 assert(call('myRole', { token: admin, g: gid }).custom.blocks.length === 3, 'the Control Panel sees it');
-assert(call('health', {}).version === 'step44-hub-editor', 'backend version step44-hub-editor');
+assert(+(call('health', {}).version.match(/^step(\d+)/) || [0, 0])[1] >= 44, 'backend version is step44 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 44 checks passed');
