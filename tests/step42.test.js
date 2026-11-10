@@ -27,5 +27,5 @@ const own = DB.Users.slice(1).find(u => u[2] === company && u[3] === 'client');
 if (own) { const pt = login(own[0]);
   assert(call('setPhotographer', { token: pt, g: gid, photographer: { name: 'WFA Studio' } }).ok, 'the wedding’s photographer edits their details');
   assert(!call('setPhotographer', { token: pt, g: gid, credit: 'off' }).ok, 'only PicGrades turns its credit off'); }
-assert(call('health', {}).version === 'step42-photographer', 'backend version step42-photographer');
+assert(+(call('health', {}).version.match(/^step(\d+)/) || [0, 0])[1] >= 42, 'backend version is step42 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 42 checks passed');

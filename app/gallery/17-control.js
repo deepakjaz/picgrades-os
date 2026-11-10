@@ -67,9 +67,10 @@
     if ('theme' in body) d.theme = body.theme; if ('layout' in body) d.layout = body.layout;
     if ('pages' in body) d.pages = Object.assign({}, d.pages || {}, parse(body.pages));
     if ('features' in body) d.features = Object.assign({}, d.features || {}, parse(body.features));
+    if ('custom' in body) d.custom = parse(body.custom);
     try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {}
     const g = pgDemoMerge(Object.assign({}, GALLERY));
-    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {} });
+    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {}, custom: g.custom || { blocks: [] } });
   }
   function showLook() {
     if (window.PGTheme) PGTheme.apply(GALLERY.theme || '');
@@ -77,7 +78,7 @@
   }
   function saveLook(part, box, done) {
     call('coupleLook', 'setLook', part)
-      .then(r => { GALLERY.theme = r.theme; GALLERY.layout = r.layout; GALLERY.pages = r.pages || {}; showLook(); if (window.PGGrids) PGGrids.refresh(); paintLook(box); showToast(ROLE === 'demo' ? 'Applied on this phone (demo)' : 'Applied — every guest sees it now'); if (done) done(true); })
+      .then(r => { GALLERY.theme = r.theme; GALLERY.layout = r.layout; GALLERY.pages = r.pages || {}; if (r.custom) GALLERY.custom = r.custom; showLook(); if (window.PGGrids) PGGrids.refresh(); paintLook(box); showToast(ROLE === 'demo' ? 'Applied on this phone (demo)' : 'Applied — every guest sees it now'); if (done) done(true); })
       .catch(err => { showToast(err.message); if (done) done(false); });
   }
 
@@ -140,15 +141,19 @@
     const th = box.querySelector('.pgcp-themes'), la = box.querySelector('.pgcp-layouts'); if (!th || !la) return;
     const themes = window.PGTheme ? PGTheme.list() : [], layouts = window.PGLayout ? PGLayout.list() : [];
     th.innerHTML = ''; th.appendChild(themeCard(ORIGINAL_T, !GALLERY.theme)); themes.forEach(t => th.appendChild(themeCard(t, GALLERY.theme === t.id)));
-    la.innerHTML = ''; la.appendChild(layoutCard(null, !GALLERY.layout)); layouts.forEach(l => la.appendChild(layoutCard(l, GALLERY.layout === l.id)));
+    la.innerHTML = ''; la.appendChild(layoutCard(null, !GALLERY.layout));
+    if (GALLERY.custom && GALLERY.custom.blocks && GALLERY.custom.blocks.length) la.appendChild(layoutCard({ id: 'custom', name: 'Our own Hub', blocks: GALLERY.custom.blocks.map(b => ({ block: b.block, size: 'W' })) }, GALLERY.layout === 'custom'));
+    layouts.forEach(l => la.appendChild(layoutCard(l, GALLERY.layout === l.id)));
     box.querySelectorAll('.pgcp-pagestyles').forEach(ps => { const key = ps.dataset.pagekey; ps.innerHTML = ''; Object.keys(PAGE_DEFS[key].styles).forEach(k => ps.appendChild(styleCard(key, k, curStyle(key) === k))); });
   }
   function lookPane() {
     const p = h('div', 'pgcp-pane', '<h4>Theme</h4><p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' +
-      '<h4>Hub layout</h4><p class="pgcp-note">How the Hub is arranged. Tap one to preview it.</p><div class="pgcp-row pgcp-layouts"></div>' +
+      '<h4>Hub layout</h4><p class="pgcp-note">How the Hub is arranged. Tap one to preview it — or design your own: place the cards where you want them, any size.</p>' +
+      '<button type="button" class="pgcp-design">✎ Design your own Hub</button><div class="pgcp-row pgcp-layouts"></div>' +
       Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join(''));
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }
+      if (e.target.closest('.pgcp-design')) { const s = document.querySelector('.pgcp-sheet'); if (s) { s.remove(); document.querySelectorAll('.overlay-backdrop.show').forEach(x => x.remove()); } PGHubEditor.open(); return; }
       const st = e.target.closest('.pgcp-style'); if (st) { preview({ pages: { [st.dataset.pagekey]: st.dataset.style } }, p.parentNode); return; }
       const l = e.target.closest('.pgcp-layout'); if (l) preview({ layout: l.dataset.layout }, p.parentNode);
     });
@@ -162,12 +167,13 @@
     const lay = 'layout' in want ? layouts.find(x => x.id === want.layout) || null : layouts.find(x => x.id === GALLERY.layout) || null;
     // a layout comes with its own theme; "Keep my theme" tries it with the wedding's current theme instead
     const pk = want.pages ? Object.keys(want.pages)[0] : null;   // the page whose style is being tried
-    const state = { layout: lay ? lay.id : '', theme: 'theme' in want ? want.theme : (GALLERY.theme || ''), page: pk ? PAGE_DEFS[pk].page : 'hub', dark: document.documentElement.getAttribute('data-tkg-theme') === 'dark',
+    const own = ('layout' in want ? want.layout : GALLERY.layout) === 'custom';   // the wedding's own Hub (Hub editor)
+    const state = { layout: lay ? lay.id : own ? 'custom' : '', theme: 'theme' in want ? want.theme : (GALLERY.theme || ''), page: pk ? PAGE_DEFS[pk].page : 'hub', dark: document.documentElement.getAttribute('data-tkg-theme') === 'dark',
       styles: Object.keys(PAGE_DEFS).reduce((o, k) => { o[k] = pk === k ? want.pages[k] : curStyle(k); return o; }, {}) };
     const withOwn = 'layout' in want && lay && lay.theme && themes.some(t => t.id === lay.theme);
     if (withOwn) state.theme = lay.theme;
     const nameOf = () => {
-      const t = themes.find(x => x.id === state.theme), l = layouts.find(x => x.id === state.layout);
+      const t = themes.find(x => x.id === state.theme), l = layouts.find(x => x.id === state.layout) || (state.layout === 'custom' ? { name: 'Our own Hub' } : null);
       if (pk) return PAGE_DEFS[pk].title + ' · ' + PAGE_DEFS[pk].styles[state.styles[pk]][0];
       return 'layout' in want ? (l ? l.name : 'Original Hub') + ' · ' + (t ? t.name : 'Original theme') : (t ? t.name : 'Original');
     };
@@ -306,5 +312,6 @@
     box.append(head, body, done); document.body.append(back, box);
     repaint();
   }
-  window.PGControl = { role: () => ROLE, open, refresh: paintRole };
+  // the Hub editor (23-editor.js) publishes through the same saving as the panel (couple link, login, or this phone in a demo)
+  window.PGControl = { role: () => ROLE, open, refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
 })();

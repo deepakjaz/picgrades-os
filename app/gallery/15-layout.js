@@ -12,7 +12,9 @@
   let LAYOUTS = [], cur = null;
   const SIZE = { S: [1, 1], W: [2, 1], M: [2, 2], L: [4, 2], XL: [4, 3], XXL: [4, 4] };
   const SCREEN = { phone: { cols: 4, gap: 10, pad: 16, max: 480 }, tall: { cols: 8, gap: 12, pad: 24, max: 1120 }, wide: { cols: 12, gap: 14, pad: 40, max: 1680 } };
-  const screenOf = () => { const w = window.innerWidth, ht = window.innerHeight; return w < 600 ? 'phone' : w >= 1100 && w >= ht ? 'wide' : 'tall'; };
+  let SCR_FOR = null, SKIP_REPACK = false;   // the editor keeps every card in its place (a placeholder shows the ones guests cannot see now)   // the Hub editor draws a layout for another screen than this one (step 44)
+  const realScreen = () => { const w = window.innerWidth, ht = window.innerHeight; return w < 600 ? 'phone' : w >= 1100 && w >= ht ? 'wide' : 'tall'; };
+  const screenOf = () => SCR_FOR || realScreen();
   // big-screen sizes for the older (phone-only) layouts: same order, more room
   const WIDE_OF = { hero: { XXL: [8, 5], XL: [8, 5], L: [8, 4], M: [6, 4] }, act: { S: [2, 2], W: [4, 2], M: [4, 3], L: [6, 3] },
     events: [12, 4], loved: [6, 3], notes: [6, 3], studio: [12, 1], stats: [12, 1] };
@@ -172,46 +174,81 @@
     return true;
   }
   let shownOn = '';   // which screen the layout was drawn for (it is drawn again when that changes)
-  function fit(box) {
-    const scr = screenOf(), S = SCREEN[scr], wv = Math.min(($('view-hub') || document.body).clientWidth || window.innerWidth, S.max);
+  function fit(box, widthPx) {
+    const scr = screenOf(), S = SCREEN[scr], wv = Math.min(widthPx || ($('view-hub') || document.body).clientWidth || window.innerWidth, S.max);
     const u = (wv - 2 * S.pad - S.gap * (S.cols - 1)) / S.cols;
     box.style.setProperty('--cols', S.cols); box.style.setProperty('--gap', S.gap + 'px'); box.style.setProperty('--pad', S.pad + 'px');
     box.style.setProperty('--max', S.max + 'px'); box.style.setProperty('--u', Math.max(40, u).toFixed(1) + 'px'); box.dataset.screen = scr;
+  }
+  // which blocks show on this screen, and the size of each ([cols, rows]); a block with its own place ("pos", the Hub editor) keeps it
+  function plan(layout, scr, D) {
+    const shown = (layout.blocks || []).filter(b0 => B[b0.block] && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
+      && !(b0.block === 'loved' && !D.loved.length) && !(b0.block === 'notes' && !D.notes.length));
+    const wide = scr === 'wide' && shown.some(b0 => !Array.isArray(b0.wide) && !(b0.pos && b0.pos.wide)) ? planWide(shown) : null;
+    // an own Hub (cards with fixed places) where a card has nothing to show right now (no hearts yet, a function off):
+    // the other cards close up in reading order, so guests never see a hole
+    const placed = shown.filter(b0 => b0.pos && Array.isArray(b0.pos[scr]));
+    const missing = (layout.blocks || []).some(b0 => b0.pos && Array.isArray(b0.pos[scr]) && shown.indexOf(b0) < 0 && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1));
+    const repack = new Map();
+    if (missing && placed.length && !SKIP_REPACK) {
+      const cols = SCREEN[scr].cols, taken = [], over = (a, c) => a[0] < c[0] + c[2] && c[0] < a[0] + a[2] && a[1] < c[1] + c[3] && c[1] < a[1] + a[3];
+      placed.slice().sort((x, y) => x.pos[scr][1] - y.pos[scr][1] || x.pos[scr][0] - y.pos[scr][0]).forEach(b0 => {
+        const w = Math.min(b0.pos[scr][2], cols), ht = b0.pos[scr][3];
+        for (let y = 0, done = false; !done; y++) for (let x = 0; x + w <= cols; x++) { const p = [x, y, w, ht]; if (!taken.some(q => over(q, p))) { taken.push(p); repack.set(b0, p); done = true; break; } }
+      });
+      // a card that ends a row with empty cells after it grows to the edge (no gap on the right)
+      taken.forEach(p => { while (p[0] + p[2] < cols && !taken.some(q => q !== p && over(q, [p[0] + p[2], p[1], 1, p[3]]))) p[2]++; });
+    }
+    return shown.map(b0 => {
+      const at = repack.get(b0) || (b0.pos && Array.isArray(b0.pos[scr]) ? b0.pos[scr].map(Number) : null);
+      const sz = at ? [at[2], at[3]] : (wide && wide.get(b0)) || sizeOf(b0, scr), legacy = !at && !Array.isArray(b0[scr]) && !wide;
+      const rows = legacy && (b0.block === 'stats' || b0.block === 'studio') ? 1 : sz[1];   // numbers and the photographer read best one row high
+      return { b0, at, cols: Math.min(sz[0], SCREEN[scr].cols), rows };
+    });
+  }
+  // draw a layout into a box: the Hub itself, or the Hub editor's canvas (scr / widthPx: the screen it is drawn for)
+  function build(box, layout, scr, widthPx, editing) {
+    SCR_FOR = scr || null; SKIP_REPACK = !!editing;
+    try {
+      box.innerHTML = ''; box.dataset.layout = layout.id; fit(box, widthPx);
+      const D = data(), sc = screenOf(), u = parseFloat(box.style.getPropertyValue('--u')), gap = SCREEN[sc].gap, out = [];
+      plan(layout, sc, D).forEach(it => {
+        const b0 = it.b0, letter = b0.size && sc === 'phone' && !it.at ? b0.size : letterOf([it.cols, it.rows], u, gap), b = Object.assign({}, b0, { _letter: letter });
+        const el = h('section', 'pgl-b pgl-' + b.block + ' pgl-v-' + b.variant + ' pgl-s' + letter);
+        el.style.gridColumn = it.at ? (it.at[0] + 1) + ' / span ' + it.cols : 'span ' + it.cols;
+        el.style.gridRow = it.at ? (it.at[1] + 1) + ' / span ' + it.rows : 'span ' + it.rows; el.dataset.block = b.block;
+        if (B[b.block](el, b, D) === false) return;
+        box.appendChild(el); out.push({ b0, el });
+      });
+      return out;
+    } finally { SCR_FOR = null; SKIP_REPACK = false; }
   }
   function render() {
     const view = $('view-hub'); if (!view || typeof GALLERY === 'undefined' || !GALLERY) return;
     let box = $('pgLay');
     if (!cur || GALLERY.isStudio) { document.body.classList.remove('pg-lay-on'); if (box) box.remove(); return; }
     if (!box) { box = h('div', 'pgl-grid'); box.id = 'pgLay'; view.prepend(box); }
-    box.dataset.layout = cur.id; box.innerHTML = ''; document.body.classList.add('pg-lay-on');
-    const D = data(), scr = screenOf(); shownOn = scr; fit(box);
-    const u = parseFloat(box.style.getPropertyValue('--u')), gap = SCREEN[scr].gap;
-    const shown = (cur.blocks || []).filter(b0 => B[b0.block] && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
-      && !(b0.block === 'loved' && !D.loved.length) && !(b0.block === 'notes' && !D.notes.length));
-    const wide = scr === 'wide' && shown.some(b0 => !Array.isArray(b0.wide)) ? planWide(shown) : null;
-    shown.forEach(b0 => {
-      const sz = (wide && wide.get(b0)) || sizeOf(b0, scr), letter = b0.size && scr === 'phone' ? b0.size : letterOf(sz, u, gap), b = Object.assign({}, b0, { _letter: letter });
-      const cols = Math.min(sz[0], SCREEN[scr].cols), legacy = !Array.isArray(b0[scr]) && !wide;
-      const rows = legacy && (b.block === 'stats' || b.block === 'studio') ? 1 : sz[1];   // numbers and the photographer read best one row high
-      const el = h('section', 'pgl-b pgl-' + b.block + ' pgl-v-' + b.variant + ' pgl-s' + letter);
-      el.style.gridColumn = 'span ' + cols; el.style.gridRow = 'span ' + rows; el.dataset.block = b.block;
-      if (B[b.block](el, b, D) === false) return;
-      box.appendChild(el);
-    });
+    document.body.classList.add('pg-lay-on'); shownOn = screenOf();
+    build(box, cur);
   }
   let rz = 0;
   window.addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const box = $('pgLay'); if (!box || !cur) return; if (screenOf() !== shownOn) render(); else fit(box); }); });
   function choose() {
     const q = new URLSearchParams(location.search).get('layout');
     if (q === 'original') return null;   // preview of the original Hub
-    const id = q || (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.layout) || '';
+    const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {};
+    if (window.PGHubDraft && PGHubDraft()) return customOf(PGHubDraft());   // the Hub editor's draft, previewed on this phone only
+    const id = q || G.layout || '';
+    if (id === 'custom') return G.custom && G.custom.blocks ? customOf(G.custom) : null;   // the wedding's own Hub (made in the Hub editor)
     return LAYOUTS.find(l => l.id === id) || null;
   }
+  const customOf = c => ({ id: 'custom', name: 'Our own Hub', theme: '', blocks: (c.blocks || []).map(b => Object.assign({}, b)) });
   try { localStorage.removeItem('pg_layout_pick'); } catch (e) {}   // old test-menu choice no longer overrides the wedding
   const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
   pgAfter('pgRenderHub', () => { if (LAYOUTS.length) { cur = choose(); render(); } });
   // apply(id) shows a layout straight away (the Control Panel saves it for the wedding); '' = the original Hub
-  window.PGLayout = { ready, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render,
-    apply: id => { const l = LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
+  window.PGLayout = { ready, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render, build, plan: (l, scr) => { SCR_FOR = scr; try { return plan(l, scr, data()); } finally { SCR_FOR = null; } },
+    SCREEN, sizeOf, find: id => LAYOUTS.find(l => l.id === id) || null, refresh: () => { cur = choose(); render(); },
+    apply: id => { const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {}; const l = id === 'custom' ? (G.custom && G.custom.blocks ? customOf(G.custom) : null) : LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
     reset: () => { cur = null; render(); } };
 })();
