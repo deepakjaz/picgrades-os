@@ -48,12 +48,13 @@
     if (el.classList.contains('pe-wrap') || el.classList.contains('ps-wrap')) return () => (window.PGPost && PGPost.back ? PGPost.back() : (window.PGPost && PGPost.close(), false));
     if (el.classList.contains('pgcp-pv')) return () => click(el.querySelector('.pgcp-pv-back'));
     if (el.classList.contains('pgcv')) return () => click(el.querySelector('.pgcv-x'));
+    if (el.classList.contains('pged')) return () => click(el.querySelector('.pged-x'));
     if (el.classList.contains('pgs-story')) return () => click(el.querySelector('.pgs-x'));
     if (el.classList.contains('pgg-play')) return () => click(el.querySelector('.pgg-hostx'));
     if (el.classList.contains('pgg')) return () => click(el.querySelector('.pgg-x'));
     return () => el.remove();
   }
-  const LAYERS = '.rl-wrap,.pe-wrap,.ps-wrap,.pgs-story,.pgg-play,.pgg,.pgcp-pv,.pgcv';
+  const LAYERS = '.rl-wrap,.pe-wrap,.ps-wrap,.pgs-story,.pgg-play,.pgg,.pgcp-pv,.pgcv,.pged';
   function scan() {
     const now = Array.from(document.querySelectorAll('.reg-overlay.show'));
     if (document.body.classList.contains('pgv-info')) now.push('info');

@@ -153,7 +153,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step42-photographer',
+    version: 'step44-hub-editor',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -869,7 +869,8 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit'];   // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom'];   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+   // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
    // features: the couple's / photographer's on-off per function (JSON); allowed: PicGrades' master switches by plan (JSON, empty = all allowed)   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
@@ -1032,6 +1033,7 @@ function getGallery_(p) {
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
   m.features = featuresOf_(g);
   m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
+  m.custom = customOf_(g.custom);
   m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
@@ -1438,11 +1440,12 @@ function saveLook_(g, p) {
   if ('theme' in p) out.theme = lookId_(p.theme);
   if ('layout' in p) out.layout = lookId_(p.layout);
   if ('pages' in p) { var cur = pagesOf_(g.pages), want = pagesOf_(p.pages); Object.keys(want).forEach(function (k) { cur[k] = want[k]; }); out.pages = JSON.stringify(cur); }
-  if (!('theme' in out) && !('layout' in out) && !('pages' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
+  if ('custom' in p) { var c = customOf_(p.custom); if (!c.blocks.length) return { ok: false, error: 'Your Hub has no cards yet.' }; out.custom = JSON.stringify(c); }
+  if (!('theme' in out) && !('layout' in out) && !('pages' in out) && !('custom' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
   out.updatedAt = fmt_(new Date());
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, out);
-  return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages) };
+  return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages), custom: customOf_('custom' in out ? out.custom : g.custom) };
 }
 // The wedding's photographer (step 42): shown as "Photographed by", on the photographer page and in the Hub.
 // Empty = the studio of the order. Set in the app's Control Panel by PicGrades or the wedding's photographer.
@@ -1477,8 +1480,28 @@ function setDemo_(p, user) {
   updateRowByNumber_('Galleries', x.g._row, { demo: on ? 'yes' : '' });
   return { demo: on };
 }
+// The wedding's own Hub (step 44): cards placed on the grid in the app's Hub editor. Only known cards and whole numbers are kept.
+var HUB_BLOCKS = ['hero', 'findme', 'reel', 'post', 'upload', 'install', 'review', 'events', 'loved', 'notes', 'studio'];
+var HUB_COLS = { phone: 4, tall: 8, wide: 12 };
+function customOf_(v) {
+  var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = { blocks: [] };
+  (Array.isArray(o.blocks) ? o.blocks : []).slice(0, 24).forEach(function (b) {
+    if (!b || HUB_BLOCKS.indexOf(String(b.block)) < 0) return;
+    var x = { block: String(b.block), variant: /^[a-z0-9-]{1,24}$/.test(String(b.variant || '')) ? String(b.variant) : '' , pos: {} };
+    Object.keys(HUB_COLS).forEach(function (s) {
+      var p = b.pos && b.pos[s]; if (!Array.isArray(p) || p.length !== 4) return;
+      var n = p.map(function (v) { return Math.round(Number(v)); });
+      if (n.some(function (v) { return !(v >= 0); }) || n[2] < 1 || n[3] < 1 || n[0] + n[2] > HUB_COLS[s] || n[3] > 12 || n[1] > 200) return;
+      x.pos[s] = n;
+    });
+    if (Array.isArray(b.hide)) x.hide = b.hide.filter(function (s) { return s in HUB_COLS; });
+    out.blocks.push(x);
+  });
+  if (o.base && /^[a-z0-9-]{1,40}$/.test(String(o.base))) out.base = String(o.base);
+  return out;
+}
 // Page styles (step 36): which style each page uses. Only known pages and styles are kept.
-var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'], viewer: ['live', 'classic'] };   // events: the list of all events (step 37)
+var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'], viewer: ['live', 'classic'], header: ['right', 'left'] };   // header: where the couple's logo sits (step 44)   // events: the list of all events (step 37)
 function pagesOf_(v) {
   var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = {};
   Object.keys(PAGE_STYLES).forEach(function (k) { if (PAGE_STYLES[k].indexOf(String(o[k])) > -1) out[k] = String(o[k]); });
@@ -1493,7 +1516,7 @@ function myRole_(p, user) {
   var x = staffGallery_(p.g, user), role = String(user.role || '').toLowerCase();
   return { role: isStaff_(user) ? 'picgrades' : 'photographer', canLock: role === 'admin', name: user.name || '', companyName: x.g.companyName || '',
     features: featuresOf_(x.g), allowed: jsonObj_(x.g.allowed), theme: lookId_(x.g.theme), layout: lookId_(x.g.layout), pages: pagesOf_(x.g.pages),
-    photographer: photographerOf_(x.g.photographer), studio: x.g.companyName || '', credit: String(x.g.credit || '').toLowerCase() !== 'off' };
+    custom: customOf_(x.g.custom), photographer: photographerOf_(x.g.photographer), studio: x.g.companyName || '', credit: String(x.g.credit || '').toLowerCase() !== 'off' };
 }
 
 /** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.

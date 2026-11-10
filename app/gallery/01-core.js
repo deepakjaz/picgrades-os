@@ -242,6 +242,7 @@ function pgDemoMerge(g) {
   const d = pgDemoLocal();
   if ('theme' in d) g.theme = d.theme; if ('layout' in d) g.layout = d.layout;
   if (d.pages) g.pages = Object.assign({}, g.pages || {}, d.pages);
+  if (d.custom && d.custom.blocks) g.custom = d.custom;
   if (d.features) { const f = Object.assign({}, g.features || {}); Object.keys(d.features).forEach(k => { if (f[k] !== 'locked') f[k] = d.features[k]; }); g.features = f; }
   return g;
 }
@@ -602,8 +603,8 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate;
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
     pgDemoMerge(res.gallery); GALLERY.demo = res.gallery.demo;
-    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
-    GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {};
+    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
+    GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {}; GALLERY.custom = res.gallery.custom || { blocks: [] };
     if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
     GALLERY.guestPosts = res.gallery.guestPosts || [];
