@@ -298,12 +298,12 @@
     const who = WHO[ROLE] || WHO.couple;
     const head = h('div', 'pgcp-head', '<div class="reg-overlay-handle"></div><div class="pgcp-top"><h3 class="fm-title">Control Panel</h3><span class="pgcp-badge">' + who[0] + '</span></div>' +
       '<p class="pgcp-who">' + who[1] + (ROLE === 'demo' ? ' Your changes stay on this phone only, so everyone can play — <button type="button" class="pgcp-reset">start again</button>.' : ' Changes are saved for this wedding and reach every guest straight away.') + '</p>' +
-      '<div class="pgcp-tabs' + (STAFF ? ' three' : '') + '" role="tablist"><button type="button" role="tab" data-tab="look">Look</button><button type="button" role="tab" data-tab="functions">Functions</button>' + (STAFF ? '<button type="button" role="tab" data-tab="photographer">Photographer</button>' : '') + '</div>');
+      '<div class="pgcp-tabs' + (STAFF ? ' four' : ' three') + '" role="tablist"><button type="button" role="tab" data-tab="look">Look</button><button type="button" role="tab" data-tab="functions">Functions</button>' + (window.PGRules ? '<button type="button" role="tab" data-tab="requests">Requests</button>' : '') + (STAFF ? '<button type="button" role="tab" data-tab="photographer">Photographer</button>' : '') + '</div>');
     const body = h('div', 'pgcp-body'), done = h('button', 'mk-btn-peach ios-wide', 'Done'); done.type = 'button'; done.addEventListener('click', close);
     repaint = () => {
       head.querySelectorAll('[data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
       if (tab === 'photographer' && !STAFF) tab = 'look';
-      body.innerHTML = ''; body.appendChild(tab === 'look' ? lookPane() : tab === 'photographer' ? photogPane() : funcPane()); body.dataset.tab = tab;
+      body.innerHTML = ''; body.appendChild(tab === 'look' ? lookPane() : tab === 'photographer' ? photogPane() : tab === 'requests' && window.PGRules ? PGRules.pane() : funcPane()); body.dataset.tab = tab;
       if (tab === 'look') { paintLook(body); Promise.all([window.PGTheme && PGTheme.ready, window.PGLayout && PGLayout.ready]).then(() => paintLook(body)); }
     };
     const rs = head.querySelector('.pgcp-reset');

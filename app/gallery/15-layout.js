@@ -119,7 +119,7 @@
     s.forEach(([k, v, l]) => { const x = h('button', 'pgl-stat', '<b>' + Number(v).toLocaleString('en-IN') + '</b><span>' + l + '</span>'); x.type = 'button'; x.addEventListener('click', () => pgStatTap(k)); el.appendChild(x); });
   };
   const action = (el, b, D, k) => {
-    const a = ACT[k]; tapOn(el, a[2]); el.classList.add('pgl-act-' + b.variant);
+    const a = (window.PGRules && PGRules.act(k)) || ACT[k]; tapOn(el, a[2]); el.classList.add('pgl-act-' + b.variant);
     if (b.variant === 'photo' || b.variant === 'slideshow') { rot(el, picks(D, 8), 700); el.appendChild(h('div', 'pgl-scrim')); el.classList.add('pgl-act-photo'); }
     const small = b._letter === 'S';
     el.appendChild(h('div', 'pgl-actin', '<i>' + ic(k) + '</i><div><b>' + a[0] + '</b>' + (small ? '' : '<small>' + a[1] + '</small>') + '</div>' + (small ? '' : '<em>' + ic('arrow') + '</em>')));

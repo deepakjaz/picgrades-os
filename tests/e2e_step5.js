@@ -80,7 +80,11 @@ const srv = http.createServer((req, res) => {
   await pg.click('#pghReel'); await pg.waitForTimeout(800); console.log('reel unlocked after Find me:', await pg.isVisible('.rl-wrap')); await pg.evaluate(() => PGReel.close()); await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(300);
   await pg.screenshot({ path: '/tmp/s5_collections_personal.png' });
   // live camera
-  await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(300); await pg.click('#fmCamBtn');
+  // step 45: Find me is done for this number — its button now opens "Your photos"; a new guest (another number) tries the camera
+  await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(500); console.log('Find me again opens your photos:', await pg.isVisible('#view-event'), '| face sheet:', await pg.isVisible('#fmSheet.show'));
+  await pg.evaluate(() => localStorage.clear()); await pg.reload(); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(900);
+  await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(300);
+  await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(300); await pg.fill('#idName', 'Rohan Guest'); await pg.fill('#idPhone', '9123456780'); await pg.click('#idGo'); await pg.waitForSelector('#fmSheet.show'); await pg.click('#fmCamBtn');
   await pg.waitForFunction(() => !document.getElementById('fmShoot').disabled, null, { timeout: 120000 });
   console.log('camera:', await pg.textContent('#fmHint')); await pg.screenshot({ path: '/tmp/s5_camera.png' });
   await pg.click('#fmShoot'); await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });

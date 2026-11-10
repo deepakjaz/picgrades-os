@@ -1483,7 +1483,9 @@ body.pg-nocredit .mk-brand-dash,body.pg-nocredit .mk-brand-pg{display:none}
 .pgcp-form input:not(.pgf-sw),.pgcp-form textarea{font:400 15px var(--font-sans);padding:11px 12px;border-radius:12px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);width:100%;box-sizing:border-box}
 .pgcp-form textarea{min-height:76px;resize:vertical}
 .pgcp-form .pgf-row{margin-top:6px}
-.pgcp-tabs.three{grid-template-columns:1fr 1fr 1.25fr}
+.pgcp-tabs.three{grid-template-columns:1fr 1.15fr 1.1fr}
+.pgcp-tabs.four{grid-template-columns:.8fr 1fr 1fr 1.25fr}
+.pgcp-tabs.four button{font-size:12.5px}
 .pgcp-form .pgf-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.pgcp-form .pgf-row > div{flex:1;min-width:0}.pgcp-form .pgf-row b{font:600 14px var(--font-sans);color:var(--ink)}
 
 /* ---------- header, simple and not pinned (step 43): the couple's name and logo, transparent, at the top of the page ---------- */
@@ -1557,3 +1559,28 @@ body.pg-logo-left .mk-header{flex-direction:row-reverse}
 .pged-banner span{overflow:hidden;text-overflow:ellipsis}
 .pged-banner button{height:32px;padding:0 10px;border-radius:16px;border:0;background:rgba(255,255,255,.16);color:#fff;font:600 12px var(--font-sans);cursor:pointer;flex:none}
 .pged-banner .pged-bp{background:var(--cta-peach);color:var(--cta-peach-ink,#fff)}
+
+/* ---------- step 45: ask to download (guests) + Control Panel › Requests ---------- */
+.pgr-sheet{padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.pgr-top{display:flex;gap:14px;align-items:flex-start;margin:4px 0 10px}
+.pgr-top img{width:84px;height:104px;object-fit:cover;border-radius:12px;flex:none;background:var(--border-hairline)}
+.pgr-top .fm-title{margin:0 0 6px}
+.pgr-why{font-size:.8rem;line-height:1.45;color:var(--ink-soft);margin:0}
+.pgr-how,.pgr-done{font-size:.86rem;line-height:1.5;margin:6px 0 12px}
+.pgr-lab{display:block;font:600 .78rem var(--font-sans);color:var(--ink-soft);margin-bottom:6px}
+.pgr-lab input{display:block;width:100%;box-sizing:border-box;margin-top:6px;height:46px;padding:0 14px;border-radius:12px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:400 16px var(--font-sans)}
+.pgr-status{min-height:1.2em;font-size:.78rem;color:#c0392b;margin:4px 0 8px}
+.pgr-close{display:block;margin:10px auto 0;background:none;border:0;color:var(--ink-soft);font:600 .9rem var(--font-sans);padding:8px 16px;cursor:pointer}
+.pgr-h{font:600 .8rem var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:14px 0 8px}
+.pgr-empty{font-size:.84rem;color:var(--ink-soft);margin:6px 0}
+.pgr-row{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;padding:10px;border-radius:14px;background:var(--bg-box);border:1px solid var(--border-hairline);margin-bottom:8px}
+.pgr-thumbs{display:flex;cursor:pointer}
+.pgr-thumbs img{width:44px;height:54px;object-fit:cover;border-radius:8px;border:2px solid var(--bg-box)}
+.pgr-thumbs img+img{margin-left:-18px}
+.pgr-who{display:flex;flex-direction:column;min-width:0}
+.pgr-who b{font-size:.92rem}.pgr-who span{font-size:.76rem;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pgr-who small{font-size:.68rem;color:var(--ink-soft)}
+.pgr-acts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.pgr-acts button{height:38px;border-radius:19px;border:1px solid var(--border-hairline);background:none;color:var(--ink);font:600 .86rem var(--font-sans);cursor:pointer}
+.pgr-acts .pgr-yes{background:var(--ink);color:var(--bg-box);border-color:var(--ink)}
+.pgr-row em{grid-column:1/-1;font:600 .74rem var(--font-sans);font-style:normal;color:var(--ink-soft)}
+.pgr-row em.ok{color:#2e8b57}.pgr-row.done{opacity:.85}
