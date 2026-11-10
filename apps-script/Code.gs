@@ -151,7 +151,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step36-page-styles',
+    version: 'step37-events-page',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1440,7 +1440,7 @@ function saveLook_(g, p) {
   return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages) };
 }
 // Page styles (step 36): which style each page uses. Only known pages and styles are kept.
-var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'] };
+var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'] };   // events: the list of all events (step 37)
 function pagesOf_(v) {
   var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = {};
   Object.keys(PAGE_STYLES).forEach(function (k) { if (PAGE_STYLES[k].indexOf(String(o[k])) > -1) out[k] = String(o[k]); });
