@@ -15,7 +15,7 @@ global.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheetByName: n => DB
 const DRIVE = { folders: {}, files: {}, n: 0 };
 function iter(a) { let i = 0; return { hasNext: () => i < a.length, next: () => a[i++] }; }
 function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed, setTrashed: t => { f.trashed = !!t; },
-  setContent: c => { f.content = c; }, getBlob: () => ({ getDataAsString: () => f.content, getBytes: () => f.bytes || [] }),
+  setContent: c => { f.content = c; }, getThumbnail: () => ({ getContentType: () => 'image/png', getBytes: () => [137, 80, 78, 71] }), getBlob: () => ({ getDataAsString: () => f.content, getBytes: () => f.bytes || [] }),
   setSharing: (a, b) => { f.sharing = a + ':' + b; } }; }
 function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('No item with the given ID could be found'); return {
   getId: () => id, getName: () => f.name, isTrashed: () => !!f.trashed, getSharingAccess: () => f.access || 'PRIVATE',
@@ -26,7 +26,7 @@ function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('N
     else DRIVE.files[fid] = { name, content, mime, parent: id }; return fileObj(fid); },
   getFoldersByName: n => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id && DRIVE.folders[k].name === n).map(folderObj)),
   createFolder: n => { if (f.readOnly) throw new Error('Access denied'); const nid = 'fold' + (++DRIVE.n); DRIVE.folders[nid] = { name: n, parent: id }; return folderObj(nid); } }; }
-global.DriveApp = { Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK', PRIVATE: 'PRIVATE' }, Permission: { VIEW: 'VIEW' }, getFolderById: folderObj, getFileById: id => { if (!DRIVE.files[id]) throw new Error('not found'); return fileObj(id); },
+global.DriveApp = { Access: { ANYONE_WITH_LINK: 'ANYONE_WITH_LINK', PRIVATE: 'PRIVATE' }, Permission: { VIEW: 'VIEW', NONE: 'NONE' }, getFolderById: folderObj, getFileById: id => { if (!DRIVE.files[id]) throw new Error('not found'); return fileObj(id); },
   createFolder: name => { const id = 'fold' + (++DRIVE.n); DRIVE.folders[id] = { name, parent: 'root' }; return folderObj(id); } };
 const CACHE = {}; const cget = k => { const e = CACHE[k]; if (!e) return null; if (e.until < Date.now() + (global.__clockSkip || 0)) { delete CACHE[k]; return null; } return e.v; };
 const cput = (k, v, sec) => { CACHE[k] = { v: String(v), until: Date.now() + (global.__clockSkip || 0) + (sec || 600) * 1000 }; };

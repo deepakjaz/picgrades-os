@@ -97,6 +97,7 @@ function pgRenderMine(posts) {
   sets.slice(0, 4).forEach(s => rows.push('<button type="button" class="pgc-pill" data-set="' + pgEsc(s.code) + '"><img alt="" src="' + pgImg(s.ids[0], 120) + '"><span><b>' + pgEsc(s.name) + '</b><br>Your saved set</span><em class="ok">Saved</em></button>'));
   (posts || pgRenderMine.posts || []).slice(0, 6).forEach(p => {
     const st = p.status === 'approved' ? '<em class="ok">Approved</em>' : p.status === 'hidden' ? '<em class="no">Not shown</em>' : '<em>In review</em>';
+    if (p.status === 'review' && p.thumb) { rows.push('<div class="pgc-pill"><img alt="" src="' + p.thumb + '"><span>Your ' + (p.type === 'video' ? 'video' : p.type === 'album' ? 'post / album' : 'photo') + (p.caption ? ' · ' + pgEsc(p.caption) : '') + '</span>' + st + '</div>'); return; }   // step 50: private until approved
     if (p.type === 'album') { rows.push('<div class="pgc-pill"><img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 120) + '"><span>Your post / album</span>' + st + '</div>'); return; }
     rows.push('<div class="pgc-pill">' + (p.type === 'photo' ? '<img alt="" src="' + pgImg(p.fileId, 120) + '">' : '<img alt="" src="' + pgImgFallback(p.fileId, 120) + '">') + '<span>Your ' + (p.type === 'video' ? 'video' : 'photo') + (p.caption ? ' · ' + pgEsc(p.caption) : '') + '</span>' + st + '</div>');
   });
@@ -166,7 +167,10 @@ function pgCheckMyPosts() {
   const $ = (id) => document.getElementById(id);
   const close = () => { $('cpBackdrop').classList.remove('show'); $('cpSheet').classList.remove('show'); };
   $('cpClose').addEventListener('click', close); $('cpBackdrop').addEventListener('click', close);
-  function media(p) { if (p.type === 'album') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
+  function media(p) {
+    // step 50: a post waiting for review is private on Drive — show the preview the server made (videos play once approved)
+    if (p.status === 'review' && p.thumb) return '<img alt="" src="' + p.thumb + '">' + (p.type === 'video' ? '<span class="cp-vnote">Video · plays once approved (you can hide it again any time)</span>' : '');
+    if (p.type === 'album') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
   function load() {
     return pgApi('coupleQueue').then(r => {
       $('cpThanks').value = r.thanks || '';

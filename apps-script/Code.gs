@@ -158,7 +158,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step49-header',
+    version: 'step50-security-1',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1311,7 +1311,8 @@ function uploadMoment_(p) {
   var postId = 'pst_' + randomId_(10);
   var blob = Utilities.newBlob(Utilities.base64Decode(data), mime, guest.name.replace(/[^\w ]+/g, '').slice(0, 20) + '_' + postId + '.' + ext);
   var file = folder.createFile(blob);
-  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  // step 50: a guest upload waits for the couple — it is NOT opened to "anyone with the link" here; couplePost_ opens it on approval
+  try { file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); } catch (e) {}
   ensureTab_('GuestPosts', POST_COLUMNS);
   appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: guest.guestId, name: guest.name, phone: guest.phone,
     caption: String(p.caption || '').slice(0, 300), fileId: file.getId(), mime: mime, type: isVideo ? 'video' : 'photo', status: 'review', reviewedAt: '' });
@@ -1344,7 +1345,8 @@ function savePost_(p) {
   slides.forEach(function (d, i) {
     var data = String(d).replace(/^data:[^,]*,/, '');
     var f = folder.createFile(Utilities.newBlob(Utilities.base64Decode(data), 'image/jpeg', postId + '_' + (i + 1) + '.jpg'));
-    try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+    // step 50: open to "anyone with the link" only once approved (the couple's own albums are approved straight away)
+    try { f.setSharing(status === 'approved' ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, status === 'approved' ? DriveApp.Permission.VIEW : DriveApp.Permission.NONE); } catch (e) {}
     ids.push(f.getId());
   });
   ensureTab_('GuestPosts', POST_COLUMNS);
@@ -1360,7 +1362,14 @@ function myPosts_(p) {
   ensureTab_('GuestPosts', POST_COLUMNS);
   var posts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.guestId === guest.guestId; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, caption: x.caption, status: x.status, at: x.at, reviewedAt: x.reviewedAt }; });
-  return { posts: posts, thanks: g.thanksNote || defaultThanks_(g) };
+  return { posts: withThumbs_(posts), thanks: g.thanksNote || defaultThanks_(g) };
+}
+/** Step 50: a small preview of a post that is still private (waiting for the couple) — made by Drive for the file's owner, so no public link is needed. */
+function reviewThumb_(fileId) {
+  try { var b = DriveApp.getFileById(String(fileId).split(',')[0]).getThumbnail(); return b ? 'data:' + (b.getContentType() || 'image/png') + ';base64,' + Utilities.base64Encode(b.getBytes()) : ''; } catch (e) { return ''; }
+}
+function withThumbs_(list) {   // only posts that are not open yet, at most 12 per answer
+  var n = 0; return list.map(function (x) { if (x.status === 'review' && n++ < 12) x.thumb = reviewThumb_(x.fileId); return x; });
 }
 function defaultThanks_(g) { return 'Thank you for capturing this moment and sharing it with us. It means the world to us. — ' + g.title; }
 
@@ -1376,7 +1385,7 @@ function coupleQueue_(p) {
   var all = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, status: x.status, at: x.at }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
-  return { waiting: all.filter(function (x) { return x.status === 'review'; }), decided: all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40), thanks: g.thanksNote || defaultThanks_(g) };
+  return { waiting: withThumbs_(all.filter(function (x) { return x.status === 'review'; })), decided: all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40), thanks: g.thanksNote || defaultThanks_(g) };
 }
 /** Couple link: approve or hide a guest post. */
 function couplePost_(p) {
@@ -1388,7 +1397,7 @@ function couplePost_(p) {
   updateRowByNumber_('GuestPosts', row._row, { status: decision, reviewedAt: fmt_(new Date()) });
   // hidden = the Drive file is no longer open to anyone with its link (the nightly clean-up deletes it after 7 days)
   String(row.fileId || '').split(',').filter(String).forEach(function (id) {
-    try { DriveApp.getFileById(id).setSharing(decision === 'approved' ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, DriveApp.Permission.VIEW); } catch (e) {}
+    try { DriveApp.getFileById(id).setSharing(decision === 'approved' ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, decision === 'approved' ? DriveApp.Permission.VIEW : DriveApp.Permission.NONE); } catch (e) {}
   });
   dropSummary_(g.galleryId);
   return { postId: row.postId, status: decision };
@@ -1937,6 +1946,10 @@ function nightlyCleanup() {
     });
     guests.forEach(function (x) { if (phoneGone[x.galleryId] && x.phone) { updateRowByNumber_('Guests', x._row, { phone: '' }); out.phonesRemoved++; } });
     posts.forEach(function (x) { if (phoneGone[x.galleryId] && x.phone) updateRowByNumber_('GuestPosts', x._row, { phone: '' }); });
+    // step 50: the Find me record and download requests also forget the mobile number (and the email) after the same months
+    ensureTab_('FindMe', FIND_COLUMNS); ensureTab_('DownloadRequests', DLREQ_COLUMNS);
+    readTable_('FindMe').forEach(function (x) { if (phoneGone[x.galleryId] && String(x.phone || '').replace(/'/g, '')) { updateRowByNumber_('FindMe', x._row, { phone: '' }); out.phonesRemoved++; } });
+    readTable_('DownloadRequests').forEach(function (x) { if (phoneGone[x.galleryId] && (String(x.phone || '').replace(/'/g, '') || x.email)) { updateRowByNumber_('DownloadRequests', x._row, { phone: '', email: '' }); out.emailsRemoved = (out.emailsRemoved || 0) + 1; } });
     out.heartRowsSaved = packHearts_();
   } finally { lock.releaseLock(); }
   Logger.log(JSON.stringify(out));
