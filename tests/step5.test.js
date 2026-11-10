@@ -37,13 +37,13 @@ assert(call('facesStatus', { token: admin, g: gid }).faces.pass.P1 === 2, 'pass 
 let g = call('getGallery', { g: gid }).gallery;
 assert(g.faceSearch === true, 'Find me switched on when Ready');
 assert(call('getFaces', { g: gid }).code === 'AUTH' || !call('getFaces', { g: gid }).faces, 'face codes of everyone can no longer be downloaded');
-r = call('findFaces', { g: gid, d: face(500)[1], device: 'devicefaces1' });
+r = call('findFaces', { token: admin, g: gid, d: face(500)[1], device: 'devicefaces1' });
 assert(r.ok && r.sure.includes('P1') && !r.sure.includes('P2b') && !r.faces && JSON.stringify(r).length < 200, 'Find me matches on the server and returns photo ids only: ' + JSON.stringify(r));
-r = call('findFaces', { g: gid, d: face(10, 1)[1], device: 'devicefaces1' });
+r = call('findFaces', { token: admin, g: gid, d: face(10, 1)[1], device: 'devicefaces1' });
 assert(r.ok && r.sure.includes('P2b') && !r.sure.includes('P1'), 'another face finds its own photo');
 r = call('faceBoxes', { g: gid });
 assert(r.ok && r.boxes.P1.length === 3 && !/[A-Za-z0-9+\/]{40,}/.test(JSON.stringify(r)), 'album maker gets face boxes without face codes');
-let flim = 0; for (let i = 0; i < 25; i++) if (!call('findFaces', { g: gid, d: face(10)[1], device: 'devicefaces2' }).ok) flim++;
+let flim = 0; for (let i = 0; i < 25; i++) if (!call('findFaces', { token: admin, g: gid, d: face(10)[1], device: 'devicefaces2' }).ok) flim++;
 assert(flim === 5, 'searches per phone are limited (20 an hour)');
 // proxy
 r = call('facesProxy', { token: admin, g: gid, ids: ['P1', 'NOPE', 'P3'] });

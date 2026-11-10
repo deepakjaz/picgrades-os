@@ -60,7 +60,7 @@ function pgAgo(at) {
 }
 function pgNoteEl(n) {
   const b = document.createElement('button'); b.type = 'button'; b.className = 'pgh-note';
-  const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.src = pgImg(n.photoId, 200); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(n.photoId, 200); };
+  const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; const nw = window.innerWidth >= 900 ? 640 : 200; im.src = pgImg(n.photoId, nw); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(n.photoId, nw); };
   const box = document.createElement('div');
   box.innerHTML = '<b>' + pgEsc(n.name) + '</b><p>' + pgEsc(n.text) + '</p><small>' + pgEsc(pgAgo(n.at)) + '</small>';
   b.appendChild(im); b.appendChild(box);

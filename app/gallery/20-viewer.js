@@ -32,6 +32,7 @@
     el.querySelector('.pgcv-count').textContent = (S.i + 1) + ' / ' + S.photos.length;
     el.querySelector('.pgcv-prev').disabled = S.i === 0; el.querySelector('.pgcv-next').disabled = S.i === S.photos.length - 1;
     counts();
+    document.dispatchEvent(new CustomEvent('pg:classic-photo', { detail: { photo: cur(), el: el.querySelector('.pgcv-stage') } }));   // notes on the photo (26-comments.js)
     [S.i - 1, S.i + 1].forEach(j => { const q = S.photos[j]; if (q) { const pre = new Image(); pre.src = pgImg(q.id, PG_FULL_W); } });   // the next photo is ready when you swipe
   }
   function counts() {
@@ -79,7 +80,7 @@
     paint();
     return true;
   }
-  function close() { if (!S) return; S.el.remove(); S = null; document.body.classList.remove('pgcv-on'); }
+  function close() { if (!S) return; S.el.remove(); S = null; document.body.classList.remove('pgcv-on'); document.dispatchEvent(new CustomEvent('pg:classic-photo', { detail: {} })); }
   document.addEventListener('keydown', e => {
     if (!S || document.querySelector('.reg-overlay.show')) return;
     if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1); else if (e.key === 'Escape') close();
@@ -92,5 +93,5 @@
     if (style() === 'classic' && open(name, idx)) return;
     return live.apply(this, arguments);
   };
-  window.pgViewerClassic = { style, open, close, current: () => (S ? { name: S.name, i: S.i, n: S.photos.length } : null) };
+  window.pgViewerClassic = { style, open, close, photo: () => (S ? cur() : null), current: () => (S ? { name: S.name, i: S.i, n: S.photos.length } : null) };
 })();
