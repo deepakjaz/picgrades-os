@@ -151,8 +151,9 @@ async function pgDownload(m) {
   function settle() {
     if (Date.now() < lockUntil || userOnStrip()) { scrollTimer = setTimeout(settle, waitMs()); return; }
     const h = feed.clientHeight; if (!h || !items.length) return;
-    if (Math.abs(feed.scrollTop / h - Math.round(feed.scrollTop / h)) > 0.08) return; // still moving between photos
     const i = Math.max(0, Math.min(items.length - 1, Math.round(feed.scrollTop / h)));
+    // still between two photos: show both sharp, and look again shortly (an iPhone can stop a little off a photo)
+    if (Math.abs(feed.scrollTop / h - i) > 0.08) { load(Math.floor(feed.scrollTop / h)); scrollTimer = setTimeout(settle, 250); return; }
     load(i);
     if (i !== activeIdx) {
       items.forEach((it, k) => { if (k !== i && it.z) it.z.reset(); });
@@ -161,6 +162,17 @@ async function pgDownload(m) {
     }
   }
   feed.addEventListener('scroll', () => { clearTimeout(scrollTimer); scrollTimer = setTimeout(settle, waitMs()); }, { passive: true });
+  // while the guest swipes through the big photos, the ones coming up get their small picture at once (already in the
+  // phone's cache from the filmstrip), so a photo is never blank; it sharpens when the swiping stops (settle)
+  let swipeRaf = 0;
+  feed.addEventListener('scroll', () => {
+    if (swipeRaf || Date.now() < lockUntil) return;
+    swipeRaf = requestAnimationFrame(() => {
+      swipeRaf = 0; const h = feed.clientHeight; if (!h || !items.length) return;
+      const n = Math.max(0, Math.min(items.length - 1, Math.round(feed.scrollTop / h)));
+      for (let j = n - 1; j <= n + 2; j++) if (items[j]) show(items[j], 'thumb');
+    });
+  }, { passive: true });
   window.addEventListener('resize', () => { if (items.length) scrollToIdx(feedIdx, false); });
   // buttons
   document.getElementById('pgvSave').addEventListener('click', () => pgDownload(MOMENTS[activeIdx]));
