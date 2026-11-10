@@ -560,19 +560,30 @@ document.querySelectorAll('[data-goto]').forEach(btn => {
   btn.addEventListener('click', () => switchViewFromNav(btn.dataset.goto));
 });
 
-document.getElementById('stampThemeBtn').addEventListener('click', () => {
+// light / dark: a sun or moon button in the header (step 43); the monogram (the couple's logo) goes to the Hub
+const PG_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>';
+const PG_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+function pgPaintModeBtn() {
+  const dark = document.documentElement.getAttribute('data-tkg-theme') === 'dark', b = document.getElementById('pgModeBtn'); if (!b) return;
+  b.innerHTML = dark ? PG_SUN : PG_MOON; b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+}
+document.getElementById('pgModeBtn').addEventListener('click', () => {
   const root = document.documentElement;
   const next = root.getAttribute('data-tkg-theme') === 'dark' ? 'light' : 'dark';
-  root.setAttribute('data-tkg-theme', next);
+  root.setAttribute('data-tkg-theme', next); pgPaintModeBtn();
   showToast(next === 'dark' ? 'Dark mode' : 'Light mode');
   try { localStorage.setItem('pg_theme', next); } catch (e) {}
+  if (window.PGTheme && PGTheme.sync) PGTheme.sync();
 });
+document.getElementById('stampThemeBtn').addEventListener('click', () => switchViewFromNav('hub'));
+// the page on screen, for the header: on the original Hub the cover photo runs behind it, so it turns white there
+pgAfter('switchView', v => { document.body.dataset.view = v; });
 document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.classList.toggle('scrolled'); });
-document.getElementById('mkMenuBtn').addEventListener('click', () => { switchView('hub'); });
 
 // Initialise with live data
 (function boot() {
   try { const t = localStorage.getItem('pg_theme'); if (t) document.documentElement.setAttribute('data-tkg-theme', t); } catch (e) {}
+  pgPaintModeBtn();
   const bootEl = document.getElementById('pgBoot'), bootMsg = document.getElementById('pgBootMsg');
   if (!API || !GALLERY_ID) { bootMsg.textContent = 'This gallery link is incomplete. Please check the link you received.'; return; }
   // The gallery opens at once from the copy kept on this phone, then the fresh copy is fetched in the background.
