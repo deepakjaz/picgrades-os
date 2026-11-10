@@ -7,7 +7,7 @@
   const css = document.createElement('style');
   css.textContent = [
     // nothing a visitor can't use
-    '.pg-studio .pgh-create-sec,.pg-studio #pghStats,.pg-studio #pghLovedSec,.pg-studio [data-findme],.pg-studio #pgmAdd,.pg-studio .pgm-actions,.pg-studio #pgvLike,.pg-studio #pgvNote,.pg-studio #pgvSave,.pg-studio #pgvReel,.pg-studio #pgvLikeCount,.pg-studio #pgvNoteCount{display:none!important}',
+    '.pg-studio .pgh-create-sec,.pg-studio #pghStats,.pg-studio #pghLovedSec,.pg-studio [data-findme],.pg-studio #pgmAdd,.pg-studio .pgm-actions,.pg-studio #pgvLike,.pg-studio #pgvNote,.pg-studio .pgcv-like,.pg-studio .pgcv-note,.pg-studio #pgvSave,.pg-studio #pgvReel,.pg-studio #pgvLikeCount,.pg-studio #pgvNoteCount{display:none!important}',
     // hub cards
     '.pgs-about{margin:18px 16px 4px;padding:20px;border-radius:22px;background:var(--bg-box);border:1px solid var(--border-hairline)}.pgs-about p{margin:6px 0 0;color:var(--ink-soft);font-size:14px;line-height:1.55}',
     '.pgs-about b{font:500 24px/1.1 var(--font-serif)}.pgs-about small{display:block;margin-top:10px;font:11px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}',
