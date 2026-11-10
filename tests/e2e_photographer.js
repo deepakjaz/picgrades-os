@@ -38,7 +38,7 @@ const srv = http.createServer((req, res) => {
   await cs.close();
   // a guest sees WFA
   let [cg, gp] = await phone(); await gp.goto(URL); await boot(gp);
-  console.log('guest Hub: photographed by', await gp.textContent('#pghStudio'), '|', await gp.textContent('.pgh-ig'), '| credit line:', await gp.locator('#view-hub .pgp-credit').count(), '| header PicGrades shown:', await gp.isVisible('.mk-brand-pg'));
+  console.log('guest Hub: photographed by', await gp.textContent('#pghStudio'), '|', await gp.textContent('.pgh-ig'), '| credit line:', await gp.locator('#view-hub .pgp-credit').count(), '| header has no PicGrades:', !(await gp.textContent('.mk-header')).includes('PicGrades'));
   await gp.evaluate(() => { const v = document.getElementById('view-hub'); window.scrollTo(0, document.documentElement.scrollHeight); }); await gp.waitForTimeout(400);
   await gp.screenshot({ path: '/tmp/s42_hub_end.png' });
   await gp.click('.pgh-studio'); await gp.waitForTimeout(600);
@@ -49,7 +49,7 @@ const srv = http.createServer((req, res) => {
   // PicGrades turns its credit off for this client
   call('setPhotographer', { token: admin, g: pub.galleryId, credit: 'off' });
   [cg, gp] = await phone(); await gp.goto(URL); await boot(gp);
-  console.log('credit off: header PicGrades shown:', await gp.isVisible('.mk-brand-pg'), '| credit lines:', await gp.locator('.pgp-credit').count(), '| tab title:', await gp.title());
+  console.log('credit off: header has no PicGrades:', !(await gp.textContent('.mk-header')).includes('PicGrades'), '| credit lines:', await gp.locator('.pgp-credit').count(), '| tab title:', await gp.title());
   await gp.screenshot({ path: '/tmp/s42_nocredit.png' });
   await cg.close();
   call('setPhotographer', { token: admin, g: pub.galleryId, photographer: '{}', credit: 'on' });

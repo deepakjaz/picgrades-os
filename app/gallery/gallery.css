@@ -1485,3 +1485,22 @@ body.pg-nocredit .mk-brand-dash,body.pg-nocredit .mk-brand-pg{display:none}
 .pgcp-form .pgf-row{margin-top:6px}
 .pgcp-tabs.three{grid-template-columns:1fr 1fr 1.25fr}
 .pgcp-form .pgf-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.pgcp-form .pgf-row > div{flex:1;min-width:0}.pgcp-form .pgf-row b{font:600 14px var(--font-sans);color:var(--ink)}
+
+/* ---------- header, simple and not pinned (step 43): the couple's name and logo, transparent, at the top of the page ---------- */
+.mk-header{position:absolute;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 8px;align-items:center}
+.mk-brand-box{background:none;border:0;box-shadow:none;height:auto;padding:0}
+.mk-brand-title{padding:0;font-family:var(--font-serif);font-size:1.25rem;font-weight:500;color:var(--ink);text-shadow:0 0 14px var(--bg-cream),0 0 2px var(--bg-cream)}
+.mk-right-cluster{gap:6px}
+.mk-stamp-badge,.mk-stamp-badge.mk-stamp-badge{width:40px;height:40px;border-radius:50%;background:transparent;color:var(--ink);border:1px solid var(--border-hairline);outline:none;box-shadow:none;padding:0;overflow:hidden;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.pg-modebtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--border-hairline);background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.pg-modebtn svg{width:19px;height:19px}
+.pg-mono img{width:40px;height:40px}
+@media (hover:hover){.pg-modebtn:hover,.mk-stamp-badge:hover{border-color:var(--ink-faint)}}
+@media (min-width:900px){.mk-header{padding:calc(env(safe-area-inset-top,0px) + 20px) 32px 8px}.mk-brand-title{font-size:1.45rem}}
+/* the pinned "in a row" buttons no longer need to leave room for a pinned header */
+.pgx-bar{top:calc(env(safe-area-inset-top,0px) + 12px)}
+/* on the original Hub the cover photo runs behind the header: white name and buttons with a soft shadow */
+body[data-view="hub"]:not(.pg-lay-on) .mk-brand-title{color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
+body[data-view="hub"]:not(.pg-lay-on) .pg-modebtn,body[data-view="hub"]:not(.pg-lay-on) .mk-stamp-badge{color:#fff;border-color:rgba(255,255,255,.55);background:rgba(0,0,0,.18)}
