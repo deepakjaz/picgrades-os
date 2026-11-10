@@ -234,6 +234,17 @@ function syncCounts(id) {
 }
 const likeBusy = {};
 // each phone remembers its own hearts for this wedding
+// Demo wedding (step 39): what this phone tried in the Control Panel (theme, layout, page styles, functions) is kept here only
+function pgDemoKey() { return 'pg_demo_' + GALLERY_ID; }
+function pgDemoLocal() { try { return JSON.parse(localStorage.getItem(pgDemoKey()) || '{}') || {}; } catch (e) { return {}; } }
+function pgDemoMerge(g) {
+  if (!g || !g.demo) return g;
+  const d = pgDemoLocal();
+  if ('theme' in d) g.theme = d.theme; if ('layout' in d) g.layout = d.layout;
+  if (d.pages) g.pages = Object.assign({}, g.pages || {}, d.pages);
+  if (d.features) { const f = Object.assign({}, g.features || {}); Object.keys(d.features).forEach(k => { if (f[k] !== 'locked') f[k] = d.features[k]; }); g.features = f; }
+  return g;
+}
 function pgSaveMine() { try { localStorage.setItem('pg_mine_' + GALLERY_ID, JSON.stringify(Object.keys(GALLERY.mine || {}))); } catch (e) {} }
 function pgLoadMine() { const out = {}; try { (JSON.parse(localStorage.getItem('pg_mine_' + GALLERY_ID) || '[]') || []).forEach(id => { out[id] = true; }); } catch (e) {} return out; }
 function pgToggleLike(m) {
@@ -579,6 +590,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     GALLERY.likes = res.gallery.likes || {}; GALLERY.notes = res.gallery.notes || {}; GALLERY.recentNotes = res.gallery.recentNotes; GALLERY.isCouple = res.gallery.isCouple;
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate;
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
+    pgDemoMerge(res.gallery); GALLERY.demo = res.gallery.demo;
     const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
     GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {};
     if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)
@@ -588,7 +600,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     renderGalleries();
   }).catch(err => { if (!started) bootMsg.textContent = err.message; });
   function start(res, fromKept) {
-    GALLERY = res.gallery; GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
+    GALLERY = pgDemoMerge(res.gallery); GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
     const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;
     document.title = GALLERY.title + ' · PicGrades';
     document.getElementById('pgCoupleTitle').textContent = GALLERY.title;

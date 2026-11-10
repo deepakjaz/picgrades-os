@@ -29,15 +29,16 @@
   const WHO = {
     picgrades: ['PicGrades', 'You’re signed in as PicGrades.'],
     photographer: ['Photographer', 'You’re signed in as the photographer.'],
-    couple: ['Couple', 'This is your wedding app.']
+    couple: ['Couple', 'This is your wedding app.'],
+    demo: ['Demo', 'This is a demo wedding: try every setting.']
   };
 
   // ---- who is looking ----
   function paintRole() {
     const g = typeof GALLERY !== 'undefined' && GALLERY;
-    ROLE = !g || g.isStudio || PREVIEW ? 'guest' : STAFF ? STAFF.role : (window.pgIsCouple && pgIsCouple()) ? 'couple' : 'guest';
+    ROLE = !g || g.isStudio || PREVIEW ? 'guest' : STAFF ? STAFF.role : (window.pgIsCouple && pgIsCouple()) ? 'couple' : g.demo ? 'demo' : 'guest';
     document.body.classList.toggle('pg-nav4', ROLE === 'guest');
-    ['guest', 'couple', 'photographer', 'picgrades'].forEach(r => document.body.classList.toggle('pg-role-' + r, ROLE === r));
+    ['guest', 'couple', 'photographer', 'picgrades', 'demo'].forEach(r => document.body.classList.toggle('pg-role-' + r, ROLE === r));
     const gear = document.querySelector('.tkg-nav-item[data-nav="studio"]');
     if (gear) { gear.setAttribute('aria-label', 'Control Panel'); gear.title = 'Control Panel'; }
   }
@@ -59,14 +60,24 @@
   }, true);
 
   // ---- saving (couple link or login) ----
-  const call = (coupleAction, staffAction, body) => ROLE === 'couple' ? pgApi(coupleAction, body) : pgApi(staffAction, Object.assign({ token: token() }, body));
+  const call = (coupleAction, staffAction, body) => ROLE === 'demo' ? demoSave(body) : ROLE === 'couple' ? pgApi(coupleAction, body) : pgApi(staffAction, Object.assign({ token: token() }, body));
+  // demo wedding: keep the change on this phone only (01-core reads it back on every visit)
+  function demoSave(body) {
+    const d = pgDemoLocal(), parse = v => (typeof v === 'string' ? JSON.parse(v || '{}') : v || {});
+    if ('theme' in body) d.theme = body.theme; if ('layout' in body) d.layout = body.layout;
+    if ('pages' in body) d.pages = Object.assign({}, d.pages || {}, parse(body.pages));
+    if ('features' in body) d.features = Object.assign({}, d.features || {}, parse(body.features));
+    try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {}
+    const g = pgDemoMerge(Object.assign({}, GALLERY));
+    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {} });
+  }
   function showLook() {
     if (window.PGTheme) PGTheme.apply(GALLERY.theme || '');
     if (window.PGLayout) PGLayout.apply(GALLERY.layout || '');
   }
   function saveLook(part, box, done) {
     call('coupleLook', 'setLook', part)
-      .then(r => { GALLERY.theme = r.theme; GALLERY.layout = r.layout; GALLERY.pages = r.pages || {}; showLook(); if (window.PGGrids) PGGrids.refresh(); paintLook(box); showToast('Applied — every guest sees it now'); if (done) done(true); })
+      .then(r => { GALLERY.theme = r.theme; GALLERY.layout = r.layout; GALLERY.pages = r.pages || {}; showLook(); if (window.PGGrids) PGGrids.refresh(); paintLook(box); showToast(ROLE === 'demo' ? 'Applied on this phone (demo)' : 'Applied — every guest sees it now'); if (done) done(true); })
       .catch(err => { showToast(err.message); if (done) done(false); });
   }
 
@@ -166,7 +177,7 @@
       '<div class="pgcp-pv-stage"><div class="pgcp-pv-phone"><iframe title="Preview" loading="eager"></iframe><div class="pgcp-pv-wait">Opening preview…</div></div></div>' +
       '<div class="pgcp-pv-pages" role="tablist"></div>' +
       '<div class="pgcp-pv-foot"><label class="pgcp-pv-keep" hidden><input type="checkbox"> Keep my current theme</label>' +
-      '<p class="pgcp-pv-note">Only you can see this preview.</p><button type="button" class="mk-btn-peach ios-wide pgcp-pv-apply">Apply to the wedding</button></div>';
+      '<p class="pgcp-pv-note">Only you can see this preview.</p><button type="button" class="mk-btn-peach ios-wide pgcp-pv-apply">' + (ROLE === 'demo' ? 'Apply on this phone' : 'Apply to the wedding') + '</button></div>';
     const fr = wrap.querySelector('iframe'), pages = wrap.querySelector('.pgcp-pv-pages'), wait = wrap.querySelector('.pgcp-pv-wait');
     const post = m => { try { fr.contentWindow.postMessage(Object.assign({ pg: 'preview' }, m), location.origin); } catch (e) {} };
     const load = () => {
@@ -197,7 +208,7 @@
     ap.addEventListener('click', () => {
       const part = pk ? { pages: JSON.stringify({ [pk]: state.styles[pk] }) } : 'layout' in want ? { layout: state.layout, theme: state.theme } : { theme: state.theme };
       ap.disabled = true; ap.textContent = 'Applying…';
-      saveLook(part, box, ok => { if (ok) close(); else { ap.disabled = false; ap.textContent = 'Apply to the wedding'; } });
+      saveLook(part, box, ok => { if (ok) close(); else { ap.disabled = false; ap.textContent = ROLE === 'demo' ? 'Apply on this phone' : 'Apply to the wedding'; } });
     });
     // the preview is a real phone-sized page (390 × 844), scaled down to fit this screen
     const stage = wrap.querySelector('.pgcp-pv-stage'), phone = wrap.querySelector('.pgcp-pv-phone');
@@ -247,7 +258,7 @@
     back.addEventListener('click', close);
     const who = WHO[ROLE] || WHO.couple;
     const head = h('div', 'pgcp-head', '<div class="reg-overlay-handle"></div><div class="pgcp-top"><h3 class="fm-title">Control Panel</h3><span class="pgcp-badge">' + who[0] + '</span></div>' +
-      '<p class="pgcp-who">' + who[1] + ' Changes are saved for this wedding and reach every guest straight away.</p>' +
+      '<p class="pgcp-who">' + who[1] + (ROLE === 'demo' ? ' Your changes stay on this phone only, so everyone can play — <button type="button" class="pgcp-reset">start again</button>.' : ' Changes are saved for this wedding and reach every guest straight away.') + '</p>' +
       '<div class="pgcp-tabs" role="tablist"><button type="button" role="tab" data-tab="look">Look</button><button type="button" role="tab" data-tab="functions">Functions</button></div>');
     const body = h('div', 'pgcp-body'), done = h('button', 'mk-btn-peach ios-wide', 'Done'); done.type = 'button'; done.addEventListener('click', close);
     repaint = () => {
@@ -255,6 +266,8 @@
       body.innerHTML = ''; body.appendChild(tab === 'look' ? lookPane() : funcPane()); body.dataset.tab = tab;
       if (tab === 'look') { paintLook(body); Promise.all([window.PGTheme && PGTheme.ready, window.PGLayout && PGLayout.ready]).then(() => paintLook(body)); }
     };
+    const rs = head.querySelector('.pgcp-reset');
+    if (rs) rs.addEventListener('click', () => { try { localStorage.removeItem(pgDemoKey()); } catch (e) {} showToast('Back to the demo as it was'); setTimeout(() => location.reload(), 500); });
     head.querySelector('.pgcp-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; repaint(); } });
     box.append(head, body, done); document.body.append(back, box);
     repaint();

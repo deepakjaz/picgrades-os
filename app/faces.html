@@ -86,6 +86,10 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     <h2 style="margin-top:22px">Functions</h2>
     <p class="muted" style="margin:0 0 10px">Switch off anything this couple doesn't want in their wedding app. Root Moment and the photos are always there. The couple can change these too. Theme and Hub layout: open the wedding app while signed in here and tap the gear in the bottom bar (Control Panel).</p>
     <div id="featList" class="feat-list"></div>
+    <h2 style="margin-top:22px">Demo wedding</h2>
+    <p class="muted" style="margin:0 0 10px">Turn this on to show this wedding to other photographers and couples. Everyone with the gallery link gets the Control Panel (the gear) and can try every theme, layout, page style and function. Their changes stay on their own phone only, so the wedding itself never changes. Turn it off for a real client wedding.</p>
+    <div class="feat-list"><label class="feat-row"><span><b>Demo wedding</b><small>Anyone with the link can try every setting</small></span><input type="checkbox" id="demoSw" aria-label="Demo wedding"></label></div>
+    <p class="msg muted" id="demoMsg"></p>
     <p class="msg muted" id="featMsg"></p>
   </section>
 </div>
@@ -292,6 +296,12 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     if (r.gallery.sentAt) $('sendMsg').textContent = 'Last sent to ' + r.gallery.sentTo + ' at ' + dmyhm(r.gallery.sentAt) + '.';
     ['readCard'].forEach(function (id) { $(id).classList.remove('hidden'); });
     paintFeatures(r.gallery.features || {});
+    $('demoSw').checked = !!r.gallery.demo;
+    $('demoSw').onchange = function () {
+      var on = $('demoSw').checked; $('demoMsg').textContent = 'Saving…';
+      api('setDemo', { on: on ? 'yes' : '' }).then(function (x) { $('demoSw').checked = !!x.demo; $('demoMsg').textContent = x.demo ? 'Demo is on: anyone with the gallery link can try every setting (on their own phone).' : 'Demo is off: a normal wedding.'; })
+        .catch(function (e) { $('demoSw').checked = !on; $('demoMsg').textContent = e.message; });
+    };
     paint(); if (counts().faces) showPeople();
   }).catch(function (e) { $('title').textContent = 'Face reading'; fail(e.message); });
 })();

@@ -165,7 +165,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
       .then(function (res) { if (res.code === 'AUTH') { logoutLocal(); throw new Error(res.error); } if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; });
   }
   // The website and Code.gs are updated separately. If Code.gs is older than this page, staff see a warning.
-  var BACKEND_VERSION = 'step38-photo-view';
+  var BACKEND_VERSION = 'step39-demo-mode';
   setTimeout(function () { try { api('health').then(function (h) {
     if (h.version === BACKEND_VERSION) return;
     var b = el('div', { role: 'alert', style: 'background:#5a2a12;color:#FFD9A8;padding:12px 16px;font:500 14px/1.4 system-ui;text-align:center', text: 'The backend (Code.gs) is older than this website (it has ' + (h.version || '?') + ', this page needs ' + BACKEND_VERSION + '). Paste the latest Code.gs into Apps Script and deploy a new version.' });
