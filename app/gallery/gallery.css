@@ -1601,7 +1601,8 @@ body.pg-logo-left .mk-header{flex-direction:row-reverse}
   body[data-view="hub"]:not(.pg-lay-on) .pg-topnav button:hover{color:#fff;background:rgba(255,255,255,.12)}
   body[data-view="hub"]:not(.pg-lay-on) .pg-topnav button.on{background:#fff;color:#141413}
   /* the round bottom bar only once the header has scrolled away */
-  body.pg-big:not(.pg-far) .tkg-global-nav{opacity:0!important;pointer-events:none!important}
+  body.pg-big:not(.pg-far):is([data-view="hub"],[data-view="gallery"],[data-view="rooms"],[data-view="event"]) .tkg-global-nav{opacity:0!important;pointer-events:none!important}
+  body:is([data-view="moments"],[data-view="root"]) .pg-topnav{display:none}
 }
 /* sheets open as a centred window on laptops (no more half-cut bottom sheets) */
 @media (min-width:900px){

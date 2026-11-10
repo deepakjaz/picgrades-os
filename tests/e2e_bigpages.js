@@ -34,6 +34,8 @@ const srv = http.createServer((req, res) => {
   console.log('Notes from the top menu:', await p.evaluate(() => document.body.dataset.view), '| on:', await p.textContent('.pg-topnav button.on'), '| wall columns:', await p.evaluate(() => getComputedStyle(document.getElementById('pgWall')).columnCount), '| cards:', await p.locator('#pgWall .pgh-note').count());
   await p.screenshot({ path: '/tmp/s46_laptop_notes.png' });
   await p.click('.pg-topnav [data-go=gallery]'); await p.waitForTimeout(500); console.log('Galleries:', await p.textContent('.pg-topnav button.on'));
+  await p.click('.pg-topnav [data-go=moments]'); await p.waitForTimeout(600); console.log('Moments (full-screen feed): bottom bar stays', await vis('.tkg-global-nav'), '| top menu steps aside', !(await vis('.pg-topnav')));
+  await p.click('.tkg-nav-item[data-nav=gallery]'); await p.waitForTimeout(500);
   await p.click('.pg-topnav [data-go=hub]'); await p.waitForTimeout(600);
   await p.mouse.move(600, 500); await p.mouse.wheel(0, 900); await p.waitForTimeout(600);
   console.log('after scrolling, bottom bar shows:', await vis('.tkg-global-nav'));
