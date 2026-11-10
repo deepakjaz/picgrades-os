@@ -75,6 +75,12 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/s37_pv_shapes.png' });
   await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
   console.log('Apply → saved', JSON.stringify(call('getGallery', { g: pub.galleryId }).gallery.pages), '| this phone', await pg.evaluate(() => PGEvents.style()));
+  // photo view style (step 38)
+  await pg.locator('.pgcp-style[data-pagekey=viewer][data-style=classic]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-style[data-pagekey=viewer][data-style=classic]'); await pvReady();
+  console.log('photo view preview:', await pg.textContent('.pgcp-pv-name'), '| classic view in the preview:', await inFrame(() => !!document.querySelector('.pgcv')));
+  await pg.screenshot({ path: '/tmp/s38_pv_classic.png' });
+  await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
+  console.log('Apply → saved', JSON.stringify(call('getGallery', { g: pub.galleryId }).gallery.pages), '| this phone', await pg.evaluate(() => pgViewerClassic.style()));
   await pg.click('.pgcp-tabs [data-tab=functions]'); await pg.waitForTimeout(300);
   console.log('functions tab: switches', await pg.locator('.pgcp-sheet .pgf-sw').count(), '| no Plan switches for the couple:', !(await pg.locator('.pgcp-plan').count()));
   await pg.screenshot({ path: '/tmp/s34_panel_functions.png' });

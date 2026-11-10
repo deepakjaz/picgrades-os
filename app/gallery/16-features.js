@@ -22,10 +22,10 @@
     reel: '#pghReel,#fmReel,.pgl-reel,.pe-tab[data-mode=reel]',
     post: '#pgcPost,#fmPost,.pgl-post',
     upload: '#pgcUpload,#pgmAdd,.pgl-upload',
-    notes: '#pgvNote,#mkCommentBtn,.pgm-actions [aria-label="Moment Notes"],#pghNotesSec,.pgl-notes',
-    hearts: '#pgvLike,.pgm-like,#pghLovedSec,.pgl-loved,.pgh-heart',
-    download: '#pgvSave,.pgm-actions [aria-label="Download photo"]',
-    share: '#pgvShare,.pgm-actions [aria-label="Share"]',
+    notes: '.pgcv-note,#pgvNote,#mkCommentBtn,.pgm-actions [aria-label="Moment Notes"],#pghNotesSec,.pgl-notes',
+    hearts: '.pgcv-like,#pgvLike,.pgm-like,#pghLovedSec,.pgl-loved,.pgh-heart',
+    download: '.pgcv-dl,#pgvSave,.pgm-actions [aria-label="Download photo"]',
+    share: '.pgcv-share,#pgvShare,.pgm-actions [aria-label="Share"]',
     install: '#pghInstall,.pgl-install'
   };
   const on = k => !(typeof GALLERY !== 'undefined' && GALLERY && GALLERY.features && GALLERY.features[k] && GALLERY.features[k] !== 'on');

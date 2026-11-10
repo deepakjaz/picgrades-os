@@ -104,7 +104,9 @@
     events: { title: 'Events page', note: 'How the list of all events looks. Tap one to preview it.', page: 'gallery', param: 'eventsstyle', def: 'cards',
       styles: { cards: ['Cards', 'The original event cards'], shapes: ['Shapes', 'Each event inside a shape from its name — Cocktail in a wine glass, Haldi in a marigold…'], carousel: ['Carousel', 'Big cards to swipe, one event at a time'], mosaic: ['Mosaic', 'Big and small event cards mixed'] } },
     event: { title: 'Event page', note: 'How the photos look inside each event. Tap one to preview it.', page: 'event', param: 'eventstyle', def: 'collage',
-      styles: { collage: ['Collage', 'Each photo keeps its own shape, like a classic gallery'], mosaic: ['Mosaic', 'Big and small tiles mixed'], grid: ['Grid', 'All photos the same size'] } }
+      styles: { collage: ['Collage', 'Each photo keeps its own shape, like a classic gallery'], mosaic: ['Mosaic', 'Big and small tiles mixed'], grid: ['Grid', 'All photos the same size'] } },
+    viewer: { title: 'Photo view', note: 'How a photo opens. Tap one to preview it.', page: 'photo', param: 'viewerstyle', def: 'live',
+      styles: { live: ['Full screen', 'The current view: full screen with the filmstrip'], classic: ['Classic', 'The photo clean in the middle with arrows, like a traditional gallery'] } }
   };
   const curStyle = key => ((GALLERY.pages || {})[key]) || PAGE_DEFS[key].def;
   function styleCard(key, k, cur) {
@@ -114,6 +116,7 @@
     if (key === 'events' && k === 'shapes' && window.PGEvents) ['glass', 'marigold', 'mandap', 'heart'].forEach(sh => mini.insertAdjacentHTML('beforeend', PGEvents.svgOf(sh, ' class="pgcp-shp"')));
     else if (key === 'events' && k === 'carousel') grid([[3, 4], [1, 4]]);
     else if (key === 'events' && k === 'cards') grid([[2, 3], [2, 3], [2, 3], [2, 3]]);
+    else if (key === 'viewer') { mini.innerHTML = k === 'live' ? '<span class="pgcp-vlive"><em></em><u></u></span>' : '<span class="pgcp-vclassic"><s></s><em></em><s></s></span>'; }
     else if (k === 'mosaic') grid(key === 'events' ? [[4, 3], [2, 2], [2, 2], [4, 2]] : [[2, 2], [1, 1], [1, 1], [1, 2], [1, 1], [2, 1], [1, 1]]);
     else if (k === 'grid') grid(Array(8).fill([1, 1]));
     else [[3, 5, 2], [4, 2, 4], [2, 4, 3]].forEach(col => { const cEl = h('span', 'pgcp-ccol'); col.forEach(n => { const i = h('i'); i.style.height = (n * 9) + 'px'; cEl.appendChild(i); }); mini.appendChild(cEl); });
