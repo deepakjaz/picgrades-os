@@ -45,7 +45,7 @@ function pgMoment(photo, ceremony, n, total) {
   return {
     id: photo.id, n: n, title: (ceremony === 'Root Moment' ? GALLERY.title : ceremony) + ' · ' + n + '/' + total, story: '',
     date: pgDate(GALLERY.eventDate), couple: String(GALLERY.title || '').toUpperCase(), ceremony: ceremony.toUpperCase(),
-    camera: '', lens: GALLERY.studio ? ('EDITED BY PICGRADES · ' + String(GALLERY.studio).toUpperCase()) : '',
+    camera: '', lens: GALLERY.studio ? ((GALLERY.credit === false ? '' : 'EDITED BY PICGRADES · ') + String(GALLERY.studio).toUpperCase()) : '',
     photoUrl: pgImg(photo.id, PG_FULL_W), thumbUrl: pgImg(photo.id, PG_THUMB_W),
     likes: (GALLERY.likes || {})[photo.id] || 0, liked: !!(GALLERY.mine || {})[photo.id], noteCount: (GALLERY.notes || {})[photo.id] || 0, comments: []
   };
@@ -602,7 +602,9 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
   function start(res, fromKept) {
     GALLERY = pgDemoMerge(res.gallery); GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
     const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;
-    document.title = GALLERY.title + ' · PicGrades';
+    // PicGrades' own name shows unless PicGrades turned its credit off for this client (step 42)
+    document.body.classList.toggle('pg-nocredit', GALLERY.credit === false);
+    document.title = GALLERY.title + (GALLERY.credit === false ? '' : ' · PicGrades');
     document.getElementById('pgCoupleTitle').textContent = GALLERY.title;
     pgMonogram();
     const dateTxt = pgDate(GALLERY.eventDate);
@@ -610,7 +612,7 @@ document.getElementById('mkMenuBtn').addEventListener('click', () => { switchVie
     document.getElementById('pgHubTitle').textContent = 'Wedding Hub';
     document.getElementById('pgGalleryEyebrow').textContent = GALLERY.title + ' · ' + total + ' photos';
     document.getElementById('pgStudioName').textContent = GALLERY.studio || 'Your photographer';
-    document.getElementById('pgStudioSub').textContent = 'Photographed by ' + (GALLERY.studio || 'your photographer') + ' · edited and delivered with PicGrades.';
+    document.getElementById('pgStudioSub').textContent = 'Photographed by ' + (GALLERY.studio || 'your photographer') + (GALLERY.credit === false ? '.' : ' · edited and delivered with PicGrades.');
     document.getElementById('pgStudioProject').textContent = GALLERY.title;
     document.getElementById('pgStudioStats').textContent = total + ' photos · ' + (GALLERY.events || []).length + ' events' + (dateTxt ? ' · ' + dateTxt : '');
     ROOT_SET = buildRootSet();
