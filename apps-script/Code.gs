@@ -85,7 +85,8 @@ var USER_ROUTES = {
   sendGallery: sendGallery_,
   setFeatures: setFeatures_,
   setLook: setLook_,
-  myRole: myRole_
+  myRole: myRole_,
+  setDemo: setDemo_
 };
 
 // Admin or editor (order queue + delivery)
@@ -151,7 +152,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step38-photo-view',
+    version: 'step39-demo-mode',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -867,7 +868,8 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages'];   // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo'];   // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
+   // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
    // features: the couple's / photographer's on-off per function (JSON); allowed: PicGrades' master switches by plan (JSON, empty = all allowed)   // portfolio: '' = shown on the photographer's page (default), 'off' = the couple turned it off
 var NOTE_COLUMNS = ['at', 'galleryId', 'photoId', 'type', 'device', 'name', 'text', 'status'];
 var EVENT_ORDER = ['haldi', 'mehendi', 'mehndi', 'sangeet', 'wedding', 'pheras', 'reception'];
@@ -1027,7 +1029,7 @@ function getGallery_(p) {
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
   m.isCouple = !!(p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey));
   m.features = featuresOf_(g);
-  m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages);
+  m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   return { gallery: m };
@@ -1144,7 +1146,7 @@ function facesStatus_(p, user) {
   return {
     gallery: { galleryId: g.galleryId, title: g.title, studio: g.companyName, catalogName: o.catalogName,
       status: g.facesStatus || '', faceCount: Number(g.faceCount || 0), sentAt: g.sentAt || '', sentTo: g.sentTo || '',
-      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g), features: featuresOf_(g) },
+      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g), features: featuresOf_(g), demo: isDemo_(g) },
     photos: photos, faces: f
   };
 }
@@ -1438,6 +1440,15 @@ function saveLook_(g, p) {
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, out);
   return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages) };
+}
+// Demo wedding (step 39): anyone with the link gets the Control Panel to try every setting; their changes stay on their own phone.
+function isDemo_(g) { return /^(yes|true|1|on)$/i.test(String(g.demo || '').trim()); }
+/** Photographer (own studio) or PicGrades staff: make this wedding a demo, or a normal wedding again. */
+function setDemo_(p, user) {
+  var x = staffGallery_(p.g, user), on = /^(yes|true|1|on)$/i.test(String(p.on));
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', x.g._row, { demo: on ? 'yes' : '' });
+  return { demo: on };
 }
 // Page styles (step 36): which style each page uses. Only known pages and styles are kept.
 var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'], viewer: ['live', 'classic'] };   // events: the list of all events (step 37)

@@ -1427,3 +1427,4 @@ body.pgcv-on{overflow:hidden}body.pgcv-on .tkg-global-nav,body.pgcv-on .pg-totop
 .pgcp-vclassic{flex:1;display:flex;align-items:center;gap:4px;padding:10px 4px}
 .pgcp-vclassic em{flex:1;height:70%;background:var(--cta-peach);opacity:.75;border-radius:2px}.pgcp-vclassic s{width:6px;height:12px;border-left:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(45deg);text-decoration:none}
 .pgcp-vclassic s:last-child{transform:rotate(-135deg)}
+.pgcp-reset{border:0;background:none;padding:0;color:var(--cta-peach);font:inherit;text-decoration:underline;cursor:pointer}
