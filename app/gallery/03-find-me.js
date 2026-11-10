@@ -89,10 +89,10 @@ function pgMonogram() {
     $('fmActions').classList.add('hidden');
     if (!lastResult) { $('fmResult').classList.remove('hidden'); $('fmThumbs').innerHTML = ''; $('fmOpen').classList.add('hidden'); status('We could not find you in this gallery. Try a clearer, front-facing photo in good light.'); return; }
     $('fmOpen').classList.remove('hidden');
-    status((sure.length ? sure.length + ' photo' + (sure.length === 1 ? '' : 's') + ' of you' : 'No sure matches') + (maybe.length ? ' · ' + maybe.length + ' maybe you' : '') + (several ? ' (we used the biggest face in your photo)' : ''));
+    status((sure.length ? 'We found your photos' : 'These may be you') + (sure.length && maybe.length ? ' · and a few that may be you' : '') + (several ? ' (we used the biggest face in your photo)' : ''));   // step 49: no counts
     $('fmThumbs').innerHTML = '';
     (sure.length ? sure : maybe).slice(0, 8).forEach(p => { const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.src = pgImg(p.id, 300); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.id, 300); }; $('fmThumbs').appendChild(im); });
-    $('fmOpen').textContent = sure.length ? (sure.length === 1 ? 'See your photo' : 'See your ' + sure.length + ' photos') : (maybe.length === 1 ? 'See the possible photo' : 'See ' + maybe.length + ' possible photos');
+    $('fmOpen').textContent = sure.length ? 'See your photos' : 'See the possible photos';
     $('fmResult').classList.remove('hidden');
   }
   $('fmCamBtn').addEventListener('click', startCam);

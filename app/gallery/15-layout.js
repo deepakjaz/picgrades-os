@@ -114,7 +114,7 @@
     el.classList.add('pgl-bleed');
   };
   B.stats = (el, b, D) => {
-    const s = [['photos', D.all.length, 'Photos'], ['events', D.events.length, 'Events'], ['hearts', D.hearts, 'Hearts'], ['notes', D.notesN, 'Notes']];
+    const s = [['hearts', D.hearts, 'Hearts'], ['notes', D.notesN, 'Notes']];   // step 49: photo and event counts only in the Control Panel
     el.classList.add('pgl-stats-' + b.variant);
     s.forEach(([k, v, l]) => { const x = h('button', 'pgl-stat', '<b>' + Number(v).toLocaleString('en-IN') + '</b><span>' + l + '</span>'); x.type = 'button'; x.addEventListener('click', () => pgStatTap(k)); el.appendChild(x); });
   };
@@ -126,7 +126,7 @@
   };
   ['findme', 'reel', 'post', 'upload', 'install', 'review'].forEach(k => { B[k] = (el, b, D) => action(el, b, D, k); });
   B.events = (el, b, D) => {
-    const v = b.variant, head = h('div', 'pgl-head', '<h3>Events</h3><button type="button" class="pgl-more">All ' + D.events.length + ' →</button>');
+    const v = b.variant, head = h('div', 'pgl-head', '<h3>Events</h3><button type="button" class="pgl-more">See all →</button>');
     head.querySelector('button').addEventListener('click', () => switchViewFromNav('gallery'));
     const box = h('div', 'pgl-ev pgl-ev-' + v);
     // mosaic of slideshows: the first event big (2×2), then as many as fill whole rows (the rest are one tap away in "All")
@@ -141,9 +141,9 @@
     if (v === 'grid-2' && screenOf() !== 'phone') { const n = D.events.length; box.style.setProperty('--evc', n <= 4 ? n : Math.ceil(n / 2)); box.classList.add('pgl-ev-fill'); }
     D.events.slice(0, shownN).forEach((ev, i) => {
       const t = h('button', 'pgl-evt'); t.type = 'button'; t.addEventListener('click', () => pgOpenEvent(ev.name));
-      if (v === 'editorial-bands') { const c = h('div', 'pgl-evc'); rot(c, ev.photos, 1100); t.appendChild(c); t.appendChild(h('div', 'pgl-evlab', '<small>' + String(i + 1).padStart(2, '0') + '</small><b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); box.appendChild(t); return; }
-      if (v === 'list') { t.appendChild(h('span', 'pgl-num', String(i + 1).padStart(2, '0'))); const th = h('div', 'pgl-evth'); th.appendChild(img((ev.photos[0] || {}).id, 200)); t.appendChild(th); t.appendChild(h('div', 'pgl-evtx', '<b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); }
-      else { const c = h('div', 'pgl-evc'); rot(c, ev.photos, 700); t.appendChild(c); t.appendChild(h('div', 'pgl-evlab', '<b>' + esc(ev.name) + '</b><small>' + ev.photos.length + ' photos</small>')); }
+      if (v === 'editorial-bands') { const c = h('div', 'pgl-evc'); rot(c, ev.photos, 1100); t.appendChild(c); t.appendChild(h('div', 'pgl-evlab', '<small>' + String(i + 1).padStart(2, '0') + '</small><b>' + esc(ev.name) + '</b>')); box.appendChild(t); return; }
+      if (v === 'list') { t.appendChild(h('span', 'pgl-num', String(i + 1).padStart(2, '0'))); const th = h('div', 'pgl-evth'); th.appendChild(img((ev.photos[0] || {}).id, 200)); t.appendChild(th); t.appendChild(h('div', 'pgl-evtx', '<b>' + esc(ev.name) + '</b>')); }
+      else { const c = h('div', 'pgl-evc'); rot(c, ev.photos, 700); t.appendChild(c); t.appendChild(h('div', 'pgl-evlab', '<b>' + esc(ev.name) + '</b>')); }
       box.appendChild(t);
     });
     el.append(head, box);

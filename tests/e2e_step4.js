@@ -56,14 +56,14 @@ const srv = http.createServer((req, res) => {
     await pg.screenshot({ path: '/tmp/s4_collections_scrolled_' + vp.name + '.png' });
     await pg.locator('.pg-collection', { hasText: 'Wedding' }).click(); await pg.waitForTimeout(600); await pg.click('#view-event .pgx-cell >> nth=0'); await pg.waitForTimeout(500); 
     const sheetHidden = await pg.$eval('#mkEditorialSheet', e => e.getBoundingClientRect().top >= innerHeight - 2);
-    console.log(vp.name, '| viewer full screen:', await pg.$eval('#pgvFeed', e => Math.round(e.getBoundingClientRect().height)) === vp.height, '| text hidden:', sheetHidden, '| nav hidden:', !(await pg.isVisible('.tkg-global-nav')), '| counter:', await pg.textContent('#pgvCount'), '| fit:', await pg.$eval('.pgv-item img', e => getComputedStyle(e).objectFit));
+    console.log(vp.name, '| viewer full screen:', await pg.$eval('#pgvFeed', e => Math.round(e.getBoundingClientRect().height)) === vp.height, '| text hidden:', sheetHidden, '| nav hidden:', !(await pg.isVisible('.tkg-global-nav')), '| counter:', await pg.getAttribute('#pgvCount', 'data-pos'), '| fit:', await pg.$eval('.pgv-item img', e => getComputedStyle(e).objectFit));
     await pg.screenshot({ path: '/tmp/s4_viewer_' + vp.name + '.png' });
     if (vp.name === 'mobile') {
       // finger scroll = the whole photo moves (native scroll with snap), like the filmstrip
       const scrollTo = async (k) => { await pg.$eval('#pgvFeed', (f, k) => f.scrollTo(0, f.clientHeight * k), k); await pg.waitForTimeout(500); };
-      await scrollTo(1); console.log('swipe up ->', await pg.textContent('#pgvCount'), '| rail active:', await pg.locator('.mk-thumb-item.is-active, .mk-thumb-item.active').count());
-      await scrollTo(2); console.log('swipe up ->', await pg.textContent('#pgvCount'));
-      await scrollTo(1); console.log('swipe down ->', await pg.textContent('#pgvCount'));
+      await scrollTo(1); console.log('swipe up ->', await pg.getAttribute('#pgvCount', 'data-pos'), '| rail active:', await pg.locator('.mk-thumb-item.is-active, .mk-thumb-item.active').count());
+      await scrollTo(2); console.log('swipe up ->', await pg.getAttribute('#pgvCount', 'data-pos'));
+      await scrollTo(1); console.log('swipe down ->', await pg.getAttribute('#pgvCount', 'data-pos'));
       // pinch zoom (two fingers) then pan with one finger
       const pinch = await pg.evaluate(() => {
         const it = document.querySelectorAll('.pgv-item')[1], im = it.querySelector('img');
@@ -79,9 +79,9 @@ const srv = http.createServer((req, res) => {
       console.log('double-tap on zoomed photo resets zoom:', await (async () => { await pg.mouse.click(200, 420); await pg.waitForTimeout(80); await pg.mouse.click(200, 420); await pg.waitForTimeout(400); return pg.evaluate(() => document.querySelectorAll('.pgv-item img')[1].style.transform === ''); })());
       await pg.screenshot({ path: '/tmp/s4_viewer2_mobile.png' });
     } else {
-      await pg.mouse.move(500, 400); await pg.mouse.wheel(0, 120); await pg.waitForTimeout(900); console.log('wheel down ->', await pg.textContent('#pgvCount'));
-      await pg.mouse.wheel(0, 120); await pg.waitForTimeout(900); console.log('wheel down ->', await pg.textContent('#pgvCount'));
-      await pg.mouse.wheel(0, -120); await pg.waitForTimeout(900); console.log('wheel up ->', await pg.textContent('#pgvCount'));
+      await pg.mouse.move(500, 400); await pg.mouse.wheel(0, 120); await pg.waitForTimeout(900); console.log('wheel down ->', await pg.getAttribute('#pgvCount', 'data-pos'));
+      await pg.mouse.wheel(0, 120); await pg.waitForTimeout(900); console.log('wheel down ->', await pg.getAttribute('#pgvCount', 'data-pos'));
+      await pg.mouse.wheel(0, -120); await pg.waitForTimeout(900); console.log('wheel up ->', await pg.getAttribute('#pgvCount', 'data-pos'));
       await pg.click('#pgvZoom'); await pg.waitForTimeout(200); console.log('zoom button:', await pg.evaluate(() => { const f = document.getElementById('pgvFeed'), i = Math.round(f.scrollTop / f.clientHeight); return document.querySelectorAll('.pgv-item img')[i].style.transform; }));
       await pg.click('#pgvZoom'); await pg.waitForTimeout(200);
       // step 45: a guest who has not used Find me is asked to request the photo (no download); the couple downloads it
@@ -90,7 +90,7 @@ const srv = http.createServer((req, res) => {
       const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 8000 }).catch(() => null), pg.click('#pgvSave')]);
       console.log('download:', dl ? dl.suggestedFilename() : 'none');
       await pg.evaluate(() => { GALLERY.isCouple = false; });
-      await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(500); console.log('arrow down ->', await pg.textContent('#pgvCount'));
+      await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(500); console.log('arrow down ->', await pg.getAttribute('#pgvCount', 'data-pos'));
     }
     await pg.waitForTimeout(800);
     // single tap hides controls, tap again shows

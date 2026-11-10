@@ -1509,7 +1509,6 @@ body[data-view="hub"]:not(.pg-lay-on) .pg-modebtn,body[data-view="hub"]:not(.pg-
 
 /* ---------- Hub editor (step 44) ---------- */
 body.pged-on{overflow:hidden}body.pged-on .tkg-global-nav,body.pged-on .pg-totop{display:none}
-body.pg-logo-left .mk-header{flex-direction:row-reverse}
 .pgcp-design{display:block;width:100%;margin:2px 0 12px;padding:12px 14px;border-radius:14px;border:1.5px dashed var(--cta-peach);background:none;color:var(--ink);font:600 14px var(--font-sans);cursor:pointer;text-align:left}
 .pged{position:fixed;inset:0;z-index:2050;display:flex;flex-direction:column;background:#1a1716;color:#fff}
 .pged-top{flex:none;display:flex;align-items:center;gap:6px;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 6px}
@@ -1589,9 +1588,8 @@ body.pg-logo-left .mk-header{flex-direction:row-reverse}
 .pg-topnav{display:none}
 @media (min-width:1024px){
   .mk-header{display:flex;align-items:center;gap:20px}
-  .pg-topnav{pointer-events:auto;display:flex;align-items:center;gap:4px;margin-left:auto;margin-right:8px;padding:4px;border-radius:24px;
+  .pg-topnav{pointer-events:auto;display:flex;align-items:center;gap:4px;margin:0 8px;padding:4px;border-radius:24px;
     background:color-mix(in srgb,var(--bg-cream) 72%,transparent);border:1px solid var(--border-hairline);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-  body.pg-logo-left .pg-topnav{margin-left:8px;margin-right:auto}
   .pg-topnav button{height:34px;padding:0 15px;border:0;border-radius:18px;background:none;color:var(--ink-soft);font:600 13.5px var(--font-sans);letter-spacing:.01em;cursor:pointer;white-space:nowrap}
   .pg-topnav button[hidden]{display:none}
   .pg-topnav button:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
@@ -1697,3 +1695,48 @@ body:not(.pgv-on) .pgwm-fixed,body.pgcv-on .pgwm-fixed{display:none}
 .pgwm-lab input{display:block;width:100%;box-sizing:border-box;margin-top:6px;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:400 16px var(--font-sans)}
 .pgwm-demo{height:120px;border-radius:14px;background-color:#8a7a70;background-repeat:repeat;background-size:340px 220px;
   background-blend-mode:normal;box-shadow:inset 0 0 0 1px var(--border-hairline)}
+
+/* ---------- step 49: photo counts only in the Control Panel ---------- */
+.pgcp-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 14px}
+.pgcp-stat{padding:12px 14px;border-radius:14px;background:var(--bg-box);border:1px solid var(--border-hairline)}
+.pgcp-stat b{display:block;font:600 1.4rem var(--font-serif)}.pgcp-stat span{font-size:.74rem;color:var(--ink-soft)}
+.pgcp-statlist{grid-column:1/-1;padding:4px 14px;border-radius:14px;border:1px solid var(--border-hairline);font-size:.84rem}
+.pgcp-statlist summary{cursor:pointer;padding:8px 0;font-weight:600}
+.pgcp-statlist p{display:flex;justify-content:space-between;margin:0;padding:6px 0;border-top:1px solid var(--border-hairline)}
+.pgcp-stats small{grid-column:1/-1;font-size:.72rem;color:var(--ink-soft)}
+.pgv-count:empty,.pgcv-count:empty{display:none}
+
+/* ---------- step 49: header = logo + light/dark + menu (no name); each can sit left or right ---------- */
+.mk-header{justify-content:flex-start;gap:6px}
+.mk-header .mk-right-cluster{display:contents}
+.mk-spacer{flex:1;order:3}
+.pg-topnav{order:4}
+.mk-stamp-badge{order:6;pointer-events:auto}
+.pg-modebtn{order:7;pointer-events:auto}
+.pg-menubtn{order:8;pointer-events:auto}
+body.pg-logo-left .mk-stamp-badge{order:1}
+body.pg-mode-left .pg-modebtn{order:0}
+.pg-menubtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--border-hairline);background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.pg-menubtn svg{width:20px;height:20px}
+@media (hover:hover){.pg-menubtn:hover{border-color:var(--ink-faint)}}
+body[data-view="hub"]:not(.pg-lay-on) .pg-menubtn{color:#fff;border-color:rgba(255,255,255,.55);background:rgba(0,0,0,.18)}
+/* the menu: a panel from the right */
+.pgmenu-back{position:fixed;inset:0;z-index:2100;background:rgba(10,8,7,.42);opacity:0;pointer-events:none;transition:opacity .25s ease}
+.pgmenu{position:fixed;top:0;right:0;bottom:0;z-index:2101;width:min(340px,86vw);background:var(--bg-cream);color:var(--ink);box-shadow:-20px 0 60px rgba(0,0,0,.25);
+  transform:translateX(104%);transition:transform .3s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 14px) 0 calc(env(safe-area-inset-bottom,0px) + 14px);overflow:auto}
+body.pgmenu-on .pgmenu{transform:none}body.pgmenu-on .pgmenu-back{opacity:1;pointer-events:auto}
+.pgmenu-top{display:flex;align-items:center;justify-content:space-between;padding:0 18px 10px}
+.pgmenu-top b{font:500 1.2rem var(--font-serif)}
+.pgmenu-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--border-hairline);background:none;color:var(--ink);font-size:20px;cursor:pointer}
+.pgmenu-h{font:600 .7rem var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:14px 18px 4px}
+.pgmenu button.pgmenu-i{display:flex;align-items:center;gap:14px;width:100%;padding:12px 18px;border:0;background:none;color:var(--ink);font:500 15px var(--font-sans);text-align:left;cursor:pointer}
+.pgmenu button.pgmenu-i:hover,.pgmenu button.pgmenu-i:focus-visible{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.pgmenu button.pgmenu-i.on{font-weight:700}
+.pgmenu-i svg{width:21px;height:21px;flex:none;color:var(--ink-soft)}
+.pgmenu-i small{margin-left:auto;font-size:.74rem;color:var(--ink-soft)}
+.mk-brand-box[hidden]{display:none!important}
+/* two numbers now (hearts, notes): they share the row */
+.pgh-stats,.pgl-stats-row,.pgl-stats-inline{grid-template-columns:repeat(2,1fr)}
+.pge-count:empty,.pge-cap small:empty,.pgl-evlab small:empty,.pgl-evtx small:empty,.pg-coll small:empty,.pgh-ev small:empty{display:none}
+.pg-collection small:empty,#pghEvents small:empty{display:none}

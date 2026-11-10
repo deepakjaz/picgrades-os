@@ -29,7 +29,7 @@
     img.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.id, PG_FULL_W); };
     img.onload = () => img.classList.add('in');
     img.src = pgImg(p.id, PG_FULL_W);
-    el.querySelector('.pgcv-count').textContent = (S.i + 1) + ' / ' + S.photos.length;
+    el.querySelector('.pgcv-count').textContent = ''; el.querySelector('.pgcv-count').dataset.pos = (S.i + 1) + ' / ' + S.photos.length;   // step 49: no photo numbers on screen (data-pos for tests)
     el.querySelector('.pgcv-prev').disabled = S.i === 0; el.querySelector('.pgcv-next').disabled = S.i === S.photos.length - 1;
     counts();
     document.dispatchEvent(new CustomEvent('pg:classic-photo', { detail: { photo: cur(), el: el.querySelector('.pgcv-stage') } }));   // notes on the photo (26-comments.js)

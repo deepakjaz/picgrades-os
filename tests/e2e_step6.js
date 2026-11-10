@@ -57,7 +57,7 @@ const srv = http.createServer((req, res) => {
       await pg.screenshot({ path: '/tmp/s11_reel_added.png' });
       await pg.evaluate(() => PGReel.close());
       await pg.click('#pghNotes .pgh-note >> nth=0'); await pg.waitForTimeout(500);
-      console.log('note opens photo:', await pg.isVisible('#view-root'), await pg.textContent('#pgvCount'));
+      console.log('note opens photo:', await pg.isVisible('#view-root'), await pg.getAttribute('#pgvCount', 'data-pos'));
       await pg.click('#pgvBack'); await pg.waitForTimeout(300);
       await pg.click('.tkg-nav-item[data-nav=rooms]'); await pg.waitForTimeout(300);
       console.log('notes wall:', await pg.locator('#pgWall .pgh-note').count(), (await pg.locator('#pgWall b').allTextContents()).join(', '));

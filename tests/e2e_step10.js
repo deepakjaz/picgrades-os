@@ -67,7 +67,7 @@ const srv = http.createServer((req, res) => {
   const g2 = await phone();
   const set = call('saveSet', { g: pub.galleryId, name: "Meera's photos", ids: ['TN1', 'TN3', 'TN4'] });
   await g2.pg.goto('http://localhost:8775/g/' + pub.galleryId + '?set=' + set.code); await g2.pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await g2.pg.waitForTimeout(900);
-  console.log('saved link opens collection:', await g2.pg.isVisible('#view-root'), await g2.pg.textContent('#pgvCount'), '| kept on phone:', await g2.pg.evaluate(() => (JSON.parse(localStorage.getItem('pg_sets_' + GALLERY_ID) || '[]')[0] || {}).name));
+  console.log('saved link opens collection:', await g2.pg.isVisible('#view-root'), await g2.pg.getAttribute('#pgvCount', 'data-pos'), '| kept on phone:', await g2.pg.evaluate(() => (JSON.parse(localStorage.getItem('pg_sets_' + GALLERY_ID) || '[]')[0] || {}).name));
   await g2.ctx.close();
   console.log('page errors:', errors); await b.close(); srv.close();
 });

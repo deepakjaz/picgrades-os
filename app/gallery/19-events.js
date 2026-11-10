@@ -41,11 +41,11 @@
     return STYLES.indexOf(q) > -1 ? q : STYLES.indexOf(w.events) > -1 ? w.events : 'cards';
   }
   const open = ev => (window.pgOpenEvent ? pgOpenEvent(ev.name) : openCollection(ev.name, 0));
-  const count = ev => ev.photos.length + (ev.photos.length === 1 ? ' photo' : ' photos');
+  const count = () => '';   // step 49: no photo counts
 
   function shapeCard(ev) {
     const k = shapeOf(ev.name), b = h('button', 'pge-shape pge-' + k); b.type = 'button'; b.dataset.shape = k;
-    b.setAttribute('aria-label', 'Open ' + ev.name + ', ' + count(ev));
+    b.setAttribute('aria-label', 'Open ' + ev.name);
     const fig = h('span', 'pge-fig');   // every shape sits in the same box, so the names line up
     const cover = h('span', 'pg-cover pge-photo'); cover.style.webkitMaskImage = cover.style.maskImage = maskUrl(k);
     pgRotCover(cover, ev.photos, 600);
@@ -56,7 +56,7 @@
     return b;
   }
   function photoCard(ev, cls) {
-    const b = h('button', cls); b.type = 'button'; b.setAttribute('aria-label', 'Open ' + ev.name + ', ' + count(ev));
+    const b = h('button', cls); b.type = 'button'; b.setAttribute('aria-label', 'Open ' + ev.name);
     const cover = h('span', 'pg-cover'); pgRotCover(cover, ev.photos, 900);
     b.append(cover, h('span', 'pge-cap', '<b>' + pgEsc(ev.name) + '</b><small>' + count(ev) + '</small>'));
     b.addEventListener('click', () => open(ev));

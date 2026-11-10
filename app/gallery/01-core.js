@@ -43,7 +43,7 @@ function pgEsc(t) { const d = document.createElement('div'); d.textContent = Str
 function pgDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; }
 function pgMoment(photo, ceremony, n, total) {
   return {
-    id: photo.id, n: n, title: (ceremony === 'Root Moment' ? GALLERY.title : ceremony) + ' · ' + n + '/' + total, story: '',
+    id: photo.id, n: n, title: (ceremony === 'Root Moment' ? GALLERY.title : ceremony),   // step 49: no "3/40" story: '',
     date: pgDate(GALLERY.eventDate), couple: String(GALLERY.title || '').toUpperCase(), ceremony: ceremony.toUpperCase(),
     camera: '', lens: GALLERY.studio ? ((GALLERY.credit === false ? '' : 'EDITED BY PICGRADES · ') + String(GALLERY.studio).toUpperCase()) : '',
     photoUrl: pgImg(photo.id, PG_FULL_W), thumbUrl: pgImg(photo.id, PG_THUMB_W),
@@ -148,11 +148,11 @@ function renderGalleries() {
   (GALLERY.personal || []).concat(GALLERY.events || []).forEach((ev) => {
     const card = document.createElement('button');
     card.type = 'button'; card.className = 'pg-collection' + (ev.personal ? ' is-personal' : '');
-    card.setAttribute('aria-label', 'Open ' + ev.name + ' collection, ' + ev.photos.length + ' photos');
+    card.setAttribute('aria-label', 'Open ' + ev.name + ' collection');   // step 49: no photo counts in the app (the Control Panel has them)
     const cover = document.createElement('div'); cover.className = 'pg-cover';
     pgRotCover(cover, ev.photos);
     const h = document.createElement('h3'); h.textContent = ev.name;
-    const sm = document.createElement('small'); sm.textContent = ev.photos.length + ' photos';
+    const sm = document.createElement('small'); sm.textContent = '';
     card.appendChild(cover); card.appendChild(h); card.appendChild(sm);
     card.addEventListener('click', () => (window.pgOpenEvent ? pgOpenEvent(ev.name) : openCollection(ev.name, 0)));
     wrap.appendChild(card);
@@ -191,7 +191,7 @@ function renderMoments() {
     img.src = pgImg(m.id, 1600); img.loading = i < 2 ? 'eager' : 'lazy'; img.decoding = 'async';
     img.onerror = function () { this.onerror = null; this.src = pgImgFallback(m.id, 1600); blur.style.backgroundImage = 'url("' + pgImgFallback(m.id, 60) + '")'; };
     const scrim = document.createElement('div'); scrim.className = 'pgm-scrim';
-    scrim.innerHTML = '<div class="pgm-name">' + pgEsc(GALLERY.title || '') + '</div><div class="pgm-meta">ROOT MOMENT ' + (i + 1) + '/' + ROOT_SET.length + (m.date ? ' · ' + pgEsc(m.date) : '') + (GALLERY.studio ? ' · ' + pgEsc(String(GALLERY.studio).toUpperCase()) : '') + '</div>';
+    scrim.innerHTML = '<div class="pgm-name">' + pgEsc(GALLERY.title || '') + '</div><div class="pgm-meta">ROOT MOMENT' + (m.date ? ' · ' + pgEsc(m.date) : '') + (GALLERY.studio ? ' · ' + pgEsc(String(GALLERY.studio).toUpperCase()) : '') + '</div>';
     const acts = document.createElement('div'); acts.className = 'pgm-actions';
     const like = document.createElement('button'); like.type = 'button'; like.className = 'pgm-btn pgm-like'; like.setAttribute('aria-label', 'Like');
     like.innerHTML = ICON_HEART_OUTLINE + ICON_HEART_FILLED + '<span class="pgm-like-count"></span>';
@@ -200,7 +200,7 @@ function renderMoments() {
     const share = document.createElement('button'); share.type = 'button'; share.className = 'pgm-btn'; share.setAttribute('aria-label', 'Share');
     share.innerHTML = ICON_SEND;
     like.addEventListener('click', e => { e.stopPropagation(); pgToggleLike(m); });
-    note.addEventListener('click', e => { e.stopPropagation(); openNotes(m, 'Root Moment ' + (i + 1) + '/' + ROOT_SET.length); });
+    note.addEventListener('click', e => { e.stopPropagation(); openNotes(m, 'Root Moment'); });
     share.addEventListener('click', e => { e.stopPropagation(); pgShare(); });
     acts.appendChild(like); acts.appendChild(note); acts.appendChild(share);
     // double-tap to like (same as TKG Moments)
@@ -468,7 +468,7 @@ function openNotes(m, label) {
   commentSheet.classList.add('show');
   pgApi('getNotes', { photoId: m.id }).then(res => { if (noteTarget === m) renderNotes(res.notes); }).catch(err => { commentListContainer.innerHTML = '<div class="mk-comment-item">' + pgEsc(err.message) + '</div>'; });
 }
-document.getElementById('mkCommentBtn').addEventListener('click', () => { openNotes(MOMENTS[activeIdx], (CURRENT_SET || '') + ' ' + (activeIdx + 1) + '/' + MOMENTS.length); });
+document.getElementById('mkCommentBtn').addEventListener('click', () => { openNotes(MOMENTS[activeIdx], CURRENT_SET || ''); });
 commentBackdrop.addEventListener('click', () => { commentBackdrop.classList.remove('show'); commentSheet.classList.remove('show'); });
 document.getElementById('commentForm').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -622,11 +622,11 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     const dateTxt = pgDate(GALLERY.eventDate);
     document.getElementById('pgHubEyebrow').textContent = GALLERY.title + (dateTxt ? ' · ' + dateTxt : '');
     document.getElementById('pgHubTitle').textContent = 'Wedding Hub';
-    document.getElementById('pgGalleryEyebrow').textContent = GALLERY.title + ' · ' + total + ' photos';
+    document.getElementById('pgGalleryEyebrow').textContent = GALLERY.title;
     document.getElementById('pgStudioName').textContent = GALLERY.studio || 'Your photographer';
     document.getElementById('pgStudioSub').textContent = 'Photographed by ' + (GALLERY.studio || 'your photographer') + (GALLERY.credit === false ? '.' : ' · edited and delivered with PicGrades.');
     document.getElementById('pgStudioProject').textContent = GALLERY.title;
-    document.getElementById('pgStudioStats').textContent = total + ' photos · ' + (GALLERY.events || []).length + ' events' + (dateTxt ? ' · ' + dateTxt : '');
+    document.getElementById('pgStudioStats').textContent = dateTxt || '';
     ROOT_SET = buildRootSet();
     renderGalleries();
     renderMoments();
