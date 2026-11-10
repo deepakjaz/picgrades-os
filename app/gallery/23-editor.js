@@ -14,7 +14,8 @@
   const CARDS = {
     hero: ['Cover photos', ['full-bleed', 'slideshow', 'collage-3', 'collage-5', 'polaroid-stack', 'split']],
     findme: ['Find me', ['photo', 'icon', 'glass', 'slideshow']], reel: ['Reel Edits', ['icon', 'photo', 'glass', 'slideshow']], post: ['Post Edits', ['icon', 'photo', 'glass', 'slideshow']],
-    upload: ['Add a moment', ['icon', 'photo', 'glass', 'slideshow']],   // 'slideshow' is used by 14 cards in the ready layouts (step 49 audit) events: ['Events', ['carousel', 'grid-2', 'mosaic-slideshow', 'list', 'stack', 'editorial-bands']],
+    upload: ['Add a moment', ['icon', 'photo', 'glass', 'slideshow']],   // 'slideshow' is used by 14 cards in the ready layouts (step 49 audit)
+    events: ['Events', ['carousel', 'grid-2', 'mosaic-slideshow', 'list', 'stack', 'editorial-bands']],
     loved: ['Most loved', ['strip', 'mosaic']], notes: ['Notes', ['cards', 'bubbles']], studio: ['Photographer', ['card', 'banner']],
     install: ['Add to Home Screen', ['card', 'pill']], review: ['Thank the photographer', ['card', 'pill']]
   };
