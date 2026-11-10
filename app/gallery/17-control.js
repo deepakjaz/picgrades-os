@@ -15,7 +15,10 @@
       const m = e.data || {}; if (e.origin !== location.origin || m.pg !== 'preview') return;
       if (m.dark != null) document.documentElement.setAttribute('data-tkg-theme', m.dark ? 'dark' : 'light');
       if (!m.view || typeof GALLERY === 'undefined' || !GALLERY) return;
-      if (m.view === 'photo') { const ev = (GALLERY.events || [])[0]; if (ev) openCollection(ev.name, 0); }
+      if (m.view === 'photo') {   // the photo with the most notes, so "Notes on photos" has something to show
+        let best = null; (GALLERY.events || []).forEach(ev => ev.photos.forEach((ph, i) => { const n = (GALLERY.notes || {})[ph.id] || 0; if (!best || n > best.n) best = { ev: ev.name, i, n }; }));
+        if (best) openCollection(best.ev, best.i);
+      }
       else if (m.view === 'event') { const ev = (GALLERY.events || [])[0]; if (ev && window.pgOpenEvent) pgOpenEvent(ev.name); }
       else switchViewFromNav(m.view);
       window.scrollTo(0, 0);
@@ -118,7 +121,9 @@
     event: { title: 'Event page', note: 'How the photos look inside each event. Tap one to preview it.', page: 'event', param: 'eventstyle', def: 'collage',
       styles: { collage: ['Collage', 'Each photo keeps its own shape, like a classic gallery'], mosaic: ['Mosaic', 'Big and small tiles mixed'], grid: ['Grid', 'All photos the same size'] } },
     viewer: { title: 'Photo view', note: 'How a photo opens. Tap one to preview it.', page: 'photo', param: 'viewerstyle', def: 'live',
-      styles: { live: ['Full screen', 'The current view: full screen with the filmstrip'], classic: ['Classic', 'The photo clean in the middle with arrows, like a traditional gallery'] } }
+      styles: { live: ['Full screen', 'The current view: full screen with the filmstrip'], classic: ['Classic', 'The photo clean in the middle with arrows, like a traditional gallery'] } },
+    comments: { title: 'Notes on photos', note: 'How guests’ notes show on a photo. Tap one to preview it.', page: 'photo', param: 'commentstyle', def: 'below',
+      styles: { below: ['Below the photo', 'The latest notes sit under the photo'], typing: ['Typing', 'Notes appear on the photo one by one, as if someone is typing them'], off: ['Only the button', 'Just the note button with its number'] } }
   };
   const curStyle = key => ((GALLERY.pages || {})[key]) || PAGE_DEFS[key].def;
   function styleCard(key, k, cur) {
@@ -128,6 +133,7 @@
     if (key === 'events' && k === 'shapes' && window.PGEvents) ['glass', 'marigold', 'mandap', 'heart'].forEach(sh => mini.insertAdjacentHTML('beforeend', PGEvents.svgOf(sh, ' class="pgcp-shp"')));
     else if (key === 'events' && k === 'carousel') grid([[3, 4], [1, 4]]);
     else if (key === 'events' && k === 'cards') grid([[2, 3], [2, 3], [2, 3], [2, 3]]);
+    else if (key === 'comments') { mini.innerHTML = k === 'below' ? '<span class="pgcp-cbelow"><em></em><u></u><u></u></span>' : k === 'typing' ? '<span class="pgcp-ctype"><em></em><u>Lovely ♥<i></i></u></span>' : '<span class="pgcp-coff"><em></em><s></s></span>'; }
     else if (key === 'viewer') { mini.innerHTML = k === 'live' ? '<span class="pgcp-vlive"><em></em><u></u></span>' : '<span class="pgcp-vclassic"><s></s><em></em><s></s></span>'; }
     else if (k === 'mosaic') grid(key === 'events' ? [[4, 3], [2, 2], [2, 2], [4, 2]] : [[2, 2], [1, 1], [1, 1], [1, 2], [1, 1], [2, 1], [1, 1]]);
     else if (k === 'grid') grid(Array(8).fill([1, 1]));
