@@ -1740,3 +1740,4 @@ body.pgmenu-on .pgmenu{transform:none}body.pgmenu-on .pgmenu-back{opacity:1;poin
 .pgh-stats,.pgl-stats-row,.pgl-stats-inline{grid-template-columns:repeat(2,1fr)}
 .pge-count:empty,.pge-cap small:empty,.pgl-evlab small:empty,.pgl-evtx small:empty,.pg-coll small:empty,.pgh-ev small:empty{display:none}
 .pg-collection small:empty,#pghEvents small:empty{display:none}
+.cp-vnote{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:4px}
