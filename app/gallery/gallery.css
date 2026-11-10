@@ -1584,3 +1584,50 @@ body.pg-logo-left .mk-header{flex-direction:row-reverse}
 .pgr-acts .pgr-yes{background:var(--ink);color:var(--bg-box);border-color:var(--ink)}
 .pgr-row em{grid-column:1/-1;font:600 .74rem var(--font-sans);font-style:normal;color:var(--ink-soft)}
 .pgr-row em.ok{color:#2e8b57}.pgr-row.done{opacity:.85}
+
+/* ---------- step 46: big screens — top menu, centred sheets, Notes wall ---------- */
+.pg-topnav{display:none}
+@media (min-width:1024px){
+  .mk-header{display:flex;align-items:center;gap:20px}
+  .pg-topnav{pointer-events:auto;display:flex;align-items:center;gap:4px;margin-left:auto;margin-right:8px;padding:4px;border-radius:24px;
+    background:color-mix(in srgb,var(--bg-cream) 72%,transparent);border:1px solid var(--border-hairline);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+  body.pg-logo-left .pg-topnav{margin-left:8px;margin-right:auto}
+  .pg-topnav button{height:34px;padding:0 15px;border:0;border-radius:18px;background:none;color:var(--ink-soft);font:600 13.5px var(--font-sans);letter-spacing:.01em;cursor:pointer;white-space:nowrap}
+  .pg-topnav button[hidden]{display:none}
+  .pg-topnav button:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  .pg-topnav button.on{background:var(--ink);color:var(--bg-cream)}
+  body[data-view="hub"]:not(.pg-lay-on) .pg-topnav{background:rgba(0,0,0,.22);border-color:rgba(255,255,255,.35)}
+  body[data-view="hub"]:not(.pg-lay-on) .pg-topnav button{color:rgba(255,255,255,.86)}
+  body[data-view="hub"]:not(.pg-lay-on) .pg-topnav button:hover{color:#fff;background:rgba(255,255,255,.12)}
+  body[data-view="hub"]:not(.pg-lay-on) .pg-topnav button.on{background:#fff;color:#141413}
+  /* the round bottom bar only once the header has scrolled away */
+  body.pg-big:not(.pg-far) .tkg-global-nav{opacity:0!important;pointer-events:none!important}
+}
+/* sheets open as a centred window on laptops (no more half-cut bottom sheets) */
+@media (min-width:900px){
+  .reg-overlay{top:50%;bottom:auto;transform:translate(-50%,-46%);opacity:0;visibility:hidden;max-width:540px;max-height:86vh;border:1px solid var(--border-hairline);
+    border-radius:22px;box-shadow:0 30px 80px rgba(20,16,14,.32);transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .2s ease,visibility 0s linear .28s;padding-bottom:22px}
+  .reg-overlay.show{transform:translate(-50%,-50%);opacity:1;visibility:visible;transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .2s ease}
+  .reg-overlay .reg-overlay-handle{display:none}
+  .pgcp-sheet{max-width:620px;max-height:86vh!important}
+  /* Notes: a wall of cards */
+  #pgWall.pgh-notes{display:block;columns:3 260px;column-gap:18px;background:none;border:0;border-radius:0!important;overflow:visible!important}
+  #pgWall .pgh-note{display:flex;flex-direction:column;gap:0;break-inside:avoid;margin:0 0 18px;padding:0;border-radius:var(--pg-radius,16px);overflow:hidden;border:1px solid var(--border-hairline);
+    box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .2s ease,box-shadow .2s ease}
+  #pgWall .pgh-note:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,0,0,.12)}
+  #pgWall .pgh-note img{width:100%;height:auto;aspect-ratio:4/3;display:block}
+  #pgWall .pgh-note > div{padding:16px 18px 18px}
+  #pgWall .pgh-note p{font:400 1.12rem/1.45 var(--font-serif);color:var(--ink);margin:0 0 10px}
+  #pgWall .pgh-note b{font:600 .82rem var(--font-sans);color:var(--ink-soft)}
+  #pgWall .pgh-note b::before{content:"— "}
+  #pgWall .pgh-note > div{display:flex;flex-direction:column}
+  #pgWall .pgh-note p{order:-1}
+  #view-rooms .pg-module-wrap{max-width:1180px}
+  #pgWall .pgh-empty{border-radius:var(--pg-radius,16px)}
+}
+@media (min-width:1024px){
+  /* Hub on a laptop: Most loved fills the row, Recent notes in two columns */
+  #pghLoved.pgh-row-sm{grid-auto-flow:row;grid-template-columns:repeat(6,1fr);grid-auto-columns:auto;overflow:visible;margin:0;padding:0}
+  #pghNotes.pgh-notes{display:grid;grid-template-columns:1fr 1fr;gap:1px}
+  .pgc-row{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+}
