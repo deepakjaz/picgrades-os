@@ -479,6 +479,294 @@
    },
    "icons": "line",
    "by": "C"
+  },
+  {
+   "id": "travertine-silk",
+   "name": "Travertine & Silk",
+   "mood": "Sunlit limestone, unbleached raw silk, and frosted crystal glass.",
+   "fonts": {
+    "display": "Cormorant Garamond",
+    "body": "Plus Jakarta Sans"
+   },
+   "radius": {
+    "tile": 20,
+    "button": 14,
+    "sheet": 28
+   },
+   "glass": {
+    "blur": 20,
+    "opacity": 0.64,
+    "border": 0.36
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F6F2EB",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#1A1613",
+    "ink2": "#5E554D",
+    "line": "#E5DDD2",
+    "accent": "#8A6529",
+    "accent2": "#6B4C38",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#0E0C0A",
+    "surface": "#181512",
+    "glass": "#24201C",
+    "ink": "#F5F0E8",
+    "ink2": "#A89E93",
+    "line": "#2E2924",
+    "accent": "#D8B574",
+    "accent2": "#C49A76",
+    "onAccent": "#120F0D"
+   },
+   "icons": "line",
+   "by": "A"
+  },
+  {
+   "id": "mewar-terracotta",
+   "name": "Mewar Terracotta",
+   "mood": "Palace sandstone, warm sindoor terracotta, and aged brass.",
+   "fonts": {
+    "display": "Instrument Serif",
+    "body": "DM Sans"
+   },
+   "radius": {
+    "tile": 16,
+    "button": 12,
+    "sheet": 24
+   },
+   "glass": {
+    "blur": 18,
+    "opacity": 0.68,
+    "border": 0.32
+   },
+   "shadow": "lifted",
+   "motion": {
+    "duration": 260,
+    "easing": "cubic-bezier(.22,1,.36,1)"
+   },
+   "light": {
+    "bg": "#F4EBE1",
+    "surface": "#FCF8F3",
+    "glass": "#FCF8F3",
+    "ink": "#221511",
+    "ink2": "#664F47",
+    "line": "#E0D0BF",
+    "accent": "#99361F",
+    "accent2": "#876324",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#130D0B",
+    "surface": "#1F1613",
+    "glass": "#2B1F1B",
+    "ink": "#F7EDE3",
+    "ink2": "#B59E94",
+    "line": "#362722",
+    "accent": "#E67B5F",
+    "accent2": "#D8B068",
+    "onAccent": "#130D0B"
+   },
+   "icons": "duotone",
+   "by": "A"
+  },
+  {
+   "id": "malabar-zari",
+   "name": "Malabar Zari",
+   "mood": "Handloom kasavu ivory, temple teakwood, and deep emerald leaf.",
+   "fonts": {
+    "display": "Newsreader",
+    "body": "Inter"
+   },
+   "radius": {
+    "tile": 14,
+    "button": 10,
+    "sheet": 22
+   },
+   "glass": {
+    "blur": 16,
+    "opacity": 0.7,
+    "border": 0.28
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 220,
+    "easing": "cubic-bezier(.25,.8,.25,1)"
+   },
+   "light": {
+    "bg": "#F3EFE4",
+    "surface": "#FAF8F2",
+    "glass": "#FAF8F2",
+    "ink": "#1C1812",
+    "ink2": "#595043",
+    "line": "#DED5C3",
+    "accent": "#805E1C",
+    "accent2": "#234F37",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#100F0B",
+    "surface": "#1A1812",
+    "glass": "#25221A",
+    "ink": "#F4F0E5",
+    "ink2": "#A69E8D",
+    "line": "#2F2B21",
+    "accent": "#DFB864",
+    "accent2": "#66A682",
+    "onAccent": "#100F0B"
+   },
+   "icons": "filled-soft",
+   "by": "A"
+  },
+  {
+   "id": "pearl-atelier",
+   "name": "Pearl Atelier",
+   "mood": "A luminous editorial gallery with champagne and ink",
+   "fonts": {
+    "display": "Cormorant Garamond",
+    "body": "Manrope"
+   },
+   "radius": {
+    "tile": 22,
+    "button": 14,
+    "sheet": 28
+   },
+   "glass": {
+    "blur": 16,
+    "opacity": 0.72,
+    "border": 0.35
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F8F6F2",
+    "surface": "#FFFFFF",
+    "glass": "#FFFFFF",
+    "ink": "#24201D",
+    "ink2": "#625B54",
+    "line": "#E5DED6",
+    "accent": "#836039",
+    "accent2": "#73513B",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#121416",
+    "surface": "#222629",
+    "glass": "#2B3032",
+    "ink": "#F6F3ED",
+    "ink2": "#C4BDB2",
+    "line": "#3E4548",
+    "accent": "#D6B78C",
+    "accent2": "#D9A98E",
+    "onAccent": "#171717"
+   },
+   "icons": "line",
+   "by": "B"
+  },
+  {
+   "id": "monsoon-archive",
+   "name": "Monsoon Archive",
+   "mood": "Rain-washed stone, quiet green, and cinematic imagery",
+   "fonts": {
+    "display": "DM Serif Display",
+    "body": "DM Sans"
+   },
+   "radius": {
+    "tile": 22,
+    "button": 14,
+    "sheet": 28
+   },
+   "glass": {
+    "blur": 16,
+    "opacity": 0.72,
+    "border": 0.35
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#F2F4F1",
+    "surface": "#FFFFFF",
+    "glass": "#F6F8F5",
+    "ink": "#1C2825",
+    "ink2": "#54615C",
+    "line": "#DDE4DD",
+    "accent": "#386756",
+    "accent2": "#775B48",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#101A18",
+    "surface": "#1B2824",
+    "glass": "#27362F",
+    "ink": "#F0F4EF",
+    "ink2": "#BBC8C0",
+    "line": "#34463F",
+    "accent": "#A6C7B2",
+    "accent2": "#D1B49A",
+    "onAccent": "#102018"
+   },
+   "icons": "line",
+   "by": "B"
+  },
+  {
+   "id": "gulabi-editorial",
+   "name": "Gulabi Editorial",
+   "mood": "Muted rose, warm paper and modern heritage",
+   "fonts": {
+    "display": "Playfair Display",
+    "body": "Inter"
+   },
+   "radius": {
+    "tile": 22,
+    "button": 14,
+    "sheet": 28
+   },
+   "glass": {
+    "blur": 16,
+    "opacity": 0.72,
+    "border": 0.35
+   },
+   "shadow": "soft",
+   "motion": {
+    "duration": 240,
+    "easing": "cubic-bezier(.2,.8,.2,1)"
+   },
+   "light": {
+    "bg": "#FAF5F3",
+    "surface": "#FFFFFF",
+    "glass": "#FFF9F7",
+    "ink": "#2C2224",
+    "ink2": "#6A585C",
+    "line": "#E9DADD",
+    "accent": "#8A4B5C",
+    "accent2": "#755F45",
+    "onAccent": "#FFFFFF"
+   },
+   "dark": {
+    "bg": "#1C1419",
+    "surface": "#302329",
+    "glass": "#382A30",
+    "ink": "#F8EFF0",
+    "ink2": "#CDB7BC",
+    "line": "#48373D",
+    "accent": "#D8A7B5",
+    "accent2": "#D5BDA2",
+    "onAccent": "#26171D"
+   },
+   "icons": "line",
+   "by": "B"
   }
  ]
 }

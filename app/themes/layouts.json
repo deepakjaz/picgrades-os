@@ -516,6 +516,1792 @@
     }
    ],
    "by": "C"
+  },
+  {
+   "id": "mosaic-salon",
+   "name": "Mosaic Salon",
+   "idea": "Interlocking slideshow mosaic where the hero, face search, and event chapters all breathe with slow, staggered crossfades.",
+   "theme": "travertine-silk",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      5,
+      5
+     ],
+     "wide": [
+      8,
+      5
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      3,
+      3
+     ],
+     "wide": [
+      4,
+      3
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      3,
+      2
+     ],
+     "wide": [
+      2,
+      2
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "glass",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      2,
+      2
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "glass",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      4
+     ]
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      9,
+      4
+     ]
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      5,
+      3
+     ],
+     "wide": [
+      7,
+      3
+     ]
+    },
+    {
+     "block": "notes",
+     "variant": "cards",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      3,
+      3
+     ],
+     "wide": [
+      5,
+      3
+     ]
+    },
+    {
+     "block": "studio",
+     "variant": "banner",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ]
+    },
+    {
+     "block": "install",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      4,
+      2
+     ],
+     "hide": [
+      "wide"
+     ]
+    }
+   ],
+   "by": "A"
+  },
+  {
+   "id": "grand-palace-frieze",
+   "name": "Grand Palace Frieze",
+   "idea": "Monumental 5-photo architectural frieze above a rich multi-column event mosaic and couple review suite.",
+   "theme": "mewar-terracotta",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "collage-5",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      5
+     ]
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      8,
+      4
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      4,
+      4
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      4,
+      3
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "glass",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      4,
+      3
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "glass",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      4,
+      3
+     ]
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      8,
+      4
+     ]
+    },
+    {
+     "block": "notes",
+     "variant": "cards",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      4,
+      4
+     ]
+    },
+    {
+     "block": "studio",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      8,
+      2
+     ]
+    },
+    {
+     "block": "review",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      4,
+      2
+     ]
+    }
+   ],
+   "by": "A"
+  },
+  {
+   "id": "editorial-triptych",
+   "name": "Editorial Triptych",
+   "idea": "Magazine-spread triptych paired with wide horizontal chapter bands on desktop and tall portrait bands on upright screens.",
+   "theme": "malabar-zari",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "collage-3",
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      6,
+      5
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      5
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      5
+     ]
+    },
+    {
+     "block": "events",
+     "variant": "editorial-bands",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      4
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ]
+    },
+    {
+     "block": "loved",
+     "variant": "strip",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    },
+    {
+     "block": "studio",
+     "variant": "banner",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      5,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ]
+    },
+    {
+     "block": "install",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      3,
+      2
+     ],
+     "wide": [
+      4,
+      2
+     ],
+     "hide": [
+      "wide"
+     ]
+    }
+   ],
+   "by": "A"
+  },
+  {
+   "id": "bento-atelier",
+   "name": "Bento Atelier",
+   "idea": "Tightly packed iOS glass and photo Bento wall where small square utility tiles nestle beside tall portrait cards.",
+   "theme": "travertine-silk",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "split",
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      3,
+      4
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "icon",
+     "phone": [
+      1,
+      1
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "icon",
+     "phone": [
+      1,
+      1
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      4
+     ]
+    },
+    {
+     "block": "events",
+     "variant": "grid-2",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      9,
+      4
+     ]
+    },
+    {
+     "block": "notes",
+     "variant": "bubbles",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      5,
+      3
+     ],
+     "wide": [
+      8,
+      2
+     ]
+    },
+    {
+     "block": "studio",
+     "variant": "card",
+     "phone": [
+      4,
+      1
+     ],
+     "tall": [
+      3,
+      3
+     ],
+     "wide": [
+      4,
+      2
+     ]
+    }
+   ],
+   "by": "A"
+  },
+  {
+   "id": "nocturne-cinema",
+   "name": "Nocturne Cinema",
+   "idea": "Full-bleed widescreen cinema hero paired with a 4-up live slideshow studio quad and mosaic highlights.",
+   "theme": "malabar-zari",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "full-bleed",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      6
+     ],
+     "wide": [
+      8,
+      5
+     ]
+    },
+    {
+     "block": "events",
+     "variant": "carousel",
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      4,
+      5
+     ]
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      2,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "notes",
+     "variant": "cards",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      5,
+      2
+     ],
+     "wide": [
+      8,
+      2
+     ]
+    },
+    {
+     "block": "studio",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      3,
+      2
+     ],
+     "wide": [
+      4,
+      2
+     ]
+    },
+    {
+     "block": "install",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      8,
+      1
+     ],
+     "wide": [
+      4,
+      1
+     ],
+     "hide": [
+      "wide"
+     ]
+    }
+   ],
+   "by": "A"
+  },
+  {
+   "id": "mosaic-salon-b",
+   "name": "Mosaic Salon",
+   "idea": "A sweeping opening photograph followed by a tightly fitted photo salon",
+   "theme": "pearl-atelier",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      5
+     ],
+     "hide": []
+    },
+    {
+     "block": "findme",
+     "variant": "photo",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "reel",
+     "variant": "glass",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "post",
+     "variant": "glass",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "upload",
+     "variant": "photo",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "notes",
+     "variant": "cards",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "studio",
+     "variant": "banner",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "install",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "review",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    }
+   ],
+   "by": "B"
+  },
+  {
+   "id": "editorial-columns",
+   "name": "Editorial Columns",
+   "idea": "A magazine masthead with compact tools and generous image strips",
+   "theme": "gulabi-editorial",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "split",
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "findme",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "reel",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "post",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "upload",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "loved",
+     "variant": "strip",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "notes",
+     "variant": "bubbles",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "studio",
+     "variant": "banner",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "install",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "review",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    }
+   ],
+   "by": "B"
+  },
+  {
+   "id": "cinema-gallery",
+   "name": "Cinema Gallery",
+   "idea": "A cinematic hero, then a sequence of wide-screen gallery frames",
+   "theme": "monsoon-archive",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "full-bleed",
+     "phone": [
+      4,
+      5
+     ],
+     "tall": [
+      8,
+      6
+     ],
+     "wide": [
+      12,
+      5
+     ],
+     "hide": []
+    },
+    {
+     "block": "findme",
+     "variant": "slideshow",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "reel",
+     "variant": "glass",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "post",
+     "variant": "glass",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "upload",
+     "variant": "photo",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "studio",
+     "variant": "card",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "notes",
+     "variant": "cards",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "install",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "review",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    }
+   ],
+   "by": "B"
+  },
+  {
+   "id": "portrait-atlas",
+   "name": "Portrait Atlas",
+   "idea": "A portrait-led archive with deliberate stacked chapters",
+   "theme": "pearl-atelier",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "collage-3",
+     "phone": [
+      4,
+      5
+     ],
+     "tall": [
+      8,
+      7
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "findme",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      3
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "reel",
+     "variant": "photo",
+     "phone": [
+      2,
+      3
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "post",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "upload",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "loved",
+     "variant": "strip",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "notes",
+     "variant": "bubbles",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "studio",
+     "variant": "card",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "install",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "review",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    }
+   ],
+   "by": "B"
+  },
+  {
+   "id": "modern-pavilion",
+   "name": "Modern Pavilion",
+   "idea": "An airy architectural grid with gallery-first horizontal chapters",
+   "theme": "gulabi-editorial",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "collage-5",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "findme",
+     "variant": "glass",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "reel",
+     "variant": "photo",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "post",
+     "variant": "photo",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "upload",
+     "variant": "slideshow",
+     "phone": [
+      1,
+      2
+     ],
+     "tall": [
+      2,
+      3
+     ],
+     "wide": [
+      3,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      5
+     ],
+     "tall": [
+      8,
+      6
+     ],
+     "wide": [
+      12,
+      5
+     ],
+     "hide": []
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "notes",
+     "variant": "cards",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "studio",
+     "variant": "banner",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "install",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "review",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    }
+   ],
+   "by": "B"
   }
  ]
 }

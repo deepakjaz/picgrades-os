@@ -33,6 +33,7 @@ const srv = http.createServer((req, res) => {
     console.log(vp.name, '| landing view moments:', await pg.isVisible('#view-moments'), '| reels:', await pg.locator('.pgm-item').count(), '| img fit:', await pg.$eval('.pgm-img', e => getComputedStyle(e).objectFit));
     await pg.screenshot({ path: '/tmp/s4_moments_' + vp.name + '.png' });
     // double tap first reel → like
+    await pg.locator('.pgm-item').first().waitFor({ state: 'visible', timeout: 10000 });   // the feed may still be drawing
     const box = await pg.locator('.pgm-item').first().boundingBox();
     await pg.mouse.click(box.x + box.width / 2, box.y + box.height / 2); await pg.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await pg.waitForTimeout(400);

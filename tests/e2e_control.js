@@ -57,6 +57,9 @@ const srv = http.createServer((req, res) => {
   await pg.locator('.pgcp-layout[data-layout="bento-concierge"]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-layout[data-layout="bento-concierge"]'); await pvReady();
   console.log('layout preview:', await pg.textContent('.pgcp-pv-name'), '| keep-my-theme offered:', await pg.isVisible('.pgcp-pv-keep'), '| preview layout', await inFrame(() => PGLayout.current()));
   await pg.screenshot({ path: '/tmp/s34b_pv_layout.png' });
+  await pg.click('.pgcp-pv-size'); await pg.waitForTimeout(900);
+  console.log('preview on a laptop:', await pg.evaluate(() => { const f = document.querySelector('.pgcp-pv iframe'); return f.style.width + ' × ' + f.style.height; }), '| layout drawn for', await inFrame(() => document.getElementById('pgLay') && document.getElementById('pgLay').dataset.screen));
+  await pg.screenshot({ path: '/tmp/s40_pv_laptop.png' }); await pg.click('.pgcp-pv-size'); await pg.waitForTimeout(600);
   await pg.click('.pgcp-pv-keep input'); await pvReady();
   console.log('keep my theme → preview theme', await inFrame(() => document.documentElement.dataset.pgTheme), '|', await pg.textContent('.pgcp-pv-name'));
   await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
