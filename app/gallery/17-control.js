@@ -263,6 +263,7 @@
       row.appendChild(end); list.appendChild(row);
     });
     p.appendChild(list);
+    if (window.PGProtect) p.appendChild(PGProtect.pane(call));   // photo protection + watermark (27-protect.js)
     return p;
   }
 

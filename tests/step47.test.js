@@ -14,5 +14,5 @@ r = call('setLook', { token: admin, g: gid, pages: JSON.stringify({ comments: 'o
 assert(r.ok && r.pages.comments === 'off' && r.pages.viewer === 'classic', 'PicGrades picks Only the button (other styles kept)');
 r = call('coupleLook', { g: gid, coupleKey: ck, pages: JSON.stringify({ comments: '<b>' }) });
 assert(call('getGallery', { g: gid }).gallery.pages.comments === 'off', 'an unknown style is ignored');
-assert(call('health', {}).version === 'step47-comments', 'backend version step47-comments');
+assert(+(call('health', {}).version.match(/^step(\d+)/) || [0, 0])[1] >= 47, 'backend version is step47 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 47 checks passed');

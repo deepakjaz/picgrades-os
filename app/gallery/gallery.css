@@ -1683,3 +1683,17 @@ body.pgv-clean .pgcm-live,body.pgv-info .pgcm-live,body:not(.pgv-on) .pgcm-live,
 .pgcp-ctype u i{display:inline-block;width:1px;height:8px;background:#1a1716;margin-left:1px;vertical-align:-1px;animation:pgcmBlink 1s steps(1) infinite}
 .pgcp-coff s{position:absolute;right:10px;bottom:10px;width:12px;height:10px;border:1.5px solid #fff;border-radius:4px;text-decoration:none}
 .pgcp-mini-comments-below,.pgcp-mini-comments-typing,.pgcp-mini-comments-off{display:flex!important;align-items:stretch}
+
+/* ---------- step 48: photo protection for guests + watermark ---------- */
+body.pg-guard img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+@media print{body.pg-guard img,body.pg-guard .pgv-slide,body.pg-guard .pgcv-stage{visibility:hidden!important}}
+.pgwm{position:absolute;inset:0;pointer-events:none;z-index:3;background-repeat:repeat;background-size:340px 220px}
+.pgwm-fixed{position:fixed;z-index:91}
+body:not(.pgv-on) .pgwm-fixed,body.pgcv-on .pgwm-fixed{display:none}
+.pgwm-pane{margin-top:18px}
+.pgwm-pane .pgf-row.locked{opacity:1}
+.pgwm-lab{display:block;font:600 .78rem var(--font-sans);color:var(--ink-soft);margin:10px 0 8px}
+.pgwm-lab[hidden],.pgwm-demo[hidden]{display:none}
+.pgwm-lab input{display:block;width:100%;box-sizing:border-box;margin-top:6px;height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:400 16px var(--font-sans)}
+.pgwm-demo{height:120px;border-radius:14px;background-color:#8a7a70;background-repeat:repeat;background-size:340px 220px;
+  background-blend-mode:normal;box-shadow:inset 0 0 0 1px var(--border-hairline)}

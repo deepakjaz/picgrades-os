@@ -158,7 +158,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step47-comments',
+    version: 'step48-protect',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1597,10 +1597,11 @@ function customOf_(v) {
   return out;
 }
 // Page styles (step 36): which style each page uses. Only known pages and styles are kept.
-var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'], viewer: ['live', 'classic'], header: ['right', 'left'], comments: ['below', 'typing', 'off'] };   // header: where the couple's logo sits (step 44)   // events: the list of all events (step 37)
+var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'], viewer: ['live', 'classic'], header: ['right', 'left'], comments: ['below', 'typing', 'off'], watermark: ['off', 'on'] };   // header: where the couple's logo sits (step 44)   // events: the list of all events (step 37)
 function pagesOf_(v) {
   var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = {};
   Object.keys(PAGE_STYLES).forEach(function (k) { if (PAGE_STYLES[k].indexOf(String(o[k])) > -1) out[k] = String(o[k]); });
+  if (typeof o.wmtext === 'string') out.wmtext = o.wmtext.replace(/[<>"\u0000-\u001f]/g, '').trim().slice(0, 40);   // the watermark words (step 48)
   return out;
 }
 /** Couple link: change the wedding's look. */
