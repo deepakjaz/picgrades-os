@@ -25,17 +25,22 @@ const srv = http.createServer((req, res) => {
   const ck = call('facesStatus', { token: admin, g: gid }).gallery.coupleKey;
   const j = call('guestJoin', { g: gid, name: 'Riya Mehta', phone: '9811122233', device: 'devsecui001' });
   const up = call('uploadMoment', { g: gid, guestId: j.guestId, guestKey: j.guestKey, mime: 'image/jpeg', base64: Buffer.from('x').toString('base64'), caption: 'Dance floor!' });
+  const up2 = call('uploadMoment', { g: gid, guestId: j.guestId, guestKey: j.guestKey, mime: 'image/jpeg', base64: Buffer.from('y').toString('base64'), caption: 'Not for the album' });
+  call('couplePost', { g: gid, coupleKey: ck, postId: up2.postId, decision: 'hide' });   // step 52: hidden → bin at once
   const thumb = 'data:image/jpeg;base64,' + fs.readFileSync(path.join(FX, files[0])).toString('base64');
   const c = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true }); const p = await c.newPage(); p.on('pageerror', e => errors.push(e.message));
   await p.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1] || ''; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
   // the mock Drive's preview is 4 bytes; give the page a real picture so the screenshot shows something
-  await p.route('**/api', async r => { const body = JSON.parse(r.request().postData()); const out = call(body.action, body); if (out.waiting) out.waiting.forEach(x => { if (x.thumb) x.thumb = thumb; }); r.fulfill({ contentType: 'application/json', body: JSON.stringify(out) }); });
+  await p.route('**/api', async r => { const body = JSON.parse(r.request().postData()); const out = call(body.action, body); if (out.waiting) out.waiting.concat(out.decided || []).forEach(x => { if (x.thumb) x.thumb = thumb; }); r.fulfill({ contentType: 'application/json', body: JSON.stringify(out) }); });
   await require('./fonts_local').install(p);
   await p.goto('http://localhost:8790/g/' + gid + '?couple=' + ck); await p.waitForSelector('#pgBoot.hide', { state: 'attached' }); await p.waitForTimeout(1200);
   await p.evaluate(() => document.getElementById('pgcReview').click()); await p.waitForSelector('#cpList img', { timeout: 8000 }); await p.waitForTimeout(500);
   const src = await p.getAttribute('#cpList img', 'src');
   console.log('couple review shows the server preview (not a public link):', src.startsWith('data:image/'), '| Drive file:', DRIVE.files[Object.keys(DRIVE.files).filter(k => /^file/.test(k)).pop()].sharing);
+  console.log('keep-7-days switch:', await p.isVisible('#cpKeep'), '| hidden list:', (await p.locator('.cp-hidden b').allTextContents()).join(','), '| Show again button:', await p.isVisible('.cp-hidden .yes'));
   await p.screenshot({ path: '/tmp/s50_review.png' });
+  await p.click('.cp-hidden .yes'); await p.waitForTimeout(1200);
+  console.log('Show again → hidden list now:', await p.locator('.cp-hidden').count(), '| file back from the bin:', !DRIVE.files[Object.keys(DRIVE.files).filter(k => /^file/.test(k)).pop()].trashed);
   await c.close();
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
 });

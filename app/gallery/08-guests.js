@@ -181,12 +181,25 @@ function pgCheckMyPosts() {
         const d = document.createElement('div'); d.className = 'cp-item';
         d.innerHTML = media(p) + '<div><b>' + pgEsc(p.name) + '</b><p>' + pgEsc(p.caption || (p.type === 'video' ? 'Video' : 'Photo')) + '</p><div class="cp-btns"><button type="button" class="yes">Approve</button><button type="button">Hide</button></div></div>';
         const [yes, no] = d.querySelectorAll('button');
-        const act = (decision) => { yes.disabled = no.disabled = true; pgApi('couplePost', { postId: p.postId, decision }).then(() => { d.remove(); showToast(decision === 'approve' ? 'Approved — now in Root Moment' : 'Hidden'); load(); if (decision === 'approve') pgReloadPosts(); }).catch(e => { showToast(e.message); yes.disabled = no.disabled = false; }); };
+        const act = (decision) => { yes.disabled = no.disabled = true; pgApi('couplePost', { postId: p.postId, decision, keep: pgStore('hideKeep') ? '7d' : '' }).then(() => { d.remove(); showToast(decision === 'approve' ? 'Approved — now in Root Moment' : 'Hidden'); load(); if (decision === 'approve') pgReloadPosts(); }).catch(e => { showToast(e.message); yes.disabled = no.disabled = false; }); };
         yes.addEventListener('click', () => act('approve')); no.addEventListener('click', () => act('hide'));
         $('cpList').appendChild(d);
       });
+      // step 52: hidden in the last 7 days → "Show again" (a trashed file comes back out of Drive's trash)
+      const hid = (r.decided || []).filter(x => x.status === 'hidden');
+      if (hid.length) {
+        const hh = document.createElement('p'); hh.className = 'cp-hidh'; hh.textContent = 'Hidden — deleted after 7 days'; $('cpList').appendChild(hh);
+        hid.forEach(p => {
+          const d = document.createElement('div'); d.className = 'cp-item cp-hidden';
+          d.innerHTML = (p.thumb ? '<img alt="" src="' + p.thumb + '">' : '<span class="cp-nothumb"></span>') + '<div><b>' + pgEsc(p.name) + '</b><p>' + pgEsc(p.caption || (p.type === 'video' ? 'Video' : 'Photo')) + '</p><div class="cp-btns"><button type="button" class="yes">Show again</button></div></div>';
+          d.querySelector('button').addEventListener('click', e => { e.target.disabled = true; pgApi('couplePost', { postId: p.postId, decision: 'approve' }).then(() => { showToast('Shown again — back in Root Moment'); load(); pgReloadPosts(); }).catch(err => { showToast(err.message); e.target.disabled = false; }); });
+          $('cpList').appendChild(d);
+        });
+      }
     }).catch(e => { $('cpStatus').textContent = e.message; });
   }
+  $('cpKeep').checked = !!pgStore('hideKeep');
+  $('cpKeep').addEventListener('change', e => { pgStore('hideKeep', e.target.checked ? 1 : 0); showToast(e.target.checked ? 'Hidden moments are kept 7 days' : 'Hidden moments go to the bin at once'); });
   $('pgcReview').addEventListener('click', () => { $('cpStatus').textContent = ''; $('cpBackdrop').classList.add('show'); $('cpSheet').classList.add('show'); load(); });
   $('cpThanksSave').addEventListener('click', () => pgApi('coupleThanks', { text: $('cpThanks').value }).then(() => showToast('Thank-you note saved')).catch(e => showToast(e.message)));
   window.pgCoupleInit = function () { if (pgIsCouple()) { $('pgcReview').classList.remove('hidden'); load(); } };
