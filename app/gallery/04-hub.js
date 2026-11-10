@@ -99,7 +99,7 @@ function pgRenderHub() {
   const likes = GALLERY.likes || {}, notesN = GALLERY.notes || {};
   const totalLikes = Object.values(likes).reduce((t, v) => t + v, 0), totalNotes = Object.values(notesN).reduce((t, v) => t + v, 0);
   const stat = (v, l) => '<button type="button" data-stat="' + l.toLowerCase() + '"><b>' + Number(v).toLocaleString('en-IN') + '</b><span>' + l + '</span></button>';
-  document.getElementById('pghStats').innerHTML = stat(all.length, 'Photos') + stat((GALLERY.events || []).length, 'Events') + stat(totalLikes, 'Hearts') + stat(totalNotes, 'Notes');
+  document.getElementById('pghStats').innerHTML = stat(totalLikes, 'Hearts') + stat(totalNotes, 'Notes');   // step 49: photo and event counts only in the Control Panel
   document.querySelectorAll('#pghStats [data-stat]').forEach(b => b.addEventListener('click', () => pgStatTap(b.dataset.stat)));
   document.getElementById('pghStudio').textContent = GALLERY.studio || 'Your photographer';
   document.getElementById('pgHubTitle').textContent = GALLERY.title || 'Wedding Hub';
@@ -110,7 +110,7 @@ function pgRenderHub() {
     const t = document.createElement('button'); t.type = 'button'; t.className = 'pgh-tile';
     const c = document.createElement('div'); c.className = 'pg-cover'; pgRotCover(c, ev.photos, 600);
     t.appendChild(c);
-    const h = document.createElement('h4'); h.textContent = ev.name; const sm = document.createElement('small'); sm.textContent = ev.photos.length + ' photos';
+    const h = document.createElement('h4'); h.textContent = ev.name; const sm = document.createElement('small'); sm.textContent = '';
     t.appendChild(h); t.appendChild(sm);
     t.addEventListener('click', () => (window.pgOpenEvent ? pgOpenEvent(ev.name) : openCollection(ev.name, 0)));
     row.appendChild(t);

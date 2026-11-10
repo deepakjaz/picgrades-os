@@ -52,9 +52,10 @@
     if (el.classList.contains('pgs-story')) return () => click(el.querySelector('.pgs-x'));
     if (el.classList.contains('pgg-play')) return () => click(el.querySelector('.pgg-hostx'));
     if (el.classList.contains('pgg')) return () => click(el.querySelector('.pgg-x'));
+    if (el.classList.contains('pgmenu-wrap')) return () => click(el.querySelector('.pgmenu-x'));
     return () => el.remove();
   }
-  const LAYERS = '.rl-wrap,.pe-wrap,.ps-wrap,.pgs-story,.pgg-play,.pgg,.pgcp-pv,.pgcv,.pged';
+  const LAYERS = '.rl-wrap,.pe-wrap,.ps-wrap,.pgs-story,.pgg-play,.pgg,.pgcp-pv,.pgcv,.pged,.pgmenu-wrap';
   function scan() {
     const now = Array.from(document.querySelectorAll('.reg-overlay.show'));
     if (document.body.classList.contains('pgv-info')) now.push('info');

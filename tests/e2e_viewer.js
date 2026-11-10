@@ -57,7 +57,7 @@ const srv = http.createServer((req, res) => {
   // classic
   await pg.evaluate(() => { GALLERY.pages = { viewer: 'classic' }; });
   await pg.click('#view-event .pgx-cell[data-i="1"]'); await pg.waitForTimeout(900);
-  const cv = () => pg.evaluate(() => ({ open: !!document.querySelector('.pgcv'), count: (document.querySelector('.pgcv-count') || {}).textContent, view: document.querySelector('.pg-view.active').id, img: (document.querySelector('.pgcv-img') || {}).naturalWidth }));
+  const cv = () => pg.evaluate(() => ({ open: !!document.querySelector('.pgcv'), count: ((document.querySelector('.pgcv-count') || {}).dataset || {}).pos, view: document.querySelector('.pg-view.active').id, img: (document.querySelector('.pgcv-img') || {}).naturalWidth }));
   console.log('classic photo view:', JSON.stringify(await cv()));
   await pg.screenshot({ path: '/tmp/s38_classic_phone.png' });
   await pg.click('.pgcv-next'); await pg.waitForTimeout(500); console.log('next →', (await cv()).count);
@@ -80,7 +80,7 @@ const srv = http.createServer((req, res) => {
   await p2.goto(URL); await boot(p2); await p2.evaluate(() => { GALLERY.pages = { viewer: 'classic' }; pgOpenEvent(GALLERY.events[0].name); }); await p2.waitForTimeout(500);
   await p2.click('#view-event .pgx-cell[data-i="0"]'); await p2.waitForTimeout(800);
   await p2.keyboard.press('ArrowRight'); await p2.waitForTimeout(500);
-  console.log('laptop: arrow key →', await p2.textContent('.pgcv-count'));
+  console.log('laptop: arrow key →', await p2.getAttribute('.pgcv-count', 'data-pos'));
   await p2.screenshot({ path: '/tmp/s38_classic_laptop.png' });
   await p2.evaluate(() => document.documentElement.setAttribute('data-tkg-theme', 'dark')); await p2.waitForTimeout(300); await p2.screenshot({ path: '/tmp/s38_classic_laptop_dark.png' });
   await p2.keyboard.press('Escape'); await p2.waitForTimeout(300); console.log('Esc closes:', !(await p2.locator('.pgcv').count()));

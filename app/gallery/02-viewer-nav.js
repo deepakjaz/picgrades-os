@@ -8,7 +8,7 @@
 
   pgAfter('applyActiveMoment', () => {
     const m = MOMENTS[activeIdx]; if (!m) return;
-    countEl.textContent = (activeIdx + 1) + ' / ' + MOMENTS.length;
+    countEl.textContent = ''; countEl.dataset.pos = (activeIdx + 1) + ' / ' + MOMENTS.length;   // step 49: no "2 / 40" on screen (kept in data-pos for tests)
     blur.style.backgroundImage = 'url("' + pgImg(m.id, 60) + '")';
     pgvSync();
   });

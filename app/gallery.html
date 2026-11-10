@@ -22,14 +22,17 @@
 <!-- ==================== TOP HEADER ==================== -->
 <!-- step 43: simple and not pinned — the couple's name and logo at the top of the page (it scrolls away), and a clear light / dark button -->
 <header class="mk-header">
-  <div class="mk-brand-box">
+  <!-- step 49: no name in the header (the Hub's first card has it); the logo and the light/dark button each sit left or right (Hub editor), the menu always right -->
+  <div class="mk-brand-box" hidden>
     <div class="mk-brand-title"><span id="pgCoupleTitle">Wedding Gallery</span></div>
   </div>
+  <button type="button" class="mk-stamp-badge" id="stampThemeBtn" title="Wedding Hub" aria-label="Couple monogram · go to the Wedding Hub">
+    <span class="pg-mono" id="pgMono"></span>
+  </button>
+  <span class="mk-spacer"></span>
   <div class="mk-right-cluster">
     <button type="button" class="pg-modebtn" id="pgModeBtn" aria-label="Switch to dark mode" title="Light / dark"></button>
-    <button type="button" class="mk-stamp-badge" id="stampThemeBtn" title="Wedding Hub" aria-label="Couple monogram · go to the Wedding Hub">
-      <span class="pg-mono" id="pgMono"></span>
-    </button>
+    <button type="button" class="pg-menubtn" id="pgMenuBtn" aria-label="Menu" aria-haspopup="dialog" title="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 </header>
 
@@ -334,5 +337,6 @@
 <script src="/app/gallery/25-bigscreens.js"></script>
 <script src="/app/gallery/26-comments.js"></script>
 <script src="/app/gallery/27-protect.js"></script>
+<script src="/app/gallery/28-menu.js"></script>
 </body>
 </html>

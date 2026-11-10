@@ -238,6 +238,12 @@
   // ---- Functions ----
   function funcPane() {
     const p = h('div', 'pgcp-pane', '<p class="pgcp-note">Switch off anything you don’t want in this wedding app. Root Moment and the photos are always there.</p>');
+    // step 49: photo counts live only here — the app itself shows no numbers of photos
+    const evs = GALLERY.events || [], total = evs.reduce((t, e) => t + e.photos.length, 0);
+    const stats = h('div', 'pgcp-stats', '<div class="pgcp-stat"><b>' + evs.length + '</b><span>Collections</span></div><div class="pgcp-stat"><b>' + total.toLocaleString('en-IN') + '</b><span>Photos</span></div>' +
+      '<details class="pgcp-statlist"><summary>Photos in each collection</summary>' + evs.map(e => '<p><span>' + esc(e.name) + '</span><b>' + e.photos.length.toLocaleString('en-IN') + '</b></p>').join('') + '</details>' +
+      '<small>Only you see these numbers. Guests never see how many photos there are.</small>');
+    p.insertBefore(stats, p.firstChild);
     const list = h('div', 'pgf-list'), canLock = !!(STAFF && STAFF.canLock);
     if (canLock) p.firstChild.textContent += ' The small “Plan” switch is PicGrades’ own: off locks a function for the couple and the photographer.';
     (window.PGFeatures ? PGFeatures.list() : []).forEach(([k, name, line]) => {

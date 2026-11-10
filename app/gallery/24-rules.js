@@ -68,12 +68,12 @@
   function label() {
     if (free() || !found()) { document.body.classList.remove('pg-found'); return; }
     document.body.classList.add('pg-found');
-    const n = ((mine().sure || []).length || (mine().maybe || []).length);
+    // (no counts on the button: step 49)
     document.querySelectorAll('[data-findme]').forEach(b => {
       b.setAttribute('aria-label', 'Your photos');
       const s = b.querySelector('span'), t = b.querySelector('b');
-      if (t) { t.textContent = 'Your photos'; if (s) s.textContent = n + ' of you'; }
-      else if (s) s.textContent = b.classList.contains('pg-findme') ? 'Your photos · ' + n + ' found by Find me' : 'Your photos';
+      if (t) { t.textContent = 'Your photos'; if (s) s.textContent = 'Found by Find me'; }
+      else if (s) s.textContent = b.classList.contains('pg-findme') ? 'Your photos · found by Find me' : 'Your photos';
     });
   }
   pgAfter('renderGalleries', label);
@@ -81,7 +81,7 @@
   // the Hub's Find me card (15-layout.js asks for its words here)
   window.PGRules = {
     found, canDownload, free,
-    act: k => (k === 'findme' && !free() && found()) ? ['Your photos', ((mine().sure || []).length || (mine().maybe || []).length) + ' photos of you', openMine] : null,
+    act: k => (k === 'findme' && !free() && found()) ? ['Your photos', 'Found by Find me', openMine] : null,
     pane: requestsPane
   };
   // a guest who signed in on another phone gets their result back from the server
@@ -143,7 +143,7 @@
       pgApi('dlGrant', { grant: code }).then(r => {
         pgStore('granted', Array.from(new Set(granted().concat(r.ids))));
         const map = pgPhotoById(), photos = r.ids.map(id => map[id]).filter(Boolean);
-        showToast(photos.length === 1 ? 'Your photo is ready to download' : 'Your ' + photos.length + ' photos are ready to download');
+        showToast('Your photos are ready to download');
         if (photos.length && window.pgOpenEvent) setTimeout(() => pgOpenEvent('Approved for you', photos), 500);
       }).catch(e => showToast(e.message));
     });

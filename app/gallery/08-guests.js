@@ -94,7 +94,7 @@ function pgAddSavedSet(set) { const sets = (pgStore('sets') || []).filter(s => s
 function pgRenderMine(posts) {
   const box = document.getElementById('pgcMine'), sets = pgStore('sets') || [];
   const rows = [];
-  sets.slice(0, 4).forEach(s => rows.push('<button type="button" class="pgc-pill" data-set="' + pgEsc(s.code) + '"><img alt="" src="' + pgImg(s.ids[0], 120) + '"><span><b>' + pgEsc(s.name) + '</b><br>' + s.ids.length + ' photos</span><em class="ok">Saved</em></button>'));
+  sets.slice(0, 4).forEach(s => rows.push('<button type="button" class="pgc-pill" data-set="' + pgEsc(s.code) + '"><img alt="" src="' + pgImg(s.ids[0], 120) + '"><span><b>' + pgEsc(s.name) + '</b><br>Your saved set</span><em class="ok">Saved</em></button>'));
   (posts || pgRenderMine.posts || []).slice(0, 6).forEach(p => {
     const st = p.status === 'approved' ? '<em class="ok">Approved</em>' : p.status === 'hidden' ? '<em class="no">Not shown</em>' : '<em>In review</em>';
     if (p.type === 'album') { rows.push('<div class="pgc-pill"><img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 120) + '"><span>Your post / album</span>' + st + '</div>'); return; }
