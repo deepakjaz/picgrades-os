@@ -1741,3 +1741,9 @@ body.pgmenu-on .pgmenu{transform:none}body.pgmenu-on .pgmenu-back{opacity:1;poin
 .pge-count:empty,.pge-cap small:empty,.pgl-evlab small:empty,.pgl-evtx small:empty,.pg-coll small:empty,.pgh-ev small:empty{display:none}
 .pg-collection small:empty,#pghEvents small:empty{display:none}
 .cp-vnote{display:block;font-size:.7rem;color:var(--ink-soft);margin-top:4px}
+/* step 52: hide → bin at once, or keep 7 days */
+.cp-keep{display:flex;align-items:flex-start;gap:12px;margin:4px 0 14px;padding:12px 14px;border-radius:14px;border:1px solid var(--border-hairline);background:var(--bg-box);cursor:pointer}
+.cp-keep span{display:flex;flex-direction:column;gap:2px}.cp-keep b{font-size:.88rem}.cp-keep small{font-size:.74rem;color:var(--ink-soft);line-height:1.4}
+.cp-keep .pgf-sw{flex:none;margin-top:2px}
+.cp-hidh{font:600 .72rem var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:16px 0 6px}
+.cp-hidden{opacity:.8}.cp-nothumb{display:block;width:84px;height:84px;border-radius:10px;background:var(--border-hairline)}

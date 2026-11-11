@@ -18,7 +18,7 @@ const b64 = Buffer.from('photo').toString('base64');
 const keep = call('uploadMoment', { g: gid, guestId: j.guestId, guestKey: j.guestKey, mime: 'image/jpeg', base64: b64 });
 const hide = call('uploadMoment', { g: gid, guestId: j.guestId, guestKey: j.guestKey, mime: 'image/jpeg', base64: b64 });
 call('couplePost', { g: gid, coupleKey: ck, postId: keep.postId, decision: 'approve' });
-call('couplePost', { g: gid, coupleKey: ck, postId: hide.postId, decision: 'hide' });
+call('couplePost', { g: gid, coupleKey: ck, postId: hide.postId, decision: 'hide', keep: '7d' });   // step 52: 'keep 7 days' (the default now sends it to the bin at once)
 const fileOf = (pid) => DB.GuestPosts.slice(1).find(r => r.includes(pid));
 const hiddenFile = fileOf(hide.postId).find(v => /^file\d+$/.test(String(v)));
 const col = (tab, name) => DB[tab][0].indexOf(name);

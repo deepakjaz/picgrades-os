@@ -158,7 +158,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step50-security-1',
+    version: 'step52-hide-trash',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1368,8 +1368,8 @@ function myPosts_(p) {
 function reviewThumb_(fileId) {
   try { var b = DriveApp.getFileById(String(fileId).split(',')[0]).getThumbnail(); return b ? 'data:' + (b.getContentType() || 'image/png') + ';base64,' + Utilities.base64Encode(b.getBytes()) : ''; } catch (e) { return ''; }
 }
-function withThumbs_(list) {   // only posts that are not open yet, at most 12 per answer
-  var n = 0; return list.map(function (x) { if (x.status === 'review' && n++ < 12) x.thumb = reviewThumb_(x.fileId); return x; });
+function withThumbs_(list) {   // only posts that are not open (waiting or hidden), at most 12 per answer
+  var n = 0; return list.map(function (x) { if ((x.status === 'review' || x.status === 'hidden') && x.fileId && n++ < 12) x.thumb = reviewThumb_(x.fileId); return x; });
 }
 function defaultThanks_(g) { return 'Thank you for capturing this moment and sharing it with us. It means the world to us. — ' + g.title; }
 
@@ -1385,7 +1385,7 @@ function coupleQueue_(p) {
   var all = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, status: x.status, at: x.at }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
-  return { waiting: withThumbs_(all.filter(function (x) { return x.status === 'review'; })), decided: all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40), thanks: g.thanksNote || defaultThanks_(g) };
+  return { waiting: withThumbs_(all.filter(function (x) { return x.status === 'review'; })), decided: withThumbs_(all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40)), thanks: g.thanksNote || defaultThanks_(g) };
 }
 /** Couple link: approve or hide a guest post. */
 function couplePost_(p) {
@@ -1394,10 +1394,17 @@ function couplePost_(p) {
   ensureTab_('GuestPosts', POST_COLUMNS);
   var row = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.postId === String(p.postId || ''); })[0];
   if (!row) return { ok: false, error: 'Post not found.' };
+  if (row.status === 'deleted' || !row.fileId) return { ok: false, error: 'This moment was already deleted.' };
+  // step 52: Hide = the file goes to Drive's trash at once (a trashed file cannot be opened by its link, even inside a
+  // shared folder), unless the couple chose to keep hidden moments 7 days. Show again within 7 days takes it back out.
+  var keep = p.keep === '7d';
   updateRowByNumber_('GuestPosts', row._row, { status: decision, reviewedAt: fmt_(new Date()) });
-  // hidden = the Drive file is no longer open to anyone with its link (the nightly clean-up deletes it after 7 days)
   String(row.fileId || '').split(',').filter(String).forEach(function (id) {
-    try { DriveApp.getFileById(id).setSharing(decision === 'approved' ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, decision === 'approved' ? DriveApp.Permission.VIEW : DriveApp.Permission.NONE); } catch (e) {}
+    try {
+      var f = DriveApp.getFileById(id);
+      if (decision === 'approved') { try { f.setTrashed(false); } catch (e) {} f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); }
+      else { f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); if (!keep) f.setTrashed(true); }
+    } catch (e) {}
   });
   dropSummary_(g.galleryId);
   return { postId: row.postId, status: decision };
