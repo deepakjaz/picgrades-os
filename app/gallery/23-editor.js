@@ -76,8 +76,13 @@
   }
   // a Story Hub (step 54) has no cards: it is edited as sections (show / hide / move), the Find me button, the icon bar and the headings
   function storyDraft(kind, base) { return { base: base || '', blocks: [], story: { kind, sections: [], findme: 'right', bar: 'off', texts: {} }, header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' }; }
-  function startDraft() {
-    const saved = loadDraft(); if (saved && ((saved.blocks && saved.blocks.length) || saved.story)) return saved;
+  // step 55: an unpublished draft is only reopened while the Hub is still the one it started from. Before, a story draft stayed
+  // even after the Hub went back to a card layout, so the editor showed the story panel and no cards to drag.
+  function liveIsStory() { const l = PGLayout.find(GALLERY.layout); return !!(l && l.story) || !!(GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.story); }
+  function startDraft() { const d = freshOrSaved(); d.from = GALLERY.layout || ''; return d; }
+  function freshOrSaved() {
+    const saved = loadDraft();
+    if (saved && ((saved.blocks && saved.blocks.length) || saved.story) && (saved.from != null ? saved.from === (GALLERY.layout || '') : !!saved.story === liveIsStory())) return saved;
     const pg = { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' };
     if (GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.story) return Object.assign({ base: GALLERY.custom.base || '', blocks: [], story: clone(GALLERY.custom.story) }, pg);
     const sl = PGLayout.find(GALLERY.layout); if (sl && sl.story) return storyDraft(sl.story, sl.id);
