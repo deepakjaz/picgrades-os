@@ -10,6 +10,7 @@ function login(email) { call('requestCode', { email }); const code = /code: (\d{
 const admin = login('adcmediaa@gmail.com');
 const pub = call('setGallery', { token: admin, orderId: call('queue', { token: admin }).recentDone[0].orderId, folderUrl: W, title: 'Ashish & Muskan', eventDate: '2027-01-24' });
 const ck = call('facesStatus', { token: admin, g: pub.galleryId }).gallery.coupleKey;
+call('storyPicks', { g: pub.galleryId, coupleKey: ck, picks: { bride: 'SE301', groom: 'SE304' } });   // step 56: the varmala part shows only once both portraits are chosen
 const bytesOf = (id) => { const n = parseInt(String(id).replace(/\D/g, ''), 10) || 0; return fs.readFileSync(path.join(FX, files[n % files.length])); };
 global.__fetchBytes = bytesOf;
 const srv = http.createServer((req, res) => {
