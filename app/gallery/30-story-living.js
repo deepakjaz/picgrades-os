@@ -212,10 +212,7 @@
     // 3. Couple portraits for Varmala interaction
     let brideId = D.couple && D.couple.bride;
     let groomId = D.couple && D.couple.groom;
-    if (!brideId || !groomId) {
-      brideId = coverIds[1] || coverIds[0] || '';
-      groomId = coverIds[2] || coverIds[0] || '';
-    }
+    // PicGrades (step 56): the portraits are chosen by the couple / photographer (Control Panel › Story); not chosen = no varmala part
 
     S = {
       box: box,

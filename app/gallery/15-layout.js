@@ -264,11 +264,11 @@
   }
   function storyStop() { if (storyOn) { try { storyOn.mod.destroy(); } catch (e) {} storyOn = null; } const s = $('pgStory'); if (s) s.remove(); document.body.classList.remove('pg-story-on'); }
   function storyData() {
-    const D0 = data(), evs = (GALLERY.events || []).map(e => ({ name: e.name, photos: (e.photos || []).map(p => ({ id: p.id })), featured: Array.isArray(e.featured) ? e.featured : undefined }));
-    // until the couple picks two portraits (later), two photos from the wedding ceremony itself stand in for the varmala moment
-    const main = evs.find(e => /varmala|jaimala|wedding|shaadi|phera|lagan/i.test(e.name) && e.photos.length > 3) || evs.filter(e => e.photos.length > 3).pop();
-    const couple = main ? { bride: main.photos[Math.floor(main.photos.length / 3)].id, groom: main.photos[Math.floor(main.photos.length * 2 / 3)].id } : undefined;
-    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
+    // step 56: the photos come from the couple's / photographer's choice (Control Panel › Story); nothing is guessed
+    const P = GALLERY.story || {}, hl = P.hl || {};
+    const D0 = data(), evs = (GALLERY.events || []).map(e => ({ name: e.name, photos: (e.photos || []).map(p => ({ id: p.id })), featured: hl[e.name] && hl[e.name].length ? hl[e.name].slice() : undefined }));
+    const couple = P.bride && P.groom ? { bride: P.bride, groom: P.groom } : undefined;   // both chosen, or the varmala part is left out
+    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, cover: (P.cover || []).length ? P.cover.slice() : undefined, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
   }
   function storyAct(a, x) {
     const run = k => { if (!visible(k)) return; const t = (window.PGRules && PGRules.act(k)) || ACT[k]; if (t) t[2](); };
@@ -284,11 +284,11 @@
   function storyRender(view, kind) {
     const mod = STORY[kind] && STORY[kind](); if (!mod) return false;
     const old = $('pgLay'); if (old) old.remove(); document.body.classList.remove('pg-lay-on');
-    if (storyOn && storyOn.kind === kind && $('pgStory')) { if (JSON.stringify(cur.tune || null) !== storyOn.tune) { storyStop(); } else return true; }   // already showing: keep the guest's place
+    if (storyOn && storyOn.kind === kind && $('pgStory')) { if (JSON.stringify(cur.tune || null) !== storyOn.tune || JSON.stringify(GALLERY.story || null) !== storyOn.picks) { storyStop(); } else return true; }   // new settings or new story photos: draw again   // already showing: keep the guest's place
     storyStop();
     const box = h('div', 'pgl-story'); box.id = 'pgStory'; view.prepend(box); document.body.classList.add('pg-story-on');
     let asked = false; try { asked = localStorage.getItem('pg_storyq_' + GALLERY_ID) === '1'; } catch (e) {}
-    try { mod.render(box, storyData(), storyAct, { first: !asked && !/pgpreview=1/.test(location.search), galleryId: GALLERY_ID }); storyOn = { kind, mod, tune: JSON.stringify(cur.tune || null) }; storyTune(box, cur.tune); }
+    try { mod.render(box, storyData(), storyAct, { first: !asked && !/pgpreview=1/.test(location.search), galleryId: GALLERY_ID }); storyOn = { kind, mod, tune: JSON.stringify(cur.tune || null), picks: JSON.stringify(GALLERY.story || null) }; storyTune(box, cur.tune); }
     catch (e) { console.warn('Story Hub', e); storyStop(); return false; }
     return true;
   }
