@@ -159,7 +159,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step56-story-photos',
+    version: 'step57-experience',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1623,7 +1623,27 @@ function setDemo_(p, user) {
   return { demo: on };
 }
 // The wedding's own Hub (step 44): cards placed on the grid in the app's Hub editor. Only known cards and whole numbers are kept.
-var HUB_BLOCKS = ['hero', 'findme', 'reel', 'post', 'upload', 'install', 'review', 'events', 'loved', 'notes', 'studio'];
+var HUB_BLOCKS = ['hero', 'findme', 'reel', 'post', 'upload', 'install', 'review', 'events', 'loved', 'notes', 'studio', 'x-world', 'x-journey', 'x-chapter'];   // x-…: experience cards (step 57)
+// the words / photos / choices a couple sets on a card (step 57): short texts, photo ids, small numbers — nothing else is kept
+function cardSet_(o) {
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+  var out = {}, n = 0;
+  Object.keys(o).slice(0, 40).forEach(function (k) {
+    if (!/^[a-z][a-z0-9]{0,15}$/i.test(k) || n >= 30) return;
+    var v = o[k];
+    if (typeof v === 'number' && isFinite(v)) { out[k] = Math.max(-1000, Math.min(1000, Math.round(v))); n++; }
+    else if (typeof v === 'string') { v = v.replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 200); if (v) { out[k] = v; n++; } }
+  });
+  return n ? out : null;
+}
+// the Hub's colours (step 57): a ready palette by name, or four #rrggbb colours
+function paletteOf_(p) {
+  if (!p || typeof p !== 'object') return null;
+  var id = String(p.id || ''); if (!/^[a-z0-9-]{1,20}$/.test(id)) return null;
+  var out = { id: id };
+  ['bg', 'ink', 'acc', 'acc2'].forEach(function (k) { if (/^#[0-9a-f]{6}$/i.test(String(p[k] || ''))) out[k] = String(p[k]); });
+  return out;
+}
 var HUB_COLS = { phone: 4, tall: 8, wide: 12 };
 function customOf_(v) {
   var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = { blocks: [] };
@@ -1637,9 +1657,11 @@ function customOf_(v) {
       x.pos[s] = n;
     });
     if (Array.isArray(b.hide)) x.hide = b.hide.filter(function (s) { return s in HUB_COLS; });
+    var st = cardSet_(b.set); if (st) x.set = st;
     out.blocks.push(x);
   });
   if (o.base && /^[a-z0-9-]{1,40}$/.test(String(o.base))) out.base = String(o.base);
+  var pal = paletteOf_(o.palette); if (pal) out.palette = pal;
   // a Story Hub (step 54): which story, its sections (shown / hidden, order), the floating Find me, the icon bar and reworded headings
   var st = o.story;
   if (st && (st.kind === 'living' || st.kind === 'editorial')) {

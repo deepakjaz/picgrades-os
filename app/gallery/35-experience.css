@@ -1,0 +1,173 @@
+/* Experience cards (step 57) — see 35-experience.js. Motion comes from --e (card coming in, 0→1), --p (its whole pass) and --f (journey fill). */
+.x-world,.x-journey,.x-chapter{position:relative;overflow:hidden;container-type:inline-size;isolation:isolate;--e:0;--p:0;--f:0;-webkit-tap-highlight-color:transparent}
+.x-world *,.x-journey *,.x-chapter *{box-sizing:border-box}
+.x-eye{font:600 clamp(10px,2.6cqw,13px)/1.3 var(--font-sans);letter-spacing:.22em;text-transform:uppercase;opacity:.85}
+body.pgx-pal #view-hub{background:var(--x-bg);transition:background .4s}
+body.pgx-pal .pgl-grid .pgl-head h3{color:var(--x-ink)}
+
+/* ---------- 1. World cover ---------- */
+.x-world{color:#fff;background:#1b1410;--sky:var(--p)}
+.x-sky-dawn{--sky:.22}.x-sky-day{--sky:.05}.x-sky-dusk{--sky:.62}.x-sky-night{--sky:.95}
+.x-scene{position:absolute;inset:0;overflow:hidden}
+.x-photo{position:absolute;inset:-9%;background:#3a2a20 center/cover no-repeat;will-change:transform;
+  transform:translate3d(0,calc((var(--p) - .5) * 9%),0) scale(calc(1.2 - var(--e) * .14))}
+.x-skytint{position:absolute;inset:0}
+.x-skytint::before,.x-skytint::after{content:"";position:absolute;inset:0}
+.x-skytint::before{background:linear-gradient(180deg,rgba(255,214,140,.55),rgba(255,180,90,.12) 45%,rgba(30,16,8,.55));opacity:calc(1 - var(--sky) * 1.25)}
+.x-skytint::after{background:linear-gradient(180deg,rgba(8,12,40,.88),rgba(40,20,70,.55) 50%,rgba(5,5,15,.8));mix-blend-mode:multiply;opacity:calc(var(--sky) * 1.4 - .25)}
+.x-sun{position:absolute;width:clamp(60px,22cqw,190px);aspect-ratio:1;border-radius:50%;left:calc(8% + var(--sky) * 62%);top:calc(6% + var(--sky) * 46%);
+  background:radial-gradient(circle,rgba(255,246,210,1) 0 30%,rgba(255,196,100,.55) 48%,transparent 70%);opacity:calc(1 - var(--sky) * 1.15);mix-blend-mode:screen}
+.x-stars{position:absolute;inset:0 0 40% 0;opacity:calc(var(--sky) * 1.6 - .6);
+  background-image:radial-gradient(1.4px 1.4px at 12% 22%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 32% 12%,#fff 50%,transparent 51%),radial-gradient(1.6px 1.6px at 58% 30%,#fff 50%,transparent 51%),
+  radial-gradient(1px 1px at 76% 16%,#fff 50%,transparent 51%),radial-gradient(1.3px 1.3px at 88% 36%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 44% 40%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 22% 48%,#fff 50%,transparent 51%)}
+.x-wtext{position:absolute;left:0;right:0;bottom:0;padding:clamp(18px,6cqw,64px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:clamp(6px,1.6cqw,14px);
+  background:linear-gradient(180deg,transparent,rgba(10,6,4,.55) 45%,rgba(10,6,4,.78))}
+.x-title{margin:0;font:400 clamp(34px,11cqw,104px)/1 var(--font-serif);letter-spacing:.01em;text-wrap:balance}
+.x-title span{display:inline-block;--k:clamp(0,calc((var(--e) * 34 - var(--i)) / 5),1);opacity:var(--k);transform:translateY(calc((1 - var(--k)) * .55em)) rotate(calc((1 - var(--k)) * 6deg))}
+.x-wline{margin:0;max-width:36ch;font:400 clamp(14px,3.4cqw,20px)/1.45 var(--font-serif);font-style:italic;opacity:calc(var(--e) * 1.4 - .3)}
+.x-btn{margin-top:clamp(4px,1.4cqw,12px);border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:inherit;border-radius:999px;padding:11px 22px;
+  font:600 13px var(--font-sans);letter-spacing:.06em;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.x-btn span{display:inline-block;animation:x-nudge 1.8s ease-in-out infinite}
+@keyframes x-nudge{50%{transform:translateY(3px)}}
+/* palace window: the scene seen through a carved arch */
+.x-w-arch{background:var(--x-bg,#f6efe3)}
+.x-archframe{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.x-archframe path:first-child{fill:var(--x-bg,#f6efe3)}
+.x-archline{fill:none;stroke:var(--x-acc,#c9963f);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--e))}
+.x-w-arch .x-wtext{z-index:2;left:14%;right:14%;background:linear-gradient(180deg,transparent,rgba(10,6,4,.6) 40%,rgba(10,6,4,.82));border-radius:0}
+.x-w-arch .x-photo{inset:0 14% 0 14%}
+/* horizon: the sky (words) above, the photo below — nothing written on the photo */
+.x-w-horizon{color:var(--x-ink,#2b1d14);background:linear-gradient(180deg,#f9e7c4,#f4c98f 60%,#e79a63);}
+.x-w-horizon.x-in{background:linear-gradient(180deg,color-mix(in srgb,#f9e7c4 calc(100% - var(--sky) * 100%),#141a3a),color-mix(in srgb,#f0b878 calc(100% - var(--sky) * 100%),#4a2a5c) 60%)}
+.x-w-horizon .x-photo{inset:auto 0 0 0;height:58%;transform:translate3d(0,calc((1 - var(--e)) * 18%),0);border-radius:50% 50% 0 0 / 14% 14% 0 0}
+.x-w-horizon .x-skytint{display:none}
+.x-w-horizon .x-wtext{top:0;bottom:auto;background:none;padding-top:clamp(22px,7cqw,70px)}
+.x-w-horizon .x-btn{border-color:currentColor;background:transparent}
+.x-w-horizon.x-sky-night,.x-w-horizon.x-sky-dusk{color:#f7ead6}
+
+/* ---------- 2. Wedding journey ---------- */
+.x-journey{--ink:#3a2410;background:linear-gradient(180deg,#fff4d6 0%,#f7dca8 26%,#eeaa72 52%,#8a4a6a 76%,#161d3c 100%);color:#3a2410;padding:clamp(18px,5cqw,48px)}
+.x-across{background:linear-gradient(90deg,#fff4d6 0%,#f7dca8 24%,#eeaa72 50%,#8a4a6a 74%,#161d3c 100%)}
+.x-jhead{position:relative;z-index:1;margin-bottom:clamp(10px,3cqw,26px)}
+.x-jtitle{margin:6px 0 0;font:400 clamp(24px,6.4cqw,46px)/1.08 var(--font-serif);max-width:22ch;color:#4a2b10}
+.x-track{position:relative}
+.x-rail{position:absolute;border-radius:9px;background:rgba(255,255,255,.35)}
+.x-rail i{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,#e8a400,#d9622b,#b33a5c,#f0d48a);transform-origin:top;transform:scaleY(var(--f))}
+.x-stop{position:relative;display:flex;align-items:center;gap:clamp(12px,3.6cqw,22px);border:0;background:none;color:inherit;padding:0;text-align:left;cursor:pointer;
+  --s:clamp(0,calc((var(--f) * 1.15 - var(--t)) * 7),1);opacity:var(--s);transform:translateY(calc((1 - var(--s)) * 18px)) scale(calc(.94 + var(--s) * .06))}
+.x-bead{flex:none;width:clamp(54px,15cqw,76px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:#fffaf0;box-shadow:0 8px 24px rgba(60,20,0,.18),inset 0 0 0 2px rgba(255,255,255,.7)}
+.x-bead .x-icon{width:74%;height:74%}
+.x-stxt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.x-stxt small{font:600 10.5px var(--font-sans);letter-spacing:.2em;text-transform:uppercase;opacity:.75}
+.x-stxt b{font:400 clamp(20px,5.4cqw,30px)/1.1 var(--font-serif)}
+.x-stxt em{font:italic 400 clamp(13px,3.3cqw,16px)/1.35 var(--font-serif);opacity:.85}
+.x-stop:nth-last-child(-n+2) .x-stxt{color:#fbf1df}.x-stop:nth-last-child(-n+2) .x-stxt em{opacity:.9}
+/* down (phones) */
+.x-down .x-track{display:flex;flex-direction:column;justify-content:space-between;gap:clamp(16px,5cqw,30px);padding-left:4px}
+.x-down .x-rail{left:calc(clamp(54px,15cqw,76px) / 2 + 1px);top:20px;bottom:20px;width:5px}
+.x-down .x-journey,.x-down{display:flex;flex-direction:column}
+.x-down .x-track{flex:1}
+/* across (laptops) */
+.x-across .x-track{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:18px;align-items:start;padding-top:6px}
+.x-across .x-rail{top:calc(6px + clamp(54px,15cqw,76px) / 2 - 2px);left:6%;right:6%;height:5px}
+.x-across .x-rail i{background:linear-gradient(90deg,#e8a400,#d9622b,#b33a5c,#f0d48a);transform-origin:left;transform:scaleX(var(--f))}
+.x-across .x-bead{width:clamp(64px,7cqw,96px)}
+.x-across .x-stop{flex-direction:column;text-align:center;align-items:center}
+.x-across .x-stxt{align-items:center}
+.x-across .x-stop:nth-last-child(-n+2) .x-stxt{color:#fbf1df}
+.x-across .x-jtitle{max-width:none}
+.x-j-beads .x-rail{background:none;border-left:1px dashed rgba(90,50,10,.4)}
+.x-across.x-j-beads .x-rail{border-left:0;border-top:1px dashed rgba(90,50,10,.4)}
+.x-j-beads .x-rail i{background:linear-gradient(180deg,#d4a24c,#f0d48a)}
+.x-j-beads .x-bead{background:radial-gradient(circle at 35% 30%,#fff,#ffe9b8 60%,#e8b85c);box-shadow:0 10px 26px rgba(80,30,0,.25)}
+@container (max-width:240px){.x-stxt em{display:none}.x-jtitle{font-size:20px}}
+
+/* ---------- 3. Event chapter ---------- */
+.x-chapter{display:flex;cursor:pointer;color:var(--c-ink);background:var(--c-bg);--c-ink:#3b2a1d;--c-bg:#f8efe0;--c-acc:#c9963f}
+.x-cbg{position:absolute;inset:0;z-index:-1;overflow:hidden}
+.x-cmain{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(8px,2.4cqw,18px);padding:clamp(14px,5cqw,44px)}
+.x-c-side .x-cmain{flex-direction:row;text-align:left;justify-content:flex-start;gap:clamp(14px,5cqw,40px)}
+.x-icon{display:block;overflow:visible}
+.x-hero{width:clamp(64px,30cqw,190px);height:auto;aspect-ratio:1;flex:none;filter:drop-shadow(0 10px 18px rgba(0,0,0,.12))}
+.x-c-side .x-hero{width:clamp(64px,26cqw,170px)}
+.x-ctext{display:flex;flex-direction:column;align-items:inherit;gap:clamp(4px,1.2cqw,10px);min-width:0}
+.x-ctitle{margin:0;font:400 clamp(28px,10cqw,72px)/1 var(--font-serif);letter-spacing:.01em}
+.x-cline{margin:0;max-width:30ch;font:italic 400 clamp(14px,3.6cqw,19px)/1.4 var(--font-serif);opacity:.88}
+.x-cbtn{margin-top:4px;font:600 12.5px var(--font-sans);letter-spacing:.14em;text-transform:uppercase;border-bottom:1.5px solid currentColor;padding-bottom:3px}
+.x-ctext>*{opacity:clamp(0,calc(var(--e) * 2 - .5),1);transform:translateY(calc((1 - var(--e)) * 14px))}
+@container (max-width:200px){.x-ctitle{font-size:22px}.x-hero{width:52px}.x-cmain{gap:6px;padding:10px}}
+/* icon parts */
+.x-icon .x-pet1{fill:#f4a300}.x-icon .x-pet2{fill:#ffcb45}.x-icon .x-core{fill:#c95a1c}
+.x-icon .x-line,.x-icon .x-draw{fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.x-icon .x-dot{fill:currentColor}.x-icon .x-flame{fill:#f08a24}
+.x-marigold{transform-box:fill-box;transform-origin:center;transform:rotate(calc((1 - var(--e)) * -120deg)) scale(calc(.35 + var(--e) * .65))}
+.x-bead .x-marigold{transform:none}
+.x-draw{stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--e) * 100)}
+.x-bead .x-draw{stroke-dashoffset:0}
+.x-id-mehendi .x-icon{color:#7a3b1a}.x-id-sangeet .x-icon{color:#8a2bb0}.x-id-wedding .x-icon{color:#a0182c}.x-id-reception .x-icon{color:#1f2c66}
+.x-chapter.x-id-sangeet .x-hero,.x-chapter.x-id-reception .x-hero{color:#f3d58a}.x-chapter.x-id-wedding .x-hero{color:#e2b45a}
+.x-tw{animation:x-tw 2.4s ease-in-out infinite}.x-tw:nth-child(3){animation-delay:.8s}.x-tw:nth-child(4){animation-delay:1.5s}
+@keyframes x-tw{50%{opacity:.25}}
+/* Haldi — sunlight and a turmeric splash that spreads as it comes in */
+.x-chapter.x-id-haldi{--c-bg:radial-gradient(circle at 50% 35%,#fffbe6,#ffe58a 55%,#f7c531);--c-ink:#5a3000}
+.x-splash{position:absolute;inset:-12%;width:124%;height:124%;fill:#f2a900;opacity:.55;transform-origin:50% 45%;
+  transform:scale(calc(.25 + var(--e) * .9)) rotate(calc((1 - var(--e)) * 40deg))}
+.x-splash path:last-child{fill:none;stroke:#f2a900;stroke-width:4;stroke-linecap:round;transform:translateY(calc(var(--p) * 12px))}
+/* Mehendi — henna that draws itself */
+.x-chapter.x-id-mehendi{--c-bg:linear-gradient(160deg,#f5eedb,#e9dcbc);--c-ink:#2f3a1f}
+.x-henna{position:absolute;right:-18%;top:-10%;width:90%;height:120%;color:#9b4a22;opacity:.4}
+.x-henna .x-draw,.x-palace .x-draw{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}.x-henna .x-draw{stroke-width:1.6}
+/* Sangeet — a stage at night, lights sweeping, music in bars */
+.x-chapter.x-id-sangeet{--c-bg:radial-gradient(circle at 50% 110%,#5b1f74,#2a0f3d 55%,#12061c);--c-ink:#fbeaff}
+.x-beam{position:absolute;top:-10%;width:60%;height:120%;transform-origin:50% 0;opacity:.5;background:linear-gradient(180deg,rgba(255,214,120,.65),transparent 75%);clip-path:polygon(45% 0,55% 0,100% 100%,0 100%)}
+.x-b1{left:-6%;transform:rotate(calc(-28deg + var(--p) * 40deg))}.x-b2{right:-6%;transform:rotate(calc(28deg - var(--p) * 40deg));background:linear-gradient(180deg,rgba(255,120,200,.55),transparent 75%)}
+.x-eq{position:absolute;left:0;right:0;bottom:0;height:14%;display:flex;align-items:flex-end;justify-content:center;gap:5px;opacity:.55}
+.x-eq i{width:6px;height:30%;border-radius:3px 3px 0 0;background:linear-gradient(0deg,#ff7ac8,#ffd37a)}
+.x-chapter.x-in:not(.x-still) .x-eq i{animation:x-eq 1s var(--d) ease-in-out infinite alternate}
+@keyframes x-eq{to{height:95%}}
+/* Wedding — royal: a palace that draws itself, gold, the sacred fire, petals */
+.x-chapter.x-id-wedding{--c-bg:radial-gradient(circle at 50% 40%,#7d1427,#4a0815 60%,#2a040c);--c-ink:#f8e6c4}
+.x-palace{position:absolute;left:0;right:0;bottom:0;width:100%;height:55%;color:#d4a24c;opacity:.55}
+.x-palace .x-draw{stroke-width:1.6;vector-effect:non-scaling-stroke}
+.x-palace{filter:drop-shadow(0 0 6px rgba(212,162,76,.35))}
+.x-chapter.x-id-wedding .x-flame{transform-box:fill-box;transform-origin:50% 100%}
+.x-chapter.x-in:not(.x-still) .x-flame{animation:x-flame 1.4s ease-in-out infinite alternate}
+@keyframes x-flame{to{transform:scaleY(1.12) scaleX(.92)}}
+.x-petals i{position:absolute;top:-6%;left:var(--x);width:9px;height:12px;border-radius:60% 0 60% 0;background:#e05a6e;opacity:0}
+.x-chapter.x-in:not(.x-still) .x-petals i{animation:x-petal 6s var(--d) linear infinite}
+@keyframes x-petal{0%{opacity:0;transform:translate(0,0) rotate(0)}10%{opacity:.9}100%{opacity:0;transform:translate(30px,110cqh) rotate(320deg)}}
+/* Reception — night, city lights, bokeh */
+.x-chapter.x-id-reception{--c-bg:linear-gradient(180deg,#0b1230,#17224d 60%,#2a2a52);--c-ink:#f4ead2}
+.x-bokeh i{position:absolute;left:var(--x);top:var(--y);width:var(--s);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,224,150,.75),rgba(255,224,150,0) 70%);
+  opacity:calc(var(--e) * .9);transform:translateY(calc((var(--p) - .5) * -30px))}
+.x-chapter.x-in:not(.x-still) .x-bokeh i{animation:x-tw 3.2s var(--d) ease-in-out infinite}
+.x-city{position:absolute;left:0;right:0;bottom:0;width:100%;height:32%;fill:#060a1d}
+/* any other event */
+.x-chapter.x-id-bloom{--c-bg:radial-gradient(circle at 50% 40%,#fffaf2,#f3e3cc);--c-ink:#3b2a1d}
+.x-glow{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(circle,rgba(201,150,63,.3),transparent 70%);transform:scale(calc(.6 + var(--e) * .6))}
+.x-id-bloom .x-pet1{fill:#e7a6a0}.x-id-bloom .x-core{fill:#c9963f}
+/* the bead colours on the journey follow each event */
+.x-stop.x-id-mehendi .x-bead{background:#f6f0dd}.x-stop.x-id-sangeet .x-bead{background:#f7e9fb}.x-stop.x-id-wedding .x-bead{background:#fdeee4}.x-stop.x-id-reception .x-bead{background:#e9ecf8}
+@media (prefers-reduced-motion:reduce){.x-btn span,.x-tw,.x-eq i,.x-petals i,.x-flame{animation:none!important}}
+/* Hub editor: the words / photos panel and the Colours sheet (step 57) */
+.pged-content{border-top:1px solid rgba(255,255,255,.12);margin-top:8px;padding-top:8px}
+.pged-field{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:8px 0}
+.pged-field>span{flex:1 1 100%;font:600 12px var(--font-sans);opacity:.75}
+.pged-field input[type=text],.pged-field textarea,.pged-field select{flex:1 1 100%;min-height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.25);color:inherit;padding:8px 10px;font:500 14px var(--font-sans)}
+.pged-field textarea{min-height:64px;resize:vertical}
+.pged-ph{width:56px;height:56px;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.1);font:600 10px var(--font-sans);text-align:center}
+.pged-ph img{width:100%;height:100%;object-fit:cover}
+.pged-phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;margin-bottom:12px}
+.pged-phgrid button{padding:0;border:0;border-radius:10px;overflow:hidden;aspect-ratio:1;cursor:pointer;background:var(--border-hairline)}
+.pged-phgrid img{width:100%;height:100%;object-fit:cover;display:block}
+.pged-photosheet,.pged-palsheet{max-height:86vh;overflow:auto}
+.pged-pals{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:8px 0 14px}
+.pged-pals button{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:10px;border-radius:14px;border:1.5px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:600 13px var(--font-sans);cursor:pointer;text-align:left}
+.pged-pals button.on{border-color:var(--cta-peach);box-shadow:0 0 0 2px var(--cta-peach)}
+.pged-sw{display:flex;width:100%;height:28px;border-radius:8px;overflow:hidden}.pged-sw i{flex:1}
+.pged-sw0{background:linear-gradient(90deg,var(--bg-box),var(--cta-peach))}
+.pged-own{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.pged-own label{display:flex;align-items:center;gap:8px;font:600 13px var(--font-sans);color:var(--ink)}
+.pged-own input{width:44px;height:36px;border:0;padding:0;background:none;cursor:pointer}
+.pged-photosheet,.pged-palsheet{z-index:2100!important}
+body:has(.pged-photosheet) .overlay-backdrop.show,body:has(.pged-palsheet) .overlay-backdrop.show{z-index:2099}
