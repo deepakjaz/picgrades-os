@@ -167,7 +167,9 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   // The website and Code.gs are updated separately. If Code.gs is older than this page, staff see a warning.
   var BACKEND_VERSION = 'step44-hub-editor';
   setTimeout(function () { try { api('health').then(function (h) {
-    if (h.version === BACKEND_VERSION) return;
+    // step 55: warn only when Code.gs is OLDER (a lower step number), not when it is newer than this page
+    var num = function (v) { var m = /^step(\d+)/.exec(v || ''); return m ? +m[1] : 0; };
+    if (h.version === BACKEND_VERSION || num(h.version) >= num(BACKEND_VERSION)) return;
     var b = el('div', { role: 'alert', style: 'background:#5a2a12;color:#FFD9A8;padding:12px 16px;font:500 14px/1.4 system-ui;text-align:center', text: 'The backend (Code.gs) is older than this website (it has ' + (h.version || '?') + ', this page needs ' + BACKEND_VERSION + '). Paste the latest Code.gs into Apps Script and deploy a new version.' });
     document.body.insertBefore(b, document.body.firstChild);
   }).catch(function () {}); } catch (e) {} }, 0);

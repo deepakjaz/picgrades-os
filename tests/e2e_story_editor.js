@@ -77,6 +77,13 @@ const srv = http.createServer((req, res) => {
   check(await pg.isVisible('.pged-canvas') && !(await pg.isVisible('.pged-story')) && (await pg.evaluate(() => PGHubEditor.draft().blocks.length)) > 0, 'choosing a card layout gives the card grid back');
   await pg.click('.pged-x'); await pg.waitForTimeout(500);
   check(await pg.evaluate(() => !!document.getElementById('pgStory')), 'closing the editor shows the wedding’s story again');
+  // step 55: an old story draft must not block the card editor once the Hub is a card layout again
+  await pg.evaluate(() => PGHubEditor.open()); await pg.waitForSelector('.pged-wrap, .pged-story', { state: 'attached' });
+  await pg.selectOption('.pged-from', 'story-editorial'); await pg.waitForSelector('.pged-story:not([hidden])'); await pg.click('.pged-x'); await pg.waitForTimeout(300);   // leaves a story draft behind
+  await pg.evaluate(() => PGControl.save({ layout: 'magazine-cover' }).then(r => { GALLERY.layout = r.layout; PGLayout.refresh(); }));
+  await pg.evaluate(() => PGHubEditor.open()); await pg.waitForTimeout(500);
+  check(await pg.isVisible('.pged-canvas') && !(await pg.isVisible('.pged-story')) && (await pg.locator('.pged-canvas [draggable], .pged-canvas .pged-card, .pged-canvas > *').count()) > 0, 'after going back to a card Hub the editor opens the cards to drag, not the old story draft');
+  await pg.click('.pged-x');
   console.log(bad ? 'FAIL ' + bad + ' checks' : 'all story editor checks passed');
   console.log('page errors:', JSON.stringify(errors)); await b.close(); srv.close(); process.exit(0);
 });
