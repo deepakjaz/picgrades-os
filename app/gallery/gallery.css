@@ -2507,3 +2507,35 @@ body.pg-story-on #view-hub > :not(.pgl-story){display:none!important}
 .pgcp-mini.story{display:flex;flex-direction:column;gap:3px}
 .pgcp-mini.story i{flex:1;border-radius:3px}
 .pgcp-mini.story i.hero{flex:3}
+
+/* ===== Step 54: Story settings ===== */
+/* the extra icon bars are off unless chosen in the editor (our header + bottom bar are enough) */
+.pgl-story:not(.pgs-bar-on) .psh-rail, .pgl-story:not(.pgs-bar-on) .pse-quickbar{display:none!important}
+/* the floating Find me: stays on screen while scrolling, above the bottom bar */
+.pgs-findme{position:fixed;z-index:60;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:8px;padding:11px 18px 11px 14px;border:0;border-radius:999px;
+  background:rgba(20,18,16,.78);color:#fff;font:600 14px/1 var(--sans,system-ui);letter-spacing:.02em;box-shadow:0 8px 24px rgba(0,0,0,.28);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);cursor:pointer}
+.pgs-findme.left{right:auto;left:16px}
+.pgs-findme svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+@media (min-width:1024px){.pgs-findme{bottom:28px;right:28px}.pgs-findme.left{left:28px}}
+.pgs-probe{position:fixed!important;left:-10000px;top:0;width:100vw;visibility:hidden;pointer-events:none}
+body.pg-big.pg-far .pgs-findme{bottom:100px}
+/* Hub editor › Story panel (step 54) */
+.pged-storymode .pged-screens,.pged-storymode .pged-add{display:none}
+.pged-story{flex:1;overflow-y:auto;padding:6px 14px 40px;color:#fff;max-width:620px;width:100%;margin:0 auto;box-sizing:border-box}
+.pged-story h3{font:600 20px/1.2 var(--font-serif,Georgia,serif);margin:8px 0 14px}.pged-story h3 small{display:block;font:500 12px var(--font-sans);opacity:.6;margin-top:4px}
+.pged-sgroup{background:rgba(255,255,255,.06);border-radius:16px;padding:14px;margin-bottom:12px}
+.pged-sgroup>b{display:block;font:700 14px var(--font-sans)}.pged-sgroup>p{margin:4px 0 10px;font:500 12px/1.4 var(--font-sans);opacity:.65}
+.pged-srow{display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid rgba(255,255,255,.08)}
+.pged-srow span{flex:1;font:600 14px var(--font-sans)}.pged-srow em{font:500 12px var(--font-sans);opacity:.5;font-style:normal}
+.pged-srow.off span{opacity:.4;text-decoration:line-through}
+.pged-sic{width:34px;height:34px;border:0;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;font-size:16px;cursor:pointer}.pged-sic:disabled{opacity:.25}
+.pged-stog{min-width:74px;height:34px;border:0;border-radius:10px;background:#fff;color:#141110;font:700 12px var(--font-sans);cursor:pointer}
+.pged-srow.off .pged-stog{background:rgba(255,255,255,.12);color:#fff}
+.pged-stext{display:block;margin-top:10px}.pged-stext small{display:block;font:600 11px var(--font-sans);opacity:.55;margin-bottom:4px}
+.pged-stext input{width:100%;box-sizing:border-box;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.25);color:#fff;padding:0 12px;font:500 15px var(--font-sans)}
+.pged-stext input::placeholder{color:rgba(255,255,255,.5)}
+body.pg-story-on .mk-counter-pill{display:none!important}   /* the gallery counter (↑) has no use on a story page and sat on Find me */
+/* Find me sits beside the round back-to-top button, never under it; white text whatever the story's own button colours */
+#pgStory .pgs-findme{color:#fff;right:70px;bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+#pgStory .pgs-findme.left{right:auto;left:16px}
+@media (min-width:1100px){#pgStory .pgs-findme{right:84px;bottom:34px}#pgStory .pgs-findme.left{left:28px}body.pg-big.pg-far #pgStory .pgs-findme{bottom:34px}}

@@ -158,7 +158,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step53-post-one-picture',
+    version: 'step54-story-editor',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1553,7 +1553,7 @@ function saveLook_(g, p) {
   if ('theme' in p) out.theme = lookId_(p.theme);
   if ('layout' in p) out.layout = lookId_(p.layout);
   if ('pages' in p) { var cur = pagesOf_(g.pages), want = pagesOf_(p.pages); Object.keys(want).forEach(function (k) { cur[k] = want[k]; }); out.pages = JSON.stringify(cur); }
-  if ('custom' in p) { var c = customOf_(p.custom); if (!c.blocks.length) return { ok: false, error: 'Your Hub has no cards yet.' }; out.custom = JSON.stringify(c); }
+  if ('custom' in p) { var c = customOf_(p.custom); if (!c.blocks.length && !c.story) return { ok: false, error: 'Your Hub has no cards yet.' }; out.custom = JSON.stringify(c); }
   if (!('theme' in out) && !('layout' in out) && !('pages' in out) && !('custom' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
   out.updatedAt = fmt_(new Date());
   ensureTab_('Galleries', GALLERY_COLUMNS);
@@ -1611,6 +1611,15 @@ function customOf_(v) {
     out.blocks.push(x);
   });
   if (o.base && /^[a-z0-9-]{1,40}$/.test(String(o.base))) out.base = String(o.base);
+  // a Story Hub (step 54): which story, its sections (shown / hidden, order), the floating Find me, the icon bar and reworded headings
+  var st = o.story;
+  if (st && (st.kind === 'living' || st.kind === 'editorial')) {
+    var key = /^[a-z0-9-]{1,32}(:\d{1,3})?$/, texts = {}, n = 0;
+    Object.keys(st.texts || {}).forEach(function (k) { var v = String(st.texts[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 120); if (key.test(k) && k.indexOf(':') > 0 && v && n < 60) { texts[k] = v; n++; } });
+    out.story = { kind: st.kind, findme: ['left', 'right', 'off'].indexOf(st.findme) > -1 ? st.findme : 'right', bar: st.bar === 'on' ? 'on' : 'off', texts: texts,
+      sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 20).filter(function (q) { return q && key.test(String(q.k)) && String(q.k).indexOf(':') < 0; }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
+    out.blocks = [];
+  }
   return out;
 }
 // Page styles (step 36): which style each page uses. Only known pages and styles are kept.

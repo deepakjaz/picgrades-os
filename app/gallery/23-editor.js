@@ -74,8 +74,13 @@
     blocks.forEach(b => delete b._src);
     return { base: lay.id || '', blocks, header: ((GALLERY.pages || {}).header) || 'right', modeside: ((GALLERY.pages || {}).modeside) || 'right' };
   }
+  // a Story Hub (step 54) has no cards: it is edited as sections (show / hide / move), the Find me button, the icon bar and the headings
+  function storyDraft(kind, base) { return { base: base || '', blocks: [], story: { kind, sections: [], findme: 'right', bar: 'off', texts: {} }, header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' }; }
   function startDraft() {
-    const saved = loadDraft(); if (saved && saved.blocks && saved.blocks.length) return saved;
+    const saved = loadDraft(); if (saved && ((saved.blocks && saved.blocks.length) || saved.story)) return saved;
+    const pg = { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' };
+    if (GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.story) return Object.assign({ base: GALLERY.custom.base || '', blocks: [], story: clone(GALLERY.custom.story) }, pg);
+    const sl = PGLayout.find(GALLERY.layout); if (sl && sl.story) return storyDraft(sl.story, sl.id);
     if (GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.blocks.length) return Object.assign(clone(GALLERY.custom), { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' });
     const lay = [PGLayout.find(GALLERY.layout)].concat(PGLayout.list()).find(l => l && !l.story);   // a story Hub has no cards to move
     return fromLayout(lay);
@@ -99,11 +104,13 @@
       '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="right">Right</button></div>' +
       '<div class="pged-seg pged-mode" aria-label="Light / dark button"><span>Light/dark</span><button type="button" data-mode="left">Left</button><button type="button" data-mode="right">Right</button></div>' +
       '<button type="button" class="pged-btn pged-add">+ Add card</button><select class="pged-from" aria-label="Start from a layout"></select></div>' +
+      '<div class="pged-story" hidden></div>' +
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
       '<div class="pged-tools" hidden></div>';
     const from = el.querySelector('.pged-from');
-    from.innerHTML = '<option value="">Start again from a layout…</option>' + PGLayout.list().filter(l => !l.story).map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + '</option>').join('');
-    from.addEventListener('change', () => { const l = PGLayout.find(from.value); from.value = ''; if (!l) return; if (!confirmBox('Start again from “' + l.name + '”? Your changes so far are replaced (Undo brings them back).')) return; snapshot(); E.d = Object.assign(fromLayout(l), { header: E.d.header }); E.sel = -1; commit(); });
+    from.innerHTML = '<option value="">Start again from a layout…</option>' + PGLayout.list().map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + (l.story ? ' · story' : '') + '</option>').join('');
+    from.addEventListener('change', () => { const l = PGLayout.find(from.value); from.value = ''; if (!l) return; if (!confirmBox('Start again from “' + l.name + '”? Your changes so far are replaced (Undo brings them back).')) return; snapshot();
+      E.d = Object.assign(l.story ? storyDraft(l.story, l.id) : fromLayout(l), { header: E.d.header, modeside: E.d.modeside }); E.sel = -1; E.info = null; commit(); });
     el.querySelector('.pged-x').addEventListener('click', close);
     el.querySelector('.pged-undo').addEventListener('click', () => { if (!E.undo.length) return; E.redo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.undo.pop()); E.sel = -1; paintUndo(); commit(); });
     el.querySelector('.pged-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.redo.pop()); E.sel = -1; paintUndo(); commit(); });
@@ -117,12 +124,15 @@
     document.body.appendChild(el); document.body.classList.add('pged-on');
     endPreview(true); store(E.d); paintUndo(); draw();
   }
-  function close() { if (!E) return; window.removeEventListener('resize', draw); E.el.remove(); E = null; document.body.classList.remove('pged-on'); }
+  function close() { if (!E) return; const wasStory = !!E.storySeen; /* the story was stopped to read it: draw the Hub again */ window.removeEventListener('resize', draw); E.el.remove(); E = null; document.body.classList.remove('pged-on'); if (wasStory) PGLayout.refresh(); }
   function confirmBox(t) { return window.confirm(t); }
 
   // draw the draft for the chosen screen, scaled to fit
   function draw() {
     if (!E) return;
+    E.el.classList.toggle('pged-storymode', !!E.d.story);
+    E.el.querySelector('.pged-story').hidden = !E.d.story; E.el.querySelector('.pged-canvas').hidden = !!E.d.story;
+    if (E.d.story) { E.el.querySelector('.pged-tools').hidden = true; E.el.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === (E.d.header || 'right'))); E.el.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === (E.d.modeside || 'right'))); drawStory(); return; }
     const el = E.el, scr = E.scr, d = E.d, cols = COLS[scr];
     el.querySelectorAll('[data-scr]').forEach(b => b.classList.toggle('on', b.dataset.scr === scr));
     el.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === (d.header || 'right')));
@@ -226,6 +236,42 @@
 
   // ---- preview on this phone, then publish ----
   let banner = null;
+  // ---- the Story panel ----
+  function drawStory() {
+    const st = E.d.story, box = E.el.querySelector('.pged-story'), lay = PGLayout.list().find(l => l.story === st.kind);
+    E.storySeen = true;
+    if (!E.info || E.info.kind !== st.kind) E.info = Object.assign({ kind: st.kind }, PGLayout.storyInfo(st.kind) || { parts: [], texts: [] });
+    // the sections in the couple's order (new ones at the end), the cover always first
+    const parts = E.info.parts, fixed = parts.filter(p => p.fixed), rest = parts.filter(p => !p.fixed);
+    const order = st.sections.map(q => rest.find(p => p.k === q.k)).filter(Boolean).concat(rest.filter(p => !st.sections.some(q => q.k === p.k)));
+    const on = k => { const q = st.sections.find(x => x.k === k); return !q || q.on !== false; };
+    const seg = (name, cur, opts) => '<div class="pged-seg" data-set="' + name + '">' + opts.map(o => '<button type="button" data-v="' + o[0] + '" class="' + (cur === o[0] ? 'on' : '') + '">' + o[1] + '</button>').join('') + '</div>';
+    let html = '<h3>' + pgEsc(lay ? lay.name : 'Story') + ' <small>a story Hub · one long page</small></h3>' +
+      '<div class="pged-sgroup"><b>Sections</b><p>Show, hide or move each part of the page. The cover always opens the page.</p>' +
+      fixed.map(p => '<div class="pged-srow fixed"><span>' + pgEsc(p.name) + '</span><em>always first</em></div>').join('') +
+      order.map((p, i) => '<div class="pged-srow' + (on(p.k) ? '' : ' off') + '" data-k="' + p.k + '"><span>' + pgEsc(p.name) + '</span>' +
+        '<button type="button" class="pged-sic" data-do="up" aria-label="Move ' + pgEsc(p.name) + ' up"' + (i ? '' : ' disabled') + '>↑</button>' +
+        '<button type="button" class="pged-sic" data-do="down" aria-label="Move ' + pgEsc(p.name) + ' down"' + (i < order.length - 1 ? '' : ' disabled') + '>↓</button>' +
+        '<button type="button" class="pged-stog" data-do="toggle" aria-pressed="' + on(p.k) + '">' + (on(p.k) ? 'Shown' : 'Hidden') + '</button></div>').join('') + '</div>' +
+      '<div class="pged-sgroup"><b>Find me button</b><p>Floats on the page while guests scroll.</p>' + seg('findme', st.findme || 'right', [['left', 'Left'], ['right', 'Right'], ['off', 'Off']]) + '</div>' +
+      '<div class="pged-sgroup"><b>Icon bar</b><p>The story’s own row of small icons. Off keeps only our header and bottom bar.</p>' + seg('bar', st.bar || 'off', [['off', 'Off'], ['on', 'On']]) + '</div>' +
+      '<div class="pged-sgroup"><b>Words</b><p>Rewrite any heading. Leave a box empty to keep the original.</p>' +
+      E.info.texts.map(t => '<label class="pged-stext"><small>' + pgEsc(t.part) + '</small><input type="text" maxlength="120" data-key="' + t.key + '" placeholder="' + pgEsc(t.text) + '" value="' + pgEsc((st.texts || {})[t.key] || '') + '"></label>').join('') + '</div>';
+    box.innerHTML = html;
+    const setSections = list => { st.sections = list.map(p => ({ k: p.k, on: on(p.k) })); };
+    box.querySelectorAll('.pged-srow[data-k] button').forEach(b => b.addEventListener('click', () => {
+      const k = b.closest('[data-k]').dataset.k, i = order.findIndex(p => p.k === k), what = b.dataset.do; snapshot();
+      if (what === 'toggle') { setSections(order); const q = st.sections.find(x => x.k === k); q.on = !on(k); }
+      else { const j = what === 'up' ? i - 1 : i + 1; if (j < 0 || j >= order.length) return; const o = order.slice(); [o[i], o[j]] = [o[j], o[i]]; setSections(o); }
+      commit();
+    }));
+    box.querySelectorAll('[data-set] button').forEach(b => b.addEventListener('click', () => { snapshot(); st[b.closest('[data-set]').dataset.set] = b.dataset.v; commit(); }));
+    box.querySelectorAll('.pged-stext input').forEach(inp => {
+      inp.addEventListener('focus', () => { inp._was = inp.value; });
+      inp.addEventListener('change', () => { if (inp.value === inp._was) return; E.undo.push(JSON.stringify(Object.assign(clone(E.d), { story: Object.assign(clone(st), { texts: Object.assign({}, st.texts, { [inp.dataset.key]: inp._was }) }) }))); E.redo = []; paintUndo();
+        st.texts = Object.assign({}, st.texts); const v = inp.value.replace(/[<>]/g, '').trim(); if (v) st.texts[inp.dataset.key] = v; else delete st.texts[inp.dataset.key]; inp._was = inp.value; store(E.d); });
+    });
+  }
   function applyHeader() {
     const d = previewing ? loadDraft() : null, pg = (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.pages) || {};
     const side = (d && d.header) || pg.header || 'right', mode = (d && d.modeside) || pg.modeside || 'right';
@@ -245,8 +291,9 @@
     if (!previewing) return; previewing = false; if (!quiet) { PGLayout.refresh(); applyHeader(); }
   }
   function publish() {
-    const d = E ? E.d : loadDraft(); if (!d || !d.blocks.length) { showToast('Add at least one card first'); return; }
-    const body = { layout: 'custom', custom: JSON.stringify({ base: d.base || '', blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide })) }), pages: JSON.stringify({ header: d.header || 'right', modeside: d.modeside || 'right' }) };
+    const d = E ? E.d : loadDraft(); if (!d || (!d.story && !d.blocks.length)) { showToast('Add at least one card first'); return; }
+    const custom = d.story ? { base: d.base || '', story: d.story, blocks: [] } : { base: d.base || '', blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide })) };
+    const body = { layout: 'custom', custom: JSON.stringify(custom), pages: JSON.stringify({ header: d.header || 'right', modeside: d.modeside || 'right' }) };
     const btn = E ? E.el.querySelector('.pged-pub') : null; if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
     PGControl.save(body).then(r => {
       GALLERY.layout = r.layout; GALLERY.custom = r.custom; GALLERY.pages = r.pages || GALLERY.pages; if (r.theme != null) GALLERY.theme = r.theme;

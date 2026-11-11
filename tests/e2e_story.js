@@ -28,7 +28,7 @@ const srv = http.createServer((req, res) => {
       await pg.route('https://lh3.googleusercontent.com/**', r => { const pid = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1] || ''; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(pid) }); });
       await require('./fonts_local').install(pg);
       await pg.goto('http://localhost:8831/g/' + pub.galleryId + '?layout=' + id); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
-      await pg.waitForSelector('#pgStory', { timeout: 15000 }); await pg.waitForTimeout(1200);
+      await pg.waitForSelector('#pgStory', { timeout: 15000 }); await pg.evaluate(() => { GALLERY.faceSearch = true; PGLayout.reset(); PGLayout.refresh(); }); await pg.waitForTimeout(1200);   // Find me shows once face search is ready
       const tag = scr.padEnd(6) + ' ' + id.padEnd(16);
       // first visit: the question shows once, Skip closes it
       const q = await pg.locator('.psh-question, .pse-question, [class*="-qveil"]').count();
@@ -43,6 +43,16 @@ const srv = http.createServer((req, res) => {
       check(r.orig === 'none' && !r.grid, tag + ' the story replaces the Hub cards');
       check(r.header, tag + ' our header buttons (menu, light/dark) are not covered');
       check(!r.counts.length, tag + ' no photo counts ' + JSON.stringify(r.counts));
+      // step 54: no second icon bar; one floating Find me that stays while scrolling; no drawn garland
+      const bars = await pg.evaluate(() => [...document.querySelectorAll('.psh-rail, .pse-quickbar')].filter(x => x.offsetParent || getComputedStyle(x).position === 'fixed' && getComputedStyle(x).display !== 'none').length);
+      check(bars === 0, tag + ' the story’s own icon bar is off');
+      check(!(await pg.locator('.psh-vm-garland').count()), tag + ' no drawn garland');
+      await pg.evaluate(() => window.scrollTo(0, 2600)); await pg.waitForTimeout(400);
+      const fm = await pg.evaluate(() => { const b = document.querySelector('#pgStory .pgs-findme'); if (!b) return null; const rc = b.getBoundingClientRect(), t = document.elementFromPoint(rc.left + rc.width / 2, rc.top + rc.height / 2); return { y: rc.top, h: innerHeight, top: !!t && b.contains(t) }; });
+      check(fm && fm.top && fm.y > fm.h * 0.6, tag + ' Find me floats on screen while scrolling ' + JSON.stringify(fm));
+      check(await pg.evaluate(() => { const a = document.querySelector('.pgs-findme').getBoundingClientRect(), t = document.querySelector('.pg-totop.show'); if (!t) return true; const c = t.getBoundingClientRect(); return a.right <= c.left || c.right <= a.left || a.bottom <= c.top || c.bottom <= a.top; }), tag + ' Find me and the back-to-top button do not overlap');
+      check(await pg.evaluate(() => getComputedStyle(document.querySelector('.pgs-findme')).color === 'rgb(255, 255, 255)'), tag + ' Find me text is white');
+      await pg.evaluate(() => window.scrollTo(0, 0));
       // scroll the whole page: never more than 14 photos loaded at once, no blank picture in the middle of the screen
       const H = await pg.evaluate(() => document.documentElement.scrollHeight); let maxLive = 0, blank = 0;
       for (let y = 0; y <= H; y += Math.round(hh * 0.5)) {

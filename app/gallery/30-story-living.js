@@ -411,7 +411,7 @@
     // ---- E. 40%–55% Interactive Varmala Convergence (Portraits come close & exchange garland) ----
     if (brideId && groomId) {
       const vmTrack = h('section', 'psh-varmala-track');
-      vmTrack.setAttribute('aria-label', 'The Varmala Exchange');
+      vmTrack.setAttribute('aria-label', 'The Varmala');
       const vmSticky = h('div', 'psh-varmala-sticky');
       S.vmTrack = vmTrack;
 
@@ -419,7 +419,7 @@
       const vmEye = h('div', 'psh-eye');
       vmEye.textContent = 'Scroll to bring them together';
       const vmTitle = h('h2', 'psh-sec-title');
-      vmTitle.textContent = 'Two Paths, One Garland';
+      vmTitle.textContent = 'Two Paths, One Promise';
       vmHead.append(vmEye, vmTitle);
 
       const vmStage = h('div', 'psh-vm-stage');
@@ -435,18 +435,10 @@
       pRight.appendChild(makeManagedImg(groomId, 600, '', false));
       pRight.addEventListener('click', () => runAct('photo', { event: (events[0] && events[0].name) || '', id: groomId }));
 
-      // SVG Marigold Garland that descends and links both portraits at convergence
-      const garland = h('div', 'psh-vm-garland');
-      garland.innerHTML =
-        '<svg viewBox="0 0 240 120" fill="none" aria-hidden="true">' +
-          '<path class="psh-garland-path" d="M30 20 C 75 105, 165 105, 210 20" stroke="var(--cta-peach)" stroke-width="6" stroke-linecap="round" stroke-dasharray="6 10"/>' +
-          '<circle cx="120" cy="84" r="9" fill="var(--cta-peach)"/>' +
-        '</svg>';
-
+      // PicGrades (step 54): the drawn garland was removed: it looked unreal next to real photos. The two portraits still come together.
       S.vmLeft = pLeft;
       S.vmRight = pRight;
-      S.vmGarland = garland;
-      vmStage.append(pLeft, pRight, garland);
+      vmStage.append(pLeft, pRight);
       vmSticky.append(vmHead, vmStage);
       vmTrack.appendChild(vmSticky);
       root.appendChild(vmTrack);
