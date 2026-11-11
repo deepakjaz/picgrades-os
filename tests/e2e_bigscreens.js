@@ -34,7 +34,7 @@ const srv = http.createServer((req, res) => {
     await pg.goto(URL); await boot(pg);
     await pg.evaluate(names => { const all = pgAllPhotos().map(x => x.p); GALLERY.events = names.map((n, i) => ({ name: n, photos: all.slice(i % 4, i % 4 + 6) })); GALLERY.faceSearch = true;
       GALLERY.likes = {}; all.slice(0, 5).forEach((p, i) => GALLERY.likes[p.id] = 5 - i); GALLERY.recentNotes = [{ name: 'Nani', text: 'God bless you both, always.', photoId: all[0].id }, { name: 'Riya', text: 'Best sangeet ever!', photoId: all[1].id }]; }, NAMES);
-    const list = (await pg.evaluate(() => PGLayout.list().map(l => [l.id, l.theme]))).filter(([id]) => !only || only.includes(id));
+    const list = (await pg.evaluate(() => PGLayout.list().filter(l => !l.story).map(l => [l.id, l.theme]))).filter(([id]) => !only || only.includes(id));
     for (const [id, th] of list) {
       await pg.evaluate(([id, th]) => { PGTheme.apply(th); PGLayout.apply(id); switchViewFromNav('hub'); window.scrollTo(0, 0); }, [id, th]); await pg.waitForTimeout(900);
       const r = await pg.evaluate(() => {

@@ -77,7 +77,7 @@
   function startDraft() {
     const saved = loadDraft(); if (saved && saved.blocks && saved.blocks.length) return saved;
     if (GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.blocks.length) return Object.assign(clone(GALLERY.custom), { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' });
-    const lay = PGLayout.find(GALLERY.layout) || PGLayout.list()[0];
+    const lay = [PGLayout.find(GALLERY.layout)].concat(PGLayout.list()).find(l => l && !l.story);   // a story Hub has no cards to move
     return fromLayout(lay);
   }
 
@@ -102,7 +102,7 @@
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
       '<div class="pged-tools" hidden></div>';
     const from = el.querySelector('.pged-from');
-    from.innerHTML = '<option value="">Start again from a layout…</option>' + PGLayout.list().map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + '</option>').join('');
+    from.innerHTML = '<option value="">Start again from a layout…</option>' + PGLayout.list().filter(l => !l.story).map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + '</option>').join('');
     from.addEventListener('change', () => { const l = PGLayout.find(from.value); from.value = ''; if (!l) return; if (!confirmBox('Start again from “' + l.name + '”? Your changes so far are replaced (Undo brings them back).')) return; snapshot(); E.d = Object.assign(fromLayout(l), { header: E.d.header }); E.sel = -1; commit(); });
     el.querySelector('.pged-x').addEventListener('click', close);
     el.querySelector('.pged-undo').addEventListener('click', () => { if (!E.undo.length) return; E.redo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.undo.pop()); E.sel = -1; paintUndo(); commit(); });

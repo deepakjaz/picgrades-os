@@ -43,7 +43,7 @@ const srv = http.createServer((req, res) => {
   console.log('phone button:', await pg.textContent('.re-phone'), '| note:', await pg.textContent('.re-pnote'));
   const before = calls.length;
   await pg.setInputFiles('.rl-picker .re-pin', [FIX + '/phone_clip.webm', FIX + '/phone_photo.jpg']);
-  await pg.waitForFunction(() => /From your phone \(2\)/.test(document.querySelector('.rl-picker .re-colsel').selectedOptions[0].textContent), null, { timeout: 30000 });
+  await pg.waitForFunction(() => /From your phone/.test(document.querySelector('.rl-picker .re-colsel').selectedOptions[0].textContent) && document.querySelectorAll('.rl-picker .rl-pick').length === 2, null, { timeout: 30000 });   // step 53: no count in the menu
   console.log('phone collection:', await pg.$eval('.rl-picker .re-colsel', s => s.selectedOptions[0].textContent), '| tiles:', await pg.locator('.rl-pick').count(), '| video badge:', await pg.textContent('.rl-pick u'), '| chosen:', await pg.textContent('.rl-pcount'));
   await pg.screenshot({ path: '/tmp/s23_picker.png' });
   await pg.click('.rl-picker .re-next'); await pg.waitForSelector('.rl-wrap[data-view=edit]', { timeout: 30000 }); await pg.waitForTimeout(800);

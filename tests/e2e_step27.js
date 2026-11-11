@@ -55,7 +55,7 @@ const srv = http.createServer((req, res) => {
   console.log('Use template → feed sound stopped:', !(await pg.evaluate(() => PGReel.state().soundPlaying)));
   await pg.evaluate(() => PGReel.close());
   // ---- 2. Post Edits undo / redo ----
-  await PE.toEdit(pg);
+  await PE.toEdit(pg, 'album');   // step 53: Post is one picture now; the album maker keeps every template and format
   console.log('undo at start disabled:', await pg.$eval('.pe-ur[aria-label=Undo]', b => b.disabled));
   const t0 = (await pg.evaluate(() => PGPost.state())).tid;
   await PE.template(pg, 'Film'); await pg.waitForTimeout(500);

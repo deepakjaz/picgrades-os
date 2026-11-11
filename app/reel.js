@@ -1074,7 +1074,7 @@
     // opt.choose: the photos given are only for the style previews — you pick the reel's photos yourself (up to 80)
     var order = o.single || o.add || (S.opt.choose && !S.P) ? [] : S.photos.filter(function (p) { return p.on; }).map(function (p) { return p.id; });
     var grid = el('div', { class: 'rl-pgrid' }), sel = el('select', { class: 're-colsel', 'aria-label': 'Collection' }), next = el('button', { type: 'button', class: 're-next', text: o.single ? 'Use' : 'Next' });
-    cols.forEach(function (c, i) { sel.appendChild(el('option', { value: String(i), text: c.name + ' (' + c.photos.length + ')' })); });
+    cols.forEach(function (c, i) { sel.appendChild(el('option', { value: String(i), text: c.name })); });
     var count = el('span', { class: 'rl-pcount' });
     // from your phone: photos and videos are read here only — nothing is uploaded, all of it is let go when Reel Edits closes
     var pin = el('input', { type: 'file', accept: 'image/*,video/*', multiple: '', class: 're-pin', style: 'display:none' });
@@ -1092,7 +1092,7 @@
           if (!S.phoneCol) { S.phoneCol = { name: 'From your phone', photos: [] }; cols.push(S.phoneCol); sel.appendChild(el('option', { value: String(cols.length - 1) })); }
           got.forEach(function (id) { S.phoneCol.photos.push({ id: id }); });
           if (o.single) { if (got.length) order = [got[0]]; } else order = got.concat(order).slice(0, 80);   // what you bring from the phone comes first in the reel
-          var ix = cols.indexOf(S.phoneCol); sel.options[ix].textContent = S.phoneCol.name + ' (' + S.phoneCol.photos.length + ')'; sel.value = String(ix); show(ix);
+          var ix = cols.indexOf(S.phoneCol); sel.options[ix].textContent = S.phoneCol.name; sel.value = String(ix); show(ix);
           pnote.textContent = (bad ? bad + ' file(s) could not be opened on this phone. ' : '') + (skip ? 'Up to ' + PHONE_MAX + ' files and ' + VIDEO_MAX + ' videos per reel. ' : '') + 'They stay on your phone — nothing is uploaded.';
           return;
         }

@@ -2,7 +2,7 @@
 // Part of the wedding gallery (app/gallery.html). Files load in number order; features hook into the core with pgAfter / pgBefore.
 // "Posts & Albums" collection = every approved post/album (all slides)
 function pgAlbumsCollection() {
-  const albums = ((GALLERY && GALLERY.guestPosts) || []).filter(p => p.type === 'album');
+  const albums = ((GALLERY && GALLERY.guestPosts) || []).filter(p => p.type === 'album' || p.type === 'post');   // step 53: a post is one picture, an album many
   GALLERY.personal = (GALLERY.personal || []).filter(x => !x.albums);
   if (albums.length && !GALLERY.isStudio) GALLERY.personal.push({ name: 'Posts & Albums', photos: [].concat.apply([], albums.map(a => String(a.fileId).split(',').map(id => ({ id })))), albums: true });
 }
@@ -31,6 +31,7 @@ function pgOpenPost(photos) {
   }).catch(e => showToast(e.message));
 }
 document.getElementById('pgcPost').addEventListener('click', () => {
+  // step 53: Post Edits opens on ONE photo (a post is one picture); these suggestions fill in only when the guest switches to Album
   const pools = (GALLERY.events || []).map(e => pgShuffle(e.photos)), pick = [];
   while (pick.length < 7 && pools.some(p => p.length)) pools.forEach(p => { if (p.length && pick.length < 7) pick.push(p.shift()); });
   pgOpenPost(pick.map(p => ({ id: p.id })));
