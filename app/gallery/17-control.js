@@ -149,7 +149,8 @@
     const themes = window.PGTheme ? PGTheme.list() : [], layouts = window.PGLayout ? PGLayout.list() : [];
     th.innerHTML = ''; th.appendChild(themeCard(ORIGINAL_T, !GALLERY.theme)); themes.forEach(t => th.appendChild(themeCard(t, GALLERY.theme === t.id)));
     la.innerHTML = ''; la.appendChild(layoutCard(null, !GALLERY.layout));
-    if (GALLERY.custom && GALLERY.custom.blocks && GALLERY.custom.blocks.length) la.appendChild(layoutCard({ id: 'custom', name: 'Our own Hub', blocks: GALLERY.custom.blocks.map(b => ({ block: b.block, size: 'W' })) }, GALLERY.layout === 'custom'));
+    if (GALLERY.custom && GALLERY.custom.story) la.appendChild(layoutCard({ id: 'custom', name: 'Our own Hub', story: GALLERY.custom.story.kind, blocks: [] }, GALLERY.layout === 'custom'));   // a story Hub changed in the editor (step 54)
+    else if (GALLERY.custom && GALLERY.custom.blocks && GALLERY.custom.blocks.length) la.appendChild(layoutCard({ id: 'custom', name: 'Our own Hub', blocks: GALLERY.custom.blocks.map(b => ({ block: b.block, size: 'W' })) }, GALLERY.layout === 'custom'));
     layouts.forEach(l => la.appendChild(layoutCard(l, GALLERY.layout === l.id)));
     box.querySelectorAll('.pgcp-pagestyles').forEach(ps => { const key = ps.dataset.pagekey; ps.innerHTML = ''; Object.keys(PAGE_DEFS[key].styles).forEach(k => ps.appendChild(styleCard(key, k, curStyle(key) === k))); });
   }
