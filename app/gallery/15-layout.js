@@ -223,8 +223,46 @@
       return out;
     } finally { SCR_FOR = null; SKIP_REPACK = false; }
   }
+  // ---------- Story Hubs (step 53): a whole scrolling page instead of cards ----------
+  // "living" = Living Story (Gemini), "editorial" = Editorial Album (ChatGPT). They get the wedding's data and call back here to open things.
+  const STORY = { living: () => window.PGStoryLiving, editorial: () => window.PGStoryEditorial };
+  let storyOn = null;   // { kind, mod } while a story is on screen
+  function storyStop() { if (storyOn) { try { storyOn.mod.destroy(); } catch (e) {} storyOn = null; } const s = $('pgStory'); if (s) s.remove(); document.body.classList.remove('pg-story-on'); }
+  function storyData() {
+    const D0 = data(), evs = (GALLERY.events || []).map(e => ({ name: e.name, photos: (e.photos || []).map(p => ({ id: p.id })), featured: Array.isArray(e.featured) ? e.featured : undefined }));
+    // until the couple picks two portraits (later), two photos from the wedding ceremony itself stand in for the varmala moment
+    const main = evs.find(e => /varmala|jaimala|wedding|shaadi|phera|lagan/i.test(e.name) && e.photos.length > 3) || evs.filter(e => e.photos.length > 3).pop();
+    const couple = main ? { bride: main.photos[Math.floor(main.photos.length / 3)].id, groom: main.photos[Math.floor(main.photos.length * 2 / 3)].id } : undefined;
+    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
+  }
+  function storyAct(a, x) {
+    const run = k => { if (!visible(k)) return; const t = (window.PGRules && PGRules.act(k)) || ACT[k]; if (t) t[2](); };
+    if (['findme', 'reel', 'post', 'upload', 'install'].indexOf(a) > -1) return run(a);
+    if (a === 'memory') return run('upload');
+    if (a === 'notes') return switchViewFromNav('rooms');
+    if (a === 'loved') return pgStatTap('hearts');
+    if (a === 'share') return pgShare();
+    if (a === 'studio') return switchViewFromNav('studio');
+    if (a === 'event' && x) return window.pgOpenEvent ? pgOpenEvent(x) : openCollection(x, 0);
+    if (a === 'photo' && x && x.id) return pgOpenPhoto(x.id);
+  }
+  function storyRender(view, kind) {
+    const mod = STORY[kind] && STORY[kind](); if (!mod) return false;
+    const old = $('pgLay'); if (old) old.remove(); document.body.classList.remove('pg-lay-on');
+    if (storyOn && storyOn.kind === kind && $('pgStory')) return true;   // already showing: keep the guest's place
+    storyStop();
+    const box = h('div', 'pgl-story'); box.id = 'pgStory'; view.prepend(box); document.body.classList.add('pg-story-on');
+    let asked = false; try { asked = localStorage.getItem('pg_storyq_' + GALLERY_ID) === '1'; } catch (e) {}
+    try { mod.render(box, storyData(), storyAct, { first: !asked && !/pgpreview=1/.test(location.search), galleryId: GALLERY_ID }); storyOn = { kind, mod }; }
+    catch (e) { console.warn('Story Hub', e); storyStop(); return false; }
+    return true;
+  }
+  pgAfter('switchView', v => { if (v !== 'hub') storyStop(); else if (cur && cur.story && !storyOn) render(); });
+
   function render() {
     const view = $('view-hub'); if (!view || typeof GALLERY === 'undefined' || !GALLERY) return;
+    if (cur && cur.story && !GALLERY.isStudio) { if (document.body.dataset.view && document.body.dataset.view !== 'hub') return; if (storyRender(view, cur.story)) return; }
+    storyStop();
     let box = $('pgLay');
     if (!cur || GALLERY.isStudio) { document.body.classList.remove('pg-lay-on'); if (box) box.remove(); return; }
     if (!box) { box = h('div', 'pgl-grid'); box.id = 'pgLay'; view.prepend(box); }

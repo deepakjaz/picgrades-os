@@ -1,6 +1,22 @@
 {
  "layouts": [
   {
+   "id": "story-living",
+   "name": "Living Story",
+   "story": "living",
+   "idea": "A cinematic scroll: full-screen cover with Next moment that shrinks away, photos glancing in, events one by one, the varmala moment, live Reel and Post preview.",
+   "by": "G",
+   "blocks": []
+  },
+  {
+   "id": "story-editorial",
+   "name": "Editorial Album",
+   "story": "editorial",
+   "idea": "A calm, premium magazine: big names, numbered event chapters, small icons, notes and a closing invitation to add a moment.",
+   "by": "C",
+   "blocks": []
+  },
+  {
    "id": "magazine-cover",
    "name": "Magazine Cover",
    "idea": "Full-screen editorial portrait cover with an asymmetric glass Bento studio tray.",
