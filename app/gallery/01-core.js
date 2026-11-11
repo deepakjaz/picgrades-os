@@ -243,6 +243,7 @@ function pgDemoMerge(g) {
   if ('theme' in d) g.theme = d.theme; if ('layout' in d) g.layout = d.layout;
   if (d.pages) g.pages = Object.assign({}, g.pages || {}, d.pages);
   if (d.custom && d.custom.blocks) g.custom = d.custom;
+  if (d.story) g.story = d.story;   // story photos chosen on this phone (step 56)
   if (d.features) { const f = Object.assign({}, g.features || {}); Object.keys(d.features).forEach(k => { if (f[k] !== 'locked') f[k] = d.features[k]; }); g.features = f; }
   return g;
 }

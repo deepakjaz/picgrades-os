@@ -2539,3 +2539,32 @@ body.pg-story-on .mk-counter-pill{display:none!important}   /* the gallery count
 #pgStory .pgs-findme{color:#fff;right:70px;bottom:calc(100px + env(safe-area-inset-bottom,0px))}
 #pgStory .pgs-findme.left{right:auto;left:16px}
 @media (min-width:1100px){#pgStory .pgs-findme{right:84px;bottom:34px}#pgStory .pgs-findme.left{left:28px}body.pg-big.pg-far #pgStory .pgs-findme{bottom:34px}}
+
+/* ===== Step 56: Story photos (the couple / photographer chooses) ===== */
+.pgsp-btn{display:none!important}
+body.pg-role-couple .pgsp-btn,body.pg-role-photographer .pgsp-btn,body.pg-role-picgrades .pgsp-btn,body.pg-role-demo .pgsp-btn{display:inline-flex!important}
+.pgsp-sheet .pgsp-head{display:flex;gap:14px;align-items:center;margin:4px 0 14px}
+.pgsp-sheet .pgsp-head img{width:72px;height:72px;border-radius:14px;object-fit:cover;flex:none}
+.pgsp-sheet .pgsp-head p{margin:4px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.4}
+.pgsp-row{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--border-hairline);border-radius:14px;background:var(--bg-box);color:var(--ink);text-align:left;cursor:pointer}
+.pgsp-row i{width:26px;height:26px;border-radius:50%;border:2px solid var(--border-hairline);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;flex:none}
+.pgsp-row.on{border-color:var(--cta-peach)}.pgsp-row.on i{background:var(--cta-peach);border-color:var(--cta-peach);color:var(--cta-peach-ink,#141110)}
+.pgsp-row[data-full]{opacity:.5}
+.pgsp-row b{display:block;font:600 15px var(--font-sans)}.pgsp-row small{display:block;font-size:12px;color:var(--ink-soft);margin-top:2px}
+.pgsp-sheet.busy,.pgsp-pane.busy{opacity:.6;pointer-events:none}
+.pgsp-pane h4 small{font-weight:500;color:var(--ink-soft);margin-left:6px}
+.pgsp-empty{font-size:13px;color:var(--ink-soft);margin:4px 0 14px}
+.pgsp-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin:6px 0 16px}
+.pgsp-th{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--border-hairline)}
+.pgsp-th img{width:100%;height:100%;object-fit:cover;display:block}
+.pgsp-th button{position:absolute;bottom:4px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:16px;line-height:1;cursor:pointer}
+.pgsp-th button:disabled{opacity:.25}
+.pgsp-th [data-do=left]{left:4px}.pgsp-th [data-do=right]{right:4px}.pgsp-th [data-do=del]{left:calc(50% - 13px);background:rgba(170,40,40,.8)}
+.pgsp-slots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 16px}
+.pgsp-slot{position:relative;display:flex;flex-direction:column;gap:6px}
+.pgsp-slot img,.pgsp-ph{width:100%;aspect-ratio:3/4;border-radius:90px 90px 14px 14px;object-fit:cover;display:block}
+.pgsp-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border-hairline);color:var(--ink-soft);font-size:12px;box-sizing:border-box}
+.pgsp-ph i{width:34px;height:34px;border-radius:50%;border:1.5px solid currentColor}
+.pgsp-slot b{text-align:center;font:600 13px var(--font-sans)}
+.pgsp-slot button{position:absolute;top:8px;right:8px;width:30px;height:30px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:18px;cursor:pointer}
+.pgcp-tabs.five{grid-template-columns:.85fr .85fr 1.1fr 1.1fr 1.3fr}.pgcp-tabs.five button{font-size:11.5px;padding-left:2px;padding-right:2px}

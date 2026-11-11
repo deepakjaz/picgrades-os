@@ -64,6 +64,7 @@ var PUBLIC_ROUTES = {
   myPosts: myPosts_,
   coupleQueue: coupleQueue_,
   couplePost: couplePost_,
+  storyPicks: storyPicks_,
   coupleThanks: coupleThanks_,
   coupleFeatures: coupleFeatures_,
   coupleLook: coupleLook_,
@@ -158,7 +159,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step54-story-editor',
+    version: 'step56-story-photos',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -874,7 +875,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom'];   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks'];   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1039,6 +1040,7 @@ function getGallery_(p) {
   m.features = featuresOf_(g);
   m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
   m.custom = customOf_(g.custom);
+  m.story = picksOf_(g.storyPicks);
   m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
@@ -1559,6 +1561,33 @@ function saveLook_(g, p) {
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, out);
   return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages), custom: customOf_('custom' in out ? out.custom : g.custom) };
+}
+// Story photos (step 56): the couple or the photographer chooses which photos the story shows: cover photos (up to 15),
+// the bride's and the groom's portraits (the varmala moment) and 10–15 highlights for each event. Nothing is guessed:
+// until something is chosen, the story leaves that part out. Couple link or staff login (the wedding's photographer / PicGrades).
+var STORY_MAX = 15;
+function picksOf_(v) {
+  var o = v; if (typeof o === 'string') { try { o = JSON.parse(o || '{}'); } catch (e) { o = {}; } }
+  o = o || {};
+  var id = function (x) { x = String(x || ''); return /^[A-Za-z0-9_-]{3,120}$/.test(x) ? x : ''; };
+  var list = function (a) { var out = []; (Array.isArray(a) ? a : []).forEach(function (x) { x = id(x); if (x && out.indexOf(x) < 0 && out.length < STORY_MAX) out.push(x); }); return out; };
+  var hl = {}, n = 0;
+  Object.keys(o.hl || {}).forEach(function (k) { var ids = list(o.hl[k]), name = String(k).slice(0, 80); if (ids.length && n < 40) { hl[name] = ids; n++; } });
+  return { cover: list(o.cover), bride: id(o.bride), groom: id(o.groom), hl: hl };
+}
+/** Couple link or staff login: save the story photos (the whole choice at once; only photos of this wedding are kept). */
+function storyPicks_(p) {
+  var g = publishedGallery_(p.g);
+  if (!privileged_(g, p)) throw new Error('Only the couple or the photographer can choose the story photos.');
+  var m = loadManifest_(g), all = {}, evs = {};
+  allPhotoIds_(m).forEach(function (x) { all[x] = true; });
+  (m.events || []).forEach(function (e) { evs[e.name] = {}; e.photos.forEach(function (ph) { evs[e.name][ph.id] = true; }); });
+  var want = picksOf_(p.picks), hl = {};
+  Object.keys(want.hl).forEach(function (k) { if (evs[k]) { var ids = want.hl[k].filter(function (x) { return evs[k][x]; }); if (ids.length) hl[k] = ids; } });
+  var out = { cover: want.cover.filter(function (x) { return all[x]; }), bride: all[want.bride] ? want.bride : '', groom: all[want.groom] ? want.groom : '', hl: hl };
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { storyPicks: JSON.stringify(out), updatedAt: fmt_(new Date()) });
+  return { story: out };
 }
 // The wedding's photographer (step 42): shown as "Photographed by", on the photographer page and in the Hub.
 // Empty = the studio of the order. Set in the app's Control Panel by PicGrades or the wedding's photographer.
