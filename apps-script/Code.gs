@@ -158,7 +158,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step52-hide-trash',
+    version: 'step53-post-one-picture',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1337,11 +1337,12 @@ function savePost_(p) {
     if (u) { try { loadOrder_(g.orderId, u); who = { guestId: 'staff:' + u.email, name: g.companyName || 'Photographer', phone: '' }; status = 'approved'; } catch (e) {} }
   }
   if (!who) { who = guestFor_(g, p); if (!limitOk_('spg:' + g.galleryId, 200, 3600)) return { ok: false, error: 'Many guests are posting right now. Please try again in a little while.' }; }
-  var slides = (p.slides || []).slice(0, 10);
+  var kind = p.kind === 'post' ? 'post' : 'album';   // step 53: a post is ONE picture; an album is many slides
+  var slides = (p.slides || []).slice(0, kind === 'post' ? 1 : 10);
   if (!slides.length) return { ok: false, error: 'Nothing to save.' };
   var total = slides.reduce(function (t, x) { return t + String(x || '').length; }, 0);
   if (total * 0.75 > 30 * 1024 * 1024) return { ok: false, error: 'This post is too big. Try fewer slides.' };
-  var folder = subFolder_(g, POSTS_FOLDER_NAME), postId = 'alb_' + randomId_(10), ids = [];
+  var folder = subFolder_(g, POSTS_FOLDER_NAME), postId = (kind === 'post' ? 'pst_' : 'alb_') + randomId_(10), ids = [];
   slides.forEach(function (d, i) {
     var data = String(d).replace(/^data:[^,]*,/, '');
     var f = folder.createFile(Utilities.newBlob(Utilities.base64Decode(data), 'image/jpeg', postId + '_' + (i + 1) + '.jpg'));
@@ -1351,7 +1352,7 @@ function savePost_(p) {
   });
   ensureTab_('GuestPosts', POST_COLUMNS);
   appendRow_('GuestPosts', { at: fmt_(new Date()), galleryId: g.galleryId, postId: postId, guestId: who.guestId, name: who.name, phone: who.phone || '',
-    caption: String(p.caption || '').slice(0, 300), fileId: ids.join(','), mime: 'image/jpeg', type: 'album', status: status, reviewedAt: status === 'approved' ? fmt_(new Date()) : '' });
+    caption: String(p.caption || '').slice(0, 300), fileId: ids.join(','), mime: 'image/jpeg', type: kind, status: status, reviewedAt: status === 'approved' ? fmt_(new Date()) : '' });
   if (status === 'approved') dropSummary_(g.galleryId);
   return { postId: postId, status: status, slides: ids.length };
 }

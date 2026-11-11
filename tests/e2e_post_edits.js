@@ -1,7 +1,8 @@
-// Browser test (step 25): Post Edits — New post (numbered picks, shape, phone, POST/ALBUM/REEL) → edit (carousel swipe, tools, tap photo → Replace) → share (caption, see on profile, post).
+// Browser test (step 25, step 53 = Post is ONE picture: 1 photo or a grid of up to 5, four Instagram sizes, borders or merged): Post Edits — New post (numbered picks, shape, phone, POST/ALBUM/REEL) → edit (carousel swipe, tools, tap photo → Replace) → share (caption, see on profile, post).
 const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
-const { call, mail, DRIVE } = require('./gas_mock');
+const { call, mail, DRIVE, DB } = require('./gas_mock');
+const DB_ROWS = () => { const t = DB.GuestPosts || [[]], h = t[0]; return t.slice(1).map(r => Object.fromEntries(h.map((k, i) => [k, r[i]]))); };
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
 const W = 'EDITSWEDDING000000001';
 DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' };
@@ -36,58 +37,84 @@ const srv = http.createServer((req, res) => {
   await pg.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
   await pg.goto('http://localhost:8788/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(800);
   const FIX = require('path').join(__dirname, 'fixtures');
+  let bad = 0; const check = (ok, m) => { if (!ok) bad++; console.log((ok ? 'ok   ' : 'FAIL ') + m); };
   await pg.click('#pgcPost'); await pg.waitForSelector('.pe-wrap[data-view=pick]', { timeout: 30000 }); await pg.waitForTimeout(800);
   console.log('new post:', await pg.textContent('.pe-v-pick .pe-title'), '| shape:', await pg.textContent('.pe-pill'), '| chosen:', await pg.textContent('.pe-count'), '| tabs:', (await pg.$$eval('.pe-tab', l => l.map(t => t.textContent + (t.classList.contains('on') ? '*' : '')))).join(' '));
-  console.log('numbers on picks:', (await pg.$$eval('.pe-pick.on i', l => l.map(i => i.textContent))).join(','));
-  // tap: unselected → chosen; tap again (it is the big one) → removed
-  const free = pg.locator('.pe-pick:not(.on)').first(); const fid = await free.getAttribute('data-id');
-  await free.click(); console.log('after choosing one more:', await pg.textContent('.pe-count'), '| big preview is it:', await pg.$eval('.pe-big1', (i, id) => i.src.includes(id), fid));
-  await pg.locator('.pe-pick[data-id="' + fid + '"]').click(); console.log('tap again removes it:', await pg.textContent('.pe-count'));
-  await pg.click('.pe-pill'); console.log('shape button →', await pg.textContent('.pe-pill')); await pg.click('.pe-pill'); await pg.click('.pe-pill'); console.log('… back to', await pg.textContent('.pe-pill'));
-  await pg.setInputFiles('.pe-v-pick .pe-pin', [FIX + '/phone_photo.jpg']); await pg.waitForFunction(() => /From your phone/.test(document.querySelector('.pe-v-pick .pe-colsel').selectedOptions[0].textContent), null, { timeout: 20000 });
-  console.log('phone photo chosen:', await pg.textContent('.pe-count'));
-  await pg.screenshot({ path: '/tmp/s25_pick.png' });
+  // step 53: Post opens with ONE photo (not 7)
+  check((await pg.locator('.pe-pick.on').count()) === 1 && (await pg.textContent('.pe-count')) === 'One photo', 'Post opens with one photo chosen');
+  // the size button goes through all four Instagram sizes, the wide 1.91:1 included
+  const sizes = []; for (let k = 0; k < 4; k++) { sizes.push(await pg.textContent('.pe-pill')); await pg.click('.pe-pill'); }
+  check(sizes.join(' ') === '3:4 4:5 1:1 1.91:1' && (await pg.textContent('.pe-pill')) === '3:4', 'sizes: ' + sizes.join(' '));
+  // choose up to 5 (a grid in one picture); a 6th is refused
+  const pickMore = async () => { if (!(await pg.locator('.pe-pick:not(.on)').count())) { const ov = await pg.$$eval('.pe-v-pick .pe-colsel option', l => l.map(o => o.value)); const cur = await pg.inputValue('.pe-v-pick .pe-colsel'); await pg.selectOption('.pe-v-pick .pe-colsel', ov[(ov.indexOf(cur) + 1) % ov.length]); } await pg.locator('.pe-pick:not(.on)').first().click(); };
+  for (let k = 0; k < 4; k++) await pickMore();
+  const curId = await pg.locator('.pe-pick.cur').first().getAttribute('data-id'); await pg.locator('.pe-pick[data-id="' + curId + '"]').click();
+  check((await pg.textContent('.pe-count')) === 'Grid of 4', 'tap the big one again removes it: ' + await pg.textContent('.pe-count'));
+  await pg.locator('.pe-pick[data-id="' + curId + '"]').click(); await pickMore();
+  check((await pg.evaluate(() => PGPost.state().photos.length)) === 5 && /up to 5/.test(await pg.textContent('.pe-msg')), 'a post takes up to 5 photos, a 6th is refused: ' + await pg.textContent('.pe-count'));
+  await pg.screenshot({ path: '/tmp/s53_post_pick.png' });
   await pg.click('.pe-v-pick .pe-next'); await pg.waitForSelector('.pe-wrap[data-view=edit]'); await pg.waitForTimeout(900);
   let st = await pg.evaluate(() => Object.assign(PGPost.state(), PGPost.info()));
-  console.log('edit:', st.format, '| shape', st.shape, '| page', st.W / st.slides + '×' + st.H, '|', st.slides, 'slides,', st.cells, 'photos | dots:', await pg.locator('.pe-dots i').count(), '|', await pg.textContent('.pe-slideno'));
-  await pg.screenshot({ path: '/tmp/s25_edit.png' });
-  // swipe to slide 3
-  await pg.$eval('.pe-stage', s => { const w = s.querySelector('canvas').getBoundingClientRect().width / s.querySelectorAll('.pe-snap').length; s.scrollTo({ left: w * 2 }); }); await pg.waitForTimeout(500);
-  console.log('after swipe:', await pg.textContent('.pe-slideno'));
-  await pg.$eval('.pe-stage', s => s.scrollTo({ left: 0 })); await pg.waitForTimeout(400);
-  // tools
+  check(st.format === 'post' && st.slides === 1 && st.cells === 5 && st.W === 1080 && st.H === 1440, 'one picture 1080×' + st.H + ' with ' + st.cells + ' photos (' + st.format + ', ' + st.slides + ' slide) | dots: ' + await pg.locator('.pe-dots i').count());
+  check(!(await pg.locator('.pe-tool[data-tool=slides]').count()) && await pg.locator('.pe-tool[data-tool=grid]').count() === 1, 'tools: ' + (await pg.locator('.pe-tool span').allTextContents()).join(', '));
+  // photos never overlap and stay inside the picture
+  const inside = hs => hs.every(h => h.x >= 0 && h.y >= 0 && h.x + h.w <= 1080.5 && h.y + h.h <= st.H + 0.5) && hs.every((a, i) => hs.every((c, j) => i === j || !(a.x < c.x + c.w - 1 && c.x < a.x + a.w - 1 && a.y < c.y + c.h - 1 && c.y < a.y + a.h - 1)));
+  check(inside(st.hits), 'the 5 photos fit the picture without overlapping');
+  await pg.screenshot({ path: '/tmp/s53_post_grid.png' });
+  // Grid: three arrangements; Borders off → photos meet edge to edge
+  await pg.click('.pe-tool[data-tool=grid]'); const nGrids = await pg.locator('.pe-gopt').count(); await pg.locator('.pe-gopt').nth(1).click();
+  const withB = await pg.evaluate(() => PGPost.info().hits);
+  await pg.locator('.pe-sheet .ps-chip', { hasText: 'Merged' }).click(); await pg.click('.pe-sheet .pe-done');
+  const noB = await pg.evaluate(() => PGPost.info().hits), area = hs => hs.reduce((t, h) => t + h.w * h.h, 0);
+  check(nGrids === 3 && (await pg.evaluate(() => PGPost.state().grid)) === 1, 'Grid offers ' + nGrids + ' arrangements for 5 photos');
+  check(Math.abs(area(noB) - 1080 * st.H) < 2000 && area(withB) < area(noB) - 20000, 'Merged: photos cover the whole picture (' + Math.round(area(noB)) + ' of ' + 1080 * st.H + '); with borders: a frame shows');
+  await pg.screenshot({ path: '/tmp/s53_post_merged.png' });
+  // every Instagram size changes the WHOLE picture
+  for (const [lab, H, v] of [['4:5', 1350, '45'], ['1:1', 1080, '11'], ['1.91:1', 566, '191'], ['3:4', 1440, '34']]) {
+    await pg.click('.pe-tool[data-tool=shape]'); await pg.click('.pe-sheet .ps-chip[data-v="' + v + '"]'); await pg.click('.pe-sheet .pe-done'); await pg.waitForTimeout(200);
+    const I = await pg.evaluate(() => PGPost.info()), cv = await pg.$eval('.pe-stage canvas', c => c.width / c.height);
+    check(I.H === H && Math.abs(cv - 1080 / H) < 0.02 && inside.call(null, I.hits.map(h => h)) && Math.abs(area(I.hits) - 1080 * H) < 2000, 'size ' + lab + ' → picture 1080×' + I.H + ' (canvas ' + cv.toFixed(2) + '), photos fill it');
+    if (lab === '1.91:1') await pg.screenshot({ path: '/tmp/s53_post_wide.png' });
+  }
+  // Post templates only (album templates stay in Album)
+  await pg.click('.pe-tool[data-tool=template]'); await pg.waitForSelector('.pe-sheet .pe-tpl'); const tpls = await pg.locator('.pe-sheet .pe-tpl span').allTextContents();
+  check(tpls.join() === 'Clean,Names below,Names on photo,Gallery frame,Night', 'post templates: ' + tpls.join(', '));
+  await pg.locator('.pe-sheet .pe-tpl', { hasText: 'Names below' }).click(); await pg.click('.pe-sheet .pe-done'); await pg.waitForTimeout(300);
+  const tx = await pg.evaluate(() => PGPost.info().texts.map(t => t.key));
+  check(tx.indexOf('names') > -1, 'Names below writes the names: ' + tx.join(','));
+  await pg.screenshot({ path: '/tmp/s53_post_names.png' });
   await pg.click('.pe-tool[data-tool=filters]'); await pg.click('.pe-filter[data-f=golden]'); await pg.click('.pe-sheet .pe-done');
-  await pg.click('.pe-tool[data-tool=slides]'); await pg.locator('.pe-sheet .ps-chip', { hasText: /^2$/ }).click(); await pg.click('.pe-sheet .pe-done');
-  st = await pg.evaluate(() => Object.assign(PGPost.state(), PGPost.info())); console.log('golden filter + 2 per slide:', st.filter, '|', st.slides, 'slides');
-  await pg.click('.pe-tool[data-tool=shape]'); await pg.locator('.pe-sheet .ps-chip', { hasText: '4:5' }).click(); await pg.click('.pe-sheet .pe-done');
-  console.log('shape 4:5 → page height', (await pg.evaluate(() => PGPost.info())).H);
   await pg.click('.pe-tool[data-tool=order]'); const o1 = (await pg.evaluate(() => PGPost.state().photos)).slice(0, 2); await pg.locator('.pe-ord').nth(0).locator('button[aria-label="Move later"]').click();
-  const o2 = (await pg.evaluate(() => PGPost.state().photos)).slice(0, 2); console.log('order swapped first two:', o1[0] === o2[1] && o1[1] === o2[0]); await pg.click('.pe-sheet .pe-done');
-  await pg.click('.pe-tool[data-tool=template]'); await pg.locator('.pe-sheet .pe-tpl').nth(10).click(); await pg.click('.pe-sheet .pe-done');
-  // tap a photo on slide 1 → pop-up → Replace
+  const o2 = (await pg.evaluate(() => PGPost.state().photos)).slice(0, 2); check(o1[0] === o2[1] && o1[1] === o2[0], 'order swapped first two'); await pg.click('.pe-sheet .pe-done');
+  // tap a photo → pop-up → Replace
   const hit = await pg.evaluate(() => { const c = document.querySelector('.pe-stage canvas'), r = c.getBoundingClientRect(), I = PGPost.info(); return { r: { x: r.x, y: r.y, w: r.width, h: r.height }, W: I.W, H: I.H }; });
-  const h0 = (await pg.evaluate(() => PGPost.info().hits)).filter(h => h.x < 1080)[0];
+  const h0 = (await pg.evaluate(() => PGPost.info().hits))[0];
   await pg.mouse.click(hit.r.x + (h0.x + h0.w / 2) / hit.W * hit.r.w, hit.r.y + (h0.y + h0.h / 2) / hit.H * hit.r.h); await pg.waitForTimeout(400);
   console.log('tap photo → pop-up:', await pg.isVisible('.pe-pop'), '|', await pg.textContent('.pe-thisone b'));
-  await pg.screenshot({ path: '/tmp/s25_pop.png' });
   const old = (await pg.evaluate(() => PGPost.state().sel)).id;
   await pg.click('.pe-repl'); await pg.waitForSelector('.pe-picker');
+  const freeIn = async () => pg.$$eval('.pe-picker .pe-pick', (l, cur) => l.map(t => t.dataset.id).find(id => cur.indexOf(id) < 0), await pg.evaluate(() => PGPost.state().photos));
+  if (!(await freeIn())) { const ov = await pg.$$eval('.pe-picker .pe-colsel option', l => l.map(o => o.value)); await pg.selectOption('.pe-picker .pe-colsel', ov[ov.length - 1]); }
   const nid = await pg.$$eval('.pe-picker .pe-pick', (l, cur) => l.map(t => t.dataset.id).find(id => cur.indexOf(id) < 0), await pg.evaluate(() => PGPost.state().photos));
   await pg.click('.pe-picker .pe-pick[data-id="' + nid + '"]'); await pg.waitForTimeout(1500);
-  st = await pg.evaluate(() => PGPost.state()); console.log('replaced in place:', st.photos.includes(nid) && !st.photos.includes(old), '| pop-up now on it:', st.sel && st.sel.id === nid);
+  st = await pg.evaluate(() => PGPost.state()); check(st.photos.includes(nid) && !st.photos.includes(old) && st.sel && st.sel.id === nid, 'replaced in place');
   await pg.click('.pe-pop .pe-done');
-  // share
+  // share: one image; saved as a post
   await pg.click('.pe-v-edit .pe-next'); await pg.waitForSelector('.pe-wrap[data-view=share]'); await pg.waitForTimeout(500);
-  console.log('share: slides', await pg.locator('.pe-shth').count(), '| caption:', JSON.stringify(await pg.inputValue('.pe-cap')), '| profile tiles:', await pg.locator('.pe-tile').count(), '| new tile:', await pg.isVisible('.pe-tile.new img'));
+  check((await pg.locator('.pe-shth').count()) === 1, 'share: one image | caption: ' + JSON.stringify(await pg.inputValue('.pe-cap')));
   await pg.screenshot({ path: '/tmp/s25_share.png' });
   await pg.click('.ps-go'); await pg.waitForFunction(() => /Posted|Sent/.test(document.querySelector('.ps-go').textContent), null, { timeout: 30000 });
+  const saved = DB_ROWS().filter(r => r.galleryId === pub.galleryId).slice(-1)[0] || {};
+  check(saved.type === 'post' && String(saved.fileId).split(',').length === 1 && /^pst_/.test(saved.postId), 'saved as a post (one picture): ' + saved.type + ' ' + saved.postId);
   console.log('post:', await pg.textContent('.ps-go'), '|', await pg.textContent('.pe-msg'));
   // ALBUM tab, then REEL hand-off
   await pg.click('.pe-v-share .pe-ib'); await pg.click('.pe-v-edit .pe-ib'); await pg.click('.pe-tab[data-mode=album]'); await pg.click('.pe-v-pick .pe-next'); await pg.waitForSelector('.pe-wrap[data-view=edit]'); await pg.waitForTimeout(600);
   st = await pg.evaluate(() => Object.assign(PGPost.state(), PGPost.info())); console.log('ALBUM →', st.format, st.slides, 'slides | seams:', await pg.locator('.ps-seams i').count());
+  check(st.format === 'strip' && st.slides > 1, 'Album is unchanged: the swipe album (' + st.slides + ' slides)');
   await pg.screenshot({ path: '/tmp/s25_album.png' });
   await pg.click('.pe-v-edit .pe-ib'); await pg.click('.pe-tab[data-mode=reel]'); await pg.waitForSelector('.rl-wrap', { timeout: 30000 });
   console.log('REEL tab opens Reel Edits:', await pg.isVisible('.rl-wrap'), '| post maker closed:', !(await pg.isVisible('.pe-wrap')));
   await pg.evaluate(() => PGReel.close());
+  console.log(bad ? 'FAIL ' + bad + ' post checks' : 'all post checks passed');
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
 });

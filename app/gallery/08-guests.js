@@ -97,8 +97,8 @@ function pgRenderMine(posts) {
   sets.slice(0, 4).forEach(s => rows.push('<button type="button" class="pgc-pill" data-set="' + pgEsc(s.code) + '"><img alt="" src="' + pgImg(s.ids[0], 120) + '"><span><b>' + pgEsc(s.name) + '</b><br>Your saved set</span><em class="ok">Saved</em></button>'));
   (posts || pgRenderMine.posts || []).slice(0, 6).forEach(p => {
     const st = p.status === 'approved' ? '<em class="ok">Approved</em>' : p.status === 'hidden' ? '<em class="no">Not shown</em>' : '<em>In review</em>';
-    if (p.status === 'review' && p.thumb) { rows.push('<div class="pgc-pill"><img alt="" src="' + p.thumb + '"><span>Your ' + (p.type === 'video' ? 'video' : p.type === 'album' ? 'post / album' : 'photo') + (p.caption ? ' · ' + pgEsc(p.caption) : '') + '</span>' + st + '</div>'); return; }   // step 50: private until approved
-    if (p.type === 'album') { rows.push('<div class="pgc-pill"><img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 120) + '"><span>Your post / album</span>' + st + '</div>'); return; }
+    if (p.status === 'review' && p.thumb) { rows.push('<div class="pgc-pill"><img alt="" src="' + p.thumb + '"><span>Your ' + (p.type === 'video' ? 'video' : p.type === 'post' ? 'post' : p.type === 'album' ? 'album' : 'photo') + (p.caption ? ' · ' + pgEsc(p.caption) : '') + '</span>' + st + '</div>'); return; }   // step 50: private until approved
+    if (p.type === 'album' || p.type === 'post') { rows.push('<div class="pgc-pill"><img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 120) + '"><span>Your ' + (p.type === 'post' ? 'post' : 'album') + '</span>' + st + '</div>'); return; }
     rows.push('<div class="pgc-pill">' + (p.type === 'photo' ? '<img alt="" src="' + pgImg(p.fileId, 120) + '">' : '<img alt="" src="' + pgImgFallback(p.fileId, 120) + '">') + '<span>Your ' + (p.type === 'video' ? 'video' : 'photo') + (p.caption ? ' · ' + pgEsc(p.caption) : '') + '</span>' + st + '</div>');
   });
   if (posts) pgRenderMine.posts = posts;
@@ -170,7 +170,7 @@ function pgCheckMyPosts() {
   function media(p) {
     // step 50: a post waiting for review is private on Drive — show the preview the server made (videos play once approved)
     if (p.status === 'review' && p.thumb) return '<img alt="" src="' + p.thumb + '">' + (p.type === 'video' ? '<span class="cp-vnote">Video · plays once approved (you can hide it again any time)</span>' : '');
-    if (p.type === 'album') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
+    if (p.type === 'album' || p.type === 'post') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
   function load() {
     return pgApi('coupleQueue').then(r => {
       $('cpThanks').value = r.thanks || '';
@@ -222,7 +222,7 @@ function pgReloadPosts() { return pgApi('getGallery').then(r => { GALLERY.guestP
       const item = document.createElement('div'); item.className = 'pgm-item pgm-guest'; item.dataset.pid = p.fileId;
       const blur = document.createElement('div'); blur.className = 'pgm-blur';
       let media;
-      if (p.type === 'album') {
+      if (p.type === 'album' || p.type === 'post') {
         const ids = String(p.fileId).split(','); m.id = ids[0]; item.dataset.pid = ids[0];
         media = document.createElement('div'); media.className = 'pgm-album';
         const dots = document.createElement('div'); dots.className = 'pgm-dots';
@@ -244,7 +244,7 @@ function pgReloadPosts() { return pgApi('getGallery').then(r => { GALLERY.guestP
         blur.style.backgroundImage = 'url("' + pgImg(p.fileId, 60) + '")';
       }
       const scrim = document.createElement('div'); scrim.className = 'pgm-scrim';
-      scrim.innerHTML = '<div class="pgm-name">' + pgEsc(p.caption || GALLERY.title || '') + '</div><div class="pgm-meta">' + (p.type === 'album' ? 'POST / ALBUM' : 'GUEST MOMENT') + ' · ' + (i + 1) + '/' + posts.length + '</div><span class="pgm-by">by ' + pgEsc(p.name) + '</span>';
+      scrim.innerHTML = '<div class="pgm-name">' + pgEsc(p.caption || GALLERY.title || '') + '</div><div class="pgm-meta">' + (p.type === 'post' ? 'POST' : p.type === 'album' ? 'ALBUM' : 'GUEST MOMENT') + ' · ' + (i + 1) + '/' + posts.length + '</div><span class="pgm-by">by ' + pgEsc(p.name) + '</span>';
       const acts = document.createElement('div'); acts.className = 'pgm-actions';
       const like = document.createElement('button'); like.type = 'button'; like.className = 'pgm-btn pgm-like'; like.setAttribute('aria-label', 'Like'); like.innerHTML = ICON_HEART_OUTLINE + ICON_HEART_FILLED + '<span class="pgm-like-count"></span>';
       const note = document.createElement('button'); note.type = 'button'; note.className = 'pgm-btn'; note.setAttribute('aria-label', 'Notes'); note.innerHTML = ICON_NOTE + '<span class="pgm-note-count"></span>';
@@ -253,7 +253,7 @@ function pgReloadPosts() { return pgApi('getGallery').then(r => { GALLERY.guestP
       note.addEventListener('click', e => { e.stopPropagation(); openNotes(m, 'Guest moment by ' + p.name); });
       share.addEventListener('click', e => { e.stopPropagation(); pgShare(); });
       acts.appendChild(like); acts.appendChild(note); acts.appendChild(share);
-      if (p.type !== 'video' && p.type !== 'album') {   // guest photos: pinch to zoom and download, like the photographer's photos
+      if (p.type !== 'video' && p.type !== 'album' && p.type !== 'post') {   // guest photos: pinch to zoom and download, like the photographer's photos
         pgZoomable(item, media, feed);
         const dl = document.createElement('button'); dl.type = 'button'; dl.className = 'pgm-btn'; dl.setAttribute('aria-label', 'Download photo');
         dl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';

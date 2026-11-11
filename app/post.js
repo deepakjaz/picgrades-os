@@ -28,6 +28,26 @@
     cocktail: { name: 'Cocktail Night', pad: 80, top: 210, bottom: 190, gap: 26, cell: 'neon', deco: 'cocktail', dark: true, layout: 'mosaic' }
   };
   var ORDER = ['album', 'seamless', 'film', 'polaroid', 'magazine', 'minimal', 'arch', 'kasavu', 'floral', 'cocktail'];
+  // Post mode (step 53): ONE Instagram picture — never a carousel. 1 photo, or a grid of 2–5 photos in one picture.
+  // frame: the paper around and between the photos when Borders are on. names: where the couple's names go ('' = none).
+  var POST_TEMPLATES = {
+    pclean:  { name: 'Clean', post: true, names: '' },
+    pnames:  { name: 'Names below', post: true, names: 'below' },
+    povl:    { name: 'Names on photo', post: true, names: 'over' },
+    pframe:  { name: 'Gallery frame', post: true, names: '', wide: true },
+    pdark:   { name: 'Night', post: true, names: 'below', dark: true }
+  };
+  var POST_ORDER = Object.keys(POST_TEMPLATES);
+  Object.keys(POST_TEMPLATES).forEach(function (k) { var x = POST_TEMPLATES[k]; TEMPLATES[k] = Object.assign({ pad: 0, top: 0, bottom: 0, gap: 0, cell: 'plain', deco: 'none', layout: 'singles' }, x); });
+  // grids: where each photo sits inside the picture, as parts of the photo area [x, y, w, h]; one list per number of photos
+  var GRIDS = {
+    1: [[[0, 0, 1, 1]]],
+    2: [[[0, 0, .5, 1], [.5, 0, .5, 1]], [[0, 0, 1, .5], [0, .5, 1, .5]], [[0, 0, .62, 1], [.62, 0, .38, 1]]],
+    3: [[[0, 0, .6, 1], [.6, 0, .4, .5], [.6, .5, .4, .5]], [[0, 0, 1, .6], [0, .6, .5, .4], [.5, .6, .5, .4]], [[0, 0, 1 / 3, 1], [1 / 3, 0, 1 / 3, 1], [2 / 3, 0, 1 / 3, 1]]],
+    4: [[[0, 0, .5, .5], [.5, 0, .5, .5], [0, .5, .5, .5], [.5, .5, .5, .5]], [[0, 0, .64, 1], [.64, 0, .36, 1 / 3], [.64, 1 / 3, .36, 1 / 3], [.64, 2 / 3, .36, 1 / 3]], [[0, 0, 1, .62], [0, .62, 1 / 3, .38], [1 / 3, .62, 1 / 3, .38], [2 / 3, .62, 1 / 3, .38]]],
+    5: [[[0, 0, .5, .5], [.5, 0, .5, .5], [0, .5, 1 / 3, .5], [1 / 3, .5, 1 / 3, .5], [2 / 3, .5, 1 / 3, .5]], [[0, 0, .5, 1], [.5, 0, .25, .5], [.75, 0, .25, .5], [.5, .5, .25, .5], [.75, .5, .25, .5]], [[0, 0, 1, .58], [0, .58, .25, .42], [.25, .58, .25, .42], [.5, .58, .25, .42], [.75, .58, .25, .42]]]
+  };
+  var POSTMAX = 5;
   var S = null;
 
   function el(tag, attrs, kids) {
@@ -122,6 +142,22 @@
     return { W: slides.length * SW, n: slides.length, cells: cells };
   }
 
+  // one picture: the photos in the chosen grid; Borders on = a paper frame around and between them, off = they meet edge to edge
+  function postArea(T) {
+    var b = S.border ? Math.round(Math.min(SW, SH) * (T.wide ? 0.06 : 0.025)) : 0, strip = T.names === 'below' ? Math.round(Math.max(90, SH * 0.12)) : 0;
+    return { x: b, y: b, w: SW - 2 * b, h: SH - 2 * b - strip, gap: S.border ? Math.max(8, Math.round(Math.min(SW, SH) * 0.014)) : 0, strip: strip };
+  }
+  function layoutPost(list, T) {
+    var n = Math.max(1, Math.min(POSTMAX, list.length)), designs = GRIDS[n], d = designs[(S.grid || 0) % designs.length], A = postArea(T), g = A.gap / 2, cells = [], e = 1e-6;
+    d.forEach(function (r, i) {
+      if (!list[i]) return;
+      var x0 = A.x + r[0] * A.w + (r[0] > e ? g : 0), y0 = A.y + r[1] * A.h + (r[1] > e ? g : 0);
+      var x1 = A.x + (r[0] + r[2]) * A.w - (r[0] + r[2] < 1 - e ? g : 0), y1 = A.y + (r[1] + r[3]) * A.h - (r[1] + r[3] < 1 - e ? g : 0);
+      cells.push({ id: list[i].id, x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+    });
+    return { W: SW, n: 1, cells: cells, post: true };
+  }
+
   // ---------- drawing ----------
   function focusOf(id) {
     var a = S.adj[id]; if (a) return a;
@@ -164,7 +200,7 @@
 
   function render(ctx, L, opt) {
     var T = TEMPLATES[S.tid], P = PALETTES[S.pid], W = L.W;
-    var bg = T.dark ? (S.pid === 'midnight' ? P.paper : '#121016') : T.white ? '#FFFFFF' : P.paper;
+    var bg = T.dark ? (S.pid === 'midnight' ? P.paper : '#121016') : T.white ? '#FFFFFF' : T.post && !T.wide && S.pid === 'ivory' ? '#FFFFFF' : P.paper;
     var ink = T.dark ? '#F4EEE6' : P.ink, acc = P.accent;
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, SH);
     // page decoration under the photos
@@ -204,7 +240,15 @@
       line(ctx, ink, 2); ctx.beginPath(); ctx.moveTo(70, 230); ctx.lineTo(SW * 0.75 - 30, 230); ctx.stroke();
       ctx.font = '500 150px ' + SERIF; var parts = String(names).split(/\s*&\s*/); parts.forEach(function (p, i) { tt(ctx, 'names', (i ? '& ' : '') + p, 64, 420 + i * 160); });
       ctx.fillStyle = acc; ctx.font = '500 34px ' + MONO; tt(ctx, 'date', date, 70, 420 + parts.length * 160 + 20);
-    } else if (T.deco !== 'none' || T.cell === 'caption') {
+    } else if (T.post && T.names === 'over') {
+      var go = ctx.createLinearGradient(0, SH * 0.55, 0, SH); go.addColorStop(0, 'rgba(0,0,0,0)'); go.addColorStop(1, 'rgba(0,0,0,.55)'); ctx.fillStyle = go; ctx.fillRect(0, SH * 0.55, SW, SH * 0.45);
+      var fs = Math.round(Math.min(96, SH * 0.085)); ctx.fillStyle = '#fff'; ctx.font = 'italic 400 ' + fs + 'px ' + SERIF; tt(ctx, 'names', names, 64, SH - fs * 0.95 - 30);
+      ctx.font = '500 ' + Math.round(fs * 0.32) + 'px ' + MONO; tt(ctx, 'date', date, 68, SH - 40);
+    } else if (T.post && T.names === 'below') {
+      var A2 = postArea(T), cy = SH - A2.y - A2.strip / 2, f2 = Math.round(Math.min(64, A2.strip * 0.42));
+      ctx.textBaseline = 'middle'; ctx.fillStyle = ink; ctx.font = 'italic 500 ' + f2 + 'px ' + SERIF; tt(ctx, 'names', names, Math.max(A2.x, 40) + 8, cy);
+      ctx.font = '500 ' + Math.round(f2 * 0.42) + 'px ' + MONO; ctx.fillStyle = T.dark ? acc : P.accent; ctx.textAlign = 'right'; tt(ctx, 'date', date, SW - Math.max(A2.x, 40) - 8, cy); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    } else if (!T.post && (T.deco !== 'none' || T.cell === 'caption')) {
       ctx.fillStyle = ink; ctx.font = (T.dark ? '600 ' : 'italic 500 ') + '64px ' + (T.dark ? SANS : SERIF); tt(ctx, 'names', names, T.pad || 70, T.top - (T.deco === 'film' ? 160 : 70));
       ctx.font = '500 26px ' + MONO; ctx.fillStyle = T.dark ? acc : P.accent; ctx.textAlign = 'right'; tt(ctx, 'date', date, W - (T.pad || 70), SH - Math.max(60, T.bottom / 2 - 10)); ctx.textAlign = 'left';
       if (T.deco === 'rule') { line(ctx, acc, 2); ctx.beginPath(); ctx.moveTo(T.pad, T.top - 40); ctx.lineTo(W - T.pad, T.top - 40); ctx.stroke(); }
@@ -248,6 +292,7 @@
     var list = S.photos.filter(function (p) { return p.on && S.bitmaps[p.id]; }).map(function (p) { var b = S.bitmaps[p.id]; return { id: p.id, w: b.width, h: b.height }; });
     if (!list.length) return null;
     var T = TEMPLATES[S.tid];
+    if (S.format === 'post') return layoutPost(list.slice(0, POSTMAX), T);
     if (S.format === 'single') return layoutStrip(list.slice(0, T.singles ? 1 : 4), T, 1);
     if (S.format === 'carousel') return layoutCarousel(list, T);
     return layoutStrip(list, T, S.slides || 0);
@@ -269,7 +314,7 @@
     dots(); commitSoon();
   }
   // ---------- undo / redo: every change is a step; a drag or a burst of typing counts as one ----------
-  function snap() { return JSON.stringify({ tid: S.tid, pid: S.pid, format: S.format, per: S.per, slides: S.slides, art: S.art, petals: S.petals, names: S.names, date: S.date, tx: S.tx || {}, filter: S.filter, fcss: S.fcss, shape: S.shape, photos: S.photos, adj: S.adj, stickers: S.stickers }); }
+  function snap() { return JSON.stringify({ tid: S.tid, pid: S.pid, format: S.format, per: S.per, slides: S.slides, art: S.art, petals: S.petals, names: S.names, date: S.date, tx: S.tx || {}, filter: S.filter, fcss: S.fcss, shape: S.shape, photos: S.photos, adj: S.adj, stickers: S.stickers, mode: S.mode, grid: S.grid, border: S.border }); }
   var commitT = null;
   function commitSoon() { clearTimeout(commitT); commitT = setTimeout(commit, 350); }
   function commit() { if (!S || S.view !== 'edit') return; var now = snap(); if (S.lastSnap == null) { S.lastSnap = now; return updUndo(); } if (now === S.lastSnap) return; S.undo.push(S.lastSnap); if (S.undo.length > 60) S.undo.shift(); S.redo = []; S.lastSnap = now; updUndo(); }
@@ -352,6 +397,8 @@
     '.pe-thisone{display:flex;align-items:center;gap:12px}.pe-thisone b{flex:1;font-size:15px}.pe-ethumb{width:46px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #FAC646}' +
     '.pe-repl{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:19px;border:0;background:#FAC646;color:#111;font:700 14px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}.pe-repl svg{width:16px;height:16px}' +
     '.pe-note{font-size:12px;color:rgba(255,255,255,.6);margin:8px 0}' +
+    '.pe-grow{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 8px}.pe-gopt{flex:none;width:92px;padding:6px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,.08);cursor:pointer}.pe-gopt.on{border-color:#E7C873}' +
+    '.pe-gmini{position:relative;display:block;width:100%;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}.pe-gmini i{position:absolute;box-sizing:border-box;border:2px solid #1b1b1b;background:rgba(231,200,115,.75)}' +
     '.pe-frow{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}.pe-filter{flex:none;border:0;background:none;color:#fff;display:flex;flex-direction:column;align-items:center;gap:6px;font:600 11.5px/1 "Plus Jakarta Sans",system-ui,sans-serif;cursor:pointer}' +
     '.pe-filter img{width:64px;height:84px;object-fit:cover;border-radius:8px;border:2px solid transparent}.pe-filter.on img{border-color:#FAC646}' +
     '.pe-orow{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}.pe-ord{flex:none;position:relative;width:72px;text-align:center}.pe-ord img{width:72px;height:96px;object-fit:cover;border-radius:8px;display:block}' +
@@ -493,8 +540,9 @@
     return packsP;
   }
   // ================= Post Edits (step 25): Instagram-style new-post screens — choose → edit → share =================
-  var SHAPES = { '34': [1440, '3:4'], '45': [1350, '4:5'], '11': [1080, '1:1'] };
-  function setShape(k) { S.shape = SHAPES[k] ? k : '34'; SH = SHAPES[S.shape][0]; }
+  var SHAPES = { '34': [1440, '3:4'], '45': [1350, '4:5'], '11': [1080, '1:1'], '191': [566, '1.91:1'] };   // 1.91:1 = Instagram's wide (landscape) post, posts only
+  function shapeKeys() { return S && S.mode === 'post' ? ['34', '45', '11', '191'] : ['34', '45', '11']; }
+  function setShape(k) { S.shape = SHAPES[k] && shapeKeys().indexOf(k) > -1 ? k : '34'; SH = SHAPES[S.shape][0]; }
   var FILTERS = [['none', 'Original', ''], ['warm', 'Warm', 'sepia(.22) saturate(1.15) brightness(1.03)'], ['golden', 'Golden', 'sepia(.35) saturate(1.3) hue-rotate(-8deg)'],
     ['film', 'Film', 'contrast(1.08) saturate(.85) sepia(.15)'], ['vivid', 'Vivid', 'saturate(1.4) contrast(1.08)'], ['cool', 'Cool', 'hue-rotate(-12deg) saturate(.9) brightness(1.02)'],
     ['fade', 'Fade', 'contrast(.85) brightness(1.08) saturate(.8)'], ['bw', 'B&W', 'grayscale(1) contrast(1.12)'], ['noir', 'Noir', 'grayscale(1) contrast(1.35) brightness(.92)']];
@@ -536,7 +584,7 @@
     var cols = o.cols, grid = el('div', { class: 'pe-grid' }), sel = el('select', { class: 'pe-colsel', 'aria-label': 'Collection' });
     var pin = el('input', { type: 'file', accept: 'image/*', multiple: '', class: 'pe-pin', style: 'display:none' });
     var pbtn = el('button', { type: 'button', class: 'pe-phone', html: ic('phone') + '<span>Phone</span>', onclick: function () { pin.click(); } });
-    cols.forEach(function (c, i) { sel.appendChild(el('option', { value: String(i), text: c.name + ' (' + c.photos.length + ')' })); });
+    cols.forEach(function (c, i) { sel.appendChild(el('option', { value: String(i), text: c.name })); });
     function show(i) {
       grid.innerHTML = ''; var c = cols[+i]; if (!c) return;
       c.photos.forEach(function (p) {
@@ -560,7 +608,7 @@
           if (!S.phoneCol) { S.phoneCol = { name: 'From your phone', photos: [] }; }
           if (cols.indexOf(S.phoneCol) < 0) { cols.push(S.phoneCol); sel.appendChild(el('option', { value: String(cols.length - 1) })); }
           got.forEach(function (id) { S.phoneCol.photos.push({ id: id }); });
-          var ix = cols.indexOf(S.phoneCol); sel.options[ix].textContent = S.phoneCol.name + ' (' + S.phoneCol.photos.length + ')'; sel.value = String(ix); show(ix);
+          var ix = cols.indexOf(S.phoneCol); sel.options[ix].textContent = S.phoneCol.name; sel.value = String(ix); show(ix);
           if (o.onPhone) o.onPhone(got);
           if (bad) msg(bad + ' photo(s) could not be opened on this phone.');
           return;
@@ -570,7 +618,7 @@
       };
       step();
     });
-    if (S.phoneCol && cols.indexOf(S.phoneCol) < 0) { cols.push(S.phoneCol); sel.appendChild(el('option', { value: String(cols.length - 1), text: S.phoneCol.name + ' (' + S.phoneCol.photos.length + ')' })); }
+    if (S.phoneCol && cols.indexOf(S.phoneCol) < 0) { cols.push(S.phoneCol); sel.appendChild(el('option', { value: String(cols.length - 1), text: S.phoneCol.name })); }
     show(0);
     return { grid: grid, sel: sel, pbtn: pbtn, pin: pin, paint: paint, show: show };
   }
@@ -588,25 +636,26 @@
 
   // ---------- screen 1: New post ----------
   var MAXPICK = 20;
+  function maxPick() { return S.mode === 'post' ? POSTMAX : MAXPICK; }
   function buildPick() {
     var v = S.vPick;
     S.big1 = el('img', { class: 'pe-big1', alt: '' });
-    S.shapeBtn = el('button', { type: 'button', class: 'pe-pill', 'aria-label': 'Shape', onclick: function () { var ks = ['34', '45', '11']; setShape(ks[(ks.indexOf(S.shape) + 1) % 3]); paintPick(); } });
+    S.shapeBtn = el('button', { type: 'button', class: 'pe-pill', 'aria-label': 'Shape', onclick: function () { var ks = shapeKeys(); setShape(ks[(ks.indexOf(S.shape) + 1) % ks.length]); paintPick(); } });
     S.box1 = el('div', { class: 'pe-box1' }, [S.big1]);
     var count = el('span', { class: 'pe-count' });
     S.next1 = el('button', { type: 'button', class: 'pe-next', text: 'Next', onclick: goEdit });
     var G = S.pg1 = photoGrid({ cols: allCols(), onTap: function (id) {
       var k = chosenIds().indexOf(id);
-      if (k < 0) { if (S.photos.length >= MAXPICK) { msg('Up to ' + MAXPICK + ' photos in one post.'); return; } S.photos.push({ id: id, on: true }); S.cur = id; }
+      if (k < 0) { if (S.photos.length >= maxPick()) { msg(S.mode === 'post' ? 'A post is one picture: up to ' + POSTMAX + ' photos in a grid. For more, use Album.' : 'Up to ' + MAXPICK + ' photos in one album.'); return; } S.photos.push({ id: id, on: true }); S.cur = id; msg(''); }
       else if (S.cur === id) { S.photos.splice(k, 1); S.cur = S.photos.length ? S.photos[S.photos.length - 1].id : null; }
       else S.cur = id;
       paintPick();
-    }, onPhone: function (got) { got.forEach(function (id) { if (S.photos.length < MAXPICK && chosenIds().indexOf(id) < 0) S.photos.push({ id: id, on: true }); }); if (got.length) S.cur = got[got.length - 1]; paintPick(); } });
+    }, onPhone: function (got) { got.forEach(function (id) { if (S.photos.length < maxPick() && chosenIds().indexOf(id) < 0) S.photos.push({ id: id, on: true }); }); if (got.length) S.cur = got[got.length - 1]; paintPick(); } });
     var tabs = el('div', { class: 'pe-tabs', role: 'tablist' });
     [['post', 'POST'], ['album', 'ALBUM'], ['reel', 'REEL']].forEach(function (t) {
       tabs.appendChild(el('button', { type: 'button', role: 'tab', class: 'pe-tab', 'data-mode': t[0], text: t[1], onclick: function () {
         if (t[0] === 'reel') { var ids = chosenIds().filter(function (id) { return !isPhone(id); }), fn = S.opt.openReel; if (!fn) { msg('Reels open from the Hub.'); return; } close(); fn(ids.map(function (id) { return { id: id }; })); return; }
-        S.mode = t[0]; paintPick(); } }));
+        setMode(t[0]); paintPick(); } }));
     });
     S.tabs1 = tabs;
     v.append(
@@ -615,13 +664,21 @@
       el('div', { class: 'pe-row1' }, [G.sel, G.pbtn, G.pin]), G.grid, tabs);
     S.count1 = count; paintPick();
   }
+  // Post = one picture (1 photo, or a grid of up to 5). Album = the swipe album (many photos, many slides).
+  function setMode(m) {
+    if (m === S.mode) return;
+    S.mode = m; msg('');
+    if (m === 'album' && S.photos.length <= 1) (S.suggest || []).forEach(function (p) { if (S.photos.length < 7 && chosenIds().indexOf(p.id) < 0) S.photos.push({ id: p.id, on: true }); });
+    if (m === 'post' && S.photos.length > POSTMAX) { S.photos = S.photos.slice(0, POSTMAX); if (chosenIds().indexOf(S.cur) < 0) S.cur = S.photos[0].id; msg('A post is one picture: the first ' + POSTMAX + ' photos are kept.'); }
+    setShape(S.shape);   // the wide 1.91:1 size is for posts only
+  }
   function paintPick() {
     var n = S.photos.length; if (S.cur && chosenIds().indexOf(S.cur) < 0 && !S.cur) S.cur = null;
     if (!S.cur && n) S.cur = S.photos[0].id;
     S.big1.src = S.cur ? thumbUrl(S.cur, 1080) : ''; S.big1.style.visibility = S.cur ? '' : 'hidden';
     S.box1.style.aspectRatio = '1080 / ' + SHAPES[S.shape][0];
     S.shapeBtn.textContent = SHAPES[S.shape][1];
-    S.count1.textContent = n ? n + ' chosen' : 'Tap photos to choose';
+    S.count1.textContent = !n ? 'Tap photos to choose' : S.mode === 'post' ? (n === 1 ? 'One photo' : 'Grid of ' + n) : n + ' chosen';
     S.next1.disabled = !n;
     S.tabs1.querySelectorAll('.pe-tab').forEach(function (b) { b.classList.toggle('on', b.dataset.mode === S.mode); });
     S.pg1.paint();
@@ -630,13 +687,15 @@
   // ---------- screen 2: edit ----------
   function goEdit() {
     if (!S.photos.length) return;
-    S.photos = S.photos.slice(0, MAXPICK);
+    S.photos = S.photos.slice(0, maxPick());
     S.next1.disabled = true;
     ensureLoaded(chosenIds()).then(function () {
       S.next1.disabled = false; if (!S) return;
       S.photos = S.photos.filter(function (p) { return S.bitmaps[p.id]; });
       if (!S.photos.length) { msg('Those photos could not be loaded. Check the internet.'); return; }
-      S.format = S.mode === 'album' ? 'strip' : (S.photos.length === 1 ? 'single' : 'carousel');
+      S.format = S.mode === 'album' ? 'strip' : 'post';
+      if (S.mode === 'post' && !TEMPLATES[S.tid].post) S.tid = S.postTid || 'pclean';
+      if (S.mode === 'album' && TEMPLATES[S.tid].post) S.tid = 'album';
       show('edit'); S.stage.scrollLeft = 0; draw(); renderTools();
     }, function (e) { S.next1.disabled = false; msg(e && e.message || 'Could not get the photos.'); });
   }
@@ -651,7 +710,9 @@
   function chipRow(list, cur, onPick, cls) { var r = el('div', { class: 'ps-row' }); chips(r, list, cur, onPick, cls); return r; }
   function lbl(t) { return el('div', { class: 'ps-lbl', text: t }); }
   function renderTools() {
-    var tools = [['template', 'Template', toolTemplate], ['colours', 'Colours', toolColours], ['text', 'Text', toolText], ['sticker', 'Drawings', toolDrawings],
+    var tools = S.format === 'post' ? [['template', 'Template', toolTemplate], ['grid', 'Grid', toolGrid], ['colours', 'Colours', toolColours], ['text', 'Text', toolText], ['sticker', 'Drawings', toolDrawings],
+      ['filters', 'Filters', toolFilters], ['order', 'Order', toolOrder], ['shape', 'Size', toolShape]]
+      : [['template', 'Template', toolTemplate], ['colours', 'Colours', toolColours], ['text', 'Text', toolText], ['sticker', 'Drawings', toolDrawings],
       ['filters', 'Filters', toolFilters], ['slides', S.format === 'strip' ? 'Slides' : 'Per slide', toolSlides], ['order', 'Order', toolOrder], ['shape', 'Shape', toolShape]];
     S.toolsEl.innerHTML = '';
     tools.forEach(function (t) { S.toolsEl.appendChild(el('button', { type: 'button', class: 'pe-tool', 'data-tool': t[0], html: ic(t[0]) + '<span>' + t[1] + '</span>', onclick: function () { select(null); t[2](); } })); });
@@ -660,7 +721,8 @@
   function toolTemplate() {
     var body = sheet('Template', function (b) {
       var tabs = el('div', { class: 'ps-row pe-cats' }), grid = el('div', { class: 'pe-tgrid' }), g = S.tplGroup || 'all';
-      var groups = GROUPS.filter(function (x) { return ORDER.some(function (k) { return inGroup(TEMPLATES[k], x[0]); }); });
+      var isPost = S.format === 'post', LIST = isPost ? POST_ORDER : ORDER.filter(function (k) { return !TEMPLATES[k].post; });
+      var groups = isPost ? [] : GROUPS.filter(function (x) { return LIST.some(function (k) { return inGroup(TEMPLATES[k], x[0]); }); });
       var io = null, queue = [], busy = false;
       var paintNext = function () {   // one small picture per frame, so scrolling stays smooth
         if (busy || !queue.length || !S || !S.sheetEl) return; busy = true;
@@ -669,10 +731,10 @@
       var fill = function () {
         grid.innerHTML = ''; if (io) io.disconnect(); queue = [];
         io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting && !e.target.dataset.done) { e.target.dataset.done = 1; queue.push(e.target); io.unobserve(e.target); } }); paintNext(); }, { root: S.sheetEl.querySelector('.pe-sh-body'), rootMargin: '200px' });
-        ORDER.filter(function (k) { return inGroup(TEMPLATES[k], g); }).forEach(function (k) {
+        LIST.filter(function (k) { return isPost || inGroup(TEMPLATES[k], g); }).forEach(function (k) {
           var c = el('canvas', { class: 'pe-tcan', 'data-t': k, width: '120', height: String(Math.round(120 * SH / SW)) });
           var t = el('button', { type: 'button', class: 'pe-tpl' + (k === S.tid ? ' on' : ''), 'data-t': k, onclick: function () {
-            S.tid = k; if (TEMPLATES[k].palette) S.pid = TEMPLATES[k].palette; grid.querySelectorAll('.pe-tpl').forEach(function (x) { x.classList.toggle('on', x === t); }); draw(); } }, [c, el('span', { text: label(TEMPLATES[k]) })]);
+            S.tid = k; if (TEMPLATES[k].post) S.postTid = k; if (TEMPLATES[k].palette) S.pid = TEMPLATES[k].palette; grid.querySelectorAll('.pe-tpl').forEach(function (x) { x.classList.toggle('on', x === t); }); draw(); } }, [c, el('span', { text: label(TEMPLATES[k]) })]);
           grid.appendChild(t); io.observe(c);
         });
       };
@@ -737,8 +799,27 @@
   }
   function toolShape() {
     sheet('Shape', function (b) {
-      b.append(chipRow([{ t: '3:4 · fills the profile grid', v: '34' }, { t: '4:5 · tall', v: '45' }, { t: '1:1 · square', v: '11' }], S.shape, function (v) { setShape(v); S.stickers = []; draw(); }),
-        el('p', { class: 'pe-note', text: 'Instagram shows 3:4 posts whole, in the feed and on the profile.' }));
+      var sizes = [{ t: '3:4 · fills the profile grid', v: '34' }, { t: '4:5 · tall', v: '45' }, { t: '1:1 · square', v: '11' }];
+      if (S.format === 'post') sizes.push({ t: '1.91:1 · wide', v: '191' });
+      b.append(chipRow(sizes, S.shape, function (v) { setShape(v); S.stickers = []; draw(); }),
+        el('p', { class: 'pe-note', text: S.format === 'post' ? 'The whole picture changes size. Instagram shows 3:4 posts whole on the profile; wide 1.91:1 posts are cropped to the middle there.' : 'Instagram shows 3:4 posts whole, in the feed and on the profile.' }));
+    });
+  }
+  // Grid (posts): how 2–5 photos sit inside the one picture, and Borders on / off
+  function toolGrid() {
+    sheet('Grid', function (b) {
+      var n = Math.max(1, Math.min(POSTMAX, S.photos.length)), row = el('div', { class: 'pe-grow' });
+      var mini = function (d, i) {
+        var bt = el('button', { type: 'button', class: 'pe-gopt' + (i === (S.grid || 0) % GRIDS[n].length ? ' on' : ''), 'aria-label': 'Grid ' + (i + 1), 'data-g': String(i) });
+        var box = el('span', { class: 'pe-gmini', style: 'aspect-ratio:1080 / ' + SH });
+        d.forEach(function (r) { box.appendChild(el('i', { style: 'left:' + r[0] * 100 + '%;top:' + r[1] * 100 + '%;width:' + r[2] * 100 + '%;height:' + r[3] * 100 + '%' })); });
+        bt.appendChild(box); bt.addEventListener('click', function () { S.grid = i; row.querySelectorAll('.pe-gopt').forEach(function (x) { x.classList.toggle('on', x === bt); }); draw(); });
+        return bt;
+      };
+      GRIDS[n].forEach(function (d, i) { row.appendChild(mini(d, i)); });
+      b.append(lbl(n === 1 ? 'One photo fills the picture' : n + ' photos in one picture'), row,
+        lbl('Borders'), chipRow([{ t: 'With borders', v: 1 }, { t: 'Merged · no borders', v: 0 }], S.border ? 1 : 0, function (v) { S.border = !!v; draw(); }),
+        el('p', { class: 'pe-note', text: n < POSTMAX ? 'Add more photos (Back, then tap them) for a grid of up to ' + POSTMAX + '. It stays one picture, never an album.' : 'It stays one picture, never an album.' }));
     });
   }
   // the pop-up for a tapped photo or drawing (same idea as Reel Edits)
@@ -841,7 +922,7 @@
   function postIt() {
     var b = S.postBtn; b.disabled = true; msg('Posting to Root Moment…');
     var data = []; for (var i = 0; i < S.L.n; i++) data.push(slide(i).toDataURL('image/jpeg', 0.86));
-    S.opt.post({ slides: data, caption: (S.cap.value || S.T_NAME()).slice(0, 200) }).then(function (r) {
+    S.opt.post({ slides: data, caption: (S.cap.value || S.T_NAME()).slice(0, 200), kind: S.format === 'post' ? 'post' : 'album' }).then(function (r) {
       msg(r.status === 'approved' ? 'Posted! It is in Root Moment and in “Posts & Albums”.' : 'Sent to the couple — it will appear once they approve it.');
       b.textContent = r.status === 'approved' ? 'Posted ✓' : 'Sent for approval ✓';
     }).catch(function (e) { msg(e.message); b.disabled = false; });
@@ -852,7 +933,8 @@
     if (S && S.wrap) close();
     if (!document.getElementById('ps-css')) document.head.appendChild(el('style', { id: 'ps-css', text: CSS + PE_CSS }));
     S = { opt: opt, tid: 'album', pid: opt.palette || 'ivory', format: 'carousel', mode: opt.mode === 'album' ? 'album' : 'post', per: 1, slides: 0, art: true, names: opt.title || 'Our Wedding', date: opt.date || '',
-      photos: (opt.photos || []).slice(0, MAXPICK).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, adj: {}, stickers: [], petals: false, sel: null, thumbs: {}, filter: 'none', fcss: '', view: 'pick', undo: [], redo: [], lastSnap: null };
+      suggest: (opt.photos || []).slice(0, MAXPICK), grid: 0, border: true, postTid: 'pclean',
+      photos: (opt.photos || []).slice(0, opt.mode === 'album' ? MAXPICK : 1).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, adj: {}, stickers: [], petals: false, sel: null, thumbs: {}, filter: 'none', fcss: '', view: 'pick', undo: [], redo: [], lastSnap: null };
     setShape(opt.shape || '34');
     S.T_NAME = function () { return TEMPLATES[S.tid].name; };
     document.body.classList.add('ps-on');
@@ -924,7 +1006,7 @@
   }
   window.PGPost = { back: back, addTemplate: addTemplate, open: open, close: close, templates: ORDER, palettes: Object.keys(PALETTES),
     setFaces: function (f) { if (S) { S.opt.faces = f; if (S.view === 'edit') draw(); } }, addSticker: function (k) { if (S) addSticker(k); },
-    state: function () { return S ? { tx: S.tx || {}, date: S.date, undo: S.undo.length, redo: S.redo.length, names: S.names, tid: S.tid, view: S.view, mode: S.mode, format: S.format, shape: S.shape, H: SH, filter: S.filter, per: S.per, sel: S.sel, adj: S.adj, stickers: S.stickers, photos: S.photos.map(function (p) { return p.id; }) } : null; },
+    state: function () { return S ? { tx: S.tx || {}, date: S.date, undo: S.undo.length, redo: S.redo.length, names: S.names, tid: S.tid, view: S.view, mode: S.mode, format: S.format, shape: S.shape, H: SH, grid: S.grid, border: S.border, filter: S.filter, per: S.per, sel: S.sel, adj: S.adj, stickers: S.stickers, photos: S.photos.map(function (p) { return p.id; }) } : null; },
     set: function (k, v) { if (!S) return; if (k === 'shape') setShape(v); else S[k] = v; if (S.view === 'edit') draw(); },
     info: function () { return S && S.L ? { texts: (S.lastHitTexts || []).map(function (h) { return { key: h.key, x: h.x, y: h.y, w: h.w, h: h.h }; }), slides: S.L.n, cells: S.L.cells.length, W: S.L.W, H: SH, hits: (S.lastHit || []).map(function (h) { return { id: h.id, x: h.x, y: h.y, w: h.w, h: h.h }; }) } : null; } };
 })();

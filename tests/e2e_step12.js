@@ -24,7 +24,7 @@ const srv = http.createServer((req, res) => {
   await pg.route('https://lh3.googleusercontent.com/**', r => { const id = r.request().url().match(/\/d\/([^=]+)/)[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id), headers: { 'Access-Control-Allow-Origin': '*' } }); });
   await pg.goto('http://localhost:8776/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(700);
   console.log('create row:', (await pg.locator('.pgc-card:not(.hidden) b').allTextContents()).join(' | '));
-  await PE.toEdit(pg);
+  await PE.toEdit(pg, 'album');   // step 53: Post is one picture now; the album maker keeps every template and format
   console.log('opened:', JSON.stringify(await pg.evaluate(() => { const i = PGPost.info(); delete i.hits; return i; })), '| tools:', (await pg.locator('.pe-tool span').allTextContents()).join(', '));
   await pg.screenshot({ path: '/tmp/s12_maker.png' });
   // every template: export the whole page small for the contact sheet
