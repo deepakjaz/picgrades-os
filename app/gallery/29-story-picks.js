@@ -15,20 +15,43 @@
   const eventOf = id => { const ev = ((typeof GALLERY !== 'undefined' && GALLERY && GALLERY.events) || []).find(e => e.photos.some(p => p.id === id)); return ev ? ev.name : ''; };
   const token = () => { try { return localStorage.getItem('pg_token') || ''; } catch (e) { return ''; } };
 
-  // ---- saving ----
-  function save(next) {
+  // ---- saving (step 59) ----
+  // A tap shows at once and the pane stays usable: the choice is saved in the background, with a thin progress bar
+  // at the top of the screen. Taps made while a save runs are sent together as soon as it finishes (the latest choice wins).
+  // If the server says no, the last saved choice comes back and the reason is shown.
+  let saved = null, inflight = null, waiting = null, settle = [];
+  const bar = () => { let b = document.getElementById('pgSaveBar'); if (!b) { b = h('div', 'pg-savebar', '<i></i><span>Saving…</span>'); b.id = 'pgSaveBar'; b.setAttribute('role', 'status'); document.body.appendChild(b); } return b; };
+  const showBar = on => { const b = bar(); b.classList.toggle('on', on); };
+  let redraw = 0;
+  const refreshHub = () => { clearTimeout(redraw); redraw = setTimeout(() => { if (window.PGLayout) PGLayout.refresh(); }, 400); };   // a story Hub shows the new choice
+  function send() {
+    const next = waiting, done = settle; waiting = null; settle = [];
     const r = role();
-    let p;
-    if (r === 'demo') {
-      const d = pgDemoLocal(); d.story = next; try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {}
-      p = Promise.resolve({ story: next });
-    } else p = pgApi('storyPicks', Object.assign(r === 'couple' ? {} : { token: token() }, { picks: next }));
-    return p.then(res => {
-      GALLERY.story = res.story || next;
-      if (window.PGLayout) PGLayout.refresh();   // a story Hub shows the new choice straight away
-      return GALLERY.story;
-    }).catch(err => { showToast(err.message || 'Could not save'); throw err; });
+    showBar(true);
+    inflight = (r === 'demo'
+      ? (() => { const d = pgDemoLocal(); d.story = next; try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {} return Promise.resolve({ story: next }); })()
+      : pgApi('storyPicks', Object.assign(r === 'couple' ? {} : { token: token() }, { picks: next })))
+      .then(res => {
+        saved = res.story || next;
+        if (!waiting) { GALLERY.story = saved; if (window.pgKeepCopy) pgKeepCopy({ story: saved }); }
+        done.forEach(d => d.ok(saved));
+      }, err => {
+        waiting = null; const back = saved || {}; GALLERY.story = back; refreshHub();
+        document.dispatchEvent(new CustomEvent('pg:story-reverted'));
+        showToast((err && err.message) || 'Could not save. Check the internet and try again.');
+        done.concat(settle).forEach(d => d.no(err)); settle = [];
+      })
+      .then(() => { inflight = null; if (waiting) send(); else showBar(false); });
   }
+  function save(next) {
+    if (!inflight && !waiting) saved = JSON.parse(JSON.stringify(GALLERY.story || {}));   // the last saved choice, to come back to if the server says no
+    GALLERY.story = next; refreshHub();
+    waiting = next;
+    const p = new Promise((ok, no) => settle.push({ ok, no }));
+    if (!inflight) send();
+    return p;
+  }
+  const saving = () => !!(inflight || waiting);
 
   // ---- the "Story" sheet for one photo ----
   function sheet(photo) {
@@ -55,8 +78,8 @@
         if (k === 'bride') { P2.bride = P2.bride === id ? '' : id; if (P2.bride && P2.groom === id) P2.groom = ''; }
         if (k === 'groom') { P2.groom = P2.groom === id ? '' : id; if (P2.groom && P2.bride === id) P2.bride = ''; }
         if (k === 'hl') { P2.hl[ev] = tog((P2.hl[ev] || []).slice()); if (!P2.hl[ev].length) delete P2.hl[ev]; }
-        box.classList.add('busy');
-        save(P2).then(() => { paint(); showToast('Saved — the story shows it now'); }).catch(() => {}).finally(() => box.classList.remove('busy'));
+        save(P2).then(() => { if (box.isConnected) paint(); }).catch(() => { if (box.isConnected) paint(); });
+        paint();
       }));
     }
     paint();
@@ -119,12 +142,13 @@
         else { const j = b.dataset.do === 'left' ? i - 1 : i + 1; [list[i], list[j]] = [list[j], list[i]]; }
         if (key !== 'cover') { if (list.length) P.hl[key.slice(3)] = list; else delete P.hl[key.slice(3)]; }
       }
-      p.classList.add('busy'); save(P).then(paint).catch(() => {}).finally(() => p.classList.remove('busy'));
+      save(P).catch(() => { if (p.isConnected) paint(); });
+      paint();
     });
     paint();
     return p;
   }
 
   mainButton(); pgAfter('pgRenderHub', mainButton);
-  window.PGStoryPicks = { sheet, pane, picks, save, canPick };
+  window.PGStoryPicks = { sheet, pane, picks, save, canPick, saving };
 })();

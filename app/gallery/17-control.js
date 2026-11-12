@@ -307,6 +307,7 @@
   // ---- the panel ----
   let tab = 'look', repaint = () => {};
   function open() {
+    if (document.querySelector('.pgcp-sheet')) return;   // step 59: a double tap on the gear opened two panels
     const back = h('div', 'overlay-backdrop show'), box = h('div', 'reg-overlay show pgcp-sheet');
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Control Panel');
     const close = () => { box.remove(); back.remove(); repaint = () => {}; };
