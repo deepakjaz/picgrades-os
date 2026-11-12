@@ -16,7 +16,7 @@ const ACTS = [];
 const srv = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api') { let b = ''; req.on('data', d => b += d); req.on('end', () => { const p = JSON.parse(b); ACTS.push(p.action); res.end(JSON.stringify(call(p.action, p))); }); return; }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
-  let u = req.url.split('?')[0]; if (/^\/g\/[a-z0-9]+$/.test(u)) u = '/app/gallery.html';
+  let u = req.url.split('?')[0]; if (/^\/(g|c|ph|pg)\/[a-z0-9]+(\/[A-Za-z0-9_-]+)?$/.test(u)) u = '/app/gallery.html';
   fs.readFile(path.join(root, u), (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', u.endsWith('.html') ? 'text/html' : u.endsWith('.css') ? 'text/css' : u.endsWith('.json') ? 'application/json' : 'text/javascript'); res.end(d); } });
 }).listen(8792, async () => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = [];
@@ -26,7 +26,7 @@ const srv = http.createServer((req, res) => {
   const phone = async tok => { const c = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true }); const p = await c.newPage(); p.on('pageerror', e => errors.push(e.message)); await img(p); await require('./fonts_local').install(p);
     if (tok) await p.addInitScript(t => { try { localStorage.setItem('pg_token', t); } catch (e) {} }, tok); return [c, p]; };
   // PicGrades sets WFA as the photographer
-  let [cs, st] = await phone(admin); await st.goto(URL); await boot(st); await st.waitForFunction(() => PGControl.role() === 'picgrades', null, { timeout: 10000 });
+  let [cs, st] = await phone(admin); await st.goto(URL.replace('/g/', '/pg/'));   // step 61: the PicGrades link await boot(st); await st.waitForFunction(() => PGControl.role() === 'picgrades', null, { timeout: 10000 });
   await st.click('.tkg-nav-item[data-nav=studio]'); await st.waitForSelector('.pgcp-sheet'); await st.click('.pgcp-tabs [data-tab=photographer]'); await st.waitForTimeout(300);
   console.log('Photographer tab: fields', await st.locator('.pgcp-form input, .pgcp-form textarea').count(), '| credit switch (PicGrades):', await st.locator('.pgcp-form input[name=credit]').count());
   const fill = { name: 'WFA', instagram: 'https://www.instagram.com/wfa.with.love?psln=dzZmcWRwNGxxY245', website: 'wfa.example.com', phone: '+91 98765-43210', city: 'Surat, Gujarat', about: 'Wedding films and photographs, made with love.' };

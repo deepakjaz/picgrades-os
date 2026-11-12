@@ -5,6 +5,22 @@
       "destination": "/app/gallery.html?g=:id"
     },
     {
+      "source": "/c/:id",
+      "destination": "/app/gallery.html?g=:id&as=couple"
+    },
+    {
+      "source": "/c/:id/:key",
+      "destination": "/app/gallery.html?g=:id&as=couple"
+    },
+    {
+      "source": "/ph/:id",
+      "destination": "/app/gallery.html?g=:id&as=photographer"
+    },
+    {
+      "source": "/pg/:id",
+      "destination": "/app/gallery.html?g=:id&as=picgrades"
+    },
+    {
       "source": "/p/:slug",
       "destination": "/app/gallery.html?p=:slug"
     }

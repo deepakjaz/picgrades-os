@@ -289,7 +289,14 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);min-height:32px', text: o.galleryId ? 'Gallery published · faces & send to client' : 'Publish gallery' }));
     var inner = el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-top:8px' });
     if (o.galleryId) {
-      inner.appendChild(el('a', { href: galleryUrl(o.galleryId), target: '_blank', rel: 'noopener', text: galleryUrl(o.galleryId) }));
+      // step 61: one link per person (the couple link, with its private key, is on the faces page)
+      [['G · Guest', '/g/'], ['PH · Photographer', '/ph/'], ['PG · PicGrades', '/pg/']].forEach(function (L) {
+        var u = location.origin + L[1] + o.galleryId, row = el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' });
+        row.appendChild(el('b', { style: 'font-size:11px;min-width:120px', text: L[0] }));
+        row.appendChild(el('a', { href: u, target: '_blank', rel: 'noopener', text: u }));
+        var cp = el('button', { type: 'button', class: 'mini', text: 'Copy' }); cp.addEventListener('click', function () { if (navigator.clipboard) navigator.clipboard.writeText(u).then(function () { cp.textContent = 'Copied'; }); });
+        row.appendChild(cp); inner.appendChild(row);
+      });
       inner.appendChild(el('a', { href: '/app/faces.html?g=' + encodeURIComponent(o.galleryId), target: '_blank', rel: 'noopener', class: 'mini', style: 'text-decoration:none;align-self:flex-start', text: 'Read faces (Find me) & send to client →' }));
     }
     var folder = el('input', { placeholder: 'Google Drive folder link (shared: Anyone with the link)', style: 'min-height:40px' });

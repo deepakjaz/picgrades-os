@@ -5,7 +5,7 @@
 // Everything is saved for the wedding and reaches every guest. Whoever changes something last wins.
 // Part of the wedding gallery (app/gallery.html). Files load in number order.
 (function pgControl() {
-  let ROLE = 'guest', STAFF = null, asked = false;
+  let ROLE = 'guest', STAFF = null, asked = false, checked = false;
   // ?pgpreview: this page is the preview window inside the Control Panel. It shows the app exactly as a guest sees it,
   // with the theme / layout being tried (?theme= / ?layout=), and the panel tells it which page to show.
   const PREVIEW = new URLSearchParams(location.search).has('pgpreview');
@@ -28,7 +28,7 @@
   const $ = id => document.getElementById(id);
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const esc = s => pgEsc(String(s == null ? '' : s));
-  const token = () => { try { return localStorage.getItem('pg_token') || ''; } catch (e) { return ''; } };
+  const token = () => pgToken();   // only on a staff link (step 61)
   const WHO = {
     picgrades: ['PicGrades', 'You’re signed in as PicGrades.'],
     photographer: ['Photographer', 'You’re signed in as the photographer.'],
@@ -39,7 +39,8 @@
   // ---- who is looking ----
   function paintRole() {
     const g = typeof GALLERY !== 'undefined' && GALLERY;
-    ROLE = !g || g.isStudio || PREVIEW ? 'guest' : STAFF ? STAFF.role : (window.pgIsCouple && pgIsCouple()) ? 'couple' : g.demo ? 'demo' : 'guest';
+    // step 61: the link decides: a staff link shows the login's role, the couple link the couple, the guest link always a guest (or the demo)
+    ROLE = !g || g.isStudio || PREVIEW ? 'guest' : PG_STAFF_LINK ? (STAFF ? STAFF.role : 'guest') : PG_AS === 'couple' ? ((window.pgIsCouple && pgIsCouple()) ? 'couple' : 'guest') : g.demo ? 'demo' : 'guest';
     document.body.classList.toggle('pg-nav4', ROLE === 'guest');
     ['guest', 'couple', 'photographer', 'picgrades', 'demo'].forEach(r => document.body.classList.toggle('pg-role-' + r, ROLE === r));
     const gear = document.querySelector('.tkg-nav-item[data-nav="studio"]');
@@ -50,7 +51,7 @@
   function askStaff() {
     if (asked || PREVIEW || !token() || typeof GALLERY === 'undefined' || !GALLERY || GALLERY.isStudio) return;
     asked = true;
-    pgApi('myRole', { token: token() }).then(r => { STAFF = r; paintRole(); }).catch(() => {});   // not this wedding's photographer = a guest here
+    pgApi('myRole', { token: token() }).then(r => { STAFF = r; }).catch(() => {}).finally(() => { checked = true; paintRole(); });   // not this wedding's photographer = a guest here
   }
   document.body.classList.add('pg-nav4');   // guests' bar until we know better
   pgAfter('pgRenderHub', () => { paintRole(); askStaff(); });
@@ -331,5 +332,5 @@
     repaint();
   }
   // the Hub editor (23-editor.js) publishes through the same saving as the panel (couple link, login, or this phone in a demo)
-  window.PGControl = { role: () => ROLE, open, refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
+  window.PGControl = { role: () => ROLE, checked: () => checked, open, refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
 })();

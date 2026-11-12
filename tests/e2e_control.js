@@ -17,7 +17,7 @@ const ACTS = [];
 const srv = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api') { let b = ''; req.on('data', d => b += d); req.on('end', () => { const p = JSON.parse(b); ACTS.push(p.action); res.end(JSON.stringify(call(p.action, p))); }); return; }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
-  let u = req.url.split('?')[0]; if (/^\/g\/[a-z0-9]+$/.test(u)) u = '/app/gallery.html';
+  let u = req.url.split('?')[0]; if (/^\/(g|c|ph|pg)\/[a-z0-9]+(\/[A-Za-z0-9_-]+)?$/.test(u)) u = '/app/gallery.html';
   fs.readFile(path.join(root, u), (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', u.endsWith('.html') ? 'text/html' : u.endsWith('.css') ? 'text/css' : u.endsWith('.json') ? 'application/json' : 'text/javascript'); res.end(d); } });
 }).listen(8799, async () => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = [];
@@ -129,7 +129,7 @@ const srv = http.createServer((req, res) => {
   // ---- PicGrades (staff login) ----
   const ctx3 = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true }); const st = await ctx3.newPage(); st.on('pageerror', e => errors.push('staff: ' + e.message)); await img(st);
   await st.addInitScript(t => { try { localStorage.setItem('pg_token', t); } catch (e) {} }, admin);
-  await st.goto(URL); await boot(st); await st.waitForFunction(() => PGControl.role() !== 'guest', null, { timeout: 10000 });
+  await st.goto(URL.replace('/g/', '/pg/')); await boot(st); await st.waitForFunction(() => PGControl.role() !== 'guest', null, { timeout: 10000 });
   console.log('staff: role', await st.evaluate(() => PGControl.role()), '| gear shown:', await gearShown(st));
   await st.click('.tkg-nav-item[data-nav=studio]'); await st.waitForSelector('.pgcp-sheet'); await st.click('.pgcp-tabs [data-tab=functions]'); await st.waitForTimeout(300);
   console.log('PicGrades sees Plan switches:', await st.locator('.pgcp-plan').count());
@@ -149,11 +149,12 @@ const srv = http.createServer((req, res) => {
   const ctx4 = await b.newContext({ viewport: { width: 390, height: 844 }, userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' });
   const ip = await ctx4.newPage(); ip.on('pageerror', e => errors.push('iphone: ' + e.message)); await img(ip);
   await ip.goto(URL + '?couple=' + ck); await boot(ip);
-  console.log('iPhone Safari keeps the couple key in the address (for Add to Home Screen):', new RegExp('couple=' + ck).test(ip.url()), '| app file has it:', /&c=/.test(await ip.getAttribute('link[rel=manifest]', 'href')));
+  // step 61: an old couple link becomes the couple's own link /c/<id>/<key> on every phone (so Add to Home Screen keeps it)
+  console.log('old couple link becomes /c/<id>/<key>:', ip.url().indexOf('/c/' + pub.galleryId + '/' + ck) > -1, '| app file has it:', /&c=/.test(await ip.getAttribute('link[rel=manifest]', 'href')), '| role:', await ip.evaluate(() => PGControl.role()));
   await ctx4.close();
   const ctx5 = await b.newContext({ viewport: { width: 390, height: 844 } }); const an = await ctx5.newPage(); await img(an);
   await an.goto(URL + '?couple=' + ck); await boot(an);
-  console.log('other phones tidy the address:', !/couple=/.test(an.url()));
+  console.log('no ?couple= left in the address:', !/couple=/.test(an.url()), an.url().indexOf('/c/') > -1);
   await ctx5.close();
   call('coupleLook', { g: pub.galleryId, coupleKey: ck, theme: '', layout: '' });
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);

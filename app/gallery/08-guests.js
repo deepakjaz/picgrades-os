@@ -3,18 +3,12 @@
 // ---------- guests, couple, staff ----------
 const PGK = (k) => 'pg_' + k + '_' + GALLERY_ID;
 function pgStore(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(PGK(k)) || 'null'); localStorage.setItem(PGK(k), JSON.stringify(v)); } catch (e) { return null; } }
-(function pgCoupleFromLink() {
-  const q = new URLSearchParams(location.search), ck = q.get('couple');
-  // iPhone's "Add to Home Screen" keeps the address shown, so on iPhone Safari the couple key stays in it: the couple's home-screen app opens in couple mode.
-  // (The home-screen app has its own storage, separate from Safari.) Elsewhere it is tidied away; Share always sends the plain link.
-  const keep = /iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone;
-  if (ck && GALLERY_ID) { pgStore('couple', ck); if (!keep) { q.delete('couple'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } }
-})();
+// the couple key comes from the /c/ link (01-core, step 61); a guest link never sends it
 const _pgApi = pgApi;
-pgApi = function (action, body) { const ck = pgStore('couple'); return _pgApi(action, Object.assign(ck ? { coupleKey: ck } : {}, body || {})); };
+pgApi = function (action, body) { const ck = PG_AS === 'couple' ? pgStore('couple') : null; return _pgApi(action, Object.assign(ck ? { coupleKey: ck } : {}, body || {})); };
 function pgGuest() { return pgStore('guest'); }
-function pgIsStaff() { try { return !!localStorage.getItem('pg_token'); } catch (e) { return false; } }
-function pgIsCouple() { return !!(GALLERY && GALLERY.isCouple); }
+function pgIsStaff() { return !!pgToken(); }
+function pgIsCouple() { return PG_AS === 'couple' && !!(GALLERY && GALLERY.isCouple); }   // only on the couple's link (step 61)
 function pgOpenMode() { return !GALLERY || GALLERY.guestGate !== 'on'; } // demo: everything open; Settings › guestGate = on brings the guest checks back
 function pgGuestBody() { const g = pgGuest(); return g ? { guestId: g.guestId, guestKey: g.guestKey } : {}; }
 
@@ -271,7 +265,7 @@ function pgReloadPosts() { return pgApi('getGallery').then(r => { GALLERY.guestP
 pgHookable('pgRenderHub'); pgHookable('pgLoadSavedSets');
 pgAfter('pgRenderHub', () => {
   pgLoadSavedSets(); renderGalleries(); pgRenderMine(); pgCheckMyPosts();
-  if (pgStore('couple') && !GALLERY.isCouple) pgApi('coupleQueue').then(() => { GALLERY.isCouple = true; if (window.pgCoupleInit) pgCoupleInit(); }).catch(() => pgStore('couple', null));
+  if (PG_AS === 'couple' && pgStore('couple') && !GALLERY.isCouple) pgApi('coupleQueue').then(() => { GALLERY.isCouple = true; if (window.pgCoupleInit) pgCoupleInit(); }).catch(() => { pgStore('couple', null); GALLERY.coupleChecked = true; if (window.PGLinks) PGLinks.paint(); });
   else if (window.pgCoupleInit) pgCoupleInit();
   const code = new URLSearchParams(location.search).get('set');
   if (code) pgApi('getSet', { code }).then(r => { pgAddSavedSet({ code, name: r.name, ids: r.ids }); pgOpenEvent(r.name); }).catch(e => showToast(e.message));

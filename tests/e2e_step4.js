@@ -14,7 +14,7 @@ console.log('published:', pub.ok, pub.photoCount);
 const srv = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/api') { let b = ''; req.on('data', d => b += d); req.on('end', () => { const p = JSON.parse(b); res.end(JSON.stringify(call(p.action, p))); }); return; }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
-  let u = req.url.split('?')[0]; if (/^\/g\/[a-z0-9]+$/.test(u)) u = '/app/gallery.html';
+  let u = req.url.split('?')[0]; if (/^\/(g|c|ph|pg)\/[a-z0-9]+(\/[A-Za-z0-9_-]+)?$/.test(u)) u = '/app/gallery.html';
   let f = path.join(root, u);
   fs.readFile(f, (e, d) => { if (e) { res.statusCode = 404; res.end(); } else { res.setHeader('Content-Type', f.endsWith('.html') ? 'text/html' : f.endsWith('.css') ? 'text/css' : f.endsWith('.json') ? 'application/json' : 'text/javascript'); res.end(d); } });
 }).listen(8767, async () => {
@@ -86,10 +86,10 @@ const srv = http.createServer((req, res) => {
       await pg.click('#pgvZoom'); await pg.waitForTimeout(200);
       // step 45: a guest who has not used Find me is asked to request the photo (no download); the couple downloads it
       await pg.click('#pgvSave'); await pg.waitForTimeout(400); console.log('guest download → first asks who they are (to request it):', await pg.isVisible('#idSheet.show')); await pg.click('#idClose'); await pg.waitForTimeout(300);
-      await pg.evaluate(() => { GALLERY.isCouple = true; });
+      await pg.evaluate(() => { window.__ic = pgIsCouple; window.pgIsCouple = () => true; });   // step 61: only the /c/ link is the couple, so this test plays the couple
       const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 8000 }).catch(() => null), pg.click('#pgvSave')]);
       console.log('download:', dl ? dl.suggestedFilename() : 'none');
-      await pg.evaluate(() => { GALLERY.isCouple = false; });
+      await pg.evaluate(() => { window.pgIsCouple = window.__ic; });
       await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(500); console.log('arrow down ->', await pg.getAttribute('#pgvCount', 'data-pos'));
     }
     await pg.waitForTimeout(800);
