@@ -52,22 +52,25 @@ const srv = http.createServer((req, res) => {
   const { ctx, pg } = await open('', g);
   await pg.evaluate(() => document.querySelector('[data-findme]').click()); await pg.waitForSelector('#fmSheet.show');
   check(await pg.evaluate(() => document.getElementById('fmFile').closest('label').classList.contains('hidden') && !document.getElementById('fmCamBtn').hidden), 'guest: only "Use camera", no "Choose a photo"');
-  await pg.click('#fmCamBtn'); await pg.waitForSelector('#fmCam:not(.hidden)'); await pg.waitForTimeout(700);
-  const st = () => pg.evaluate(() => ({ live: document.getElementById('fmSheet').dataset.live, hint: document.getElementById('fmHint').textContent, off: document.getElementById('fmShoot').disabled }));
+  await pg.click('#fmCamBtn'); await pg.waitForSelector('#fmGuide:not(.hidden)');
+  const gd = await pg.evaluate(() => { const g = document.getElementById('fmGuide'); return { t: g.textContent, h: parseFloat(getComputedStyle(g.querySelector('h4')).fontSize), face: !!g.querySelector('.fm-guide-face'), cam: !document.getElementById('fmCam').classList.contains('hidden') }; });
+  check(/Please follow the instructions/.test(gd.t) && /RIGHT/.test(gd.t) && /LEFT/.test(gd.t) && /CENTRE/.test(gd.t) && gd.face && gd.h >= 20 && !gd.cam, 'guest: big instructions with a moving face first (right, left, centre), camera not on yet');
+  await pg.screenshot({ path: '/tmp/s60c_guide.png' });
+  await pg.click('#fmGuideOk'); await pg.waitForSelector('#fmCam:not(.hidden)'); await pg.waitForTimeout(700);
+  const st = () => pg.evaluate(() => ({ live: document.getElementById('fmSheet').dataset.live, hint: document.getElementById('fmHint').textContent, size: parseFloat(getComputedStyle(document.getElementById('fmHint')).fontSize), shootShown: !document.getElementById('fmShoot').classList.contains('hidden'), done: [...document.querySelectorAll('#fmSteps .done')].map(x => x.dataset.s).join(), beeps: window.__beeps || 0 }));
   let s = await st();
-  check(s.live === 'turn' && s.off && /turn your head/.test(s.hint), 'face seen: asks to turn the head, "Take selfie" is off (' + s.hint + ')');
-  await pg.screenshot({ path: '/tmp/s60_turn.png' });
-  // a flat photo held in front of the camera: it never really turns
-  for (const y of [0.02, -0.04, 0.05, -0.03, 0.04]) { await pg.evaluate(y => { window.__yaw = y; }, y); await pg.waitForTimeout(260); }
-  s = await st(); check(s.live === 'turn' && s.off, 'a photo held up (no real turn) never passes the live check');
+  check(s.live === 'turn' && /RIGHT/.test(s.hint) && s.size >= 17 && !s.shootShown && s.done === '', 'camera: big words "Turn your head to the RIGHT", no button to press (' + s.hint + ', ' + s.size + 'px)');
+  await pg.screenshot({ path: '/tmp/s60c_right.png' });
+  for (const y of [0.02, -0.04, 0.05, -0.03, 0.04]) { await pg.evaluate(y => { window.__yaw = y; }, y); await pg.waitForTimeout(230); }
+  s = await st(); check(s.done === '' && s.beeps === 0, 'a photo held up (no real turn) gets no tick and no beep');
   await pg.evaluate(() => { window.__yaw = -0.2; }); await pg.waitForTimeout(450);
-  s = await st(); check(/other side/.test(s.hint) && s.off, 'one side done: asks for the other side');
+  s = await st(); check(s.done === 'right' && /LEFT/.test(s.hint) && s.beeps === 1, 'turned right: beep, Right ✓, now "turn to the LEFT"');
+  await pg.screenshot({ path: '/tmp/s60c_left.png' });
   await pg.evaluate(() => { window.__yaw = 0.19; }); await pg.waitForTimeout(450);
-  s = await st(); check(s.live === 'back' && s.off && /straight/.test(s.hint), 'both sides done: asks to look straight');
-  await pg.evaluate(() => { window.__yaw = 0.01; }); await pg.waitForTimeout(450);
-  s = await st(); check(s.live === 'done' && !s.off && /passed/.test(s.hint), 'looking straight: live check passed, "Take selfie" is on');
-  await pg.screenshot({ path: '/tmp/s60_passed.png' });
-  await pg.click('#fmShoot'); await pg.waitForSelector('#fmAsk:not(.hidden)', { timeout: 8000 });
+  s = await st(); check(s.done === 'right,left' && /CENTRE/.test(s.hint) && s.beeps === 2, 'turned left: beep, Left ✓, now "look at the CENTRE"');
+  await pg.evaluate(() => { window.__yaw = 0.01; }); await pg.waitForFunction(() => /Well done/.test(document.getElementById('fmHint').textContent), null, { timeout: 4000 }).catch(() => {});
+  s = await st(); await pg.screenshot({ path: '/tmp/s60c_done.png' }); check(/Well done/.test(s.hint) && s.beeps >= 4, 'looking at the centre: double beep, "Well done", the selfie is taken by itself');
+  await pg.waitForSelector('#fmAsk:not(.hidden)', { timeout: 8000 });
   const ask = await pg.evaluate(() => ({ text: document.getElementById('fmAsk').textContent, thumbs: document.querySelectorAll('#fmThumbs img').length, res: !document.getElementById('fmResult').classList.contains('hidden'), personal: (GALLERY.personal || []).length }));
   check(/close match/.test(ask.text) && /fewer than 3/.test(ask.text) && !ask.res && ask.thumbs === 0 && ask.personal === 0, 'only 2 photos: "You are a close match", no photos shown');
   await pg.fill('#fmAskEmail', 'nikhil@example.com'); await pg.click('#fmAskSend'); await pg.waitForSelector('#fmAskDone:not(.hidden)');
@@ -80,9 +83,9 @@ const srv = http.createServer((req, res) => {
     const s2 = await open('', { guestId: r2.guestId, guestKey: r2.guestKey, name: 'Stranger' });
     await s2.pg.evaluate(() => { const d = new Float32Array(128); for (let i = 0; i < 128; i++) d[i] = ((i * 37) % 23 - 11) / 120; window.PGFaces.detect = () => Promise.resolve([{ box: { x: 220, y: 120, width: 220, height: 240 }, descriptor: d }]); });
     await s2.pg.evaluate(() => document.querySelector('[data-findme]').click()); await s2.pg.waitForSelector('#fmSheet.show');
-    await s2.pg.click('#fmCamBtn');
+    await s2.pg.click('#fmCamBtn'); await s2.pg.click('#fmGuideOk'); await s2.pg.waitForSelector('#fmCam:not(.hidden)'); await s2.pg.waitForTimeout(500);
     for (const y of [-0.2, 0.2, 0]) { await s2.pg.evaluate(y => { window.__yaw = y; }, y); await s2.pg.waitForTimeout(450); }
-    await s2.pg.click('#fmShoot'); await s2.pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 8000 });
+    await s2.pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 8000 });
     const v = await s2.pg.evaluate(() => { const vis = id => !document.getElementById(id).classList.contains('hidden'); return { open: vis('fmOpen'), save: vis('fmSave'), reel: vis('fmReel'), post: vis('fmPost'), again: document.getElementById('fmAgain').textContent, st: document.getElementById('fmStatus').textContent, hubReel: !!document.querySelector('#pgLay > section[data-block=reel]'), can: PGCreate.can() }; });
     check(!v.open && !v.save && !v.reel && !v.post && v.again === 'Try another selfie' && /could not find you/.test(v.st), 'nobody found: no Save / Make a reel / album, only "Try another selfie" ' + JSON.stringify(v));
     check(!v.can && !v.hubReel, 'nobody found: Reel and Post Edits stay hidden on the Hub');
@@ -94,7 +97,7 @@ const srv = http.createServer((req, res) => {
   await c.pg.evaluate(() => document.querySelector('[data-findme]').click()); await c.pg.waitForSelector('#fmSheet.show');
   check(await c.pg.evaluate(() => !document.getElementById('fmFile').closest('label').classList.contains('hidden')), 'the couple can still choose a photo');
   await c.pg.click('#fmCamBtn'); await c.pg.waitForSelector('#fmCam:not(.hidden)'); await c.pg.waitForTimeout(700);
-  check(await c.pg.evaluate(() => !document.getElementById('fmShoot').disabled && !document.getElementById('fmSheet').dataset.live), 'the couple: no live check');
+  check(await c.pg.evaluate(() => !document.getElementById('fmShoot').disabled && !document.getElementById('fmSheet').dataset.live && !document.getElementById('fmGuide')), 'the couple: no instructions, no live check, "Take selfie" as before');
   await c.pg.click('#fmClose');
   await c.pg.evaluate(() => PGControl.open()); await c.pg.click('.pgcp-tabs [data-tab=requests]'); await c.pg.waitForSelector('.pgr-row');
   const row = await c.pg.evaluate(() => document.querySelector('.pgr-row').textContent);

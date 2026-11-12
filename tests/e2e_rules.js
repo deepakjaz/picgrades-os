@@ -33,7 +33,7 @@ const srv = http.createServer((req, res) => {
     // step 60: guests use the camera with a live check, so a fake camera and a head that turns left, right, then looks straight
     await p.addInitScript(code => { const box = { x: 200, y: 100, width: 240, height: 260 }; let n = 0;
       navigator.mediaDevices.getUserMedia = async () => { const c = document.createElement('canvas'); c.width = 640; c.height = 480; c.getContext('2d').fillRect(0, 0, 640, 480); return c.captureStream(5); };
-      window.PGFaces = { load: () => Promise.resolve(), locate: () => Promise.resolve([{ box }]), pose: () => Promise.resolve({ box, yaw: [-0.2, 0.2, 0][Math.min(2, n++)] }), detect: () => Promise.resolve([{ box: { x: 0, y: 0, width: 10, height: 10 }, descriptor: [] }]), pack: () => code }; }, ME);
+      window.PGFaces = { load: () => Promise.resolve(), locate: () => Promise.resolve([{ box }]), pose: () => Promise.resolve({ box, yaw: [-0.2, 0.2, 0, 0][Math.min(3, n++)] }), detect: () => Promise.resolve([{ box: { x: 0, y: 0, width: 10, height: 10 }, descriptor: [] }]), pack: () => code }; }, ME);
     return [c, p]; };
   const hubFind = '#view-hub .pgl-findme, #view-hub [data-findme]:not(.hidden)';
   // ---------- 1. a new guest (incognito): Find me asks who they are ----------
@@ -43,7 +43,7 @@ const srv = http.createServer((req, res) => {
   console.log('Find me asks name + mobile first:', await g1.isVisible('#idSheet.show'), '| face sheet not open yet:', !(await g1.isVisible('#fmSheet.show')));
   await g1.screenshot({ path: '/tmp/s45_ask_name.png' });
   await g1.fill('#idName', 'Neha Sharma'); await g1.fill('#idPhone', '9876543210'); await g1.click('#idGo'); await g1.waitForSelector('#fmSheet.show');
-  await g1.click('#fmCamBtn'); await g1.waitForFunction(() => !document.getElementById('fmShoot').disabled, null, { timeout: 15000 }); await g1.click('#fmShoot'); await g1.waitForSelector('#fmResult:not(.hidden)', { timeout: 30000 });
+  await g1.click('#fmCamBtn'); await g1.click('#fmGuideOk'); await g1.waitForSelector('#fmResult:not(.hidden)', { timeout: 30000 });
   console.log('Find me result:', await g1.textContent('#fmStatus'));
   await g1.screenshot({ path: '/tmp/s45_found.png' });
   await g1.click('#fmClose'); await g1.waitForTimeout(400);

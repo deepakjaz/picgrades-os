@@ -33,7 +33,7 @@ function pgApi(action, body) {
   // step 60b: never wait forever (a blocked or lost answer left "Saving…" on screen): stop after 45 seconds and say so
   const stop = window.AbortController ? new AbortController() : null, timer = stop && setTimeout(() => stop.abort(), 45000);
   return fetch(API, { method: 'POST', signal: stop ? stop.signal : undefined, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, PG_STUDIO_SLUG ? { slug: PG_STUDIO_SLUG } : {}, body || {})) })
-    .then(r => r.json(), e => { throw new Error(e && e.name === 'AbortError' ? 'The server did not answer. Please check your internet and try again.' : 'Could not reach the server. Please check your internet and try again.'); })
+    .then(r => r.json(), e => { throw new Error(e && e.name === 'AbortError' ? 'The server did not answer. Please check your internet and try again.' : 'Your browser could not reach the PicGrades server. If your internet works, an ad blocker or another browser extension may be blocking it: allow this site, or open the link in another browser.'); })
     .then(res => { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; })
     .finally(() => { if (timer) clearTimeout(timer); });
 }
