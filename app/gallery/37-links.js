@@ -1,6 +1,7 @@
 // Step 61: one link per person, and the page always says whose view it is.
 //   /g/<id> guest · /c/<id>/<key> couple · /ph/<id> photographer · /pg/<id> PicGrades (both ask for the PicGrades login)
-// · a badge at the top names the view (GUEST, COUPLE, PHOTOGRAPHER, PICGRADES, DEMO)
+// · a badge at the top names the view (GUEST, COUPLE, PHOTOGRAPHER, PICGRADES, DEMO): shown once when the person arrives,
+//   then it fades; after that the ☰ menu says "Viewing as …" with the switch links (step 61c)
 // · staff or the couple opening the guest link see exactly what guests see, with a bar to switch to their own view
 // · a staff link without a login asks for the email code here; a login without access to this wedding says so
 // Part of the wedding gallery (app/gallery.html). Files load in number order.
@@ -8,7 +9,17 @@
   const $ = id => document.getElementById(id);
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const NAME = { guest: 'Guest', couple: 'Couple', photographer: 'Photographer', picgrades: 'PicGrades', demo: 'Demo' };
-  let shown = '', mine = null;   // mine: the staff role this phone's login has here (for the switch bar on the guest link)
+  let shown = '', mine = null, now = { role: 'guest', note: '' };
+  const SEEN = () => 'pg_seen_' + PG_AS + '_' + GALLERY_ID;
+  let fadeT = 0;
+  function once(role) {   // the badge and bar appear on arrival (once per visit and view), then fade
+    let seen = ''; try { seen = sessionStorage.getItem(SEEN()) || ''; } catch (e) {}
+    if (seen && seen !== role) seen = '';   // the view changed (e.g. the staff role arrived): say it once more
+    if (seen) { document.body.classList.add('pg-badge-gone'); return false; }
+    try { sessionStorage.setItem(SEEN(), role); } catch (e) {}
+    document.body.classList.remove('pg-badge-gone'); clearTimeout(fadeT); fadeT = setTimeout(() => document.body.classList.add('pg-badge-gone'), 6000);
+    return true;
+  }   // mine: the staff role this phone's login has here (for the switch bar on the guest link)
 
   function badge(role) {
     let b = $('pgRoleBadge'); if (!b) { b = h('div', 'pg-role-badge'); b.id = 'pgRoleBadge'; b.setAttribute('aria-live', 'polite'); document.body.appendChild(b); }
@@ -16,6 +27,7 @@
   }
   function bar(html, act) {
     let b = $('pgLinkBar');
+    now.note = html ? html.replace(/<[^>]+>/g, '') : '';
     if (!html) { if (b) b.remove(); document.body.classList.remove('pg-has-linkbar'); return; }
     if (!b) { b = h('div', 'pg-link-bar'); b.id = 'pgLinkBar'; document.body.appendChild(b); }
     b.innerHTML = html; document.body.classList.add('pg-has-linkbar');
@@ -24,7 +36,7 @@
   function paint() {
     if (typeof GALLERY === 'undefined' || !GALLERY || GALLERY.isStudio) return;
     const role = window.PGControl ? PGControl.role() : 'guest';
-    badge(role);
+    now.role = role; badge(role); once(role);
     if (PG_AS === 'guest') {
       const ck = pgStore('couple'), tok = pgSavedToken();
       if (mine) bar('You are seeing what guests see · <a href="' + pgLinkFor(mine) + '">Switch to ' + NAME[mine] + ' view</a>');
@@ -67,5 +79,17 @@
   }
   pgAfter('pgRenderHub', () => setTimeout(paint, 0));
   document.addEventListener('pg:role', paint);
-  window.PGLinks = { paint, signIn };
+  // for the ☰ menu: who this view is, and where to switch
+  function menu() {
+    const out = { role: NAME[now.role] || 'Guest', links: [] };
+    if (PG_AS === 'guest') {
+      if (mine) out.links.push([NAME[mine] + ' view', pgLinkFor(mine)]);
+      else if (pgStore('couple')) out.links.push(['Couple view', pgLinkFor('couple')]);
+    } else {
+      out.links.push(['Guest view', pgLinkFor('guest')]);
+      if (PG_STAFF_LINK && (!pgSavedToken() || now.role === 'guest')) out.links.push(['Sign in', '#signin']);
+    }
+    return out;
+  }
+  window.PGLinks = { paint, signIn, menu };
 })();

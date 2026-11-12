@@ -58,10 +58,22 @@ const srv = http.createServer((req, res) => {
   check(v.role === 'guest' && v.badge === 'Guest' && /Switch to PicGrades view/.test(v.bar) && v.barLink.endsWith('/pg/' + gid), 'PicGrades login on the guest link: guest view, bar "Switch to PicGrades view"');
   await o.pg.screenshot({ path: '/tmp/s61_staff_on_guest.png' });
   check(await o.pg.evaluate(() => pgToken() === '' && !pgIsStaff()), '… and the login is not sent from the guest link');
+  // step 61c: the badge and bar show once, then fade; the ☰ menu keeps "Viewing as" and the switch
+  await o.pg.waitForTimeout(6600);
+  check(await o.pg.evaluate(() => document.body.classList.contains('pg-badge-gone') && getComputedStyle(document.getElementById('pgRoleBadge')).visibility === 'hidden' && getComputedStyle(document.getElementById('pgLinkBar')).visibility === 'hidden'), 'after a few seconds the badge and the bar fade away');
+  await o.pg.click('#pgMenuBtn'); await o.pg.waitForSelector('.pgmenu');
+  const mt = await o.pg.textContent('.pgmenu');
+  check(/Viewing as Guest/.test(mt) && /PicGrades view/.test(mt), 'the ☰ menu says "Viewing as Guest" with "PicGrades view"');
+  await o.pg.screenshot({ path: '/tmp/s61c_menu.png' });
+  await o.pg.click('.pgmenu-x'); await o.pg.waitForTimeout(400);
+  await o.pg.reload(); await o.pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await o.pg.waitForTimeout(1500);
+  check(await o.pg.evaluate(() => document.body.classList.contains('pg-badge-gone')), 'on the next page load it does not show again');
   await o.ctx.close();
   // 7. /pg/ with the login
   o = await open('/pg/' + gid, { pg_token: admin }); v = await view(o.pg);
   check(v.role === 'picgrades' && v.badge === 'PicGrades' && !v.bar, '/pg/ with the login: PicGrades view, badge "PicGrades"');
+  await o.pg.click('#pgMenuBtn'); await o.pg.waitForSelector('.pgmenu');
+  check(/Viewing as PicGrades/.test(await o.pg.textContent('.pgmenu')) && /Guest view/.test(await o.pg.textContent('.pgmenu')), 'PicGrades menu: "Viewing as PicGrades" and "Guest view"');
   await o.pg.screenshot({ path: '/tmp/s61_pg.png' }); await o.ctx.close();
   // 8. /ph/ without a login: asks for the email code, then opens as staff
   o = await open('/ph/' + gid); v = await view(o.pg);
