@@ -161,14 +161,16 @@
     const row = (x, waiting) => {
       const r = h('div', 'pgr-row' + (waiting ? '' : ' done'));
       r.innerHTML = '<div class="pgr-thumbs">' + x.ids.slice(0, 3).map(id => '<img alt="" src="' + pgImg(id, 160) + '">').join('') + '</div>' +
-        '<div class="pgr-who"><b>' + pgEsc(x.name || 'Guest') + '</b><span>' + (x.kind === 'access' ? '<i class="pgr-tag">Find me · close match</i> ' : '') + pgEsc(x.email) + ' · ' + x.ids.length + ' photo' + (x.ids.length === 1 ? '' : 's') + (x.kind === 'access' ? ' found of them' : '') + '</span><small>' + pgEsc(String(x.at || '').slice(0, 16)) + '</small></div>' +
-        (waiting ? '<div class="pgr-acts"><button type="button" class="pgr-no">Decline</button><button type="button" class="pgr-yes">Approve</button></div>'
-          : '<em class="' + (x.status === 'approved' ? 'ok' : 'no') + '">' + (x.status === 'approved' ? 'Approved · emailed' : 'Declined') + '</em>');
+        '<div class="pgr-who"><b>' + pgEsc(x.name || 'Guest') + '</b><span>' + (x.kind === 'access' ? '<i class="pgr-tag">Find me · close match</i> ' : x.kind === 'help' ? '<i class="pgr-tag">Find me · not found</i> ' : '') + pgEsc(x.email) + (x.kind === 'help' ? ' · asks for their photos' : ' · ' + x.ids.length + ' photo' + (x.ids.length === 1 ? '' : 's') + (x.kind === 'access' ? ' found of them' : '')) + '</span><small>' + pgEsc(String(x.at || '').slice(0, 16)) + '</small></div>' +
+        (waiting ? (x.kind === 'help'   // step 60d: nobody found → write to them, then mark it done
+            ? '<div class="pgr-acts"><a class="pgr-mail" href="mailto:' + encodeURIComponent(x.email) + '?subject=' + encodeURIComponent('Your photos from ' + (GALLERY.title || 'the wedding')) + '">Email them</a><button type="button" class="pgr-no">Done</button></div>'
+            : '<div class="pgr-acts"><button type="button" class="pgr-no">Decline</button><button type="button" class="pgr-yes">Approve</button></div>')
+          : '<em class="' + (x.status === 'approved' ? 'ok' : 'no') + '">' + (x.status === 'approved' ? 'Approved · emailed' : x.kind === 'help' ? 'Done' : 'Declined') + '</em>');
       r.querySelector('.pgr-thumbs').addEventListener('click', () => { const map = pgPhotoById(), ph = x.ids.map(id => map[id]).filter(Boolean); if (ph.length && window.pgOpenEvent) pgOpenEvent('Asked by ' + (x.name || 'a guest'), ph); });
       if (waiting) r.querySelectorAll('.pgr-yes,.pgr-no').forEach(b => b.addEventListener('click', () => {
         const yes = b.classList.contains('pgr-yes'); r.querySelectorAll('button').forEach(z => { z.disabled = true; });
         pgApi('dlDecide', Object.assign({ reqId: x.reqId, decision: yes ? 'approve' : 'decline' }, auth())).then(() => {
-          showToast(yes ? 'Approved — ' + (x.name || 'the guest').split(' ')[0] + (x.kind === 'access' ? ' can see their photos now (link sent by email)' : ' gets the link by email') : 'Declined'); load();
+          showToast(yes ? 'Approved — ' + (x.name || 'the guest').split(' ')[0] + (x.kind === 'access' ? ' can see their photos now (link sent by email)' : ' gets the link by email') : x.kind === 'help' ? 'Marked as done' : 'Declined'); load();
         }).catch(err => { showToast(err.message); r.querySelectorAll('button').forEach(z => { z.disabled = false; }); });
       }));
       return r;

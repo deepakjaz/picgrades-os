@@ -146,7 +146,7 @@ function pgMonogram() {
   function showResult(m, several) {
     const idx = photoIndex(), inOrder = (ids) => { const set = new Set(ids); return idx.order.filter(id => set.has(id)).map(id => idx.map[id]); };
     if (m.unclear || m.close) { GALLERY.personal = []; $('fmActions').classList.add('hidden'); lastResult = null; }
-    if (m.unclear) { status('We could not be sure this is you: your face looks close to more than one person here. Try again in good light, alone, looking straight.'); $('fmActions').classList.remove('hidden'); return; }
+    if (m.unclear) { status('We could not be sure this is you: your face looks close to more than one person here. Try again in good light, alone, looking straight.'); $('fmActions').classList.remove('hidden'); if (m.canAsk) showAsk(0, 'help'); return; }
     if (m.close) { status(''); showAsk(m.need || 3); return; }
     const sure = inOrder(m.sure), maybe = inOrder(m.maybe);
     GALLERY.personal = [];
@@ -159,7 +159,12 @@ function pgMonogram() {
     const none = !lastResult;
     ['fmOpen', 'fmSave', 'fmReel', 'fmPost'].forEach(id => $(id).classList.toggle('hidden', none)); $('fmSaved').classList.add('hidden');
     $('fmAgain').textContent = strict() ? 'Try another selfie' : 'Try another photo';
-    if (none) { $('fmResult').classList.remove('hidden'); $('fmThumbs').innerHTML = ''; status(strict() ? 'We could not find you in this wedding’s photos. Try again in good light, looking straight at the camera.' : 'We could not find you in this gallery. Try a clearer, front-facing photo in good light.'); return; }
+    if (none) {
+      $('fmResult').classList.remove('hidden'); $('fmThumbs').innerHTML = '';
+      status(strict() ? 'We could not find you in this wedding’s photos. Try again in good light, looking straight at the camera.' : 'We could not find you in this gallery. Try a clearer, front-facing photo in good light.');
+      if (m.canAsk) showAsk(0, 'help');   // step 60d: after 2 tries the guest can ask the couple or the photographer
+      return;
+    }
     status((sure.length ? 'We found your photos' : 'These may be you') + (sure.length && maybe.length ? ' · and a few that may be you' : '') + (several ? ' (we used the biggest face in your photo)' : ''));   // step 49: no counts
     $('fmThumbs').innerHTML = '';
     (sure.length ? sure : maybe).slice(0, 8).forEach(p => { const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.src = pgImg(p.id, 300); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.id, 300); }; $('fmThumbs').appendChild(im); });
@@ -179,14 +184,16 @@ function pgMonogram() {
       btn.disabled = true; btn.textContent = 'Sending…';
       pgApi('askAccess', Object.assign({ email }, window.pgGuestBody ? pgGuestBody() : {})).then(() => {
         b.querySelector('.fm-ask-row').classList.add('hidden');
-        $('fmAskDone').textContent = 'Request sent ✓ When the couple approves, we will email you the link to your photos.'; $('fmAskDone').classList.remove('hidden');
+        $('fmAskDone').textContent = b.dataset.mode === 'help' ? 'Request sent ✓ The couple or the photographer will email you.' : 'Request sent ✓ When the couple approves, we will email you the link to your photos.'; $('fmAskDone').classList.remove('hidden');
       }).catch(e => showToast(e.message)).finally(() => { btn.disabled = false; btn.textContent = 'Send'; });
     });
     return b;
   }
-  function showAsk(need) {
-    const b = askBox();
-    $('fmAskText').textContent = 'We found you in fewer than ' + need + ' photos, so the couple needs to approve before you can see them. Share your email and we will send your access link.';
+  function showAsk(need, mode) {
+    const b = askBox(), help = mode === 'help';
+    b.querySelector('b').textContent = help ? 'Ask the couple or the photographer' : 'You are a close match';
+    $('fmAskText').textContent = help ? 'We could not find you after 2 tries. Share your email and the couple or the photographer will send you your photos.' : 'We found you in fewer than ' + need + ' photos, so the couple needs to approve before you can see them. Share your email and we will send your access link.';
+    b.dataset.mode = help ? 'help' : 'close';
     b.querySelector('.fm-ask-row').classList.remove('hidden'); $('fmAskDone').classList.add('hidden');
     b.classList.remove('hidden');
   }

@@ -60,6 +60,20 @@ assert(r.status === 'approved' && em && /You can see your photos now/.test(JSON.
 assert(call('myFind', nik).found.sure.sort().join() === 'N1,N2', 'and Find me on his number now gives his 2 photos');
 const grant = (/\?dl=([A-Za-z0-9]+)/.exec(JSON.stringify(em)) || [])[1];
 assert(call('dlGrant', { g: gid, grant }).ids.length === 2, 'the emailed link opens them');
+// step 60d: nobody found twice → the guest may ask the couple or the photographer for help
+const str = guest('Stranger'); const STRANGER = add(base, [u2, 1.4]);
+r = find(str, STRANGER);
+assert(r.ok && !r.sure.length && r.tries === 1 && !r.canAsk, 'a stranger: first miss, no help button yet');
+assert(!call('askAccess', Object.assign({ email: 'str@example.com' }, str)).ok, 'one miss is not enough to ask');
+r = find(str, STRANGER);
+assert(r.tries === 2 && r.canAsk, 'second miss: the guest may ask for help');
+const hp = call('askAccess', Object.assign({ email: 'str@example.com' }, str));
+assert(hp.ok && /^hp_/.test(hp.reqId), 'the help request is made');
+q = call('dlRequests', { g: gid, coupleKey: ck });
+const hr = q.waiting.find(x => x.kind === 'help');
+assert(hr && hr.ids.length === 0 && hr.email === 'str@example.com', 'the couple sees a help request with no photos');
+assert(!call('dlDecide', { g: gid, coupleKey: ck, reqId: hr.reqId, decision: 'approve' }).ok, 'a help request cannot be "approved" (there are no photos to send)');
+assert(call('dlDecide', { g: gid, coupleKey: ck, reqId: hr.reqId, decision: 'decline' }).status === 'declined', 'it can be marked as done');
 // the couple keeps the old rules: the brother's selfie shows the groom as "maybe"
 r = call('findFaces', { g: gid, d: pack(BROTHER), device: 'devcouple01', coupleKey: ck });
 assert(r.maybe.length + r.sure.length >= 4, 'the couple searching the brother\'s selfie still sees the groom (as sure / maybe)');

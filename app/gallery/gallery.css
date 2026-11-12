@@ -2622,3 +2622,4 @@ body:not(.pg-can-create) #pghReel,body:not(.pg-can-create) #pgcPost,body:not(.pg
 @keyframes fg-c3{0%,66%{opacity:0}70%,96%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.fg-feat,.fg-cap{animation:none}.fg-c3{opacity:1}}
 #fmSheet.fm-guiding .fm-sub{display:none}
+.pgr-mail{display:inline-flex;align-items:center;justify-content:center;padding:0 14px;border-radius:999px;background:#141413;color:#fff;text-decoration:none;font-weight:600;font-size:13px;min-height:36px}

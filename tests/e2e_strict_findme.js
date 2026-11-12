@@ -89,7 +89,17 @@ const srv = http.createServer((req, res) => {
     const v = await s2.pg.evaluate(() => { const vis = id => !document.getElementById(id).classList.contains('hidden'); return { open: vis('fmOpen'), save: vis('fmSave'), reel: vis('fmReel'), post: vis('fmPost'), again: document.getElementById('fmAgain').textContent, st: document.getElementById('fmStatus').textContent, hubReel: !!document.querySelector('#pgLay > section[data-block=reel]'), can: PGCreate.can() }; });
     check(!v.open && !v.save && !v.reel && !v.post && v.again === 'Try another selfie' && /could not find you/.test(v.st), 'nobody found: no Save / Make a reel / album, only "Try another selfie" ' + JSON.stringify(v));
     check(!v.can && !v.hubReel, 'nobody found: Reel and Post Edits stay hidden on the Hub');
+    check(await s2.pg.evaluate(() => !document.getElementById('fmAsk') || document.getElementById('fmAsk').classList.contains('hidden')), 'first miss: no request yet, only "Try another selfie"');
     await s2.pg.screenshot({ path: '/tmp/s60b_none.png' });
+    // second miss (step 60d): the guest may ask the couple or the photographer
+    await s2.pg.click('#fmAgain'); await s2.pg.click('#fmCamBtn'); await s2.pg.click('#fmGuideOk'); await s2.pg.waitForSelector('#fmCam:not(.hidden)'); await s2.pg.waitForTimeout(500);
+    for (const y of [-0.2, 0.2, 0]) { await s2.pg.evaluate(y => { window.__yaw = y; }, y); await s2.pg.waitForTimeout(450); }
+    await s2.pg.waitForSelector('#fmAsk:not(.hidden)', { timeout: 8000 });
+    const hb = await s2.pg.textContent('#fmAsk');
+    check(/Ask the couple or the photographer/.test(hb) && /after 2 tries/.test(hb), 'second miss: "Ask the couple or the photographer" with an email box');
+    await s2.pg.fill('#fmAskEmail', 'stranger@example.com'); await s2.pg.click('#fmAskSend'); await s2.pg.waitForSelector('#fmAskDone:not(.hidden)');
+    check(/couple or the photographer will email you/.test(await s2.pg.textContent('#fmAskDone')), 'request sent: "the couple or the photographer will email you"');
+    await s2.pg.screenshot({ path: '/tmp/s60d_ask.png' });
     await s2.ctx.close();
   }
   // the couple: "Choose a photo" stays, no live check; the close-match request is in Requests
@@ -100,10 +110,12 @@ const srv = http.createServer((req, res) => {
   check(await c.pg.evaluate(() => !document.getElementById('fmShoot').disabled && !document.getElementById('fmSheet').dataset.live && !document.getElementById('fmGuide')), 'the couple: no instructions, no live check, "Take selfie" as before');
   await c.pg.click('#fmClose');
   await c.pg.evaluate(() => PGControl.open()); await c.pg.click('.pgcp-tabs [data-tab=requests]'); await c.pg.waitForSelector('.pgr-row');
-  const row = await c.pg.evaluate(() => document.querySelector('.pgr-row').textContent);
+  const help = await c.pg.evaluate(() => { const r = [...document.querySelectorAll('.pgr-row')].find(x => /not found/.test(x.textContent)); return r ? { t: r.textContent, mail: (r.querySelector('.pgr-mail') || {}).href || '', yes: !!r.querySelector('.pgr-yes') } : null; });
+  check(help && /Stranger/.test(help.t) && /asks for their photos/.test(help.t) && /^mailto:stranger%40example\.com|^mailto:stranger@example\.com/.test(help.mail) && !help.yes, 'Requests: "Find me · not found" with "Email them" and "Done" (no Approve)');
+  const row = await c.pg.evaluate(() => [...document.querySelectorAll('.pgr-row')].find(x => /close match/.test(x.textContent)).textContent);
   check(/Find me · close match/.test(row) && /Nikhil/.test(row) && /2 photos found of them/.test(row), 'Requests shows "Find me · close match" for Nikhil (' + row.replace(/\s+/g, ' ').slice(0, 90) + ')');
   await c.pg.screenshot({ path: '/tmp/s60_requests.png' });
-  await c.pg.click('.pgr-row .pgr-yes'); await c.pg.waitForTimeout(600);
+  await c.pg.locator('.pgr-row', { hasText: 'close match' }).locator('.pgr-yes').click(); await c.pg.waitForTimeout(600);
   check(call('myFind', { g: gid, guestId: nik.guestId, guestKey: nik.guestKey }).found.sure.length === 2, 'approved: Nikhil\'s number now has his 2 photos');
   console.log('page errors:', JSON.stringify(errors)); check(errors.length === 0, 'no page errors');
   await b.close(); srv.close(); console.log(bad ? bad + ' FAILED' : 'all passed'); process.exit(bad ? 1 : 0);

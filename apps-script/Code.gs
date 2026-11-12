@@ -162,7 +162,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step60-strict-findme',
+    version: 'step60d-ask-for-help',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1480,12 +1480,14 @@ function askAccess_(p) {
   if (!limitOk_('acc:' + guest.guestId, 5, 3600)) return { ok: false, error: 'Too many requests for now. Please try again later.' };
   ensureTab_('FindMe', FIND_COLUMNS);
   var d = digits_(guest.phone), row = readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && x.status === 'close'; }).pop();
-  if (!row) return { ok: false, error: 'Please use Find me first.' };
+  // step 60d: no close match, but 2 searches found nobody → a request for help (no photos: the couple or photographer replies)
+  var kind = row ? 'access' : guestMisses_(g, guest.phone) >= GUEST_TRIES_BEFORE_HELP ? 'help' : '';
+  if (!kind) return { ok: false, error: 'Please use Find me first.' };
   ensureTab_('DownloadRequests', DLREQ_COLUMNS);
-  var old = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId && x.kind === 'access' && digits_(x.phone) === d && x.status === 'waiting'; })[0];
+  var old = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId && (x.kind === 'access' || x.kind === 'help') && digits_(x.phone) === d && x.status === 'waiting'; })[0];
   if (old) return { reqId: old.reqId, already: true };
-  var reqId = 'ac_' + randomId_(10);
-  appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: row.sure, status: 'waiting', grant: '', decidedAt: '', decidedBy: '', kind: 'access' });
+  var reqId = (kind === 'help' ? 'hp_' : 'ac_') + randomId_(10);
+  appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: kind === 'access' ? row.sure : '', status: 'waiting', grant: '', decidedAt: '', decidedBy: '', kind: kind });
   return { reqId: reqId };
 }
 /** Couple link or staff login: download requests of this wedding (waiting first). */
@@ -1494,7 +1496,7 @@ function dlRequests_(p) {
   if (!privileged_(g, p)) return { ok: false, error: 'Only the couple can see download requests.' };
   ensureTab_('DownloadRequests', DLREQ_COLUMNS);
   var all = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId; })
-    .map(function (x) { return { reqId: x.reqId, name: x.name, email: x.email, ids: String(x.ids || '').split(',').filter(String), status: x.status, at: x.at, decidedAt: x.decidedAt, kind: x.kind === 'access' ? 'access' : 'download' }; })
+    .map(function (x) { return { reqId: x.reqId, name: x.name, email: x.email, ids: String(x.ids || '').split(',').filter(String), status: x.status, at: x.at, decidedAt: x.decidedAt, kind: x.kind === 'access' || x.kind === 'help' ? x.kind : 'download' }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
   return { waiting: all.filter(function (x) { return x.status === 'waiting'; }), decided: all.filter(function (x) { return x.status !== 'waiting'; }).slice(0, 40) };
 }
@@ -1508,6 +1510,7 @@ function dlDecide_(p) {
   var row = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId && x.reqId === String(p.reqId || ''); })[0];
   if (!row) return { ok: false, error: 'Request not found.' };
   if (row.status !== 'waiting') return { reqId: row.reqId, status: row.status };
+  if (row.kind === 'help' && decision === 'approved') return { ok: false, error: 'This guest was not found: email them, then mark the request as done.' };
   var grant = decision === 'approved' ? randomId_(16) : '';
   updateRowByNumber_('DownloadRequests', row._row, { status: decision, grant: grant, decidedAt: fmt_(new Date()), decidedBy: who });
   var n = String(row.ids || '').split(',').filter(String).length;
@@ -1793,6 +1796,11 @@ function findFaces_(p) {
   Object.keys(best).sort(function (a, c) { return best[a] - best[c]; }).forEach(function (pid) { (best[pid] <= limSure ? sure : maybe).push(pid); });
   return { sure: sure, maybe: maybe, photos: Object.keys(f.photos || {}).length };
 }
+var GUEST_TRIES_BEFORE_HELP = 2;
+function guestMisses_(g, phone) {
+  var d = digits_(phone);
+  return readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && (x.status === 'none' || x.status === 'unclear'); }).length;
+}
 function guestFind_(g, f, scale, me, guest) {
   var R = guestFaceRules_(), scan = (R.lim + FACE_BAND) * scale, near = [];
   Object.keys(f.photos || {}).forEach(function (pid) {
@@ -1803,12 +1811,19 @@ function guestFind_(g, f, scale, me, guest) {
   });
   near.sort(function (a, b) { return a.d - b.d; });
   var out = { sure: [], maybe: [], photos: Object.keys(f.photos || {}).length };
-  if (!near.length || near[0].d > R.lim * scale) return out;
+  // step 60d: every miss is written down; after 2 the guest may ask the couple or the photographer for help
+  var miss = function (why) {
+    ensureTab_('FindMe', FIND_COLUMNS);
+    appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: '', maybe: '', status: why });
+    out.tries = guestMisses_(g, guest.phone); out.canAsk = out.tries >= GUEST_TRIES_BEFORE_HELP;
+    return out;
+  };
+  if (!near.length || near[0].d > R.lim * scale) return miss('none');
   // one clear person: the faces closest to the selfie must all be the same person
   var d1 = near[0].d, band = near.filter(function (n) { return n.d <= d1 + FACE_BAND * scale; }).slice(0, 16);
   for (var i = 0; i < band.length; i++) for (var j = i + 1; j < band.length; j++) {
-    if (band[i].pid !== band[j].pid && faceDist_(band[i].x, band[j].x) > FACE_OTHER * scale) { out.unclear = true; return out; }
-    if (band[i].pid === band[j].pid) { out.unclear = true; return out; }   // two faces of one photo = two different people
+    if (band[i].pid !== band[j].pid && faceDist_(band[i].x, band[j].x) > FACE_OTHER * scale) { out.unclear = true; return miss('unclear'); }
+    if (band[i].pid === band[j].pid) { out.unclear = true; return miss('unclear'); }   // two faces of one photo = two different people
   }
   var keep = Math.min(R.lim, d1 / scale + FACE_TIGHT) * scale, ids = [];
   near.forEach(function (n) { if (n.d <= keep && ids.indexOf(n.pid) < 0) ids.push(n.pid); });
