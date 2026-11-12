@@ -2,6 +2,8 @@
 const http = require('http'); const fs = require('fs'); const path = require('path'); const { execFileSync } = require('child_process');
 const { call, mail, DRIVE, DB } = require('./gas_mock');
 DB.Settings.push(['guestGate', 'on', 'test: guest checks on']);
+// step 60: this test is about the step 5 journey with the real face model, not about the strict rules (e2e_strict_findme / step60 test those)
+DB.Settings.push(['findmeLimit', '0.55', 'test: loose']); DB.Settings.push(['findmeMin', '1', 'test: one photo is enough']);
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures');
 const W = 'FACEWEDDING00000000001';
 DRIVE.folders[W] = { name: 'Neha_Rohan', access: 'ANYONE_WITH_LINK' };
@@ -58,6 +60,8 @@ const srv = http.createServer((req, res) => {
   // ---------- 2. guest: Find me with upload (mobile) and live camera ----------
   b = await chromium.launch({ args: GL.concat(['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-video-capture=/tmp/selfie.y4m']) });
   ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, permissions: ['camera'] }); pg = await ctx.newPage();
+  // the fake camera video does not turn its head: the real face model reads it, the head turn of the live check is played in (step 60)
+  await pg.addInitScript(() => { let real; Object.defineProperty(window, 'PGFaces', { configurable: true, get: () => real, set: v => { let n = 0; const p = v.pose; v.pose = (i, c) => p(i, c).then(r => r && Object.assign(r, { yaw: [-0.2, 0.2, 0][Math.min(2, n++)] })); real = v; } }); });
   pg.on('pageerror', e => errors.push('gallery: ' + e.message)); await pg.route('**fonts.g**', r => r.abort()); await photoRoute(pg);
   await pg.goto('http://localhost:8771/g/' + pub.galleryId + '#moments'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
   console.log('monogram:', await pg.textContent('#pgMono'), '| stamp text gone:', !(await pg.content()).includes('結婚'));
@@ -65,7 +69,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('.pgm-findme'); await pg.waitForTimeout(300);
   console.log('Find me asks name first:', await pg.isVisible('#idSheet.show')); await pg.fill('#idName', 'Neha Guest'); await pg.fill('#idPhone', '9876543210'); await pg.click('#idGo'); await pg.waitForSelector('#fmSheet.show');
   await pg.screenshot({ path: '/tmp/s5_sheet.png' });
-  await pg.setInputFiles('#fmFile', '/tmp/selfie.jpg'); await pg.waitForTimeout(60); console.log('searching card shown:', await pg.isVisible('#fmBusy'), '|', await pg.textContent('#fmBusyStep')); await pg.screenshot({ path: '/tmp/s10_busy.png' });
+  console.log('guest sees no "Choose a photo":', await pg.evaluate(() => document.getElementById('fmFile').closest('label').classList.contains('hidden'))); await pg.click('#fmCamBtn'); await pg.waitForFunction(() => !document.getElementById('fmShoot').disabled, null, { timeout: 120000 }); await pg.click('#fmShoot'); await pg.waitForTimeout(60); console.log('searching card shown:', await pg.isVisible('#fmBusy'), '|', await pg.textContent('#fmBusyStep')); await pg.screenshot({ path: '/tmp/s10_busy.png' });
   await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });
   console.log('upload result:', await pg.textContent('#fmStatus'), '|', await pg.textContent('#fmOpen'));
   await pg.fill('#fmSaveName', "Neha's photos"); await pg.click('#fmSaveBtn'); await pg.waitForSelector('#fmSaved:not(.hidden)'); console.log('saved:', await pg.textContent('#fmSaved'));

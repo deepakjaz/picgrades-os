@@ -4,12 +4,12 @@ let fails = 0; const assert = (c, m) => { if (!c) { fails++; console.error('FAIL
 function login(email) { call('requestCode', { email }); const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]; return call('verifyCode', { email, code }).token; }
 const W = 'FINDONCEWEDDING000001';
 DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' }; DRIVE.folders[W + 'w'] = { name: 'Wedding', parent: W };
-['Q1', 'Q2', 'Q3'].forEach(id => DRIVE.files[id] = { name: id + '.jpg', parent: W + 'w', mime: 'image/jpeg' });
+['Q1', 'Q2', 'Q3', 'Q4', 'Q5'].forEach(id => DRIVE.files[id] = { name: id + '.jpg', parent: W + 'w', mime: 'image/jpeg' });
 const admin = login('adcmediaa@gmail.com');
 const gid = call('setGallery', { token: admin, orderId: call('queue', { token: admin }).recentDone[0].orderId, folderUrl: W, title: 'Mira & Kabir' }).galleryId;
 const ck = call('facesStatus', { token: admin, g: gid }).gallery.coupleKey;
 const face = (v, k) => { const b = Buffer.alloc(128); for (let i = 0; i < 128; i++) b[i] = (v + i * (k || 3)) % 100; return [[0.1, 0.1, 0.2, 0.2], b.toString('base64')]; };
-call('saveFaces', { token: admin, g: gid, pass: 1, photos: { Q1: { w: 100, h: 100, f: [face(500)] }, Q2: { w: 100, h: 100, f: [face(10, 1)] }, Q3: { w: 100, h: 100, f: [face(500), face(10, 1)] } }, done: true });
+call('saveFaces', { token: admin, g: gid, pass: 1, photos: { Q1: { w: 100, h: 100, f: [face(500)] }, Q2: { w: 100, h: 100, f: [face(10, 1)] }, Q3: { w: 100, h: 100, f: [face(500), face(10, 1)] }, Q4: { w: 100, h: 100, f: [face(500)] }, Q5: { w: 100, h: 100, f: [face(10, 1)] } }  /* step 60: a guest needs 3 matching photos */, done: true });
 assert(call('getGallery', { g: gid }).gallery.faceSearch, 'Find me is ready');
 const me = face(500)[1];
 // guests must say who they are first
@@ -26,7 +26,7 @@ const again = call('guestJoin', { g: gid, name: 'Neha S', phone: '+91 9876543210
 assert(again.ok && again.found && again.found.sure.includes('Q1'), 'the same number on a new phone gets her photos back, no new search');
 r = call('findFaces', { g: gid, d: face(10, 1)[1], device: 'devonce0002', guestId: again.guestId, guestKey: again.guestKey });
 assert(r.again && !r.sure.includes('Q2'), 'and cannot search for someone else');
-assert(call('myFind', { g: gid, guestId: again.guestId, guestKey: again.guestKey }).found.sure.length === 2, 'myFind restores the result');
+assert(call('myFind', { g: gid, guestId: again.guestId, guestKey: again.guestKey }).found.sure.length === 3, 'myFind restores the result');
 // a guest with no match may try again (a bad selfie is not their one search)
 const ravi = call('guestJoin', { g: gid, name: 'Ravi', phone: '9000000001', device: 'devonce0003' });
 r = call('findFaces', { g: gid, d: face(77, 7)[1], device: 'devonce0003', guestId: ravi.guestId, guestKey: ravi.guestKey });
@@ -34,7 +34,7 @@ assert(r.ok && !r.sure.length && !r.maybe.length, 'Ravi: no match');
 r = call('findFaces', { g: gid, d: face(10, 1)[1], device: 'devonce0003', guestId: ravi.guestId, guestKey: ravi.guestKey });
 assert(r.ok && !r.again && r.sure.includes('Q2'), 'after no match he can try again and is found');
 // the couple and the photographer search freely
-assert(call('findFaces', { g: gid, d: me, device: 'devonce0004', coupleKey: ck }).sure.length === 2 && call('findFaces', { g: gid, d: face(10, 1)[1], device: 'devonce0004', coupleKey: ck }).sure.includes('Q2'), 'the couple searches as often as they like');
+assert(call('findFaces', { g: gid, d: me, device: 'devonce0004', coupleKey: ck }).sure.length === 3 && call('findFaces', { g: gid, d: face(10, 1)[1], device: 'devonce0004', coupleKey: ck }).sure.includes('Q2'), 'the couple searches as often as they like');
 assert(call('findFaces', { g: gid, d: me, device: 'devonce0005', token: admin }).ok, 'PicGrades too');
 // download requests
 const gb = { guestId: neha.guestId, guestKey: neha.guestKey };

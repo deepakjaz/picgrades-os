@@ -72,6 +72,7 @@ var PUBLIC_ROUTES = {
   coupleLook: coupleLook_,
   myFind: myFind_,
   askDownload: askDownload_,
+  askAccess: askAccess_,
   dlRequests: dlRequests_,
   dlDecide: dlDecide_,
   dlGrant: dlGrant_
@@ -161,7 +162,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step59-control-panel',
+    version: 'step60-strict-findme',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1430,7 +1431,7 @@ function coupleThanks_(p) {
 // the couple (or the photographer / PicGrades) approves it and the guest gets an email with a download link.
 // This is PicGrades' privacy policy for every wedding, so the couple never has to be the one who says no.
 var FIND_COLUMNS = ['at', 'galleryId', 'phone', 'guestId', 'name', 'sure', 'maybe', 'status'];
-var DLREQ_COLUMNS = ['at', 'galleryId', 'reqId', 'guestId', 'name', 'phone', 'email', 'ids', 'status', 'grant', 'decidedAt', 'decidedBy'];
+var DLREQ_COLUMNS = ['at', 'galleryId', 'reqId', 'guestId', 'name', 'phone', 'email', 'ids', 'status', 'grant', 'decidedAt', 'decidedBy', 'kind'];
 var DL_MAX_IDS = 50;
 function digits_(v) { return String(v == null ? '' : v).replace(/\D/g, '').slice(-10); }
 /** 'couple' (couple link) · 'staff' (photographer / PicGrades login for this wedding) · '' (a guest). */
@@ -1470,13 +1471,30 @@ function askDownload_(p) {
   appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: ids.join(','), status: 'waiting', grant: '', decidedAt: '', decidedBy: '' });
   return { reqId: reqId, count: ids.length };
 }
+/** Public (guest, step 60): after a close match, ask the couple to let them see their photos. The photos come from the
+ *  server's own close-match record, never from the phone. */
+function askAccess_(p) {
+  var g = publishedGallery_(p.g), guest = guestFor_(g, p);
+  var email = String(p.email || '').trim().toLowerCase().slice(0, 120);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'Please write a valid email address.' };
+  if (!limitOk_('acc:' + guest.guestId, 5, 3600)) return { ok: false, error: 'Too many requests for now. Please try again later.' };
+  ensureTab_('FindMe', FIND_COLUMNS);
+  var d = digits_(guest.phone), row = readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && x.status === 'close'; }).pop();
+  if (!row) return { ok: false, error: 'Please use Find me first.' };
+  ensureTab_('DownloadRequests', DLREQ_COLUMNS);
+  var old = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId && x.kind === 'access' && digits_(x.phone) === d && x.status === 'waiting'; })[0];
+  if (old) return { reqId: old.reqId, already: true };
+  var reqId = 'ac_' + randomId_(10);
+  appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: row.sure, status: 'waiting', grant: '', decidedAt: '', decidedBy: '', kind: 'access' });
+  return { reqId: reqId };
+}
 /** Couple link or staff login: download requests of this wedding (waiting first). */
 function dlRequests_(p) {
   var g = publishedGallery_(p.g);
   if (!privileged_(g, p)) return { ok: false, error: 'Only the couple can see download requests.' };
   ensureTab_('DownloadRequests', DLREQ_COLUMNS);
   var all = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId; })
-    .map(function (x) { return { reqId: x.reqId, name: x.name, email: x.email, ids: String(x.ids || '').split(',').filter(String), status: x.status, at: x.at, decidedAt: x.decidedAt }; })
+    .map(function (x) { return { reqId: x.reqId, name: x.name, email: x.email, ids: String(x.ids || '').split(',').filter(String), status: x.status, at: x.at, decidedAt: x.decidedAt, kind: x.kind === 'access' ? 'access' : 'download' }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
   return { waiting: all.filter(function (x) { return x.status === 'waiting'; }), decided: all.filter(function (x) { return x.status !== 'waiting'; }).slice(0, 40) };
 }
@@ -1493,7 +1511,18 @@ function dlDecide_(p) {
   var grant = decision === 'approved' ? randomId_(16) : '';
   updateRowByNumber_('DownloadRequests', row._row, { status: decision, grant: grant, decidedAt: fmt_(new Date()), decidedBy: who });
   var n = String(row.ids || '').split(',').filter(String).length;
-  if (decision === 'approved') {
+  if (decision === 'approved' && row.kind === 'access') {
+    // a close match the couple recognised: this mobile number now has its photos, like a normal Find me
+    ensureTab_('FindMe', FIND_COLUMNS);
+    var d = digits_(row.phone), fm = readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && x.status === 'close'; }).pop();
+    if (fm) updateRowByNumber_('FindMe', fm._row, { status: 'ok' });
+    var link2 = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '') + '/g/' + g.galleryId + '?dl=' + grant;
+    sendEmail_(row.email, 'Your photos from ' + g.title, 'You can see your photos now',
+      ['Hi ' + esc_(String(row.name || '').split(' ')[0]) + ',',
+       esc_(g.title) + ' approved your Find me request. ' + n + ' photo' + (n === 1 ? '' : 's') + ' of you ' + (n === 1 ? 'is' : 'are') + ' ready.',
+       '<a href="' + esc_(link2) + '" style="display:inline-block;padding:12px 22px;border-radius:24px;background:#141413;color:#fff;text-decoration:none">See my photos</a>',
+       'The link works for 30 days. On the same phone number, Find me now shows these photos too.'], 'access-approved', row.reqId);
+  } else if (decision === 'approved') {
     var link = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '') + '/g/' + g.galleryId + '?dl=' + grant;
     sendEmail_(row.email, 'Your photos from ' + g.title, 'Your photos are ready',
       ['Hi ' + esc_(String(row.name || '').split(' ')[0]) + ',',
@@ -1725,6 +1754,19 @@ function photoData_(p) {
 /** Public: Find me. The phone reads the guest's selfie and sends only that one face code; matching happens here,
  *  so nobody can download the face codes of everyone in the wedding. Returns photo ids only. */
 var FACE_SURE = 0.5, FACE_MAYBE = 0.58;
+// Step 60: stricter rules for guests (the couple and the photographer keep the rules above, with "Maybe you").
+// A guest is let in only when: every face counted is very close (0.42, Settings "findmeLimit"), the selfie is clearly ONE person
+// (the closest faces are not two different people, as with brothers), and at least 3 photos match (Settings "findmeMin").
+// 1 or 2 close photos = a "close match": nothing is shown; the guest may leave an email and the couple approves.
+var FACE_GUEST = 0.42, FACE_GUEST_MIN = 3, FACE_TIGHT = 0.08, FACE_BAND = 0.12, FACE_OTHER = 0.55;
+function guestFaceRules_() {
+  var st = getSettings_(), lim = Number(st.findmeLimit), min = Number(st.findmeMin);
+  return { lim: lim >= 0.3 && lim <= 0.55 ? lim : FACE_GUEST, min: min >= 1 && min <= 10 ? Math.round(min) : FACE_GUEST_MIN };
+}
+function faceDist_(a, b, stop) {
+  var t = 0; for (var i = 0; i < 128; i++) { var d = a[i] - b[i]; t += d * d; if (stop && t > stop * stop) return 1e9; }
+  return Math.sqrt(t);
+}
 function findFaces_(p) {
   var g = faceGallery_(p.g), device = String(p.device || '').slice(0, 40);
   if (device.length < 8) return { ok: false, error: 'Missing details.' };
@@ -1738,23 +1780,47 @@ function findFaces_(p) {
   }
   var f = readFacesFile_(g), scale = f.scale || 250, me = faceBytes_(String(p.d || ''));
   if (!me) return { ok: false, error: 'The face could not be read. Please try again.' };
+  if (guest) return guestFind_(g, f, scale, me, guest);
   var limSure = FACE_SURE * scale, limMaybe = FACE_MAYBE * scale, sure = [], maybe = [], best = {};
   Object.keys(f.photos || {}).forEach(function (pid) {
     var b = 1e9;
     (f.photos[pid].f || []).forEach(function (fc) {
       var x = faceBytes_(fc[1]); if (!x) return;
-      var t = 0; for (var i = 0; i < 128; i++) { var d = me[i] - x[i]; t += d * d; if (t > limMaybe * limMaybe) break; }
-      t = Math.sqrt(t); if (t < b) b = t;
+      var t = faceDist_(me, x, limMaybe); if (t < b) b = t;
     });
     if (b <= limMaybe) best[pid] = b;
   });
   Object.keys(best).sort(function (a, c) { return best[a] - best[c]; }).forEach(function (pid) { (best[pid] <= limSure ? sure : maybe).push(pid); });
-  // a guest who was found keeps that result: it is their one search (no match = they may try again with a better selfie)
-  if (guest && (sure.length || maybe.length)) {
-    ensureTab_('FindMe', FIND_COLUMNS);
-    appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: sure.join(','), maybe: maybe.join(','), status: 'ok' });
-  }
   return { sure: sure, maybe: maybe, photos: Object.keys(f.photos || {}).length };
+}
+function guestFind_(g, f, scale, me, guest) {
+  var R = guestFaceRules_(), scan = (R.lim + FACE_BAND) * scale, near = [];
+  Object.keys(f.photos || {}).forEach(function (pid) {
+    (f.photos[pid].f || []).forEach(function (fc) {
+      var x = faceBytes_(fc[1]); if (!x) return;
+      var t = faceDist_(me, x, scan); if (t <= scan) near.push({ pid: pid, d: t, x: x });
+    });
+  });
+  near.sort(function (a, b) { return a.d - b.d; });
+  var out = { sure: [], maybe: [], photos: Object.keys(f.photos || {}).length };
+  if (!near.length || near[0].d > R.lim * scale) return out;
+  // one clear person: the faces closest to the selfie must all be the same person
+  var d1 = near[0].d, band = near.filter(function (n) { return n.d <= d1 + FACE_BAND * scale; }).slice(0, 16);
+  for (var i = 0; i < band.length; i++) for (var j = i + 1; j < band.length; j++) {
+    if (band[i].pid !== band[j].pid && faceDist_(band[i].x, band[j].x) > FACE_OTHER * scale) { out.unclear = true; return out; }
+    if (band[i].pid === band[j].pid) { out.unclear = true; return out; }   // two faces of one photo = two different people
+  }
+  var keep = Math.min(R.lim, d1 / scale + FACE_TIGHT) * scale, ids = [];
+  near.forEach(function (n) { if (n.d <= keep && ids.indexOf(n.pid) < 0) ids.push(n.pid); });
+  ensureTab_('FindMe', FIND_COLUMNS);
+  if (ids.length >= R.min) {
+    appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: ids.join(','), maybe: '', status: 'ok' });
+    out.sure = ids; return out;
+  }
+  // a close match: the photos stay hidden; they are kept here for the couple to approve
+  appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: ids.join(','), maybe: '', status: 'close' });
+  out.close = true; out.need = R.min;
+  return out;
 }
 /** Public: where faces are in each photo (boxes only, no face codes) so the album maker keeps people in frame. */
 function faceBoxes_(p) {

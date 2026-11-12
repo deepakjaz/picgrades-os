@@ -153,21 +153,22 @@
   function requestsPane() {
     const p = h('div', 'pgcp-pane pgr-pane');
     const role = window.PGControl ? PGControl.role() : 'guest';
-    p.appendChild(h('p', 'pgcp-note', 'Guests can download only the photos Find me found of them — that is the app’s privacy policy, so you never have to say no yourselves. When a guest asks for another photo it shows here. Approve, and they get an email with the download link.'));
+    p.appendChild(h('p', 'pgcp-note', 'A “close match” is a guest Find me found in only 1 or 2 photos: tap the photos and approve only if it is really them. ' +
+      'Guests can download only the photos Find me found of them — that is the app’s privacy policy, so you never have to say no yourselves. When a guest asks for another photo it shows here. Approve, and they get an email with the download link.'));
     if (role === 'demo') { p.appendChild(h('p', 'pgr-empty', 'In a real wedding, guests’ download requests appear here for the couple to approve. (A demo keeps guests’ emails private, so none are shown.)')); return p; }
     const list = h('div', 'pgr-list', '<p class="pgr-empty">Loading…</p>'); p.appendChild(list);
     const auth = () => (role === 'couple' || pgIsCouple()) ? {} : { token: token() };
     const row = (x, waiting) => {
       const r = h('div', 'pgr-row' + (waiting ? '' : ' done'));
       r.innerHTML = '<div class="pgr-thumbs">' + x.ids.slice(0, 3).map(id => '<img alt="" src="' + pgImg(id, 160) + '">').join('') + '</div>' +
-        '<div class="pgr-who"><b>' + pgEsc(x.name || 'Guest') + '</b><span>' + pgEsc(x.email) + ' · ' + x.ids.length + ' photo' + (x.ids.length === 1 ? '' : 's') + '</span><small>' + pgEsc(String(x.at || '').slice(0, 16)) + '</small></div>' +
+        '<div class="pgr-who"><b>' + pgEsc(x.name || 'Guest') + '</b><span>' + (x.kind === 'access' ? '<i class="pgr-tag">Find me · close match</i> ' : '') + pgEsc(x.email) + ' · ' + x.ids.length + ' photo' + (x.ids.length === 1 ? '' : 's') + (x.kind === 'access' ? ' found of them' : '') + '</span><small>' + pgEsc(String(x.at || '').slice(0, 16)) + '</small></div>' +
         (waiting ? '<div class="pgr-acts"><button type="button" class="pgr-no">Decline</button><button type="button" class="pgr-yes">Approve</button></div>'
           : '<em class="' + (x.status === 'approved' ? 'ok' : 'no') + '">' + (x.status === 'approved' ? 'Approved · emailed' : 'Declined') + '</em>');
       r.querySelector('.pgr-thumbs').addEventListener('click', () => { const map = pgPhotoById(), ph = x.ids.map(id => map[id]).filter(Boolean); if (ph.length && window.pgOpenEvent) pgOpenEvent('Asked by ' + (x.name || 'a guest'), ph); });
       if (waiting) r.querySelectorAll('.pgr-yes,.pgr-no').forEach(b => b.addEventListener('click', () => {
         const yes = b.classList.contains('pgr-yes'); r.querySelectorAll('button').forEach(z => { z.disabled = true; });
         pgApi('dlDecide', Object.assign({ reqId: x.reqId, decision: yes ? 'approve' : 'decline' }, auth())).then(() => {
-          showToast(yes ? 'Approved — ' + (x.name || 'the guest').split(' ')[0] + ' gets the link by email' : 'Declined'); load();
+          showToast(yes ? 'Approved — ' + (x.name || 'the guest').split(' ')[0] + (x.kind === 'access' ? ' can see their photos now (link sent by email)' : ' gets the link by email') : 'Declined'); load();
         }).catch(err => { showToast(err.message); r.querySelectorAll('button').forEach(z => { z.disabled = false; }); });
       }));
       return r;
