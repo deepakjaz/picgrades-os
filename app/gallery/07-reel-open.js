@@ -5,7 +5,7 @@ function pgOpenReel(photos, choose) {
   photos = (photos || []).filter(Boolean);
   if (!photos.length) { showToast('No photos to make a reel'); return; }
   if (!pgReelLoad) pgReelLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/reel.js'; s.onload = res; s.onerror = () => { pgReelLoad = null; rej(new Error('Could not open the reel maker. Check the internet.')); }; document.head.appendChild(s); });
-  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), choose: !!choose, title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi,
+  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), choose: !!choose, demo: !!GALLERY.demo, title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi,
     collections: (GALLERY.personal || []).concat(GALLERY.events || []).concat((GALLERY.root || []).length ? [{ name: 'Root Moment', photos: GALLERY.root }] : []).map(c => ({ name: c.name, photos: c.photos.map(p => ({ id: p.id })) })) }))
     .catch(e => showToast(e.message));
 }

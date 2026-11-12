@@ -39,6 +39,7 @@
     haldi: { name: 'Haldi · sunlight', time: 'Morning', line: 'A morning painted in turmeric and laughter', btn: 'Step into the Haldi' },
     mehendi: { name: 'Mehendi · henna', time: 'Afternoon', line: 'Stories drawn in henna, one swirl at a time', btn: 'Enter the Mehendi' },
     sangeet: { name: 'Sangeet · stage lights', time: 'Evening', line: 'The night the whole family danced', btn: 'Join the Sangeet' },
+    cocktail: { name: 'Cocktail · disco lights', time: 'Night', line: 'Glasses up, lights down, a night to remember', btn: 'Raise a glass' },
     wedding: { name: 'Wedding · royal', time: 'The vows', line: 'Two families, one sacred fire', btn: 'Enter the Wedding' },
     reception: { name: 'Reception · night lights', time: 'Night', line: 'An evening of lights and celebration', btn: 'Enter the Reception' },
     bloom: { name: 'Celebration · florals', time: 'Celebration', line: 'Every moment of the celebration', btn: 'Open this event' }
@@ -47,7 +48,8 @@
     const n = String(name || '').toLowerCase();
     if (/haldi|pithi|turmeric|ubtan/.test(n)) return 'haldi';
     if (/mehe?ndi|henna|mehandi/.test(n)) return 'mehendi';
-    if (/sangeet|sangit|garba|dandiya|music|cocktail/.test(n)) return 'sangeet';
+    if (/cocktail|mocktail|toast|bar night|disco|dj night/.test(n)) return 'cocktail';
+    if (/sangeet|sangit|garba|dandiya|music/.test(n)) return 'sangeet';
     if (/recep|party|after/.test(n)) return 'reception';
     if (/wedd|shaadi|vivah|phera|varmala|lagan|nikah|anand/.test(n)) return 'wedding';
     return 'bloom';
@@ -60,6 +62,8 @@
       '<circle class="x-draw" cx="50" cy="24" r="8"/><path class="x-draw" d="M50 16V6M42 24H32M58 24h10M44 18l-6-6M56 18l6-6"/><circle cx="50" cy="24" r="2.5" class="x-dot"/>',
     sangeet: '<ellipse cx="50" cy="38" rx="30" ry="9" class="x-line"/><path class="x-line" d="M20 38v26c0 5 13 9 30 9s30-4 30-9V38"/><path class="x-line" d="M28 46l8 22M44 47v25M58 47l-4 25M72 46l-8 22"/>' +
       '<path class="x-line x-stick" d="M22 18l18 16M78 18L60 34"/><circle cx="22" cy="18" r="3" class="x-dot"/><circle cx="78" cy="18" r="3" class="x-dot"/>',
+    cocktail: '<g class="x-clink"><path class="x-line x-gl1" d="M22 22h22l-11 20zM33 42v26M25 68h16"/><path class="x-line x-gl2" d="M56 22h22l-11 20zM67 42v26M59 68h16"/></g>' +
+      '<path class="x-line x-bell" d="M50 8c-5 0-8 4-8 9v6l-3 4h22l-3-4v-6c0-5-3-9-8-9zM47 30a3 3 0 0 0 6 0"/><circle cx="18" cy="14" r="2" class="x-dot x-tw"/><circle cx="84" cy="12" r="2" class="x-dot x-tw"/><circle cx="50" cy="84" r="2" class="x-dot x-tw"/>',
     wedding: '<path class="x-line" d="M18 84h64M24 84V48l26-24 26 24v36"/><path class="x-line" d="M36 84V60a14 14 0 0 1 28 0v24"/>' +
       '<path class="x-flame" d="M50 80c-7-4-8-12-3-18 1 5 4 6 4 6 0-7 3-12 8-15-2 6 2 9 2 14 0 8-5 12-11 13z"/><circle cx="50" cy="20" r="3" class="x-dot"/>',
     reception: '<path class="x-line" d="M58 14a24 24 0 1 0 22 32 20 20 0 1 1-22-32z"/><circle cx="24" cy="24" r="2" class="x-dot x-tw"/><circle cx="34" cy="12" r="1.6" class="x-dot x-tw"/>' +
@@ -145,6 +149,7 @@
       el.innerHTML = '<div class="x-cbg" aria-hidden="true">' + (k === 'haldi' ? '<svg class="x-splash" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice"><path d="M100 22c22 0 30 22 50 24 22 2 34 22 28 44-5 18 10 30 2 48-9 20-30 18-44 30-14 12-30 22-48 12-16-9-28-2-44-14-16-12-8-32-18-48-10-17 0-36 18-42 16-6 22-28 40-34 6-2 11-20 16-20z"/><circle cx="160" cy="168" r="7"/><circle cx="30" cy="40" r="5"/><circle cx="176" cy="40" r="4"/><path d="M72 176c0 10 6 16 6 22M128 182c0 6 4 10 4 14"/></svg>'
           : k === 'mehendi' ? '<svg class="x-henna" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice"><g>' + [0, 45, 90, 135, 180, 225, 270, 315].map(a => '<path class="x-draw" transform="rotate(' + a + ' 100 100)" d="M100 100c0-20 8-34 0-52-8 18 0 32 0 52M100 48c-6-8-4-18 0-24 4 6 6 16 0 24"/>').join('') + '<circle class="x-draw" cx="100" cy="100" r="16"/><circle class="x-draw" cx="100" cy="100" r="70"/></g></svg>'
           : k === 'sangeet' ? '<div class="x-beam x-b1"></div><div class="x-beam x-b2"></div><div class="x-eq">' + Array.from({ length: 14 }, (_, i) => '<i style="--d:' + ((i * 37) % 10) / 10 + 's"></i>').join('') + '</div>'
+          : k === 'cocktail' ? '<div class="x-disco"><i class="x-ball"></i></div><div class="x-spots">' + Array.from({ length: 12 }, (_, i) => '<i style="--x:' + ((i * 53) % 100) + '%;--y:' + ((i * 29) % 90) + '%;--h:' + (i * 47) % 360 + ';--d:' + (i % 4) * 0.5 + 's"></i>').join('') + '</div>'
           : k === 'wedding' ? '<svg class="x-palace" viewBox="0 0 200 120" preserveAspectRatio="xMidYMax slice"><path class="x-draw" d="M10 120V70h16V56l10-10 10 10v14h16V48c0-14 18-26 38-32 20 6 38 18 38 32v22h16V56l10-10 10 10v14h16v50"/><path class="x-draw" d="M84 120V86a16 16 0 0 1 32 0v34M36 120v-24a8 8 0 0 1 16 0v24M148 120v-24a8 8 0 0 1 16 0v24"/></svg><div class="x-petals">' + Array.from({ length: 10 }, (_, i) => '<i style="--x:' + (i * 10 + 4) + '%;--d:' + (i % 5) * 0.9 + 's"></i>').join('') + '</div>'
           : k === 'reception' ? '<div class="x-bokeh">' + Array.from({ length: 16 }, (_, i) => '<i style="--x:' + ((i * 61) % 100) + '%;--y:' + ((i * 37) % 70) + '%;--s:' + (8 + (i * 7) % 26) + 'px;--d:' + (i % 6) * 0.7 + 's"></i>').join('') + '</div><svg class="x-city" viewBox="0 0 200 60" preserveAspectRatio="xMidYMax slice"><path d="M0 60V40h10V28h8v12h6V18h12v22h8V30h10v30h6V22l8-8 8 8v38h8V34h14v26h6V26h10v34h8V12h4V4h2v8h4v48h10V36h12v24h8V30h10v30z"/></svg>'
           : '<div class="x-glow"></div>') + '</div>' +

@@ -2568,3 +2568,15 @@ body.pg-role-couple .pgsp-btn,body.pg-role-photographer .pgsp-btn,body.pg-role-p
 .pgsp-slot b{text-align:center;font:600 13px var(--font-sans)}
 .pgsp-slot button{position:absolute;top:8px;right:8px;width:30px;height:30px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:18px;cursor:pointer}
 .pgcp-tabs.five{grid-template-columns:.85fr .85fr 1.1fr 1.1fr 1.3fr}.pgcp-tabs.five button{font-size:11.5px;padding-left:2px;padding-right:2px}
+
+/* ===== Step 58: Reel / Post Edits only after Find me; the pinned bar on the guest's own photos ===== */
+body:not(.pg-can-create) #pghReel,body:not(.pg-can-create) #pgcPost,body:not(.pg-can-create) .psh-lab-sec,body:not(.pg-can-create) .pse-demo{display:none!important}
+.pgcr-bar{position:fixed;z-index:70;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;
+  max-width:calc(100vw - 24px);border-radius:999px;background:rgba(22,18,15,.86);color:#fff;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 12px 32px rgba(0,0,0,.3);animation:pgcr-in .45s cubic-bezier(.2,.9,.3,1.2)}
+.pgcr-bar span{font:500 12.5px var(--font-sans);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pgcr-bar button{display:flex;align-items:center;gap:7px;flex:none;border:0;border-radius:999px;padding:10px 15px;background:#fff;color:#16120f;font:700 13px var(--font-sans);cursor:pointer}
+.pgcr-bar button+button{background:var(--cta-peach,#f2b98a)}
+.pgcr-bar svg{width:18px;height:18px}
+@keyframes pgcr-in{from{opacity:0;transform:translate(-50%,24px)}}
+@media (max-width:420px){.pgcr-bar span{display:none}}
+@media (min-width:1100px){.pgcr-bar{bottom:30px}}

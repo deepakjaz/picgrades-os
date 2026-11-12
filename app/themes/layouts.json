@@ -253,15 +253,15 @@
   {
    "id": "x-palace-window",
    "name": "Palace Window",
-   "idea": "The wedding seen through a carved palace window, ivory and gold, the journey as a string of beads.",
+   "idea": "The couple big and full width at dusk, the wedding as a string of beads, then each event opens like a lit stage.",
    "palette": {
-    "id": "ivory"
+    "id": "night"
    },
    "by": "C",
    "blocks": [
     {
      "block": "x-world",
-     "variant": "arch",
+     "variant": "cinema",
      "set": {
       "sky": "dusk"
      },
@@ -287,7 +287,7 @@
      ],
      "tall": [
       8,
-      7
+      6
      ],
      "wide": [
       12,
@@ -295,8 +295,46 @@
      ]
     },
     {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 0
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 1
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
      "block": "findme",
-     "variant": "icon",
+     "variant": "glass",
      "phone": [
       2,
       2
@@ -312,7 +350,7 @@
     },
     {
      "block": "reel",
-     "variant": "icon",
+     "variant": "glass",
      "phone": [
       2,
       2
@@ -328,7 +366,7 @@
     },
     {
      "block": "post",
-     "variant": "icon",
+     "variant": "glass",
      "phone": [
       2,
       2
@@ -344,7 +382,7 @@
     },
     {
      "block": "upload",
-     "variant": "icon",
+     "variant": "glass",
      "phone": [
       2,
       2
@@ -360,86 +398,64 @@
     },
     {
      "block": "x-chapter",
-     "variant": "side",
-     "set": {
-      "idx": 0
-     },
-     "phone": [
-      4,
-      3
-     ],
-     "tall": [
-      8,
-      3
-     ],
-     "wide": [
-      6,
-      3
-     ]
-    },
-    {
-     "block": "x-chapter",
-     "variant": "side",
-     "set": {
-      "idx": 1
-     },
-     "phone": [
-      4,
-      3
-     ],
-     "tall": [
-      8,
-      3
-     ],
-     "wide": [
-      6,
-      3
-     ]
-    },
-    {
-     "block": "x-chapter",
-     "variant": "side",
+     "variant": "stage",
      "set": {
       "idx": 2
      },
      "phone": [
       4,
-      3
+      4
      ],
      "tall": [
       8,
-      3
+      4
      ],
      "wide": [
-      6,
-      3
+      4,
+      4
      ]
     },
     {
      "block": "x-chapter",
-     "variant": "side",
+     "variant": "stage",
      "set": {
       "idx": 3
      },
      "phone": [
       4,
-      3
+      4
      ],
      "tall": [
       8,
-      3
+      4
      ],
      "wide": [
-      6,
-      3
+      4,
+      4
      ]
     },
     {
      "block": "x-chapter",
-     "variant": "side",
+     "variant": "stage",
      "set": {
       "idx": 4
      },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      4
+     ],
+     "wide": [
+      4,
+      4
+     ]
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
      "phone": [
       4,
       3
@@ -449,13 +465,13 @@
       3
      ],
      "wide": [
-      6,
+      12,
       3
      ]
     },
     {
      "block": "notes",
-     "variant": "bubbles",
+     "variant": "cards",
      "phone": [
       4,
       2
@@ -465,7 +481,7 @@
       3
      ],
      "wide": [
-      6,
+      12,
       3
      ]
     }

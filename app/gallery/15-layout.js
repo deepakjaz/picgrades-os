@@ -169,6 +169,7 @@
     const feat = k === 'loved' ? 'hearts' : k;   // switched-off functions leave the Hub (step 33)
     if (window.pgFeatureOn && ['findme', 'reel', 'post', 'upload', 'notes', 'install', 'hearts'].indexOf(feat) > -1 && !pgFeatureOn(feat)) return false;
     if (k === 'findme') return !!GALLERY.faceSearch;
+    if ((k === 'reel' || k === 'post') && window.PGCreate && !PGCreate.can()) return false;   // step 58: only after Find me found the guest
     if (k === 'review') return !$('pgcReview') || !$('pgcReview').classList.contains('hidden');
     if (k === 'install') return !$('pghInstall') || !$('pghInstall').classList.contains('hidden');
     return true;
@@ -181,8 +182,19 @@
     box.style.setProperty('--max', S.max + 'px'); box.style.setProperty('--u', Math.max(40, u).toFixed(1) + 'px'); box.dataset.screen = scr;
   }
   // which blocks show on this screen, and the size of each ([cols, rows]); a block with its own place ("pos", the Hub editor) keeps it
+  // Step 58: a ready layout has a chapter per event, but a wedding can have more events than the layout drew
+  // (a Cocktail as the 6th): the guest still gets one chapter per event, in the same style, after the last one
+  function moreChapters(blocks, D) {
+    const ch = blocks.filter(b0 => b0.block === 'x-chapter' && !b0.pos && !(b0.set && b0.set.event));
+    const evs = (D && D.events) || [];
+    if (!ch.length || SKIP_REPACK || evs.length <= ch.length) return blocks;
+    const used = new Set(ch.map(b0 => +((b0.set || {}).idx) || 0)), last = ch[ch.length - 1], add = [];
+    evs.forEach((e, i) => { if (!used.has(i)) add.push(Object.assign({}, last, { set: Object.assign({}, last.set, { idx: i }), more: 1 })); });
+    const at = blocks.lastIndexOf(last) + 1;
+    return blocks.slice(0, at).concat(add, blocks.slice(at));
+  }
   function plan(layout, scr, D) {
-    const shown = (layout.blocks || []).filter(b0 => (B[b0.block] || (window.PGX && PGX.has(b0.block))) && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
+    const shown = moreChapters(layout.blocks || [], D).filter(b0 => (B[b0.block] || (window.PGX && PGX.has(b0.block))) && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
       && !(b0.block === 'loved' && !D.loved.length) && !(b0.block === 'notes' && !D.notes.length));
     const wide = scr === 'wide' && shown.some(b0 => !Array.isArray(b0.wide) && !(b0.pos && b0.pos.wide)) ? planWide(shown) : null;
     // an own Hub (cards with fixed places) where a card has nothing to show right now (no hearts yet, a function off):

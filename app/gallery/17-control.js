@@ -44,6 +44,7 @@
     ['guest', 'couple', 'photographer', 'picgrades', 'demo'].forEach(r => document.body.classList.toggle('pg-role-' + r, ROLE === r));
     const gear = document.querySelector('.tkg-nav-item[data-nav="studio"]');
     if (gear) { gear.setAttribute('aria-label', 'Control Panel'); gear.title = 'Control Panel'; }
+    if (window.PGCreate) PGCreate.paint();   // step 58: the couple / staff get Reel and Post Edits as soon as the role is known
   }
   function askStaff() {
     if (asked || PREVIEW || !token() || typeof GALLERY === 'undefined' || !GALLERY || GALLERY.isStudio) return;

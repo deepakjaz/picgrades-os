@@ -171,3 +171,27 @@ body.pgx-pal .pgl-grid .pgl-head h3{color:var(--x-ink)}
 .pged-own input{width:44px;height:36px;border:0;padding:0;background:none;cursor:pointer}
 .pged-photosheet,.pged-palsheet{z-index:2100!important}
 body:has(.pged-photosheet) .overlay-backdrop.show,body:has(.pged-palsheet) .overlay-backdrop.show{z-index:2099}
+
+/* Step 58: Cocktail has its own look: glasses that clink, a ringing bell, a disco ball and coloured spots */
+.x-id-cocktail .x-icon{color:#c9a14a}.x-chapter.x-id-cocktail .x-hero{color:#ffd98a}
+.x-stop.x-id-cocktail .x-bead{background:#f3ecdf}
+.x-chapter.x-id-cocktail{--c-bg:radial-gradient(circle at 50% 0%,#3a2a12,#160f22 55%,#07060c);--c-ink:#fff3dc}
+.x-gl1,.x-gl2{transform-box:fill-box;transform-origin:50% 100%}
+.x-in:not(.x-still) .x-gl1{animation:x-cl1 2.6s ease-in-out infinite}.x-in:not(.x-still) .x-gl2{animation:x-cl2 2.6s ease-in-out infinite}
+@keyframes x-cl1{0%,60%,100%{transform:rotate(0)}75%{transform:rotate(12deg)}}
+@keyframes x-cl2{0%,60%,100%{transform:rotate(0)}75%{transform:rotate(-12deg)}}
+.x-bell{transform-box:fill-box;transform-origin:50% 0}
+.x-in:not(.x-still) .x-bell{animation:x-ring 2.6s ease-in-out infinite}
+@keyframes x-ring{0%,70%,100%{transform:rotate(0)}76%{transform:rotate(16deg)}82%{transform:rotate(-14deg)}88%{transform:rotate(8deg)}94%{transform:rotate(-4deg)}}
+.x-disco{position:absolute;left:80%;top:0;width:2px;height:18%;background:rgba(255,255,255,.35);transform:translateX(-50%)}
+.x-ball{position:absolute;left:50%;bottom:-26px;width:52px;height:52px;margin-left:-26px;border-radius:50%;
+ background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 7px),repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 1px,transparent 1px 7px),radial-gradient(circle at 35% 30%,#fff,#c9c9d6 40%,#6d6d80 80%);
+ box-shadow:0 0 24px rgba(255,255,255,.45)}
+.x-in:not(.x-still) .x-ball{animation:x-spin 4s linear infinite}
+@keyframes x-spin{to{background-position:0 0,28px 0,0 0}}
+.x-spots{position:absolute;inset:0;overflow:hidden}
+.x-spots i{position:absolute;left:var(--x);top:var(--y);width:14px;height:14px;border-radius:50%;background:hsl(var(--h) 90% 65%);filter:blur(1px);opacity:.0;box-shadow:0 0 12px hsl(var(--h) 90% 60%)}
+.x-in:not(.x-still) .x-spots i{animation:x-spot 2.4s var(--d) ease-in-out infinite}
+.x-still .x-spots i{opacity:.6}
+@keyframes x-spot{0%{opacity:0;transform:translate(0,0)}40%{opacity:.85}100%{opacity:0;transform:translate(30px,12px)}}
+@media (prefers-reduced-motion:reduce){.x-gl1,.x-gl2,.x-bell,.x-ball,.x-spots i{animation:none!important}}

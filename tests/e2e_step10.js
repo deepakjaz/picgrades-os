@@ -43,7 +43,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('#upClose'); await pg.waitForTimeout(300);
   console.log('my moments:', (await pg.locator('#pgcMine .pgc-pill').allTextContents()).join(' | '));
   // reel without Find me (face search off here) → allowed after name
-  await pg.click('#pghReel'); await pg.waitForTimeout(600); console.log('reel opens for named guest (face search off):', await pg.isVisible('.rl-wrap')); await pg.evaluate(() => PGReel.close());
+  await pg.evaluate(() => { pgStore('mine', { sure: [GALLERY.events[0].photos[0].id], maybe: [] }); PGCreate.paint(); }); await pg.click('#pghReel'); await pg.waitForTimeout(600); console.log('reel opens for named guest (face search off):', await pg.isVisible('.rl-wrap')); await pg.evaluate(() => PGReel.close());
   // ---- couple ----
   const c = await phone();
   await c.pg.goto('http://localhost:8775/g/' + pub.galleryId + '?couple=' + coupleKey); await c.pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await c.pg.waitForTimeout(600);
