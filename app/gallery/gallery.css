@@ -2631,3 +2631,9 @@ body:not(.pg-can-create) #pghReel,body:not(.pg-can-create) #pgcPost,body:not(.pg
 .pg-link-bar{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 66px);z-index:1199;max-width:min(92vw,560px);
  font:500 12.5px/1.4 var(--font-sans);padding:8px 14px;border-radius:14px;background:#fff7e6;color:#4a2c0c;box-shadow:0 6px 18px rgba(0,0,0,.18);text-align:center}
 .pg-link-bar a{color:#B8431D;font-weight:700;text-decoration:underline}
+
+/* step 61b: slideshow button; the details panel only for the photographer and PicGrades */
+.pgv-play.on{background:rgba(255,255,255,.22)}
+body:not(.pg-role-photographer):not(.pg-role-picgrades) #pgvInfo{display:none}
+body:not(.pg-role-photographer):not(.pg-role-picgrades).pgv-info #view-root .mk-editorial-sheet{transform:translateY(105%)}
+body[data-view=root] .pg-role-badge,body[data-view=root] .pg-link-bar{display:none}
