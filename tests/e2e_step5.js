@@ -61,7 +61,7 @@ const srv = http.createServer((req, res) => {
   b = await chromium.launch({ args: GL.concat(['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-video-capture=/tmp/selfie.y4m']) });
   ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, permissions: ['camera'] }); pg = await ctx.newPage();
   // the fake camera video does not turn its head: the real face model reads it, the head turn of the live check is played in (step 60)
-  await pg.addInitScript(() => { let real; Object.defineProperty(window, 'PGFaces', { configurable: true, get: () => real, set: v => { let n = 0; const p = v.pose; v.pose = (i, c) => p(i, c).then(r => r && Object.assign(r, { yaw: [-0.2, 0.2, 0][Math.min(2, n++)] })); real = v; } }); });
+  await pg.addInitScript(() => { let real; Object.defineProperty(window, 'PGFaces', { configurable: true, get: () => real, set: v => { let n = 0; const p = v.pose; v.pose = (i, c) => p(i, c).then(r => r && Object.assign(r, { yaw: [-0.2, 0.2, 0, 0][Math.min(3, n++)] })); real = v; } }); });
   pg.on('pageerror', e => errors.push('gallery: ' + e.message)); await pg.route('**fonts.g**', r => r.abort()); await photoRoute(pg);
   await pg.goto('http://localhost:8771/g/' + pub.galleryId + '#moments'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
   console.log('monogram:', await pg.textContent('#pgMono'), '| stamp text gone:', !(await pg.content()).includes('結婚'));
@@ -69,7 +69,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('.pgm-findme'); await pg.waitForTimeout(300);
   console.log('Find me asks name first:', await pg.isVisible('#idSheet.show')); await pg.fill('#idName', 'Neha Guest'); await pg.fill('#idPhone', '9876543210'); await pg.click('#idGo'); await pg.waitForSelector('#fmSheet.show');
   await pg.screenshot({ path: '/tmp/s5_sheet.png' });
-  console.log('guest sees no "Choose a photo":', await pg.evaluate(() => document.getElementById('fmFile').closest('label').classList.contains('hidden'))); await pg.click('#fmCamBtn'); await pg.waitForFunction(() => !document.getElementById('fmShoot').disabled, null, { timeout: 120000 }); await pg.click('#fmShoot'); await pg.waitForTimeout(60); console.log('searching card shown:', await pg.isVisible('#fmBusy'), '|', await pg.textContent('#fmBusyStep')); await pg.screenshot({ path: '/tmp/s10_busy.png' });
+  console.log('guest sees no "Choose a photo":', await pg.evaluate(() => document.getElementById('fmFile').closest('label').classList.contains('hidden'))); await pg.click('#fmCamBtn'); await pg.click('#fmGuideOk'); await pg.waitForTimeout(60); console.log('searching card shown:', await pg.isVisible('#fmBusy'), '|', await pg.textContent('#fmBusyStep')); await pg.screenshot({ path: '/tmp/s10_busy.png' });
   await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });
   console.log('upload result:', await pg.textContent('#fmStatus'), '|', await pg.textContent('#fmOpen'));
   await pg.fill('#fmSaveName', "Neha's photos"); await pg.click('#fmSaveBtn'); await pg.waitForSelector('#fmSaved:not(.hidden)'); console.log('saved:', await pg.textContent('#fmSaved'));
@@ -88,10 +88,10 @@ const srv = http.createServer((req, res) => {
   await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(500); console.log('Find me again opens your photos:', await pg.isVisible('#view-event'), '| face sheet:', await pg.isVisible('#fmSheet.show'));
   await pg.evaluate(() => localStorage.clear()); await pg.reload(); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(900);
   await pg.click('.tkg-nav-item[data-nav=gallery]'); await pg.waitForTimeout(300);
-  await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(300); await pg.fill('#idName', 'Rohan Guest'); await pg.fill('#idPhone', '9123456780'); await pg.click('#idGo'); await pg.waitForSelector('#fmSheet.show'); await pg.click('#fmCamBtn');
-  await pg.waitForFunction(() => !document.getElementById('fmShoot').disabled, null, { timeout: 120000 });
+  await pg.click('#view-gallery .pg-findme'); await pg.waitForTimeout(300); await pg.fill('#idName', 'Rohan Guest'); await pg.fill('#idPhone', '9123456780'); await pg.click('#idGo'); await pg.waitForSelector('#fmSheet.show'); await pg.click('#fmCamBtn'); await pg.click('#fmGuideOk');
+  await pg.waitForFunction(() => /Well done/.test(document.getElementById('fmHint').textContent), null, { timeout: 120000 });
   console.log('camera:', await pg.textContent('#fmHint')); await pg.screenshot({ path: '/tmp/s5_camera.png' });
-  await pg.click('#fmShoot'); await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });
+  await pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 120000 });
   console.log('camera result:', await pg.textContent('#fmStatus'));
   console.log('page errors:', errors);
   await b.close(); srv.close();

@@ -45,6 +45,7 @@
     const gear = document.querySelector('.tkg-nav-item[data-nav="studio"]');
     if (gear) { gear.setAttribute('aria-label', 'Control Panel'); gear.title = 'Control Panel'; }
     if (window.PGCreate) PGCreate.paint();   // step 58: the couple / staff get Reel and Post Edits as soon as the role is known
+    document.dispatchEvent(new CustomEvent('pg:role'));   // step 60c: Find me shows the right words for this role
   }
   function askStaff() {
     if (asked || PREVIEW || !token() || typeof GALLERY === 'undefined' || !GALLERY || GALLERY.isStudio) return;

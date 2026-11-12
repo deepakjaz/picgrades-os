@@ -18,6 +18,44 @@ function pgMonogram() {
   function strict() { const r = window.PGControl ? PGControl.role() : 'guest'; return !(r === 'couple' || r === 'photographer' || r === 'picgrades' || (window.pgIsCouple && pgIsCouple())); }
   let live = null;
   const LIVE_SIDE = 0.12, LIVE_STRAIGHT = 0.07;
+  // Step 60c: the live check is guided for everyone (older guests too): a picture of what to do first, then RIGHT → LEFT → CENTRE
+  // with a beep at each step, big words, three ticks, and the selfie is taken by itself at the end.
+  // The camera picture is mirrored, so turning to your right moves the nose to the left of the raw camera frame (yaw below 0).
+  let audio = null;
+  function beep(freq, ms, at) {
+    try {
+      if (!audio) return;
+      const t = audio.currentTime + (at || 0), o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+      o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + ms / 1000 + 0.05);
+      window.__beeps = (window.__beeps || 0) + 1;
+    } catch (e) {}
+  }
+  function steps() {
+    let b = $('fmSteps'); if (b) return b;
+    b = document.createElement('div'); b.id = 'fmSteps'; b.className = 'fm-steps';
+    b.innerHTML = '<span data-s="right">→ Right</span><span data-s="left">← Left</span><span data-s="centre">● Centre</span>';
+    $('fmCam').appendChild(b); return b;
+  }
+  function tick() { const b = steps(); ['right', 'left', 'centre'].forEach(k => b.querySelector('[data-s=' + k + ']').classList.toggle('done', !!(live && live[k]))); }
+  function guide() {
+    let g = $('fmGuide');
+    if (!g) {
+      g = document.createElement('div'); g.id = 'fmGuide'; g.className = 'fm-guide'; g.setAttribute('role', 'dialog'); g.setAttribute('aria-labelledby', 'fmGuideT');
+      g.innerHTML = '<h4 id="fmGuideT">Please follow the instructions to take your selfie</h4>' +
+        '<svg class="fm-guide-face" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="44" class="fg-head"/><g class="fg-feat"><circle cx="45" cy="54" r="5"/><circle cx="75" cy="54" r="5"/><path d="M60 58 L56 74 L64 74" class="fg-nose"/><path d="M48 86 Q60 94 72 86" class="fg-mouth"/></g>' +
+        '<text x="60" y="116" class="fg-cap fg-c1">→ right</text><text x="60" y="116" class="fg-cap fg-c2">← left</text><text x="60" y="116" class="fg-cap fg-c3">● centre</text></svg>' +
+        '<ol><li><b>Turn your head to the RIGHT</b> — wait for the beep</li><li><b>Turn your head to the LEFT</b> — beep</li><li><b>Look at the CENTRE</b> — beep, and the selfie is taken</li></ol>' +
+        '<p>Hold the phone in front of your face, in good light. Turn up the sound to hear the beeps.</p>' +
+        '<button type="button" class="mk-btn-peach" id="fmGuideOk">OK, start the camera</button>';
+      $('fmActions').before(g);
+      g.querySelector('#fmGuideOk').addEventListener('click', () => {
+        try { const A = window.AudioContext || window.webkitAudioContext; if (A && !audio) audio = new A(); if (audio && audio.resume) audio.resume(); } catch (e) {}
+        g.classList.add('hidden'); sheet.classList.remove('fm-guiding'); startCam();
+      });
+    }
+    g.classList.remove('hidden'); $('fmActions').classList.add('hidden'); sheet.classList.add('fm-guiding');   // the long intro steps aside so OK fits on the screen
+  }
   function loadCore() {
     if (!coreReady) coreReady = new Promise((res, rej) => { if (window.PGFaces) return res(); const s = document.createElement('script'); s.src = '/app/faces-core.js'; s.onload = res; s.onerror = () => { coreReady = null; rej(new Error('Could not load face search. Check the internet and try again.')); }; document.head.appendChild(s); });
     return coreReady;
@@ -26,7 +64,7 @@ function pgMonogram() {
     status('Getting face search ready… the first time takes a few seconds.');
     return loadCore().then(() => PGFaces.load()).then(() => status(''));
   }
-  function reset() { const how = document.querySelector('#fmSheet .fm-sub-how'); if (how) how.textContent = strict() ? 'Take a selfie with the camera: a quick live check (turn your head, then look straight) makes sure it is really you.' : 'Take a selfie or choose a photo of yourself.'; live = null; askBox().classList.add('hidden'); $('fmFile').closest('label').classList.toggle('hidden', strict()); $('fmResult').classList.add('hidden'); $('fmActions').classList.remove('hidden'); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden'); status(''); }
+  function reset() { const gd = $('fmGuide'); if (gd) gd.classList.add('hidden'); sheet.classList.remove('fm-guiding'); const how = document.querySelector('#fmSheet .fm-sub-how'); if (how) how.textContent = strict() ? 'Take a selfie with the camera: a quick live check (turn your head right, left, then look at the centre) makes sure it is really you.' : 'Take a selfie or choose a photo of yourself.'; live = null; askBox().classList.add('hidden'); $('fmFile').closest('label').classList.toggle('hidden', strict()); $('fmResult').classList.add('hidden'); $('fmActions').classList.remove('hidden'); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden'); status(''); }
   function open() { reset(); back.classList.add('show'); sheet.classList.add('show'); prepare().catch(e => status(e.message)); }
   function close() { stopCam(); back.classList.remove('show'); sheet.classList.remove('show'); }
   function stopCam() { clearTimeout(loopTimer); loopTimer = null; if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } video.srcObject = null; }
@@ -56,31 +94,32 @@ function pgMonogram() {
       const ok = big && big.box.width > w * 0.18;
       let hint = ok ? 'Face found ✓ Tap “Take selfie”' : big ? 'Come a little closer' : 'Look at the camera', ready = !!ok;
       if (guest) {
-        if (!live) live = { stage: 'find', lo: 0, hi: 0 };
-        ready = false;
-        if (ok) {
+        if (!live) live = { stage: 'turn', right: false, left: false, centre: false, still: 0 };
+        ready = false; hint = big ? 'Come a little closer' : 'Look at the camera';
+        if (ok && live.stage !== 'shot') {
           const y = big.yaw || 0;
-          if (live.stage === 'find') live.stage = 'turn';
-          if (live.stage === 'turn') {
-            live.lo = Math.min(live.lo, y); live.hi = Math.max(live.hi, y);
-            const one = live.lo < -LIVE_SIDE || live.hi > LIVE_SIDE;
-            if (live.lo < -LIVE_SIDE && live.hi > LIVE_SIDE) live.stage = 'back';
-            hint = live.stage === 'back' ? 'Now look straight at the camera' : one ? 'Good ✓ Now slowly turn to the other side' : 'Live check: slowly turn your head to one side';
+          if (!live.right && y < -LIVE_SIDE) { live.right = true; beep(880, 160); }
+          else if (!live.left && y > LIVE_SIDE) { live.left = true; beep(880, 160); }
+          if (live.right && live.left) {
+            if (Math.abs(y) < LIVE_STRAIGHT) live.still++; else live.still = 0;
+            if (live.still >= 2) { live.centre = true; live.stage = 'shot'; beep(988, 140); beep(1319, 220, 0.18); }
           }
-          if (live.stage === 'back') { if (Math.abs(y) < LIVE_STRAIGHT) live.stage = 'done'; else hint = 'Now look straight at the camera'; }
-          if (live.stage === 'done') { ready = true; hint = 'Live check passed ✓ Tap “Take selfie”'; }
+          hint = live.stage === 'shot' ? 'Well done ✓ Taking your selfie…' : !live.right ? 'Turn your head to the RIGHT' : !live.left ? 'Now turn your head to the LEFT' : 'Now look at the CENTRE';
         }
-        sheet.dataset.live = live.stage;
+        tick();
+        sheet.dataset.live = live.stage === 'shot' ? 'done' : live.right && live.left ? 'back' : 'turn';
+        if (live.stage === 'shot' && !live.taken) { live.taken = true; ready = true; setTimeout(() => { if (stream && $('fmShoot')) shoot(); }, 450); }
+        else if (live.stage === 'shot') ready = true;
       }
       if (big) { ctx.strokeStyle = ready ? '#3ddc84' : '#ffffff'; ctx.lineWidth = Math.max(3, w / 160); const b = big.box; ctx.strokeRect(b.x, b.y, b.width, b.height); }
-      $('fmHint').textContent = hint;
+      $('fmHint').textContent = hint; $('fmHint').classList.toggle('big', guest); $('fmShoot').classList.toggle('hidden', guest);   // guests: the selfie is taken by itself
       $('fmHint').classList.toggle('ok', ready); $('fmShoot').disabled = !ready;
       loopTimer = setTimeout(loop, guest ? 200 : 300);
     }).catch(() => { loopTimer = setTimeout(loop, 600); });
   }
   function shoot() {
     if (!stream || !video.videoWidth) return;
-    if (strict() && (!live || live.stage !== 'done')) return;   // the live check comes first
+    if (strict() && (!live || live.stage !== 'shot')) return;   // the live check comes first
     const c = document.createElement('canvas'); c.width = video.videoWidth; c.height = video.videoHeight; c.getContext('2d').drawImage(video, 0, 0);
     stopCam(); $('fmCam').classList.add('hidden'); $('fmShoot').classList.add('hidden');
     findIn(c);
@@ -151,7 +190,9 @@ function pgMonogram() {
     b.querySelector('.fm-ask-row').classList.remove('hidden'); $('fmAskDone').classList.add('hidden');
     b.classList.remove('hidden');
   }
-  $('fmCamBtn').addEventListener('click', startCam);
+  $('fmCamBtn').addEventListener('click', () => { if (strict()) guide(); else startCam(); });
+  // the role (couple, staff) can arrive after the sheet opened: if nothing has started yet, show that role's version
+  document.addEventListener('pg:role', () => { if (sheet.classList.contains('show') && !stream && $('fmResult').classList.contains('hidden') && $('fmBusy').classList.contains('hidden')) reset(); });   // guests see the instructions first (step 60c)
   $('fmShoot').addEventListener('click', shoot);
   $('fmFile').addEventListener('change', function () {
     const f = this.files[0]; this.value = ''; if (!f || strict()) return;   // guests: camera only (step 60)
