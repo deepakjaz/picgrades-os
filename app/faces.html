@@ -34,6 +34,7 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
 .feat-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);cursor:pointer}.feat-row:first-child{border-top:0}
 .feat-row b{display:block;font-size:14px}.feat-row small{display:block;font-size:12px;opacity:.65;margin-top:2px}.feat-row.locked{opacity:.5}
 .feat-row input{width:20px;height:20px;accent-color:#2E9D5B}
+  .links4 .row{margin-bottom:8px;align-items:center}.links4 .lk{flex:0 0 140px;font-size:12px;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -77,12 +78,17 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
 
   <section class="card hidden" id="sendCard">
     <h2>3 · Send to client</h2>
-    <p class="muted" style="margin:0 0 10px">Emails the gallery link. Gallery: <a id="galLink" target="_blank" rel="noopener"></a></p>
+    <p class="muted" style="margin:0 0 10px">Emails the couple their private couple link and the guest link to share. Guest link: <a id="galLink" target="_blank" rel="noopener"></a></p>
     <div class="row"><input id="sendTo" type="email" placeholder="client@email.com" style="flex:1 1 260px" aria-label="Client email"><button class="btn" id="sendBtn" type="button">Send to client</button></div>
     <p class="msg muted" id="sendMsg"></p>
-    <h2 style="margin-top:22px">Couple link</h2>
-    <p class="muted" style="margin:0 0 10px">Send this private link only to the bride and groom. With it they approve the photos and videos guests share in Root Moment, and write their thank-you note.</p>
-    <div class="row"><input id="coupleLink" readonly style="flex:1 1 260px" aria-label="Couple link"><button class="mini" id="coupleCopy" type="button">Copy</button></div>
+    <h2 style="margin-top:22px">The four links</h2>
+    <p class="muted" style="margin:0 0 10px">Each person gets their own link; the link decides what they see. <b>Guest</b>: share anywhere. <b>Couple</b>: only the bride and groom (it carries their private key). <b>Photographer</b> and <b>PicGrades</b>: ask for the PicGrades login.</p>
+    <div class="links4">
+      <div class="row"><b class="lk">G · Guest</b><input id="lkGuest" readonly style="flex:1 1 220px" aria-label="Guest link"><button class="mini" type="button" data-copy="lkGuest">Copy</button></div>
+      <div class="row"><b class="lk">C · Couple</b><input id="coupleLink" readonly style="flex:1 1 220px" aria-label="Couple link"><button class="mini" id="coupleCopy" type="button" data-copy="coupleLink">Copy</button></div>
+      <div class="row"><b class="lk">PH · Photographer</b><input id="lkPhoto" readonly style="flex:1 1 220px" aria-label="Photographer link"><button class="mini" type="button" data-copy="lkPhoto">Copy</button></div>
+      <div class="row"><b class="lk">PG · PicGrades</b><input id="lkPg" readonly style="flex:1 1 220px" aria-label="PicGrades link"><button class="mini" type="button" data-copy="lkPg">Copy</button></div>
+    </div>
     <h2 style="margin-top:22px">Functions</h2>
     <p class="muted" style="margin:0 0 10px">Switch off anything this couple doesn't want in their wedding app. Root Moment and the photos are always there. The couple can change these too. Theme and Hub layout: open the wedding app while signed in here and tap the gear in the bottom bar (Control Panel).</p>
     <div id="featList" class="feat-list"></div>
@@ -291,8 +297,11 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     $('sub').textContent = r.gallery.studio + ' · ' + r.photos.length + ' photos' + (r.gallery.catalogName ? ' · order ' + r.gallery.catalogName : '');
     var url = location.origin + '/g/' + r.gallery.galleryId; $('galLink').href = url; $('galLink').textContent = url;
     $('sendTo').value = r.gallery.sentTo || r.gallery.clientEmail || '';
-    if (r.gallery.coupleKey) $('coupleLink').value = location.origin + '/g/' + r.gallery.galleryId + '?couple=' + r.gallery.coupleKey;
-    $('coupleCopy').onclick = function () { $('coupleLink').select(); if (navigator.clipboard) navigator.clipboard.writeText($('coupleLink').value).then(function () { $('coupleCopy').textContent = 'Copied'; }); };
+    // step 61: one link per person
+    var gid = r.gallery.galleryId;
+    $('lkGuest').value = location.origin + '/g/' + gid; $('lkPhoto').value = location.origin + '/ph/' + gid; $('lkPg').value = location.origin + '/pg/' + gid;
+    if (r.gallery.coupleKey) $('coupleLink').value = location.origin + '/c/' + gid + '/' + r.gallery.coupleKey;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-copy]'), function (b) { b.onclick = function () { var i = $(b.getAttribute('data-copy')); i.select(); if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); }); }; });
     if (r.gallery.sentAt) $('sendMsg').textContent = 'Last sent to ' + r.gallery.sentTo + ' at ' + dmyhm(r.gallery.sentAt) + '.';
     ['readCard'].forEach(function (id) { $(id).classList.remove('hidden'); });
     paintFeatures(r.gallery.features || {});

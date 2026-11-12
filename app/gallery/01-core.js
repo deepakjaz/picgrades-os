@@ -20,7 +20,35 @@ function pgHookable(name) {
 const API = (window.PG_CONFIG || {}).apiUrl;
 // a photographer's page (/p/<name>) uses the same app; its id is 'p-<name>' so nothing mixes with a wedding
 const PG_STUDIO_SLUG = (new URLSearchParams(location.search).get('p') || (location.pathname.match(/\/p\/([a-z0-9-]+)/) || [])[1] || '').trim().toLowerCase();
-const GALLERY_ID = PG_STUDIO_SLUG ? 'p-' + PG_STUDIO_SLUG : (new URLSearchParams(location.search).get('g') || (location.pathname.match(/\/g\/([a-z0-9]+)/) || [])[1] || '').trim();
+const GALLERY_ID = PG_STUDIO_SLUG ? 'p-' + PG_STUDIO_SLUG : (new URLSearchParams(location.search).get('g') || (location.pathname.match(/\/(?:g|c|ph|pg)\/([a-z0-9]+)/) || [])[1] || '').trim();
+// Step 61: the link decides who you are, not what this phone remembers.
+//   /g/<id> guest · /c/<id>/<key> couple · /ph/<id> photographer · /pg/<id> PicGrades
+// (an old couple link /g/<id>?couple=<key> becomes /c/<id>/<key>, so links already shared keep working)
+const PG_AS = (function pgLinkRole() {
+  const m = location.pathname.match(/^\/(g|c|ph|pg)\/([a-z0-9]+)(?:\/([A-Za-z0-9_-]+))?/), q = new URLSearchParams(location.search);
+  const kind = m ? m[1] : (q.get('as') || 'g');
+  const store = k => { try { if (k) localStorage.setItem('pg_couple_' + GALLERY_ID, JSON.stringify(k)); } catch (e) {} };
+  if (kind === 'c' || kind === 'couple') { store(m && m[3]); return 'couple'; }
+  if (kind === 'ph' || kind === 'photographer') return 'photographer';
+  if (kind === 'pg' || kind === 'picgrades') return 'picgrades';
+  const old = q.get('couple');
+  if (old && GALLERY_ID && !PG_STUDIO_SLUG) {
+    store(old); q.delete('couple');
+    try { history.replaceState(null, '', '/c/' + GALLERY_ID + '/' + encodeURIComponent(old) + (q.toString() ? '?' + q : '') + location.hash); } catch (e) {}
+    return 'couple';
+  }
+  return 'guest';
+})();
+const PG_STAFF_LINK = PG_AS === 'photographer' || PG_AS === 'picgrades';
+// the staff login is used only on a staff link; on a guest or couple link this phone is a guest / the couple
+// the copy kept on this phone is per kind of link: a couple's or staff copy never opens on the guest link
+function pgCopyKey() { return 'pg_gal_' + (PG_AS === 'guest' ? '' : PG_AS + '_') + GALLERY_ID; }
+function pgToken() { if (!PG_STAFF_LINK) return ''; try { return localStorage.getItem('pg_token') || ''; } catch (e) { return ''; } }
+function pgSavedToken() { try { return localStorage.getItem('pg_token') || ''; } catch (e) { return ''; } }
+function pgLinkFor(as) {
+  const ck = (() => { try { return JSON.parse(localStorage.getItem('pg_couple_' + GALLERY_ID) || 'null'); } catch (e) { return null; } })();
+  return location.origin + (as === 'couple' ? '/c/' + GALLERY_ID + (ck ? '/' + ck : '') : as === 'photographer' ? '/ph/' + GALLERY_ID : as === 'picgrades' ? '/pg/' + GALLERY_ID : '/g/' + GALLERY_ID);
+}
 let GALLERY = null;            // manifest from the backend
 let ROOT_SET = [];             // Root Moment list
 let CURRENT_SET = 'root';      // 'root' or an event name
@@ -253,7 +281,7 @@ function pgDemoMerge(g) {
 }
 // Step 59: after a Control Panel save, the copy kept on this phone is updated too, so a restart shows the change
 function pgKeepCopy(patch) {
-  try { const CK = 'pg_gal_' + GALLERY_ID, k = JSON.parse(localStorage.getItem(CK) || 'null'); if (!k || !k.gallery) return; Object.assign(k.gallery, patch); localStorage.setItem(CK, JSON.stringify(k)); } catch (e) {}
+  try { const CK = pgCopyKey(), k = JSON.parse(localStorage.getItem(CK) || 'null'); if (!k || !k.gallery) return; Object.assign(k.gallery, patch); localStorage.setItem(CK, JSON.stringify(k)); } catch (e) {}
 }
 function pgSaveMine() { try { localStorage.setItem('pg_mine_' + GALLERY_ID, JSON.stringify(Object.keys(GALLERY.mine || {}))); } catch (e) {} }
 function pgLoadMine() { const out = {}; try { (JSON.parse(localStorage.getItem('pg_mine_' + GALLERY_ID) || '[]') || []).forEach(id => { out[id] = true; }); } catch (e) {} return out; }
@@ -598,7 +626,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
   if (!API || !GALLERY_ID) { bootMsg.textContent = 'This gallery link is incomplete. Please check the link you received.'; return; }
   // The gallery opens at once from the copy kept on this phone, then the fresh copy is fetched in the background.
   // If the phone had to reload the page, the guest comes back to the same collection and photo.
-  const CK = 'pg_gal_' + GALLERY_ID;
+  const CK = pgCopyKey();
   let kept = null; try { const k = JSON.parse(localStorage.getItem(CK) || 'null'); if (k && k.at > Date.now() - 7 * 864e5 && k.gallery) kept = k; } catch (e) {}
   const fresh = pgApi(PG_STUDIO_SLUG ? 'getStudio' : 'getGallery').then(res => { try { localStorage.setItem(CK, JSON.stringify({ at: Date.now(), gallery: res.gallery })); } catch (e) {} return res; });
   let started = false;

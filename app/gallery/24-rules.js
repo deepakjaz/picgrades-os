@@ -8,7 +8,7 @@
 (function pgRules() {
   const $ = id => document.getElementById(id);
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
-  const token = () => { try { return localStorage.getItem('pg_token') || ''; } catch (e) { return ''; } };
+  const token = () => pgToken();   // only on a staff link (step 61)
   // who may do everything: the couple link, a staff login for this wedding (PGControl knows the role)
   function free() {
     const r = window.PGControl ? PGControl.role() : 'guest';

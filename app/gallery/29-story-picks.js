@@ -13,7 +13,7 @@
   const canPick = () => ['couple', 'photographer', 'picgrades', 'demo'].indexOf(role()) > -1;
   const picks = () => { const s = (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.story) || {}; return { cover: (s.cover || []).slice(), bride: s.bride || '', groom: s.groom || '', hl: Object.assign({}, s.hl || {}) }; };
   const eventOf = id => { const ev = ((typeof GALLERY !== 'undefined' && GALLERY && GALLERY.events) || []).find(e => e.photos.some(p => p.id === id)); return ev ? ev.name : ''; };
-  const token = () => { try { return localStorage.getItem('pg_token') || ''; } catch (e) { return ''; } };
+  const token = () => pgToken();   // only on a staff link (step 61)
 
   // ---- saving (step 59) ----
   // A tap shows at once and the pane stays usable: the choice is saved in the background, with a thin progress bar

@@ -162,7 +162,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step60d-ask-for-help',
+    version: 'step61-links',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1899,11 +1899,15 @@ function sendGallery_(p, user) {
   var x = staffGallery_(p.g, user), g = x.g, s = getSettings_();
   var to = normEmail_(p.to);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return { ok: false, error: 'Enter a valid email address.' };
-  var url = String(s.siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '') + '/g/' + g.galleryId;
+  // step 61: the couple gets their own private link (/c/<id>/<key>) and the guest link to share
+  var site = String(s.siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, ''), url = site + '/g/' + g.galleryId, mine = site + '/c/' + g.galleryId + '/' + coupleKey_(g);
   sendEmail_(to, 'Your wedding gallery is ready · ' + g.title, esc_(g.title),
-    ['Your photos from <b>' + esc_(g.companyName) + '</b> are ready to view.',
-     '<a href="' + esc_(url) + '" style="display:inline-block;background:#E9B44C;color:#141413;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open the gallery</a>',
-     'Tip: tap <b>Find me</b> in the gallery and take a selfie to see every photo you are in.',
+    ['Your photos from <b>' + esc_(g.companyName) + '</b> are ready.',
+     '<b>Your private couple link</b> (only for the two of you: it opens your Control Panel, all your photos and your guests\' requests):',
+     '<a href="' + esc_(mine) + '" style="display:inline-block;background:#141413;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open our wedding app</a>',
+     '<span style="color:#777">' + esc_(mine) + '</span>',
+     '<b>The guest link</b> (share it with family and friends: they find their own photos with <b>Find me</b>):',
+     '<a href="' + esc_(url) + '" style="display:inline-block;background:#E9B44C;color:#141413;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Guest link</a>',
      '<span style="color:#777">' + esc_(url) + '</span>'], 'gallery-send', g.galleryId);
   var at = fmt_(new Date());
   updateRowByNumber_('Galleries', g._row, { sentAt: at, sentTo: to });

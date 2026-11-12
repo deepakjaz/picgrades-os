@@ -18,7 +18,7 @@ function pgOpenPost(photos) {
     openReel: (ph) => pgOpenReel(ph),   // photos chosen in Post Edits go straight in
     recent: ((GALLERY && GALLERY.guestPosts) || []).map(p => String(p.fileId || '').split(',')[0]).filter(Boolean).slice(0, 8),
     post: (data) => new Promise((res, rej) => {
-      const send = () => { let token = ''; try { token = localStorage.getItem('pg_token') || ''; } catch (e) {}
+      const send = () => { const token = pgToken();
         pgApi('savePost', Object.assign({ token }, pgGuestBody(), data)).then(r => { if (r.status === 'approved') pgReloadPosts(); else pgCheckMyPosts(); res(r); }).catch(rej); };
       if (pgIsCouple() || pgIsStaff() || pgGuest()) send(); else pgNeedGuest(send, 'Tell us who you are to post.');
     })
