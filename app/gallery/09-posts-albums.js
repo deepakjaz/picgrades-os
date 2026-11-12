@@ -14,7 +14,7 @@ function pgOpenPost(photos) {
   if (!pgPostLoad) pgPostLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/post.js'; s.onload = res; s.onerror = () => { pgPostLoad = null; rej(new Error('Could not open the post maker. Check the internet.')); }; document.head.appendChild(s); });
   const labels = {}; (GALLERY.events || []).forEach(e => e.photos.forEach(p => { labels[p.id] = e.name; }));
   pgPostLoad.then(() => PGPost.open({
-    photos: photos, title: GALLERY.title, date: pgDate(GALLERY.eventDate), collections: pgAllCollections(), labels, api: pgApi,
+    photos: photos, demo: !!GALLERY.demo, title: GALLERY.title, date: pgDate(GALLERY.eventDate), collections: pgAllCollections(), labels, api: pgApi,
     openReel: (ph) => pgOpenReel(ph),   // photos chosen in Post Edits go straight in
     recent: ((GALLERY && GALLERY.guestPosts) || []).map(p => String(p.fileId || '').split(',')[0]).filter(Boolean).slice(0, 8),
     post: (data) => new Promise((res, rej) => {

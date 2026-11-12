@@ -44,7 +44,7 @@ const srv = http.createServer((req, res) => {
     const heroNow = await pg.$eval('.pgh-hero-img.is-on', i => i.src); const covers2 = await pg.$$eval('#pghEvents .pg-rot.is-on', l => l.map(i => i.src).join('|'));
     console.log(vp.name, '| hero changed:', heroNow !== hero1, '| event tiles changed:', covers1 !== covers2, '| hero label:', await pg.textContent('#pghNow'));
     if (vp.name === 'mobile') {
-      await pg.click('#pghReel'); await pg.waitForSelector('.rl-wrap', { timeout: 8000 }).catch(() => {});
+      await pg.evaluate(() => { pgStore('mine', { sure: [GALLERY.events[0].photos[0].id], maybe: [] }); PGCreate.paint(); }); await pg.click('#pghReel'); await pg.waitForSelector('.rl-wrap', { timeout: 8000 }).catch(() => {});
       console.log('open mode: reel opens with no name asked:', await pg.isVisible('.rl-wrap'), '| name sheet:', await pg.isVisible('#idSheet.show'));
       await RE.toEditor(pg);
       const before = await pg.locator('.re-clip:not(.re-card)').count();

@@ -620,12 +620,14 @@
   }
   function shareResult() {
     var f = S.result; if (!f) return;
+    if (S.opt && S.opt.demo) { msg('This is a demo wedding: you can try everything, but saving and sharing are off.'); return; }   // step 58: a demo wedding tries the maker, nothing leaves the app
     if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: S.names }).catch(function () {}); return; }
     downloadResult();
   }
   var IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
   function downloadResult() {
     var f = S.result; if (!f) return;
+    if (S.opt && S.opt.demo) { msg('This is a demo wedding: you can try everything, but saving and sharing are off.'); return; }
     // iPhone: only the share menu can put a video in Photos ("Save Video"); a normal download goes to the Files app
     if (IOS && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f] }).catch(function () {}); return; }
     var u = URL.createObjectURL(f), a = el('a', { href: u, download: f.name }); document.body.appendChild(a); a.click(); a.remove();

@@ -900,6 +900,7 @@
     return one(0).then(function () { return blobs.map(function (b, i) { return new File([b], base + '_' + (i + 1) + '.jpg', { type: 'image/jpeg' }); }); });
   }
   function shareIt() {
+    if (S.opt && S.opt.demo) { msg('This is a demo wedding: you can try everything, but saving and sharing are off.'); return; }   // step 58: a demo wedding tries the maker, nothing leaves the app
     msg('Getting the images ready…');
     files().then(function (fs) {
       if (navigator.canShare && navigator.canShare({ files: fs })) {
@@ -912,6 +913,7 @@
   }
   var IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
   function download() {
+    if (S.opt && S.opt.demo) { msg('This is a demo wedding: you can try everything, but saving and sharing are off.'); return; }
     files().then(function (fs) {
       // iPhone: only the share menu can put images in Photos ("Save Images"); a normal download goes to the Files app
       if (IOS && navigator.canShare && navigator.canShare({ files: fs })) { msg('Choose “Save Images” to put them in Photos.'); return navigator.share({ files: fs }).catch(function () {}); }

@@ -27,7 +27,7 @@
   function keep(res) {
     if (!res || !((res.sure || []).length || (res.maybe || []).length)) return;
     pgStore('mine', { sure: res.sure || [], maybe: res.maybe || [] }); pgStore('found', 1);
-    document.body.classList.add('pg-found'); label();
+    document.body.classList.add('pg-found'); label(); if (window.PGCreate) PGCreate.paint();   // Reel / Post Edits open up (step 58)
   }
   function setsFromMine() {   // "Your photos" / "Maybe you" stay in the gallery after a reload
     const m = mine(); if (!m || free() || typeof GALLERY === 'undefined' || !GALLERY) return;
