@@ -71,7 +71,7 @@ function pgAddSavedSet(set) { const sets = (pgStore('sets') || []).filter(s => s
     if (tmp.length && !pgStore('found')) pgStore('found', 1);
   });
   new MutationObserver(() => {
-    if ($('fmResult').classList.contains('hidden')) return;
+    if ($('fmResult').classList.contains('hidden') || $('fmOpen').classList.contains('hidden')) return;   // step 60b: nothing found = nothing to save
     const g = pgGuest(); $('fmSaveName').value = $('fmSaveName').value || ((g ? g.name.split(' ')[0] + "'s" : 'My') + ' photos');
     $('fmSave').classList.remove('hidden'); $('fmSaved').classList.add('hidden');
   }).observe($('fmResult'), { attributes: true, attributeFilter: ['class'] });

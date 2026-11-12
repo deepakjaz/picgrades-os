@@ -74,6 +74,21 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/s60_close.png' });
   check(/Request sent/.test(await pg.textContent('#fmAskDone')), 'the email is sent to the couple for approval');
   await ctx.close();
+  // a guest who is not in the photos: nothing to save or make, only "Try another selfie" (step 60b)
+  {
+    const r2 = call('guestJoin', { g: gid, name: 'Stranger', phone: '9111111111', device: 'devbrowser02' });
+    const s2 = await open('', { guestId: r2.guestId, guestKey: r2.guestKey, name: 'Stranger' });
+    await s2.pg.evaluate(() => { const d = new Float32Array(128); for (let i = 0; i < 128; i++) d[i] = ((i * 37) % 23 - 11) / 120; window.PGFaces.detect = () => Promise.resolve([{ box: { x: 220, y: 120, width: 220, height: 240 }, descriptor: d }]); });
+    await s2.pg.evaluate(() => document.querySelector('[data-findme]').click()); await s2.pg.waitForSelector('#fmSheet.show');
+    await s2.pg.click('#fmCamBtn');
+    for (const y of [-0.2, 0.2, 0]) { await s2.pg.evaluate(y => { window.__yaw = y; }, y); await s2.pg.waitForTimeout(450); }
+    await s2.pg.click('#fmShoot'); await s2.pg.waitForSelector('#fmResult:not(.hidden)', { timeout: 8000 });
+    const v = await s2.pg.evaluate(() => { const vis = id => !document.getElementById(id).classList.contains('hidden'); return { open: vis('fmOpen'), save: vis('fmSave'), reel: vis('fmReel'), post: vis('fmPost'), again: document.getElementById('fmAgain').textContent, st: document.getElementById('fmStatus').textContent, hubReel: !!document.querySelector('#pgLay > section[data-block=reel]'), can: PGCreate.can() }; });
+    check(!v.open && !v.save && !v.reel && !v.post && v.again === 'Try another selfie' && /could not find you/.test(v.st), 'nobody found: no Save / Make a reel / album, only "Try another selfie" ' + JSON.stringify(v));
+    check(!v.can && !v.hubReel, 'nobody found: Reel and Post Edits stay hidden on the Hub');
+    await s2.pg.screenshot({ path: '/tmp/s60b_none.png' });
+    await s2.ctx.close();
+  }
   // the couple: "Choose a photo" stays, no live check; the close-match request is in Requests
   const c = await open('?couple=' + ck, null);
   await c.pg.evaluate(() => document.querySelector('[data-findme]').click()); await c.pg.waitForSelector('#fmSheet.show');
