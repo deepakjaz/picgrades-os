@@ -947,6 +947,7 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 .fm-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .fm-upload{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:600 .75rem/1 var(--font-mono);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 .fm-shoot{width:100%;margin-top:4px}
+.fm-shoot:disabled{opacity:.45;cursor:default}
 .fm-busy{display:flex;align-items:center;gap:14px;background:var(--bg-box);border:1px solid var(--border-hairline);border-radius:16px;padding:14px 16px;margin:6px 0 4px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
 .fm-sheet .fm-busy.hidden{display:none!important}
 .fm-busy b{display:block;font:600 .9rem/1.2 var(--font-sans);color:var(--ink)}
@@ -2586,3 +2587,13 @@ body:not(.pg-can-create) #pghReel,body:not(.pg-can-create) #pgcPost,body:not(.pg
 @keyframes pgcr-in{from{opacity:0;transform:translate(-50%,24px)}}
 @media (max-width:420px){.pgcr-bar span{display:none}}
 @media (min-width:1100px){.pgcr-bar{bottom:30px}}
+
+/* step 60: a close match asks for the guest's email */
+.fm-ask{margin:10px 0 4px;padding:14px;border-radius:14px;background:rgba(0,0,0,.04);text-align:left}
+.fm-ask b{display:block;font-size:15px;margin-bottom:4px}
+.fm-ask p{margin:0 0 10px;font-size:13px;line-height:1.45;opacity:.85}
+.fm-ask-row{display:flex;gap:8px}
+.fm-ask-row input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,0,0,.18);font:inherit;background:#fff}
+.fm-ask-row .mk-btn-peach{flex:none;padding:10px 16px}
+.fm-ask-done{color:#1d7a46;font-weight:600}
+.pgr-tag{display:inline-block;padding:1px 7px;border-radius:999px;background:#f6e1c9;color:#7a4416;font-weight:600;font-size:10.5px;font-style:normal;margin-right:4px}

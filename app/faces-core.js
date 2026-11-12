@@ -49,6 +49,17 @@
     return faceapi.detectAllFaces(input, new faceapi.SsdMobilenetv1Options({ minConfidence: minConfidence || 0.5, maxResults: 5 }));
   }
 
+  /** Step 60 live check: the biggest face and which way it is turned. yaw ≈ 0 looking straight; about ±0.15 or more turned to a side.
+   *  (Where the nose tip sits between the eyes, as a share of the eye distance. A flat photo tilted in front of the camera stays near 0.) */
+  function pose(input, minConfidence) {
+    return faceapi.detectSingleFace(input, new faceapi.SsdMobilenetv1Options({ minConfidence: minConfidence || 0.5 })).withFaceLandmarks().then(function (r) {
+      if (!r) return null;
+      var L = r.landmarks, c = function (pts) { var x = 0, y = 0; pts.forEach(function (q) { x += q.x; y += q.y; }); return { x: x / pts.length, y: y / pts.length }; };
+      var le = c(L.getLeftEye()), re = c(L.getRightEye()), tip = L.getNose()[3], span = Math.abs(re.x - le.x) || 1;
+      return { box: r.detection.box, score: r.detection.score, yaw: (tip.x - (le.x + re.x) / 2) / span };
+    });
+  }
+
   function pack(desc) {
     var b = new Int8Array(128);
     for (var i = 0; i < 128; i++) b[i] = Math.max(-127, Math.min(127, Math.round(desc[i] * SCALE)));
@@ -138,6 +149,6 @@
       (size / 2 - cx).toFixed(1) + 'px ' + (size / 2 - cy).toFixed(1) + 'px;background-repeat:no-repeat';
   }
 
-  window.PGFaces = { load: load, detect: detect, locate: locate, pack: pack, unpack: unpack, dist: dist, toEntry: toEntry,
+  window.PGFaces = { load: load, detect: detect, locate: locate, pose: pose, pack: pack, unpack: unpack, dist: dist, toEntry: toEntry,
     mergeEntry: mergeEntry, flatten: flatten, match: match, cluster: cluster, cropStyle: cropStyle, SURE: SURE, MAYBE: MAYBE };
 })();
