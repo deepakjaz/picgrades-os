@@ -99,10 +99,8 @@ const srv = http.createServer((req, res) => {
     await pg.screenshot({ path: '/tmp/s4_viewer_clean_' + vp.name + '.png' });
     await pg.mouse.click(vp.width / 3, vp.height / 2); await pg.waitForTimeout(500);
     // info sheet
-    await pg.click('#pgvInfo'); await pg.waitForTimeout(450);
-    console.log(vp.name, '| info open:', await pg.$eval('#mkEditorialSheet', e => e.getBoundingClientRect().top < innerHeight - 50));
-    await pg.screenshot({ path: '/tmp/s4_viewer_info_' + vp.name + '.png' });
-    await pg.click('#pgvInfoClose'); await pg.waitForTimeout(350);
+    // step 61b: the details (ⓘ) panel is only for the photographer and PicGrades; a guest has no button for it
+    console.log(vp.name, '| guest has no details button:', await pg.evaluate(() => getComputedStyle(document.getElementById('pgvInfo')).display === 'none'));
     await pg.click('#pgvLike'); await pg.waitForTimeout(300); console.log(vp.name, '| like in viewer:', await pg.locator('#pgvLike.liked').count(), await pg.textContent('#pgvLikeCount'));
     await pg.click('#pgvBack'); await pg.waitForTimeout(300); console.log(vp.name, '| back to collections:', await pg.isVisible('#view-gallery'), '| nav back:', await pg.isVisible('.tkg-global-nav'));
     await ctx.close();
