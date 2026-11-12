@@ -86,10 +86,10 @@ const srv = http.createServer((req, res) => {
       await pg.click('#pgvZoom'); await pg.waitForTimeout(200);
       // step 45: a guest who has not used Find me is asked to request the photo (no download); the couple downloads it
       await pg.click('#pgvSave'); await pg.waitForTimeout(400); console.log('guest download → first asks who they are (to request it):', await pg.isVisible('#idSheet.show')); await pg.click('#idClose'); await pg.waitForTimeout(300);
-      await pg.evaluate(() => { GALLERY.isCouple = true; });
+      await pg.evaluate(() => { window.__ic = pgIsCouple; window.pgIsCouple = () => true; });   // step 61: only the /c/ link is the couple, so this test plays the couple
       const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 8000 }).catch(() => null), pg.click('#pgvSave')]);
       console.log('download:', dl ? dl.suggestedFilename() : 'none');
-      await pg.evaluate(() => { GALLERY.isCouple = false; });
+      await pg.evaluate(() => { window.pgIsCouple = window.__ic; });
       await pg.keyboard.press('ArrowDown'); await pg.waitForTimeout(500); console.log('arrow down ->', await pg.getAttribute('#pgvCount', 'data-pos'));
     }
     await pg.waitForTimeout(800);
