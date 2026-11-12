@@ -64,7 +64,8 @@
 
   // ---- a draft from a layout: every card gets a place on each screen ----
   function fromLayout(lay) {
-    const blocks = (lay.blocks || []).filter(b => CARDS[b.block]).map(b => ({ block: b.block, variant: b.variant || CARDS[b.block][1][0], pos: {}, hide: (b.hide || []).slice(), _src: b }));
+    addExperienceCards();
+    const blocks = (lay.blocks || []).filter(b => CARDS[b.block]).map(b => ({ block: b.block, variant: b.variant || CARDS[b.block][1][0], pos: {}, hide: (b.hide || []).slice(), set: b.set ? clone(b.set) : undefined, _src: b }));
     Object.keys(COLS).forEach(scr => {
       const planned = new Map((PGLayout.plan(lay, scr) || []).map(it => [it.b0, it]));
       const list = blocks.filter(b => b.hide.indexOf(scr) < 0);
@@ -72,7 +73,7 @@
       list.forEach((b, i) => { b.pos[scr] = P[i]; });
     });
     blocks.forEach(b => delete b._src);
-    return { base: lay.id || '', blocks, header: ((GALLERY.pages || {}).header) || 'right', modeside: ((GALLERY.pages || {}).modeside) || 'right' };
+    return { base: lay.id || '', palette: lay.palette ? clone(lay.palette) : null, blocks, header: ((GALLERY.pages || {}).header) || 'right', modeside: ((GALLERY.pages || {}).modeside) || 'right' };
   }
   // a Story Hub (step 54) has no cards: it is edited as sections (show / hide / move), the Find me button, the icon bar and the headings
   function storyDraft(kind, base) { return { base: base || '', blocks: [], story: { kind, sections: [], findme: 'right', bar: 'off', texts: {} }, header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' }; }
@@ -96,10 +97,16 @@
   function snapshot() { E.undo.push(JSON.stringify(E.d)); if (E.undo.length > 60) E.undo.shift(); E.redo = []; paintUndo(); }
   function commit() { store(E.d); draw(); }
   function paintUndo() { E.el.querySelector('.pged-undo').disabled = !E.undo.length; E.el.querySelector('.pged-redo').disabled = !E.redo.length; }
-  const layoutOf = d => ({ id: 'custom', name: 'Our own Hub', blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide })) });
+  const layoutOf = d => ({ id: 'custom', name: 'Our own Hub', palette: d.palette || null, blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide, set: b.set })) });
+  // step 57: the experience cards (35-experience.js) join the card list, with their own styles and sizes
+  function addExperienceCards() {
+    if (!window.PGX) return;
+    Object.keys(PGX.types).forEach(k => { const t = PGX.types[k]; CARDS[k] = [t.name, t.variants.slice()]; Object.assign(VNAME, t.vnames || {}); DEF[k] = t.size; });
+  }
 
   function open() {
     if (E) return;
+    addExperienceCards();
     E = { d: startDraft(), scr: window.innerWidth < 600 ? 'phone' : window.innerWidth >= 1100 ? 'wide' : 'tall', sel: -1, undo: [], redo: [] };
     const el = h('div', 'pged'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Hub editor'); E.el = el;
     el.innerHTML = '<div class="pged-top"><button type="button" class="pged-x" aria-label="Close the editor">✕</button><b class="pged-title">Edit Hub</b>' +
@@ -108,7 +115,7 @@
       '<div class="pged-bar"><div class="pged-seg pged-screens" role="tablist">' + Object.keys(COLS).map(s => '<button type="button" data-scr="' + s + '">' + LABEL[s] + '</button>').join('') + '</div>' +
       '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="right">Right</button></div>' +
       '<div class="pged-seg pged-mode" aria-label="Light / dark button"><span>Light/dark</span><button type="button" data-mode="left">Left</button><button type="button" data-mode="right">Right</button></div>' +
-      '<button type="button" class="pged-btn pged-add">+ Add card</button><select class="pged-from" aria-label="Start from a layout"></select></div>' +
+      '<button type="button" class="pged-btn pged-add">+ Add card</button><button type="button" class="pged-btn pged-pal">Colours</button><select class="pged-from" aria-label="Start from a layout"></select></div>' +
       '<div class="pged-story" hidden></div>' +
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
       '<div class="pged-tools" hidden></div>';
@@ -117,6 +124,7 @@
     from.addEventListener('change', () => { const l = PGLayout.find(from.value); from.value = ''; if (!l) return; if (!confirmBox('Start again from “' + l.name + '”? Your changes so far are replaced (Undo brings them back).')) return; snapshot();
       E.d = Object.assign(l.story ? storyDraft(l.story, l.id) : fromLayout(l), { header: E.d.header, modeside: E.d.modeside }); E.sel = -1; E.info = null; commit(); });
     el.querySelector('.pged-x').addEventListener('click', close);
+    el.querySelector('.pged-pal').addEventListener('click', paletteSheet);
     el.querySelector('.pged-undo').addEventListener('click', () => { if (!E.undo.length) return; E.redo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.undo.pop()); E.sel = -1; paintUndo(); commit(); });
     el.querySelector('.pged-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.redo.pop()); E.sel = -1; paintUndo(); commit(); });
     el.querySelector('.pged-screens').addEventListener('click', e => { const b = e.target.closest('[data-scr]'); if (b) { E.scr = b.dataset.scr; E.sel = -1; draw(); } });
@@ -129,7 +137,7 @@
     document.body.appendChild(el); document.body.classList.add('pged-on');
     endPreview(true); store(E.d); paintUndo(); draw();
   }
-  function close() { if (!E) return; const wasStory = !!E.storySeen; /* the story was stopped to read it: draw the Hub again */ window.removeEventListener('resize', draw); E.el.remove(); E = null; document.body.classList.remove('pged-on'); if (wasStory) PGLayout.refresh(); }
+  function close() { if (!E) return; const wasStory = !!E.storySeen; /* the story was stopped to read it: draw the Hub again */ window.removeEventListener('resize', draw); E.el.remove(); E = null; document.body.classList.remove('pged-on'); if (wasStory || window.PGX) PGLayout.refresh(); }   // back to the wedding's own colours / story
   function confirmBox(t) { return window.confirm(t); }
 
   // draw the draft for the chosen screen, scaled to fit
@@ -139,6 +147,7 @@
     E.el.querySelector('.pged-story').hidden = !E.d.story; E.el.querySelector('.pged-canvas').hidden = !!E.d.story;
     if (E.d.story) { E.el.querySelector('.pged-tools').hidden = true; E.el.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === (E.d.header || 'right'))); E.el.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === (E.d.modeside || 'right'))); drawStory(); return; }
     const el = E.el, scr = E.scr, d = E.d, cols = COLS[scr];
+    if (window.PGX) PGX.palette(d.palette || null);   // the canvas shows the chosen colours
     el.querySelectorAll('[data-scr]').forEach(b => b.classList.toggle('on', b.dataset.scr === scr));
     el.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === (d.header || 'right')));
     el.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === (d.modeside || 'right')));
@@ -206,6 +215,7 @@
       '<label>Card <select class="pged-swap">' + Object.keys(CARDS).map(k => '<option value="' + k + '"' + (k === b.block ? ' selected' : '') + '>' + CARDS[k][0] + '</option>').join('') + '</select></label></div>' +
       '<div class="pged-sizes">' + SIZES[scr].map(([n, w, ht]) => '<button type="button" data-w="' + w + '" data-h="' + ht + '"' + (p && p[2] === w && p[3] === ht ? ' class="on"' : '') + '>' + n + '<small>' + w + '×' + ht + '</small></button>').join('') + '</div>' +
       '<div class="pged-trow"><button type="button" class="pged-hide">Hide on ' + LABEL[scr] + '</button><button type="button" class="pged-del">Remove from the Hub</button></div>';
+    if (window.PGX && PGX.has(b.block)) contentPanel(box, b);
     box.querySelector('.pged-done').addEventListener('click', () => { E.sel = -1; draw(); });
     box.querySelector('.pged-var').addEventListener('change', ev => { snapshot(); b.variant = ev.target.value; commit(); });
     box.querySelector('.pged-swap').addEventListener('change', ev => { snapshot(); b.block = ev.target.value; b.variant = CARDS[b.block][1][0]; commit(); });
@@ -215,6 +225,59 @@
     }));
     box.querySelector('.pged-hide').addEventListener('click', () => { snapshot(); b.hide = (b.hide || []).concat(scr); E.sel = -1; tidy(scr); commit(); showToast(CARDS[b.block][0] + ' is hidden on ' + LABEL[scr] + ' — Add card brings it back'); });
     box.querySelector('.pged-del').addEventListener('click', () => { snapshot(); E.d.blocks.splice(i, 1); E.sel = -1; Object.keys(COLS).forEach(tidy); commit(); });
+  }
+  // ---- step 57: every word, photo and choice on an experience card ----
+  function contentPanel(box, b) {
+    const D = PGLayout.data(), set = b.set || {}, wrap = h('div', 'pged-content', '<div class="pged-trow"><b>Words, photos & look</b></div>');
+    const change = (k, v) => { snapshot(); b.set = Object.assign({}, b.set || {}); if (v === '' || v == null) delete b.set[k]; else b.set[k] = v; commit(); };
+    PGX.fields(b, D).forEach(f => {
+      const row = h('label', 'pged-field'); row.appendChild(h('span', '', pgEsc(f.label)));
+      if (f.type === 'text') {
+        const i = h(f.long ? 'textarea' : 'input'); if (!f.long) i.type = 'text'; i.maxLength = 160; i.value = set[f.key] || ''; i.placeholder = f.ph || '';
+        i.addEventListener('change', () => change(f.key, i.value.replace(/[<>]/g, '').trim())); row.appendChild(i);
+      } else if (f.type === 'choice' || f.type === 'event') {
+        const opts = f.type === 'event' ? [['', 'In order (1st, 2nd…)']].concat((D.events || []).map(e => [e.name, e.name])) : f.options;
+        const sel = h('select'); sel.innerHTML = opts.map(o => '<option value="' + pgEsc(o[0]) + '"' + ((set[f.key] || (f.type === 'event' ? '' : opts[0][0])) === o[0] ? ' selected' : '') + '>' + pgEsc(o[1]) + '</option>').join('');
+        sel.addEventListener('change', () => change(f.key, sel.value)); row.appendChild(sel);
+      } else if (f.type === 'photo') {
+        const cur = set[f.key], pv = h('span', 'pged-ph' + (cur ? '' : ' empty'), cur ? '<img alt="" src="' + pgImg(cur, 200) + '">' : 'Cover photo');
+        const pick = h('button', 'pged-btn', cur ? 'Change photo' : 'Choose a photo'); pick.type = 'button'; pick.addEventListener('click', e => { e.preventDefault(); photoSheet(id => change(f.key, id)); });
+        row.append(pv, pick);
+        if (cur) { const clr = h('button', 'pged-btn', 'Use the cover'); clr.type = 'button'; clr.addEventListener('click', e => { e.preventDefault(); change(f.key, ''); }); row.appendChild(clr); }
+      }
+      wrap.appendChild(row);
+    });
+    box.appendChild(wrap);
+  }
+  function photoSheet(done) {
+    const back = h('div', 'overlay-backdrop show'), sh = h('div', 'reg-overlay show pged-photosheet');
+    const groups = [['Cover photos', ((GALLERY.story || {}).cover || []).map(id => ({ id }))]].concat((GALLERY.events || []).map(e => [e.name, e.photos.slice(0, 40)])).filter(g => g[1].length);
+    sh.innerHTML = '<div class="reg-overlay-handle"></div><h3 class="fm-title">Choose a photo</h3>' + groups.map(g => '<p class="pgcp-note">' + pgEsc(g[0]) + '</p><div class="pged-phgrid">' +
+      g[1].map(p => '<button type="button" data-id="' + pgEsc(p.id) + '"><img alt="" loading="lazy" src="' + pgImg(p.id, 200) + '"></button>').join('') + '</div>').join('') + '<button type="button" class="mk-btn-peach ios-wide">Close</button>';
+    const shut = () => { back.remove(); sh.remove(); };
+    back.addEventListener('click', shut); sh.querySelector('.ios-wide').addEventListener('click', shut);
+    sh.addEventListener('click', e => { const t = e.target.closest('[data-id]'); if (!t) return; shut(); done(t.dataset.id); });
+    document.body.append(back, sh);
+  }
+  // ---- step 57: the Hub's colours: a ready palette, or your own four colours ----
+  function paletteSheet() {
+    const back = h('div', 'overlay-backdrop show'), sh = h('div', 'reg-overlay show pged-palsheet'), P = PGX.PALETTES;
+    const cur = () => E.d.palette || null, now = () => { const c = cur(); return c ? Object.assign({}, P[c.id] || {}, c) : null; };
+    function paint() {
+      const c = now(), sw = x => ['bg', 'acc', 'acc2', 'ink'].map(k => '<i style="background:' + x[k] + '"></i>').join('');
+      sh.innerHTML = '<div class="reg-overlay-handle"></div><h3 class="fm-title">Colours</h3><p class="pgcp-note">The Hub’s background, words and accents. The event cards keep their own colours (Haldi stays yellow…).</p>' +
+        '<div class="pged-pals"><button type="button" data-p="" class="' + (c ? '' : 'on') + '"><span class="pged-sw pged-sw0"></span>App colours</button>' +
+        Object.keys(P).map(k => '<button type="button" data-p="' + k + '" class="' + (c && c.id === k ? 'on' : '') + '"><span class="pged-sw">' + sw(P[k]) + '</span>' + pgEsc(P[k].name) + '</button>').join('') + '</div>' +
+        '<p class="pgcp-note">Your own colours</p><div class="pged-own">' + [['bg', 'Background'], ['ink', 'Words'], ['acc', 'Accent'], ['acc2', 'Second accent']].map(([k, l]) =>
+          '<label><input type="color" data-k="' + k + '" value="' + ((c && c[k]) || (P.ivory[k])) + '"><span>' + l + '</span></label>').join('') + '</div>' +
+        '<button type="button" class="mk-btn-peach ios-wide">Done</button>';
+      sh.querySelector('.ios-wide').addEventListener('click', shut);
+      sh.querySelectorAll('[data-p]').forEach(bt => bt.addEventListener('click', () => { snapshot(); E.d.palette = bt.dataset.p ? { id: bt.dataset.p } : null; commit(); paint(); }));
+      sh.querySelectorAll('input[type=color]').forEach(i => i.addEventListener('change', () => { snapshot(); const base = now() || Object.assign({}, P.ivory); base[i.dataset.k] = i.value;
+        E.d.palette = { id: 'custom', bg: base.bg, ink: base.ink, acc: base.acc, acc2: base.acc2 }; commit(); paint(); }));
+    }
+    const shut = () => { back.remove(); sh.remove(); };
+    back.addEventListener('click', shut); paint(); document.body.append(back, sh);
   }
   function tidy(scr) { const P = E.d.blocks.map(q => (q.pos[scr] && (q.hide || []).indexOf(scr) < 0 ? q.pos[scr].slice() : null)); settle(P, null, false); E.d.blocks.forEach((q, j) => { if (P[j]) q.pos[scr] = P[j]; }); }
   // add a card (new, or one hidden on this screen) at the end of the Hub
@@ -297,7 +360,7 @@
   }
   function publish() {
     const d = E ? E.d : loadDraft(); if (!d || (!d.story && !d.blocks.length)) { showToast('Add at least one card first'); return; }
-    const custom = d.story ? { base: d.base || '', story: d.story, blocks: [] } : { base: d.base || '', blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide })) };
+    const custom = d.story ? { base: d.base || '', story: d.story, blocks: [] } : { base: d.base || '', palette: d.palette || null, blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide, set: b.set })) };
     const body = { layout: 'custom', custom: JSON.stringify(custom), pages: JSON.stringify({ header: d.header || 'right', modeside: d.modeside || 'right' }) };
     const btn = E ? E.el.querySelector('.pged-pub') : null; if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
     PGControl.save(body).then(r => {

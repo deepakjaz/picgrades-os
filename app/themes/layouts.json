@@ -17,6 +17,682 @@
    "blocks": []
   },
   {
+   "id": "x-royal-journey",
+   "name": "Royal Journey",
+   "idea": "Enter the couple’s world: a scene that turns from day to night, the wedding as a journey, and every event with its own identity.",
+   "palette": {
+    "id": "royal"
+   },
+   "by": "C",
+   "blocks": [
+    {
+     "block": "x-world",
+     "variant": "cinema",
+     "phone": [
+      4,
+      7
+     ],
+     "tall": [
+      8,
+      7
+     ],
+     "wide": [
+      12,
+      6
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "x-journey",
+     "variant": "path",
+     "phone": [
+      4,
+      8
+     ],
+     "tall": [
+      8,
+      7
+     ],
+     "wide": [
+      12,
+      4
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 0
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 1
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 2
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 3
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      4
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 4
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      12,
+      4
+     ]
+    },
+    {
+     "block": "loved",
+     "variant": "strip",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    },
+    {
+     "block": "notes",
+     "variant": "cards",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "x-palace-window",
+   "name": "Palace Window",
+   "idea": "The wedding seen through a carved palace window, ivory and gold, the journey as a string of beads.",
+   "palette": {
+    "id": "ivory"
+   },
+   "by": "C",
+   "blocks": [
+    {
+     "block": "x-world",
+     "variant": "arch",
+     "set": {
+      "sky": "dusk"
+     },
+     "phone": [
+      4,
+      7
+     ],
+     "tall": [
+      8,
+      7
+     ],
+     "wide": [
+      12,
+      6
+     ]
+    },
+    {
+     "block": "x-journey",
+     "variant": "beads",
+     "phone": [
+      4,
+      8
+     ],
+     "tall": [
+      8,
+      7
+     ],
+     "wide": [
+      12,
+      4
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "icon",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "icon",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "icon",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "icon",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 0
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 1
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 2
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 3
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 4
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    },
+    {
+     "block": "notes",
+     "variant": "bubbles",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ]
+    }
+   ]
+  },
+  {
+   "id": "x-horizon",
+   "name": "Horizon",
+   "idea": "Sky above, the wedding below: words never sit on photos, and the light moves from sunrise to the reception night.",
+   "palette": {
+    "id": "resort"
+   },
+   "by": "C",
+   "blocks": [
+    {
+     "block": "x-world",
+     "variant": "horizon",
+     "phone": [
+      4,
+      6
+     ],
+     "tall": [
+      8,
+      6
+     ],
+     "wide": [
+      12,
+      6
+     ]
+    },
+    {
+     "block": "x-journey",
+     "variant": "path",
+     "set": {
+      "dir": "down"
+     },
+     "phone": [
+      4,
+      8
+     ],
+     "tall": [
+      5,
+      8
+     ],
+     "wide": [
+      5,
+      8
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 0
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      3,
+      4
+     ],
+     "wide": [
+      7,
+      4
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "stage",
+     "set": {
+      "idx": 3
+     },
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      3,
+      4
+     ],
+     "wide": [
+      7,
+      4
+     ]
+    },
+    {
+     "block": "findme",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "reel",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "post",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "upload",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      3,
+      2
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 1
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      4,
+      3
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 2
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      4,
+      3
+     ]
+    },
+    {
+     "block": "x-chapter",
+     "variant": "side",
+     "set": {
+      "idx": 4
+     },
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      4,
+      3
+     ]
+    },
+    {
+     "block": "loved",
+     "variant": "mosaic",
+     "phone": [
+      4,
+      3
+     ],
+     "tall": [
+      8,
+      3
+     ],
+     "wide": [
+      12,
+      3
+     ]
+    }
+   ]
+  },
+  {
    "id": "magazine-cover",
    "name": "Magazine Cover",
    "idea": "Full-screen editorial portrait cover with an asymmetric glass Bento studio tray.",

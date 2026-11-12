@@ -182,7 +182,7 @@
   }
   // which blocks show on this screen, and the size of each ([cols, rows]); a block with its own place ("pos", the Hub editor) keeps it
   function plan(layout, scr, D) {
-    const shown = (layout.blocks || []).filter(b0 => B[b0.block] && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
+    const shown = (layout.blocks || []).filter(b0 => (B[b0.block] || (window.PGX && PGX.has(b0.block))) && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
       && !(b0.block === 'loved' && !D.loved.length) && !(b0.block === 'notes' && !D.notes.length));
     const wide = scr === 'wide' && shown.some(b0 => !Array.isArray(b0.wide) && !(b0.pos && b0.pos.wide)) ? planWide(shown) : null;
     // an own Hub (cards with fixed places) where a card has nothing to show right now (no hearts yet, a function off):
@@ -217,7 +217,8 @@
         const el = h('section', 'pgl-b pgl-' + b.block + ' pgl-v-' + b.variant + ' pgl-s' + letter);
         el.style.gridColumn = it.at ? (it.at[0] + 1) + ' / span ' + it.cols : 'span ' + it.cols;
         el.style.gridRow = it.at ? (it.at[1] + 1) + ' / span ' + it.rows : 'span ' + it.rows; el.dataset.block = b.block;
-        if (B[b.block](el, b, D) === false) return;
+        // step 57: the experience cards (35-experience.js) draw themselves; everything else as before
+        if (B[b.block] ? B[b.block](el, b, D) === false : !PGX.render(el, b, D, { scr: sc, cols: it.cols, rows: it.rows, editing: !!editing, act: storyAct })) return;
         box.appendChild(el); out.push({ b0, el });
       });
       return out;
@@ -299,9 +300,10 @@
     if (cur && cur.story && !GALLERY.isStudio) { if (document.body.dataset.view && document.body.dataset.view !== 'hub') return; if (storyRender(view, cur.story)) return; }
     storyStop();
     let box = $('pgLay');
-    if (!cur || GALLERY.isStudio) { document.body.classList.remove('pg-lay-on'); if (box) box.remove(); return; }
+    if (!cur || GALLERY.isStudio) { document.body.classList.remove('pg-lay-on'); if (box) box.remove(); if (window.PGX) PGX.palette(null); return; }
     if (!box) { box = h('div', 'pgl-grid'); box.id = 'pgLay'; view.prepend(box); }
     document.body.classList.add('pg-lay-on'); shownOn = screenOf();
+    if (window.PGX) PGX.palette(cur.palette || null);   // step 57: the Hub's colours (Colours in the Hub editor, or the layout's own)
     build(box, cur);
   }
   let rz = 0;
@@ -312,17 +314,18 @@
     const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {};
     if (window.PGHubDraft && PGHubDraft()) return customOf(PGHubDraft());   // the Hub editor's draft, previewed on this phone only
     const id = q || G.layout || '';
-    if (id === 'custom') return G.custom && G.custom.blocks ? customOf(G.custom) : null;   // the wedding's own Hub (made in the Hub editor)
+    if (id === 'custom') return G.custom && G.custom.blocks ? customOf(G.custom) : null;
+    // (a ready layout can bring its own palette: "palette": { "id": "royal" })   // the wedding's own Hub (made in the Hub editor)
     return LAYOUTS.find(l => l.id === id) || null;
   }
   const customOf = c => (c.story && STORY[c.story.kind] ? { id: 'custom', name: 'Our own Hub', theme: '', story: c.story.kind, tune: c.story, blocks: [] }
-    : { id: 'custom', name: 'Our own Hub', theme: '', blocks: (c.blocks || []).map(b => Object.assign({}, b)) });
+    : { id: 'custom', name: 'Our own Hub', theme: '', palette: c.palette || null, blocks: (c.blocks || []).map(b => Object.assign({}, b)) });
   try { localStorage.removeItem('pg_layout_pick'); } catch (e) {}   // old test-menu choice no longer overrides the wedding
   const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
   pgAfter('pgRenderHub', () => { if (LAYOUTS.length) { cur = choose(); render(); } });
   // apply(id) shows a layout straight away (the Control Panel saves it for the wedding); '' = the original Hub
   window.PGLayout = { ready, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render, build, plan: (l, scr) => { SCR_FOR = scr; try { return plan(l, scr, data()); } finally { SCR_FOR = null; } },
-    SCREEN, sizeOf, find: id => LAYOUTS.find(l => l.id === id) || null, refresh: () => { cur = choose(); render(); },
+    SCREEN, sizeOf, act: (a, x) => storyAct(a, x), data: () => data(), find: id => LAYOUTS.find(l => l.id === id) || null, refresh: () => { cur = choose(); render(); },
     apply: id => { const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {}; const l = id === 'custom' ? (G.custom && (G.custom.story || (G.custom.blocks && G.custom.blocks.length)) ? customOf(G.custom) : null) : LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
     reset: () => { cur = null; render(); },
     // for the Hub editor (step 54): the story's parts and headings, read from a hidden copy of the story
