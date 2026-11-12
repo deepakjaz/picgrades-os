@@ -40,7 +40,7 @@ const srv = http.createServer((req, res) => {
   const pick = async (ev, i, keys) => {
     await pg.evaluate(([ev, i]) => openCollection(ev, i), [ev, i]); await pg.waitForTimeout(600);
     await pg.click('#pgvStory'); await pg.waitForSelector('.pgsp-sheet');
-    for (const k of keys) { await pg.click('.pgsp-row[data-k=' + k + ']'); await pg.waitForFunction(k => document.querySelector('.pgsp-row[data-k=' + k + ']') && !document.querySelector('.pgsp-sheet.busy'), k); await pg.waitForTimeout(150); }
+    for (const k of keys) { await pg.click('.pgsp-row[data-k=' + k + ']'); await pg.waitForFunction(k => document.querySelector('.pgsp-row[data-k=' + k + ']') && !PGStoryPicks.saving(), k); await pg.waitForTimeout(150); }
     const on = await pg.$$eval('.pgsp-row.on', l => l.map(x => x.dataset.k)); await pg.click('.pgsp-done'); return on;
   };
   const on1 = await pick('Haldi', 2, ['cover', 'hl']);
@@ -52,9 +52,9 @@ const srv = http.createServer((req, res) => {
   check(sp.cover.join() === 'SP002,SP304' && sp.bride === 'SP301' && sp.groom === 'SP304' && (sp.hl.Haldi || []).join() === 'SP002', 'saved for the wedding: ' + JSON.stringify(sp));
   // the same photo cannot be both bride and groom
   await pg.evaluate(() => openCollection('Wedding', 1)); await pg.waitForTimeout(500); await pg.click('#pgvStory'); await pg.waitForSelector('.pgsp-sheet');
-  await pg.click('.pgsp-row[data-k=groom]'); await pg.waitForFunction(() => !document.querySelector('.pgsp-sheet.busy')); await pg.waitForTimeout(200);
+  await pg.click('.pgsp-row[data-k=groom]'); await pg.waitForFunction(() => !PGStoryPicks.saving()); await pg.waitForTimeout(200);
   sp = picksOnServer(); check(sp.groom === 'SP301' && sp.bride === '', 'one photo is either the bride or the groom, not both');
-  await pg.click('.pgsp-row[data-k=bride]'); await pg.waitForFunction(() => !document.querySelector('.pgsp-sheet.busy')); await pg.waitForTimeout(200); await pg.click('.pgsp-done');
+  await pg.click('.pgsp-row[data-k=bride]'); await pg.waitForFunction(() => !PGStoryPicks.saving()); await pg.waitForTimeout(200); await pg.click('.pgsp-done');
   await pick('Wedding', 4, ['groom']);
   sp = picksOnServer(); check(sp.bride === 'SP301' && sp.groom === 'SP304', 'bride and groom set again: ' + sp.bride + ' / ' + sp.groom);
   // Control Panel › Story
@@ -63,9 +63,9 @@ const srv = http.createServer((req, res) => {
   const pane = await pg.evaluate(() => ({ slots: [...document.querySelectorAll('.pgsp-slot img')].length, cover: document.querySelectorAll('.pgsp-th[data-key=cover]').length, haldi: document.querySelectorAll('.pgsp-th[data-key="hl:Haldi"]').length, empty: document.querySelectorAll('.pgsp-empty').length }));
   check(pane.slots === 2 && pane.cover === 2 && pane.haldi === 1 && pane.empty >= 3, 'Control Panel › Story shows the choice ' + JSON.stringify(pane));
   await pg.screenshot({ path: '/tmp/s56_panel.png' });
-  await pg.click('.pgsp-th[data-key=cover][data-i="0"] [data-do=right]'); await pg.waitForFunction(() => !document.querySelector('.pgsp-pane.busy')); await pg.waitForTimeout(200);
+  await pg.click('.pgsp-th[data-key=cover][data-i="0"] [data-do=right]'); await pg.waitForFunction(() => !PGStoryPicks.saving()); await pg.waitForTimeout(200);
   check(picksOnServer().cover.join() === 'SP304,SP002', 'cover photos reordered');
-  await pg.click('.pgsp-th[data-key="hl:Haldi"] [data-do=del]'); await pg.waitForFunction(() => !document.querySelector('.pgsp-pane.busy')); await pg.waitForTimeout(200);
+  await pg.click('.pgsp-th[data-key="hl:Haldi"] [data-do=del]'); await pg.waitForFunction(() => !PGStoryPicks.saving()); await pg.waitForTimeout(200);
   check(!picksOnServer().hl.Haldi, 'a highlight removed');
   await pg.click('.pgcp-sheet .mk-btn-peach.ios-wide');
   // the story Hub uses the choice: varmala with the chosen portraits, cover first

@@ -247,6 +247,10 @@ function pgDemoMerge(g) {
   if (d.features) { const f = Object.assign({}, g.features || {}); Object.keys(d.features).forEach(k => { if (f[k] !== 'locked') f[k] = d.features[k]; }); g.features = f; }
   return g;
 }
+// Step 59: after a Control Panel save, the copy kept on this phone is updated too, so a restart shows the change
+function pgKeepCopy(patch) {
+  try { const CK = 'pg_gal_' + GALLERY_ID, k = JSON.parse(localStorage.getItem(CK) || 'null'); if (!k || !k.gallery) return; Object.assign(k.gallery, patch); localStorage.setItem(CK, JSON.stringify(k)); } catch (e) {}
+}
 function pgSaveMine() { try { localStorage.setItem('pg_mine_' + GALLERY_ID, JSON.stringify(Object.keys(GALLERY.mine || {}))); } catch (e) {} }
 function pgLoadMine() { const out = {}; try { (JSON.parse(localStorage.getItem('pg_mine_' + GALLERY_ID) || '[]') || []).forEach(id => { out[id] = true; }); } catch (e) {} return out; }
 function pgToggleLike(m) {
@@ -604,7 +608,10 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate;
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
     pgDemoMerge(res.gallery); GALLERY.demo = res.gallery.demo;
-    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
+    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}, x.story || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
+    // step 59: the story photos and the photographer were never refreshed, so a restart showed the old choice
+    if (!(window.PGStoryPicks && PGStoryPicks.saving())) GALLERY.story = res.gallery.story || {};
+    GALLERY.photographer = res.gallery.photographer; GALLERY.studio = res.gallery.studio; GALLERY.credit = res.gallery.credit;
     GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {}; GALLERY.custom = res.gallery.custom || { blocks: [] };
     if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);

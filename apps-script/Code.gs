@@ -26,6 +26,7 @@ var SAMPLE_OPTION = 'Sample (Color Correction)';
 // =====================================================================
 
 function doGet(e) {
+  TBL_MEMO = {};
   // Only the health check works as a plain link; everything else must be sent as a POST (keeps login tokens out of web addresses and logs).
   var action = (e && e.parameter && e.parameter.action) || 'health';
   if (action !== 'health') return respond_({ ok: false, error: 'Use POST for this action.' });
@@ -33,6 +34,7 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  TBL_MEMO = {};
   var body = {};
   try {
     body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -159,7 +161,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step57-experience',
+    version: 'step59-control-panel',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -861,10 +863,13 @@ function money_(v, cur) { return (cur === 'USD' ? '$' : '₹') + round2_(Number(
 
 /** Add any missing header columns to a tab (keeps old sheets working). */
 function ensureColumns_(name, cols) {
+  if (TBL_MEMO[name + ':cols'] === cols.join()) return;   // already checked in this request (step 59)
   var sh = sheet_(name);
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
   var missing = cols.filter(function (c) { return head.indexOf(c) < 0; });
   missing.forEach(function (c, i) { sh.getRange(1, head.length + i + 1).setValue(c); });
+  if (missing.length) tableChanged_(name);
+  TBL_MEMO[name + ':cols'] = cols.join();
 }
 
 // =====================================================================
@@ -1890,7 +1895,29 @@ function sheet_(name) {
 }
 
 /** All rows of a tab as objects keyed by the header row. Adds _row (sheet row number). */
+// Step 59: the wedding rows and Settings are read on almost every request (opening a gallery, every Control Panel save).
+// They are kept for a short time: in this request (TBL_MEMO) and for every request (the script cache, 2 / 5 minutes).
+// Every write through updateRowByNumber_ / appendRow_ / keepRows_ / ensureColumns_ clears them at once;
+// a change typed by hand into the Sheet shows within those minutes.
+var TABLE_CACHE = { Galleries: 120, Settings: 300 };
+var TBL_MEMO = {};
+function tableChanged_(name) {
+  if (!TABLE_CACHE[name]) return;
+  delete TBL_MEMO[name];
+  try { CacheService.getScriptCache().remove('tbl:' + name + ':n'); } catch (e) {}
+}
 function readTable_(name) {
+  var keep = TABLE_CACHE[name];
+  if (keep) {
+    if (TBL_MEMO[name]) return JSON.parse(TBL_MEMO[name]);
+    var hit = cacheGetBig_('tbl:' + name);
+    if (hit) { TBL_MEMO[name] = hit; return JSON.parse(hit); }
+  }
+  var rows = readTableFresh_(name);
+  if (keep) { var str = JSON.stringify(rows); TBL_MEMO[name] = str; cachePutBig_('tbl:' + name, str, keep); }
+  return rows;
+}
+function readTableFresh_(name) {
   var values = sheet_(name).getDataRange().getValues();
   if (values.length < 2) return [];
   var head = values[0];
@@ -1912,6 +1939,7 @@ function readTable_(name) {
 
 /** Append one object as a row, matching columns by header name. */
 function appendRow_(name, obj) {
+  tableChanged_(name);
   var sh = sheet_(name);
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
   sh.appendRow(head.map(function (h) { return obj[h] === undefined ? '' : obj[h]; }));
@@ -1921,6 +1949,7 @@ function appendRow_(name, obj) {
 /** Update cells of one sheet row (row number from readTable_ _row). */
 /** Keep only the rows where keep(row) is true (rewrites the tab once: fast even for thousands of rows). Returns how many were removed. */
 function keepRows_(name, keep) {
+  tableChanged_(name);
   var sh = sheet_(name), last = sh.getLastRow(), cols = sh.getLastColumn();
   if (last < 2) return 0;
   var values = sh.getRange(1, 1, last, cols).getValues(), head = values[0], kept = [];
@@ -1936,6 +1965,7 @@ function keepRows_(name, keep) {
 }
 
 function updateRowByNumber_(name, rowNumber, patch) {
+  tableChanged_(name);
   var sh = sheet_(name);
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
   Object.keys(patch).forEach(function (f) {
