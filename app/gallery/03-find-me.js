@@ -116,8 +116,11 @@ function pgMonogram() {
     renderGalleries();
     lastResult = sure.length ? 'Your photos' : maybe.length ? 'Maybe you' : null;
     $('fmActions').classList.add('hidden');
-    if (!lastResult) { $('fmResult').classList.remove('hidden'); $('fmThumbs').innerHTML = ''; $('fmOpen').classList.add('hidden'); status('We could not find you in this gallery. Try a clearer, front-facing photo in good light.'); return; }
-    $('fmOpen').classList.remove('hidden');
+    // step 60b: nothing found = nothing to save or make: only "Try another selfie"
+    const none = !lastResult;
+    ['fmOpen', 'fmSave', 'fmReel', 'fmPost'].forEach(id => $(id).classList.toggle('hidden', none)); $('fmSaved').classList.add('hidden');
+    $('fmAgain').textContent = strict() ? 'Try another selfie' : 'Try another photo';
+    if (none) { $('fmResult').classList.remove('hidden'); $('fmThumbs').innerHTML = ''; status(strict() ? 'We could not find you in this wedding’s photos. Try again in good light, looking straight at the camera.' : 'We could not find you in this gallery. Try a clearer, front-facing photo in good light.'); return; }
     status((sure.length ? 'We found your photos' : 'These may be you') + (sure.length && maybe.length ? ' · and a few that may be you' : '') + (several ? ' (we used the biggest face in your photo)' : ''));   // step 49: no counts
     $('fmThumbs').innerHTML = '';
     (sure.length ? sure : maybe).slice(0, 8).forEach(p => { const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.src = pgImg(p.id, 300); im.onerror = function () { this.onerror = null; this.src = pgImgFallback(p.id, 300); }; $('fmThumbs').appendChild(im); });

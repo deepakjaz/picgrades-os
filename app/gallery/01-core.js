@@ -30,8 +30,12 @@ function pgDevice() {
   catch (e) { if (!window.__pgDev) window.__pgDev = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); return window.__pgDev; }
 }
 function pgApi(action, body) {
-  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, PG_STUDIO_SLUG ? { slug: PG_STUDIO_SLUG } : {}, body || {})) })
-    .then(r => r.json()).then(res => { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; });
+  // step 60b: never wait forever (a blocked or lost answer left "Saving…" on screen): stop after 45 seconds and say so
+  const stop = window.AbortController ? new AbortController() : null, timer = stop && setTimeout(() => stop.abort(), 45000);
+  return fetch(API, { method: 'POST', signal: stop ? stop.signal : undefined, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, PG_STUDIO_SLUG ? { slug: PG_STUDIO_SLUG } : {}, body || {})) })
+    .then(r => r.json(), e => { throw new Error(e && e.name === 'AbortError' ? 'The server did not answer. Please check your internet and try again.' : 'Could not reach the server. Please check your internet and try again.'); })
+    .then(res => { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; })
+    .finally(() => { if (timer) clearTimeout(timer); });
 }
 function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
 // Phones get photos sized for their screen (an iPhone shows ~1200 px across; 2048 px photos use 3× the memory and make Safari reload the page).
