@@ -14,6 +14,12 @@
   };
   function items() {
     const v = document.body.dataset.view || 'hub', L = [];
+    // step 61c: whose view this is, and the switch links (the badge on screen shows only once)
+    if (window.PGLinks && GALLERY && !GALLERY.isStudio) {
+      const m = PGLinks.menu();
+      L.push(['h', 'Viewing as ' + m.role]);
+      m.links.forEach(([t, url]) => L.push([IC.find, t, () => { if (url === '#signin') PGLinks.signIn(); else location.href = url; }]));
+    }
     L.push(['h', 'Go to']);
     [['gallery', 'Galleries'], ['moments', 'Root Moment'], ['hub', 'Wedding Hub'], ['rooms', 'Notes']].forEach(([k, t]) => {
       if (k === 'rooms' && !on('notes')) return;

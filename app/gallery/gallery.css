@@ -2637,3 +2637,7 @@ body:not(.pg-can-create) #pghReel,body:not(.pg-can-create) #pgcPost,body:not(.pg
 body:not(.pg-role-photographer):not(.pg-role-picgrades) #pgvInfo{display:none}
 body:not(.pg-role-photographer):not(.pg-role-picgrades).pgv-info #view-root .mk-editorial-sheet{transform:translateY(105%)}
 body[data-view=root] .pg-role-badge,body[data-view=root] .pg-link-bar{display:none}
+
+/* step 61c: the badge and bar show once on arrival, then fade (the ☰ menu keeps "Viewing as …") */
+.pg-role-badge,.pg-link-bar{transition:opacity .6s ease,visibility .6s}
+body.pg-badge-gone .pg-role-badge,body.pg-badge-gone .pg-link-bar{opacity:0;visibility:hidden;pointer-events:none}
