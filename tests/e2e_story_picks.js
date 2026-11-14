@@ -24,7 +24,7 @@ const srv = http.createServer((req, res) => {
   // the server refuses a guest and keeps only this wedding's photos
   check(/Only the couple/.test(String((() => { try { return JSON.stringify(call('storyPicks', { g: pub.galleryId, picks: { cover: ['SP000'] } })); } catch (e) { return e.message; } })())), 'a guest cannot choose story photos');
   const r0 = call('storyPicks', { g: pub.galleryId, coupleKey: ck, picks: { cover: ['SP000', 'NOTAPHOTO123', 'SP000'], hl: { Haldi: ['SP001', 'SP105'], Nowhere: ['SP002'] } } });
-  check(JSON.stringify(r0.story) === JSON.stringify({ cover: ['SP000'], bride: '', groom: '', hl: { Haldi: ['SP001'] } }), 'the server keeps only real photos of the right event: ' + JSON.stringify(r0.story));
+  check(JSON.stringify(r0.story) === JSON.stringify({ cover: ['SP000'], bride: '', groom: '', hl: { Haldi: ['SP001'] }, wh: [] }), 'the server keeps only real photos of the right event: ' + JSON.stringify(r0.story));
   call('storyPicks', { g: pub.galleryId, coupleKey: ck, picks: {} });
   const page = async (q, w = 390, hh = 844) => {
     const ctx = await b.newContext({ viewport: { width: w, height: hh }, hasTouch: w < 900 }); const pg = await ctx.newPage(); pg.on('pageerror', e => errors.push(e.message));

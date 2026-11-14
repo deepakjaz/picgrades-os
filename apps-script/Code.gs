@@ -164,7 +164,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step62b-draft-publish',
+    version: 'step63a-highlights',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1637,7 +1637,7 @@ function picksOf_(v) {
   var list = function (a) { var out = []; (Array.isArray(a) ? a : []).forEach(function (x) { x = id(x); if (x && out.indexOf(x) < 0 && out.length < STORY_MAX) out.push(x); }); return out; };
   var hl = {}, n = 0;
   Object.keys(o.hl || {}).forEach(function (k) { var ids = list(o.hl[k]), name = String(k).slice(0, 80); if (ids.length && n < 40) { hl[name] = ids; n++; } });
-  return { cover: list(o.cover), bride: id(o.bride), groom: id(o.groom), hl: hl };
+  return { cover: list(o.cover), bride: id(o.bride), groom: id(o.groom), hl: hl, wh: list(o.wh) };   // wh: Wedding Highlights (step 63a) — 10–15 photos of the whole wedding, the public ones
 }
 /** Couple link or staff login: save the story photos (the whole choice at once; only photos of this wedding are kept). */
 function storyPicks_(p) {
@@ -1648,7 +1648,7 @@ function storyPicks_(p) {
   (m.events || []).forEach(function (e) { evs[e.name] = {}; e.photos.forEach(function (ph) { evs[e.name][ph.id] = true; }); });
   var want = picksOf_(p.picks), hl = {};
   Object.keys(want.hl).forEach(function (k) { if (evs[k]) { var ids = want.hl[k].filter(function (x) { return evs[k][x]; }); if (ids.length) hl[k] = ids; } });
-  var out = { cover: want.cover.filter(function (x) { return all[x]; }), bride: all[want.bride] ? want.bride : '', groom: all[want.groom] ? want.groom : '', hl: hl };
+  var out = { cover: want.cover.filter(function (x) { return all[x]; }), bride: all[want.bride] ? want.bride : '', groom: all[want.groom] ? want.groom : '', hl: hl, wh: want.wh.filter(function (x) { return all[x]; }) };
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, { storyPicks: JSON.stringify(out), updatedAt: fmt_(new Date()) });
   return { story: out };

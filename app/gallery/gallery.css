@@ -2674,3 +2674,23 @@ body.pg-draft-wait>*:not(.pg-draft):not(.pg-signin):not(.toast):not(#pgToast){vi
 .pgpub-list li.ok::before{content:'✓';color:#2f9e5b}
 .pgpub-list li.no::before{content:'!';color:#c0392b}
 .pgpub-list li.opt::before{content:'○';color:var(--ink-soft)}
+
+/* step 63a: pick many photos (couple / photographer / PicGrades only) */
+.pgsel-btn{display:none;pointer-events:auto;box-shadow:0 4px 14px rgba(0,0,0,.12);height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--border-hairline);background:var(--bg-box);color:var(--ink);font:600 14px var(--font-sans);cursor:pointer}
+body.pg-role-couple .pgsel-btn,body.pg-role-photographer .pgsel-btn,body.pg-role-picgrades .pgsel-btn,body.pg-role-demo .pgsel-btn{display:inline-flex;align-items:center}
+.pgx-bar{align-items:center;gap:8px}
+.pgsel-bar{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:120;display:none;flex-direction:column;gap:10px;padding:12px 14px;border-radius:18px;background:var(--bg-box);color:var(--ink);box-shadow:0 10px 40px rgba(0,0,0,.25);max-width:560px;margin:0 auto}
+body.pgsel-mode .pgsel-bar{display:flex}
+body.pgsel-mode #globalNav,body.pgsel-mode .pgst-fab,body.pgsel-mode .pgcr-bar{visibility:hidden}
+.pgsel-top{display:flex;align-items:center;justify-content:space-between;font:400 15px var(--font-sans)}
+.pgsel-top button{background:none;border:0;color:var(--ink);font:600 15px var(--font-sans);cursor:pointer;padding:4px}
+.pgsel-acts{display:flex;flex-direction:column;gap:8px}
+.pgsel-acts button{height:44px;border-radius:12px;border:0;background:var(--ink);color:var(--bg-box);font:600 15px var(--font-sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.pgsel-acts button+button{background:none;border:1px solid var(--border-hairline);color:var(--ink)}
+.pgsel-acts button small{opacity:.7;font-weight:400}
+.pgsel-acts button:disabled{opacity:.4;cursor:default}
+body.pgsel-mode .pgx-cell{position:relative}
+body.pgsel-mode .pgx-cell::after{content:'';position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.2);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+body.pgsel-mode .pgx-cell.pgsel-on::after{content:'✓';background:var(--accent,#e8916a);color:#fff;font:700 13px/18px var(--font-sans);text-align:center}
+body.pgsel-mode .pgx-cell.pgsel-on img{opacity:.75}
+body.pgsel-mode .pgx-cell{-webkit-touch-callout:none;user-select:none}

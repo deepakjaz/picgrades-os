@@ -11,7 +11,7 @@
   const STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>';
   const role = () => (window.PGControl ? PGControl.role() : 'guest');
   const canPick = () => ['couple', 'photographer', 'picgrades', 'demo'].indexOf(role()) > -1;
-  const picks = () => { const s = (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.story) || {}; return { cover: (s.cover || []).slice(), bride: s.bride || '', groom: s.groom || '', hl: Object.assign({}, s.hl || {}) }; };
+  const picks = () => { const s = (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.story) || {}; return { cover: (s.cover || []).slice(), bride: s.bride || '', groom: s.groom || '', hl: Object.assign({}, s.hl || {}), wh: (s.wh || []).slice() }; };
   const eventOf = id => { const ev = ((typeof GALLERY !== 'undefined' && GALLERY && GALLERY.events) || []).find(e => e.photos.some(p => p.id === id)); return ev ? ev.name : ''; };
   const token = () => pgToken();   // only on a staff link (step 61)
 
@@ -65,6 +65,7 @@
       const P = picks(), hl = (P.hl[ev] || []);
       const row = (k, title, sub, on, full) => '<button type="button" class="pgsp-row' + (on ? ' on' : '') + '" data-k="' + k + '"' + (full && !on ? ' data-full="1"' : '') + '><i>' + (on ? '✓' : '') + '</i><span><b>' + title + '</b><small>' + sub + '</small></span></button>';
       box.innerHTML = '<div class="reg-overlay-handle"></div><div class="pgsp-head"><img alt="" src="' + pgImg(id, 240) + '"><div><h3 class="fm-title">Use in the story</h3><p>Choose where this photo appears in the story Hub. Only you see this.</p></div></div>' +
+        row('wh', 'Wedding Highlight', P.wh.length + ' of ' + MAX + ' chosen · the public photos every guest can see', P.wh.indexOf(id) > -1, P.wh.length >= MAX) +
         row('cover', 'Cover photo', P.cover.length + ' of ' + MAX + ' chosen · opens the story', P.cover.indexOf(id) > -1, P.cover.length >= MAX) +
         row('bride', 'Bride’s portrait', P.bride === id ? 'This photo' : P.bride ? 'Another photo is chosen · tap to use this one' : 'Not chosen yet · for the varmala moment', P.bride === id) +
         row('groom', 'Groom’s portrait', P.groom === id ? 'This photo' : P.groom ? 'Another photo is chosen · tap to use this one' : 'Not chosen yet · for the varmala moment', P.groom === id) +
@@ -75,6 +76,7 @@
         if (b.dataset.full) { showToast('Up to ' + MAX + ' — remove one in Control Panel › Story first'); return; }
         const P2 = picks(), k = b.dataset.k, tog = (list) => { const i = list.indexOf(id); if (i > -1) list.splice(i, 1); else list.push(id); return list; };
         if (k === 'cover') tog(P2.cover);
+        if (k === 'wh') tog(P2.wh);
         if (k === 'bride') { P2.bride = P2.bride === id ? '' : id; if (P2.bride && P2.groom === id) P2.groom = ''; }
         if (k === 'groom') { P2.groom = P2.groom === id ? '' : id; if (P2.groom && P2.bride === id) P2.bride = ''; }
         if (k === 'hl') { P2.hl[ev] = tog((P2.hl[ev] || []).slice()); if (!P2.hl[ev].length) delete P2.hl[ev]; }
@@ -128,19 +130,20 @@
     function paint() {
       const P = picks(), evs = (GALLERY.events || []).filter(e => e.photos && e.photos.length);
       p.innerHTML = '<h4>Story photos</h4><p class="pgcp-note">The story Hub layouts show only what you choose here. To add a photo, open it and tap <b>★ Story</b>. Until you choose, that part of the story is left out.</p>' +
+        '<h4>Wedding Highlights <small>' + P.wh.length + ' / ' + MAX + '</small></h4><p class="pgcp-note">10–15 photos of the whole wedding. These are public: every guest can see them, also before Find me. To pick many at once, press and hold a photo in an event.</p>' + thumbs(P.wh, 'wh') +
         '<h4>Couple portraits</h4><p class="pgcp-note">For the varmala moment, when the two come together.</p><div class="pgsp-slots">' + slot('bride', 'Bride') + slot('groom', 'Groom') + '</div>' +
         '<h4>Cover photos <small>' + P.cover.length + ' / ' + MAX + '</small></h4><p class="pgcp-note">The first thing guests see. “Next moment” moves through them.</p>' + thumbs(P.cover, 'cover') +
-        evs.map(e => { const l = P.hl[e.name] || []; return '<h4>' + pgEsc(e.name) + ' highlights <small>' + l.length + ' / ' + MAX + '</small></h4>' + (l.length ? thumbs(l, 'hl:' + e.name) : '<p class="pgsp-empty">Not chosen · the story uses photos from across ' + pgEsc(e.name) + '.</p>'); }).join('');
+        '<p class="pgcp-note" style="margin-top:14px"><b>Event highlights</b> · 10–15 for each event. Guests see them after Find me finds them.</p>' + evs.map(e => { const l = P.hl[e.name] || []; return '<h4>' + pgEsc(e.name) + ' highlights <small>' + l.length + ' / ' + MAX + '</small></h4>' + (l.length ? thumbs(l, 'hl:' + e.name) : '<p class="pgsp-empty">Not chosen · the story uses photos from across ' + pgEsc(e.name) + '.</p>'); }).join('');
     }
     p.addEventListener('click', e => {
       const b = e.target.closest('button[data-do]'); if (!b) return;
       const P = picks(), holder = b.closest('[data-key]'), key = holder.dataset.key, i = +holder.dataset.i;
       if (key === 'bride' || key === 'groom') P[key] = '';
       else {
-        const list = key === 'cover' ? P.cover : (P.hl[key.slice(3)] || []).slice();
+        const list = key === 'cover' ? P.cover : key === 'wh' ? P.wh : (P.hl[key.slice(3)] || []).slice();
         if (b.dataset.do === 'del') list.splice(i, 1);
         else { const j = b.dataset.do === 'left' ? i - 1 : i + 1; [list[i], list[j]] = [list[j], list[i]]; }
-        if (key !== 'cover') { if (list.length) P.hl[key.slice(3)] = list; else delete P.hl[key.slice(3)]; }
+        if (key !== 'cover' && key !== 'wh') { if (list.length) P.hl[key.slice(3)] = list; else delete P.hl[key.slice(3)]; }
       }
       save(P).catch(() => { if (p.isConnected) paint(); });
       paint();

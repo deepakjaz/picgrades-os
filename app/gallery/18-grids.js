@@ -107,6 +107,7 @@
     paintEvent(); paintCols(); switchView('event');
   };
   // the viewer's back arrow returns to the grid it came from
+  window.pgEventNow = () => EV;   // step 63a: the open event page (for picking many photos)
   window.pgViewerBackTo = () => (EV && CURRENT_SET === EV.name ? 'event' : 'gallery');
 
   // ---- Moments: grid first, tap = the Root Moment feed at that photo ----
