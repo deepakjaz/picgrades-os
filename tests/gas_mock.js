@@ -60,4 +60,11 @@ global.console = console;
 eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;global.__nightly=nightlyCleanup;global.__setupNightly=setupNightly;');
 global.__clock = 0; const RealDate = Date;
 global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(RealDate.now() + global.__clock); } static now() { return RealDate.now() + global.__clock; } };
-module.exports = { DRIVE, advance: h => { global.__clock += h * 3600000; }, call: (action, p) => { if (!global.__keepTableCache) Object.keys(CACHE).forEach(k => { if (k.indexOf('tbl:') === 0) delete CACHE[k]; }); return JSON.parse(doPost({ postData: { contents: JSON.stringify(Object.assign({ action }, p || {})) } }).s); }, DB, mail };
+module.exports = { DRIVE, advance: h => { global.__clock += h * 3600000; }, call: (action, p) => {
+    const one = (action, p) => { if (!global.__keepTableCache) Object.keys(CACHE).forEach(k => { if (k.indexOf('tbl:') === 0) delete CACHE[k]; }); return JSON.parse(doPost({ postData: { contents: JSON.stringify(Object.assign({ action }, p || {})) } }).s); };
+    const r = one(action, p);
+    // step 62b: new weddings start as drafts; older tests expect them live, so the test helper publishes them
+    // (tests about drafts set global.__autoPublish = false)
+    if (action === 'setGallery' && r && r.galleryId && r.status === 'Draft' && global.__autoPublish !== false) one('publishGallery', { g: r.galleryId, token: p.token, publish: true });
+    return r;
+  }, DB, mail };

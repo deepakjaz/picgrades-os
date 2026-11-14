@@ -81,6 +81,8 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     <p class="muted" style="margin:0 0 10px">Emails the couple their private couple link and the guest link to share. Guest link: <a id="galLink" target="_blank" rel="noopener"></a></p>
     <div class="row"><input id="sendTo" type="email" placeholder="client@email.com" style="flex:1 1 260px" aria-label="Client email"><button class="btn" id="sendBtn" type="button">Send to client</button></div>
     <p class="msg muted" id="sendMsg"></p>
+    <div class="row" id="pubRow" style="margin-top:12px;align-items:center"><b id="pubState" style="flex:1 1 240px"></b><button class="mini" id="pubBtn" type="button"></button></div>
+    <p class="muted" style="margin:6px 0 0;font-size:13px">A new wedding is a Draft: the couple gets their link to check everything first; guests can open the guest link only after you or the couple publish.</p>
     <h2 style="margin-top:22px">The four links</h2>
     <p class="muted" style="margin:0 0 10px">Each person gets their own link; the link decides what they see. <b>Guest</b>: share anywhere. <b>Couple</b>: only the bride and groom (it carries their private key). <b>Photographer</b> and <b>PicGrades</b>: ask for the PicGrades login.</p>
     <div class="links4">
@@ -272,6 +274,19 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     void c;
   });
 
+  // step 62b: Draft / Live
+  function paintPub() {
+    var live = !!S.gallery.published;
+    $('pubState').textContent = live ? '● Live · guests can open the guest link' : '● Draft · guests can’t open it yet';
+    $('pubState').style.color = live ? '#2f9e5b' : '#d99a1e';
+    $('pubBtn').textContent = live ? 'Unpublish' : 'Publish to guests';
+  }
+  $('pubBtn').addEventListener('click', function () {
+    var b = this; b.disabled = true;
+    api('publishGallery', { publish: !S.gallery.published }).then(function (r) { S.gallery.published = r.status !== 'Draft'; paintPub(); })
+      .catch(function (e) { $('sendMsg').textContent = e.message; }).then(function () { b.disabled = false; });
+  });
+
   // Functions (step 33): the same switches the couple has; locked = not in this gallery's PicGrades plan
   var FEATS = [['findme', 'Find me', 'Guests find their own photos by face'], ['reel', 'Reel Edits', 'Reels with music'], ['post', 'Post Edits', 'Posts, carousels, album strips'],
     ['upload', 'Add a moment', 'Guests add photos/videos to Root Moment'], ['notes', 'Notes', 'Blessings on photos'], ['hearts', 'Hearts', 'Love a photo, Most loved'],
@@ -302,6 +317,7 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     $('lkGuest').value = location.origin + '/g/' + gid; $('lkPhoto').value = location.origin + '/ph/' + gid; $('lkPg').value = location.origin + '/pg/' + gid;
     if (r.gallery.coupleKey) $('coupleLink').value = location.origin + '/c/' + gid + '/' + r.gallery.coupleKey;
     Array.prototype.forEach.call(document.querySelectorAll('[data-copy]'), function (b) { b.onclick = function () { var i = $(b.getAttribute('data-copy')); i.select(); if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); }); }; });
+    paintPub();
     if (r.gallery.sentAt) $('sendMsg').textContent = 'Last sent to ' + r.gallery.sentTo + ' at ' + dmyhm(r.gallery.sentAt) + '.';
     ['readCard'].forEach(function (id) { $(id).classList.remove('hidden'); });
     paintFeatures(r.gallery.features || {});

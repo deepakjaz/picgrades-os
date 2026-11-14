@@ -26,7 +26,7 @@ var SAMPLE_OPTION = 'Sample (Color Correction)';
 // =====================================================================
 
 function doGet(e) {
-  TBL_MEMO = {};
+  TBL_MEMO = {}; REQ_P = (e && e.parameter) || {};
   // Only the health check works as a plain link; everything else must be sent as a POST (keeps login tokens out of web addresses and logs).
   var action = (e && e.parameter && e.parameter.action) || 'health';
   if (action !== 'health') return respond_({ ok: false, error: 'Use POST for this action.' });
@@ -34,13 +34,14 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  TBL_MEMO = {};
+  TBL_MEMO = {}; REQ_P = {};
   var body = {};
   try {
     body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
   } catch (err) {
     return respond_({ ok: false, error: 'Bad JSON' });
   }
+  REQ_P = body;
   return respond_(route_(body.action, body));
 }
 
@@ -73,6 +74,7 @@ var PUBLIC_ROUTES = {
   myFind: myFind_,
   askDownload: askDownload_,
   askAccess: askAccess_,
+  publishGallery: publishGallery_,
   dlRequests: dlRequests_,
   dlDecide: dlDecide_,
   dlGrant: dlGrant_
@@ -162,7 +164,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step61-links',
+    version: 'step62b-draft-publish',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -385,6 +387,9 @@ function publicCompany_(c, s) {
   };
 }
 
+function galleryStatusOf_(gid) {
+  try { var g = findGallery_(gid); return g ? (g.status === 'Draft' ? 'Draft' : 'Published') : ''; } catch (e) { return ''; }
+}
 function publicOrder_(o, s, user) {
   var out = {
     orderId: o.orderId, placedAt: fmt_(parseDate_(o.placedAt)), deliveryDue: o.deliveryDue ? fmt_(parseDate_(o.deliveryDue)) : '',
@@ -395,6 +400,7 @@ function publicOrder_(o, s, user) {
     lrFilesLink: o.lrFilesLink || '', source: o.source, galleryId: o.galleryLink || '', holdReason: o.holdReason || '', heldBy: o.heldBy || '',
     companyName: o.companyName, fullName: o.fullName, email: o.email
   };
+  if (out.galleryId) out.galleryStatus = galleryStatusOf_(out.galleryId);   // step 62b: Draft / Published on the order and admin pages
   if (s && user) {
     var f = orderFlags_(o, s, user);
     out.canEdit = f.canEdit; out.editUntil = f.editUntil ? fmt_(f.editUntil) : '';
@@ -879,7 +885,7 @@ function ensureColumns_(name, cols) {
 
 var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDate', 'folderId', 'folderUrl', 'manifestFileId',
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
-  'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo',
+  'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
   'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks'];   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
@@ -999,7 +1005,7 @@ function setGallery_(p, user) {
     var row = {
       orderId: o.orderId, companyName: o.companyName, title: title, eventDate: eventDate, folderId: folderId,
       folderUrl: 'https://drive.google.com/drive/folders/' + folderId, manifestFileId: fileId,
-      photoCount: scan.photoCount, rootCount: scan.root.length, status: 'Published', updatedAt: fmt_(new Date())
+      photoCount: scan.photoCount, rootCount: scan.root.length, status: existing ? (existing.status || 'Published') : 'Draft', updatedAt: fmt_(new Date())   // step 62b: new = Draft
     };
     var gid;
     if (existing) { gid = existing.galleryId; updateRowByNumber_('Galleries', existing._row, row); }
@@ -1014,7 +1020,7 @@ function setGallery_(p, user) {
     }
     cacheRemoveBig_('gal:' + gid); dropSummary_(gid);
     updateRowByNumber_('Orders', o._row, { galleryLink: gid });
-    return { galleryId: gid, photoCount: scan.photoCount, rootCount: scan.root.length,
+    return { galleryId: gid, status: row.status, photoCount: scan.photoCount, rootCount: scan.root.length,
       events: scan.events.map(function (e) { return { name: e.name, count: e.photos.length }; }) };
   } finally { lock.releaseLock(); }
 }
@@ -1036,8 +1042,10 @@ function loadManifest_(g) {
 /** Public: everything the gallery page needs. */
 function getGallery_(p) {
   var g = findGallery_(p.g);
-  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  if (g && g.status === 'Draft' && !privileged_(g, p)) return { ok: false, draft: true, title: g.title, error: 'This wedding is being prepared. Please come back soon.' };
+  if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
   var m = loadManifest_(g), sum = gallerySummary_(g);
+  m.status = g.status === 'Draft' ? 'Draft' : 'Published';   // step 62b
   m.galleryId = g.galleryId;
   m.likes = sum.likes; m.notes = sum.noteCount; m.recentNotes = sum.recent; m.guestPosts = sum.posts;
   m.mine = {};   // each phone remembers its own hearts (no per-phone scan on the server)
@@ -1083,7 +1091,7 @@ function dropSummary_(gid) { cacheRemoveBig_('sum:' + gid); }
 
 function likePhoto_(p) {
   var g = findGallery_(p.g);
-  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
   var device = String(p.device || '').slice(0, 40), photo = String(p.photoId || '');
   if (device.length < 8 || !photo) return { ok: false, error: 'Missing details.' };
   var want = p.liked === undefined ? true : !!p.liked;   // the phone says heart on or off
@@ -1101,14 +1109,14 @@ function likePhoto_(p) {
 
 function getNotes_(p) {
   var g = findGallery_(p.g);
-  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
   var list = (gallerySummary_(g).notes[String(p.photoId || '')] || []).map(function (n) { return { at: n.at, name: n.name, text: n.text }; });
   return { notes: list };
 }
 
 function addNote_(p) {
   var g = findGallery_(p.g);
-  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
   var name = String(p.name || '').trim().slice(0, 40), text = String(p.text || '').trim().slice(0, 280);
   var device = String(p.device || '').slice(0, 40), photo = String(p.photoId || '');
   if (!name) return { ok: false, error: 'Add your name.' };
@@ -1164,7 +1172,7 @@ function facesStatus_(p, user) {
   return {
     gallery: { galleryId: g.galleryId, title: g.title, studio: g.companyName, catalogName: o.catalogName,
       status: g.facesStatus || '', faceCount: Number(g.faceCount || 0), sentAt: g.sentAt || '', sentTo: g.sentTo || '',
-      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g), features: featuresOf_(g), demo: isDemo_(g) },
+      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g), features: featuresOf_(g), demo: isDemo_(g), published: g.status !== 'Draft' },
     photos: photos, faces: f
   };
 }
@@ -1234,10 +1242,29 @@ var SET_COLUMNS = ['at', 'galleryId', 'code', 'name', 'guestId', 'device', 'ids'
 var POST_COLUMNS = ['at', 'galleryId', 'postId', 'guestId', 'name', 'phone', 'caption', 'fileId', 'mime', 'type', 'status', 'reviewedAt'];
 var MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // same as TKG Moments: Apps Script request bodies stay well under ~50 MB
 
+// Step 62b: a new wedding starts as a Draft. Guests see it only once the couple, the photographer or PicGrades publishes it;
+// those three see the draft (couple key, or a staff login of this studio). Older weddings have no status change: they stay Published.
+var REQ_P = {};
+function openTo_(g, p) {
+  if (!g) return false;
+  if (g.status === 'Published') return true;
+  return g.status === 'Draft' && !!privileged_(g, p || REQ_P || {});
+}
 function publishedGallery_(gid) {
   var g = findGallery_(gid);
-  if (!g || g.status !== 'Published') throw new Error('This gallery is not available.');
+  if (!openTo_(g)) throw new Error(g && g.status === 'Draft' ? 'This wedding is being prepared. Please come back soon.' : 'This gallery is not available.');
   return g;
+}
+/** Couple link or staff login: publish the wedding (guests can open it) or take it back to a draft. */
+function publishGallery_(p) {
+  var g = findGallery_(p.g);
+  if (!g) return { ok: false, error: 'This gallery is not available.' };
+  var who = privileged_(g, p);
+  if (!who) return { ok: false, error: 'Only the couple, the photographer or PicGrades can publish this wedding.' };
+  var on = !(p.publish === false || p.publish === 'false');
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { status: on ? 'Published' : 'Draft', publishedAt: on ? fmt_(new Date()) : '', publishedBy: on ? who : '' });
+  return { status: on ? 'Published' : 'Draft' };
 }
 function coupleKey_(g) {
   if (g.coupleKey) return g.coupleKey;
@@ -1734,7 +1761,7 @@ function myRole_(p, user) {
  *  Only photos of a published gallery; at most 4 per call and 150 per device per hour. */
 function photoData_(p) {
   var g = findGallery_(p.g);
-  if (!g || g.status !== 'Published') return { ok: false, error: 'This gallery is not available.' };
+  if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
   var device = String(p.device || '').slice(0, 40);
   if (device.length < 8) return { ok: false, error: 'Missing details.' };
   var m = loadManifest_(g), ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
@@ -1845,7 +1872,7 @@ function faceBoxes_(p) {
 }
 function faceGallery_(gid) {
   var g = findGallery_(gid);
-  if (!g || g.status !== 'Published') throw new Error('This gallery is not available.');
+  if (!openTo_(g)) throw new Error('This gallery is not available.');
   if (g.facesStatus !== 'Ready' && g.facesStatus !== 'Needs update') throw new Error('Face search is not ready for this gallery yet.');
   return g;
 }
@@ -1857,7 +1884,7 @@ function faceBytes_(b64) {
 /** Public (used by the video player on Vercel): is this an approved video of this gallery? */
 function videoOk_(p) {
   var g = findGallery_(p.g);
-  if (!g || g.status !== 'Published') return { ok: true, allowed: false };
+  if (!openTo_(g, p)) return { ok: true, allowed: false };
   var id = String(p.id || '');
   if (gallerySummary_(g).posts.some(function (x) { return x.type === 'video' && x.fileId === id; })) return { allowed: true };
   // a video still waiting for the couple's review (the couple has to watch it to decide)
@@ -1906,6 +1933,7 @@ function sendGallery_(p, user) {
      '<b>Your private couple link</b> (only for the two of you: it opens your Control Panel, all your photos and your guests\' requests):',
      '<a href="' + esc_(mine) + '" style="display:inline-block;background:#141413;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open our wedding app</a>',
      '<span style="color:#777">' + esc_(mine) + '</span>',
+     g.status === 'Draft' ? '<b>Check everything in your app, then tap Publish</b> (Control Panel, the gear). Until then guests see \u201cbeing prepared\u201d. After that, share the guest link.' : '',
      '<b>The guest link</b> (share it with family and friends: they find their own photos with <b>Find me</b>):',
      '<a href="' + esc_(url) + '" style="display:inline-block;background:#E9B44C;color:#141413;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Guest link</a>',
      '<span style="color:#777">' + esc_(url) + '</span>'], 'gallery-send', g.galleryId);
