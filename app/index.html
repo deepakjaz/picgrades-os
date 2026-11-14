@@ -307,8 +307,19 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     var inner = el('div', { style: 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center' });
     if (url) {
       inner.appendChild(el('a', { href: url, target: '_blank', rel: 'noopener', style: 'flex:1 1 100%;font-weight:600', text: url }));
-      var cp = el('button', { type: 'button', class: 'mini', text: 'Copy link for the couple' });
-      cp.addEventListener('click', function () { if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast('Gallery link copied.'); }); });
+      // step 62a: two links: the guest link to share, and the couple's private link /c/<id>/<key> (asked from the server when tapped)
+      var cg = el('button', { type: 'button', class: 'mini', text: 'Copy guest link' });
+      cg.addEventListener('click', function () { if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast('Guest link copied: share it with family and friends.'); }); });
+      inner.appendChild(cg);
+      var cp = el('button', { type: 'button', class: 'mini', text: 'Copy couple link (private)' });
+      cp.addEventListener('click', function () {
+        cp.disabled = true;
+        api('facesStatus', { g: o.galleryId }).then(function (r) {
+          var k = r && r.gallery && r.gallery.coupleKey; if (!k) throw new Error('The couple link is not ready yet.');
+          var cu = location.origin + '/c/' + o.galleryId + '/' + k;
+          return navigator.clipboard ? navigator.clipboard.writeText(cu).then(function () { toast('Couple link copied: send it only to the bride and groom.'); }) : toast(cu);
+        }).catch(function (x) { toast(x.message); }).then(function () { cp.disabled = false; });
+      });
       inner.appendChild(cp);
       inner.appendChild(el('a', { href: '/app/faces.html?g=' + encodeURIComponent(o.galleryId), target: '_blank', rel: 'noopener', class: 'mini', style: 'text-decoration:none;display:inline-flex;align-items:center', text: 'Read faces (Find me) & send to client →' }));
     }
