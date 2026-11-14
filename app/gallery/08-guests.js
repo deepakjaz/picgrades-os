@@ -27,7 +27,7 @@ function pgNeedGuest(next, why) {
   $('idClose').addEventListener('click', () => { pgIdNext = null; close(); }); $('idBackdrop').addEventListener('click', () => { pgIdNext = null; close(); });
   $('idGo').addEventListener('click', () => {
     const b = $('idGo'); b.disabled = true; $('idStatus').textContent = 'Saving…';
-    pgApi('guestJoin', { name: $('idName').value, phone: $('idPhone').value }).then(r => {
+    pgApi('guestJoin', Object.assign({ name: $('idName').value, phone: $('idPhone').value }, pgStore('welcome') || {})).then(r => {   // step 63c: side + attended from the welcome
       pgStore('guest', { guestId: r.guestId, guestKey: r.guestKey, name: r.name }); close();
       const n = pgIdNext; pgIdNext = null; showToast('Welcome, ' + r.name.split(' ')[0]); if (n) setTimeout(n, 280);
     }).catch(e => { $('idStatus').textContent = e.message; }).finally(() => { b.disabled = false; });
