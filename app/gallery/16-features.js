@@ -19,8 +19,8 @@
   // what each function shows on screen (hidden when it is off)
   const HIDE = {
     findme: '[data-findme],#pgcFind,.pgm-findme,.pgl-findme,#fmReel,#fmPost',
-    reel: '#pghReel,#fmReel,.pgl-reel,.pe-tab[data-mode=reel]',
-    post: '#pgcPost,#fmPost,.pgl-post',
+    reel: '#pghReel,#fmReel,.pgl-reel,.pe-tab[data-mode=reel],.pgcr-bar [data-k=reel]',   // + the pinned bar on Your photos (step 62a)
+    post: '#pgcPost,#fmPost,.pgl-post,.pgcr-bar [data-k=post]',
     upload: '#pgcUpload,#pgmAdd,.pgl-upload',
     notes: '.pgcv-note,#pgvNote,#mkCommentBtn,.pgm-actions [aria-label="Moment Notes"],#pghNotesSec,.pgl-notes',
     hearts: '.pgcv-like,#pgvLike,.pgm-like,#pghLovedSec,.pgl-loved,.pgh-heart',

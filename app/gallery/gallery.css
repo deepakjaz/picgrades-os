@@ -2641,3 +2641,8 @@ body[data-view=root] .pg-role-badge,body[data-view=root] .pg-link-bar{display:no
 /* step 61c: the badge and bar show once on arrival, then fade (the ☰ menu keeps "Viewing as …") */
 .pg-role-badge,.pg-link-bar{transition:opacity .6s ease,visibility .6s}
 body.pg-badge-gone .pg-role-badge,body.pg-badge-gone .pg-link-bar{opacity:0;visibility:hidden;pointer-events:none}
+
+/* step 62a: the first design's "next moment" label and ↑ counter pill are retired everywhere (their old code still runs, harmlessly) */
+.mk-counter-pill,.mk-next-moment-cue{display:none!important}
+/* the pinned bar goes away when both Reel and Post are switched off */
+body.pg-off-reel.pg-off-post .pgcr-bar{display:none!important}
