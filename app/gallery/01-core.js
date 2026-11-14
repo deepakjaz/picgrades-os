@@ -63,6 +63,8 @@ function pgAuthBody() {
   const o = {};
   if (PG_AS === 'couple') { try { const k = JSON.parse(localStorage.getItem('pg_couple_' + GALLERY_ID) || 'null'); if (k) o.coupleKey = k; } catch (e) {} }
   const t = pgToken(); if (t) o.token = t;
+  // step 63b: a guest who gave their name sends it on the first load, so photos Find me found come with the gallery
+  if (!o.coupleKey && !o.token) { try { const gu = JSON.parse(localStorage.getItem('pg_guest_' + GALLERY_ID) || 'null'); if (gu && gu.guestId) { o.guestId = gu.guestId; o.guestKey = gu.guestKey; } } catch (e) {} }
   return o;
 }
 function pgApi(action, body) {
@@ -181,6 +183,17 @@ function initFilmstrip() {
   thumbEls = Array.from(stripScroller.querySelectorAll('.mk-thumb-item'));
 }
 
+// step 63b: a guest of a wedding set to "only after Find me" gets the Wedding Highlights and, per event, only what they may see.
+// The Wedding Highlights become the first collection; an event with nothing to show yet keeps a public cover (its teaser).
+function pgGatePrep() {
+  if (!GALLERY || !GALLERY.gated) return;
+  const hl = GALLERY.highlights || [];
+  GALLERY.events = (GALLERY.events || []).filter(e => !e.isHighlights);
+  GALLERY.events.forEach((e, i) => {
+    if (!e.photos.length) { e.photos = (e.teaser && e.teaser.length ? e.teaser : hl.length ? [hl[i % hl.length]] : []).slice(); e.teaserOnly = true; }
+  });
+  if (hl.length) GALLERY.events.unshift({ name: 'Wedding Highlights', photos: hl.slice(), isHighlights: true });
+}
 function renderGalleries() {
   const wrap = document.getElementById('pgGalleryMasonry');
   wrap.innerHTML = '';
@@ -657,6 +670,9 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
     GALLERY.guestPosts = res.gallery.guestPosts || [];
     if (newPosts && !document.getElementById('view-moments').classList.contains('active')) { ROOT_SET = buildRootSet(); renderMoments(); }
+    // step 63b: what this phone may see can change (the couple switched guest photos, Find me found them, a request was approved)
+    const sees = x => JSON.stringify([x.guestPhotos || '', !!x.gated, !!x.found, (x.events || []).filter(e => !e.isHighlights).map(e => [e.name, (e.teaserOnly ? [] : e.photos).length, !!e.full]), (x.pool || []).length]);
+    if (sees(res.gallery) !== sees(GALLERY)) { ['events', 'root', 'pool', 'highlights', 'gated', 'found', 'guestPhotos'].forEach(k => { GALLERY[k] = res.gallery[k]; }); pgGatePrep(); pgRenderHub(); }
     renderGalleries();
   }).catch(err => {
     if (err && err.draft) { try { localStorage.removeItem(CK); } catch (e) {} return pgDraftScreen(err.res && err.res.title); }
@@ -682,6 +698,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
   }
   function start(res, fromKept) {
     GALLERY = pgDemoMerge(res.gallery); GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
+    pgGatePrep();
     const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;
     // PicGrades' own name shows unless PicGrades turned its credit off for this client (step 42)
     document.body.classList.toggle('pg-nocredit', GALLERY.credit === false);

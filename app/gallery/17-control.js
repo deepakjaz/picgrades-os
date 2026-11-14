@@ -249,6 +249,7 @@
       '<details class="pgcp-statlist"><summary>Photos in each collection</summary>' + evs.map(e => '<p><span>' + esc(e.name) + '</span><b>' + e.photos.length.toLocaleString('en-IN') + '</b></p>').join('') + '</details>' +
       '<small>Only you see these numbers. Guests never see how many photos there are.</small>');
     p.insertBefore(stats, p.firstChild);
+    if (window.PGGate && ROLE !== 'demo') p.insertBefore(PGGate.choice(), stats.nextSibling);   // step 63b: guest photos only after Find me / open
     const list = h('div', 'pgf-list'), canLock = !!(STAFF && STAFF.canLock);
     if (canLock) p.firstChild.textContent += ' The small “Plan” switch is PicGrades’ own: off locks a function for the couple and the photographer.';
     (window.PGFeatures ? PGFeatures.list() : []).forEach(([k, name, line]) => {

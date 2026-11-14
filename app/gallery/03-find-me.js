@@ -140,10 +140,11 @@ function pgMonogram() {
   }
   function photoIndex() {
     const map = {}, order = [];
-    (GALLERY.events || []).concat([{ name: 'Root Moment', photos: GALLERY.root || [] }]).forEach(ev => ev.photos.forEach(p => { if (!map[p.id]) { map[p.id] = p; order.push(p.id); } }));
+    (GALLERY.events || []).concat([{ name: 'Root Moment', photos: GALLERY.root || [] }, { name: 'pool', photos: GALLERY.pool || [] }]).forEach(ev => ev.photos.forEach(p => { if (!map[p.id]) { map[p.id] = p; order.push(p.id); } }));
     return { map, order };
   }
   function showResult(m, several) {
+    if (m.items && m.items.length) { const have = new Set((GALLERY.pool || []).map(p => p.id)); GALLERY.pool = (GALLERY.pool || []).concat(m.items.filter(p => !have.has(p.id))); }   // step 63b
     const idx = photoIndex(), inOrder = (ids) => { const set = new Set(ids); return idx.order.filter(id => set.has(id)).map(id => idx.map[id]); };
     if (m.unclear || m.close) { GALLERY.personal = []; $('fmActions').classList.add('hidden'); lastResult = null; }
     if (m.unclear) { status('We could not be sure this is you: your face looks close to more than one person here. Try again in good light, alone, looking straight.'); $('fmActions').classList.remove('hidden'); if (m.canAsk) showAsk(0, 'help'); return; }
@@ -153,6 +154,7 @@ function pgMonogram() {
     if (sure.length) GALLERY.personal.push({ name: 'Your photos', photos: sure, personal: true });
     if (maybe.length) GALLERY.personal.push({ name: 'Maybe you', photos: maybe, personal: true });
     renderGalleries();
+    if (sure.length && window.PGGate) PGGate.found();   // step 63b: now the events' highlights open
     lastResult = sure.length ? 'Your photos' : maybe.length ? 'Maybe you' : null;
     $('fmActions').classList.add('hidden');
     // step 60b: nothing found = nothing to save or make: only "Try another selfie"

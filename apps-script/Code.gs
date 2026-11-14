@@ -74,6 +74,7 @@ var PUBLIC_ROUTES = {
   myFind: myFind_,
   askDownload: askDownload_,
   askAccess: askAccess_,
+  guestPhotos: guestPhotos_,
   publishGallery: publishGallery_,
   dlRequests: dlRequests_,
   dlDecide: dlDecide_,
@@ -164,7 +165,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step63a-highlights',
+    version: 'step63b-findme-gate',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -887,7 +888,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks'];   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos'];   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1011,7 +1012,7 @@ function setGallery_(p, user) {
     if (existing) { gid = existing.galleryId; updateRowByNumber_('Galleries', existing._row, row); }
     else {
       gid = randomId_(12);
-      appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email) }, row));
+      appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email), guestPhotos: 'findme' }, row));   // step 63b: new weddings: photos only after Find me
     }
     if (existing && existing.facesFileId) {
       var known = readFacesFile_(existing).pass, ids = allPhotoIds_(manifest);
@@ -1058,7 +1059,63 @@ function getGallery_(p) {
   m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
+  m.guestPhotos = guestPhotosOf_(g);
+  if (gatedFor_(g, p)) gateManifest_(g, m, p);
   return { gallery: m };
+}
+
+// ---------- No photos without Find me (step 63b) ----------
+// A wedding set to 'findme': a guest's phone receives only the photos it may see. Before Find me: the Wedding Highlights and the
+// photos the couple chose for the Hub's look (cover, bride, groom). After Find me: also each event's highlights and their own photos,
+// and every photo of an event the couple opened for them (a 'more' request). Root Moment (the couple's posts) stays open.
+function guestPhotosOf_(g) { return String(g && g.guestPhotos || '') === 'findme' ? 'findme' : 'open'; }
+function gatedFor_(g, p) { return guestPhotosOf_(g) === 'findme' && !isDemo_(g) && !privileged_(g, p || REQ_P || {}); }
+function photoMap_(m) { var o = {}; (m.root || []).forEach(function (x) { o[x.id] = x; }); (m.events || []).forEach(function (e) { (e.photos || []).forEach(function (x) { if (!o[x.id]) o[x.id] = x; }); }); return o; }
+/** What this guest may see: { found, ids (set), events (event name → true for events opened in full) }. */
+function guestSees_(g, m, p) {
+  var st = picksOf_(g.storyPicks), ids = {}, add = function (l) { (l || []).forEach(function (id) { if (id) ids[id] = true; }); };
+  add(st.wh); add(st.cover); add([st.bride, st.groom]);
+  var guest = null, row = null, full = {};
+  try { guest = guestFor_(g, p); row = foundRow_(g, guest.phone); } catch (e) {}
+  if (row) {
+    add(String(row.sure || '').split(',').filter(String));
+    Object.keys(st.hl || {}).forEach(function (k) { add(st.hl[k]); });
+    ensureTab_('DownloadRequests', DLREQ_COLUMNS);
+    var d = digits_(guest.phone);
+    readTable_('DownloadRequests').forEach(function (x) { if (x.galleryId === g.galleryId && x.kind === 'more' && x.status === 'approved' && digits_(x.phone) === d) full[x.event] = true; });
+    (m.events || []).forEach(function (e) { if (full[e.name]) add((e.photos || []).map(function (x) { return x.id; })); });
+  }
+  return { found: !!row, sure: row ? String(row.sure || '').split(',').filter(String) : [], ids: ids, full: full, story: st };
+}
+function gateManifest_(g, m, p) {
+  var map = photoMap_(m), see = guestSees_(g, m, p), st = see.story;
+  var pick = function (l) { return (l || []).map(function (id) { return map[id]; }).filter(Boolean); };
+  var whSet = {}; (st.wh || []).forEach(function (id) { whSet[id] = true; });
+  m.highlights = pick(st.wh);
+  m.events = (m.events || []).map(function (e) {
+    var o = {}; Object.keys(e).forEach(function (k) { if (k !== 'photos') o[k] = e[k]; });
+    var own = (e.photos || []).filter(function (x) { return whSet[x.id]; });   // this event's Wedding Highlights: public, used as its cover
+    o.photos = see.full[e.name] ? e.photos : see.found ? pick((st.hl || {})[e.name]) : [];
+    o.teaser = (o.photos.length ? o.photos : own).slice(0, 3);
+    o.locked = !see.full[e.name]; o.full = !!see.full[e.name];
+    return o;
+  });
+  m.root = (m.root || []).filter(function (x) { return see.ids[x.id]; });
+  m.pool = pick(Object.keys(see.ids));   // every photo this phone may open (Find me results, cover photos…)
+  m.found = see.found; m.gated = true;
+  var keep = function (o) { var out = {}; Object.keys(o || {}).forEach(function (id) { if (see.ids[id]) out[id] = o[id]; }); return out; };
+  m.likes = keep(m.likes); m.notes = keep(m.notes);
+  m.recentNotes = (m.recentNotes || []).filter(function (n) { return see.ids[n.photoId]; });
+  return m;
+}
+/** Couple link or staff login: guests see photos only after Find me ('findme') or the gallery is open to everyone ('open'). */
+function guestPhotos_(p) {
+  var g = findGallery_(p.g); if (!g) return { ok: false, error: 'This gallery is not available.' };
+  if (!privileged_(g, p)) return { ok: false, error: 'Only the couple or the photographer can change this.' };
+  var mode = p.mode === 'open' ? 'open' : 'findme';
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { guestPhotos: mode });
+  return { guestPhotos: mode };
 }
 
 /** Likes, notes and approved posts of one gallery, worked out once and kept for a minute.
@@ -1458,7 +1515,7 @@ function coupleThanks_(p) {
 // the couple (or the photographer / PicGrades) approves it and the guest gets an email with a download link.
 // This is PicGrades' privacy policy for every wedding, so the couple never has to be the one who says no.
 var FIND_COLUMNS = ['at', 'galleryId', 'phone', 'guestId', 'name', 'sure', 'maybe', 'status'];
-var DLREQ_COLUMNS = ['at', 'galleryId', 'reqId', 'guestId', 'name', 'phone', 'email', 'ids', 'status', 'grant', 'decidedAt', 'decidedBy', 'kind'];
+var DLREQ_COLUMNS = ['at', 'galleryId', 'reqId', 'guestId', 'name', 'phone', 'email', 'ids', 'status', 'grant', 'decidedAt', 'decidedBy', 'kind', 'event'];   // kind 'more' (step 63b): a found guest asks for all photos of one event
 var DL_MAX_IDS = 50;
 function digits_(v) { return String(v == null ? '' : v).replace(/\D/g, '').slice(-10); }
 /** 'couple' (couple link) · 'staff' (photographer / PicGrades login for this wedding) · '' (a guest). */
@@ -1482,7 +1539,7 @@ function foundOut_(row, again) {
 /** Public (guest): the photos Find me already found for this mobile number, if any. */
 function myFind_(p) {
   var g = publishedGallery_(p.g), guest = guestFor_(g, p), row = foundRow_(g, guest.phone);
-  return row ? { found: foundOut_(row, true) } : { found: null };
+  return row ? { found: withItems_(g, foundOut_(row, true)) } : { found: null };
 }
 /** Public (guest): ask for photos that are not theirs. */
 function askDownload_(p) {
@@ -1506,7 +1563,9 @@ function askAccess_(p) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'Please write a valid email address.' };
   if (!limitOk_('acc:' + guest.guestId, 5, 3600)) return { ok: false, error: 'Too many requests for now. Please try again later.' };
   ensureTab_('FindMe', FIND_COLUMNS);
-  var d = digits_(guest.phone), row = readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && x.status === 'close'; }).pop();
+  var d = digits_(guest.phone);
+  if (p.event) return askMore_(g, guest, email, String(p.event).slice(0, 80));
+  var row = readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && x.status === 'close'; }).pop();
   // step 60d: no close match, but 2 searches found nobody → a request for help (no photos: the couple or photographer replies)
   var kind = row ? 'access' : guestMisses_(g, guest.phone) >= GUEST_TRIES_BEFORE_HELP ? 'help' : '';
   if (!kind) return { ok: false, error: 'Please use Find me first.' };
@@ -1517,13 +1576,25 @@ function askAccess_(p) {
   appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: kind === 'access' ? row.sure : '', status: 'waiting', grant: '', decidedAt: '', decidedBy: '', kind: kind });
   return { reqId: reqId };
 }
+/** step 63b: a guest Find me found asks to see every photo of one event. Approving opens that event for their mobile number. */
+function askMore_(g, guest, email, event) {
+  if (!foundRow_(g, guest.phone)) return { ok: false, error: 'Please use Find me first.' };
+  if (!(loadManifest_(g).events || []).some(function (e) { return e.name === event; })) return { ok: false, error: 'Event not found.' };
+  var d = digits_(guest.phone);
+  ensureTab_('DownloadRequests', DLREQ_COLUMNS);
+  var old = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId && x.kind === 'more' && x.event === event && digits_(x.phone) === d && (x.status === 'waiting' || x.status === 'approved'); })[0];
+  if (old) return { reqId: old.reqId, already: true, status: old.status };
+  var reqId = 'mo_' + randomId_(10);
+  appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: '', status: 'waiting', grant: '', decidedAt: '', decidedBy: '', kind: 'more', event: event });
+  return { reqId: reqId };
+}
 /** Couple link or staff login: download requests of this wedding (waiting first). */
 function dlRequests_(p) {
   var g = publishedGallery_(p.g);
   if (!privileged_(g, p)) return { ok: false, error: 'Only the couple can see download requests.' };
   ensureTab_('DownloadRequests', DLREQ_COLUMNS);
   var all = readTable_('DownloadRequests').filter(function (x) { return x.galleryId === g.galleryId; })
-    .map(function (x) { return { reqId: x.reqId, name: x.name, email: x.email, ids: String(x.ids || '').split(',').filter(String), status: x.status, at: x.at, decidedAt: x.decidedAt, kind: x.kind === 'access' || x.kind === 'help' ? x.kind : 'download' }; })
+    .map(function (x) { return { reqId: x.reqId, name: x.name, email: x.email, ids: String(x.ids || '').split(',').filter(String), status: x.status, at: x.at, decidedAt: x.decidedAt, kind: x.kind === 'access' || x.kind === 'help' || x.kind === 'more' ? x.kind : 'download', event: x.event || '' }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
   return { waiting: all.filter(function (x) { return x.status === 'waiting'; }), decided: all.filter(function (x) { return x.status !== 'waiting'; }).slice(0, 40) };
 }
@@ -1541,7 +1612,13 @@ function dlDecide_(p) {
   var grant = decision === 'approved' ? randomId_(16) : '';
   updateRowByNumber_('DownloadRequests', row._row, { status: decision, grant: grant, decidedAt: fmt_(new Date()), decidedBy: who });
   var n = String(row.ids || '').split(',').filter(String).length;
-  if (decision === 'approved' && row.kind === 'access') {
+  if (decision === 'approved' && row.kind === 'more') {
+    var link3 = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '') + '/g/' + g.galleryId;
+    sendEmail_(row.email, 'All ' + row.event + ' photos from ' + g.title, 'You can see all ' + esc_(row.event) + ' photos now',
+      ['Hi ' + esc_(String(row.name || '').split(' ')[0]) + ',', esc_(g.title) + ' opened all ' + esc_(row.event) + ' photos for you.',
+       '<a href="' + esc_(link3) + '" style="display:inline-block;padding:12px 22px;border-radius:24px;background:#141413;color:#fff;text-decoration:none">Open the wedding</a>',
+       'Use the same phone where you did Find me.'], 'more-approved', row.reqId);
+  } else if (decision === 'approved' && row.kind === 'access') {
     // a close match the couple recognised: this mobile number now has its photos, like a normal Find me
     ensureTab_('FindMe', FIND_COLUMNS);
     var d = digits_(row.phone), fm = readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && x.status === 'close'; }).pop();
@@ -1764,7 +1841,8 @@ function photoData_(p) {
   if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
   var device = String(p.device || '').slice(0, 40);
   if (device.length < 8) return { ok: false, error: 'Missing details.' };
-  var m = loadManifest_(g), ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
+  var m = loadManifest_(g), ids = {};
+  if (gatedFor_(g, p)) ids = guestSees_(g, m, p).ids; else allPhotoIds_(m).forEach(function (id) { ids[id] = true; });   // step 63b
   var want = (p.ids || []).slice(0, 4).filter(function (id) { return ids[id]; });
   var cache = CacheService.getScriptCache(), key = 'pd:' + g.galleryId + ':' + device, used = Number(cache.get(key) || 0);
   if (used + want.length > 150) return { ok: false, error: 'Too many photos for now. Please try again in an hour.' };
@@ -1806,11 +1884,11 @@ function findFaces_(p) {
   if (!privileged_(g, p)) {
     guest = guestFor_(g, p);
     var done = foundRow_(g, guest.phone);
-    if (done) return foundOut_(done, true);
+    if (done) return withItems_(g, foundOut_(done, true));
   }
   var f = readFacesFile_(g), scale = f.scale || 250, me = faceBytes_(String(p.d || ''));
   if (!me) return { ok: false, error: 'The face could not be read. Please try again.' };
-  if (guest) return guestFind_(g, f, scale, me, guest);
+  if (guest) return withItems_(g, guestFind_(g, f, scale, me, guest));
   var limSure = FACE_SURE * scale, limMaybe = FACE_MAYBE * scale, sure = [], maybe = [], best = {};
   Object.keys(f.photos || {}).forEach(function (pid) {
     var b = 1e9;
@@ -1827,6 +1905,13 @@ var GUEST_TRIES_BEFORE_HELP = 2;
 function guestMisses_(g, phone) {
   var d = digits_(phone);
   return readTable_('FindMe').filter(function (x) { return x.galleryId === g.galleryId && digits_(x.phone) === d && (x.status === 'none' || x.status === 'unclear'); }).length;
+}
+/** step 63b: a gated guest's phone has no event photo lists, so Find me sends the found photos themselves. */
+function withItems_(g, out) {
+  if (guestPhotosOf_(g) !== 'findme' || !out || !(out.sure || []).length) return out;
+  var map = photoMap_(loadManifest_(g));
+  out.items = out.sure.map(function (id) { return map[id]; }).filter(Boolean);
+  return out;
 }
 function guestFind_(g, f, scale, me, guest) {
   var R = guestFaceRules_(), scan = (R.lim + FACE_BAND) * scale, near = [];
@@ -1867,7 +1952,9 @@ function guestFind_(g, f, scale, me, guest) {
 /** Public: where faces are in each photo (boxes only, no face codes) so the album maker keeps people in frame. */
 function faceBoxes_(p) {
   var g = faceGallery_(p.g), f = readFacesFile_(g), out = {};
-  Object.keys(f.photos || {}).forEach(function (pid) { out[pid] = (f.photos[pid].f || []).map(function (fc) { return fc[0]; }); });
+  var only = gatedFor_(g, p) ? guestSees_(g, loadManifest_(g), p).ids : null;   // step 63b
+  Object.keys(f.photos || {}).forEach(function (pid) {
+    if (only && !only[pid]) return; out[pid] = (f.photos[pid].f || []).map(function (fc) { return fc[0]; }); });
   return { boxes: out };
 }
 function faceGallery_(gid) {
