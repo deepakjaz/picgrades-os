@@ -11,11 +11,13 @@
   const NAME = { guest: 'Guest', couple: 'Couple', photographer: 'Photographer', picgrades: 'PicGrades', demo: 'Demo' };
   let shown = '', mine = null, now = { role: 'guest', note: '' };
   const SEEN = () => 'pg_seen_' + PG_AS + '_' + GALLERY_ID;
-  let fadeT = 0;
+  let fadeT = 0, shownNow = '';
   function once(role) {   // the badge and bar appear on arrival (once per visit and view), then fade
     let seen = ''; try { seen = sessionStorage.getItem(SEEN()) || ''; } catch (e) {}
     if (seen && seen !== role) seen = '';   // the view changed (e.g. the staff role arrived): say it once more
+    if (seen && seen === shownNow) return false;   // shown on this page a moment ago: let its 6 seconds run (a repaint hid it at once)
     if (seen) { document.body.classList.add('pg-badge-gone'); return false; }
+    shownNow = role;
     try { sessionStorage.setItem(SEEN(), role); } catch (e) {}
     document.body.classList.remove('pg-badge-gone'); clearTimeout(fadeT); fadeT = setTimeout(() => document.body.classList.add('pg-badge-gone'), 6000);
     return true;
@@ -51,7 +53,15 @@
       if (window.PGControl && PGControl.checked && PGControl.checked() && role === 'guest') { bar('This login has no access to this wedding · you are seeing the guest view. <a href="#" data-act="1">Sign in with another email</a>', signIn); return; }
       bar('');
     }
+    draftNote(role);
   }
+  // step 62b: the couple and staff on a Draft: say once that guests can't see it yet (then it is in the ☰ menu)
+  const PRIV = r => r === 'couple' || r === 'photographer' || r === 'picgrades';
+  function draftNote(role) {
+    if (!PRIV(role) || GALLERY.status !== 'Draft' || ($('pgLinkBar') && now.note)) return;
+    bar('<b>Draft</b> · guests can’t see this yet · <a href="#" data-act="1">Publish</a>', () => window.PGControl && PGControl.open());
+  }
+  document.addEventListener('pg:status', () => { if (GALLERY.status !== 'Draft' && /^Draft/.test(now.note)) bar(''); });
   // the email code, as on the PicGrades page
   function signIn() {
     let s = $('pgSignIn');
@@ -81,7 +91,7 @@
   document.addEventListener('pg:role', paint);
   // for the ☰ menu: who this view is, and where to switch
   function menu() {
-    const out = { role: NAME[now.role] || 'Guest', links: [] };
+    const out = { role: (NAME[now.role] || 'Guest') + (PRIV(now.role) && GALLERY.status === 'Draft' ? ' · Draft (guests can’t see it yet)' : ''), links: [] };
     if (PG_AS === 'guest') {
       if (mine) out.links.push([NAME[mine] + ' view', pgLinkFor(mine)]);
       else if (pgStore('couple')) out.links.push(['Couple view', pgLinkFor('couple')]);
