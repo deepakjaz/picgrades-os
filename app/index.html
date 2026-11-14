@@ -303,9 +303,19 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   function galleryControls(o) {
     var url = o.galleryId ? location.origin + '/g/' + o.galleryId : '';
     var box = el('details', { style: 'width:100%;font-size:14px' });
-    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);font-weight:600;min-height:32px', text: o.galleryId ? 'Wedding gallery is live' : 'Create the wedding gallery (free)' }));
+    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);font-weight:600;min-height:32px', text: !o.galleryId ? 'Create the wedding gallery (free)' : o.galleryStatus === 'Draft' ? 'Wedding gallery · Draft (guests can’t open it yet)' : 'Wedding gallery is live' }));
     var inner = el('div', { style: 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center' });
     if (url) {
+      // step 62b: a new gallery is a Draft: the couple or the photographer checks it, then publishes (here or in the app's Control Panel)
+      var draft = o.galleryStatus === 'Draft';
+      inner.appendChild(el('p', { style: 'margin:0;flex:1 1 100%;font-size:13px', text: draft ? 'Draft: only you and the couple can open it. Check the photos, then tap Publish so guests can open the guest link.' : 'Live: guests can open the guest link.' }));
+      var pb = el('button', { type: 'button', class: 'mini', text: draft ? 'Publish to guests' : 'Unpublish (back to Draft)' });
+      pb.addEventListener('click', function () {
+        pb.disabled = true;
+        api('publishGallery', { g: o.galleryId, publish: draft }).then(function (r) { return refresh().then(function () { toast(r.status === 'Draft' ? 'Back to Draft: guests can’t open it now.' : 'Published: guests can open the guest link now.'); }); })
+          .catch(function (x) { toast(x.message); pb.disabled = false; });
+      });
+      inner.appendChild(pb);
       inner.appendChild(el('a', { href: url, target: '_blank', rel: 'noopener', style: 'flex:1 1 100%;font-weight:600', text: url }));
       // step 62a: two links: the guest link to share, and the couple's private link /c/<id>/<key> (asked from the server when tapped)
       var cg = el('button', { type: 'button', class: 'mini', text: 'Copy guest link' });
@@ -327,12 +337,12 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     var folder = el('input', { placeholder: 'Google Drive folder link', style: 'flex:2 1 260px;min-height:40px;padding:8px 12px' });
     var title = el('input', { placeholder: 'Couple names', style: 'flex:1 1 160px;min-height:40px;padding:8px 12px' });
     var date = el('input', { type: 'date', 'aria-label': 'Wedding date', style: 'flex:0 1 170px;min-height:40px;padding:8px 12px' });
-    var b = el('button', { type: 'button', class: 'mini', text: o.galleryId ? 'Refresh photos' : 'Publish gallery' });
+    var b = el('button', { type: 'button', class: 'mini', text: o.galleryId ? 'Refresh photos' : 'Create gallery (Draft)' });
     b.addEventListener('click', function () {
       b.disabled = true; b.textContent = 'Reading folder…';
       api('setGallery', { orderId: o.orderId, folderUrl: folder.value, title: title.value, eventDate: date.value }).then(function (r) {
-        return refresh().then(function () { toast('Gallery ready with ' + num(r.photoCount) + ' photos.'); });
-      }).catch(function (x) { toast(x.message); }).then(function () { b.disabled = false; b.textContent = o.galleryId ? 'Refresh photos' : 'Publish gallery'; });
+        return refresh().then(function () { toast('Gallery ready with ' + num(r.photoCount) + ' photos.' + (r.status === 'Draft' ? ' It is a Draft: check it, then tap Publish.' : '')); });
+      }).catch(function (x) { toast(x.message); }).then(function () { b.disabled = false; b.textContent = o.galleryId ? 'Refresh photos' : 'Create gallery (Draft)'; });
     });
     [folder, title, date, b].forEach(function (x) { inner.appendChild(x); });
     box.appendChild(inner);

@@ -286,9 +286,14 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   function galleryUrl(id) { return location.origin + '/g/' + id; }
   function galleryBox(o) {
     var box = el('details', { style: 'font-size:13px' });
-    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);min-height:32px', text: o.galleryId ? 'Gallery published · faces & send to client' : 'Publish gallery' }));
+    box.appendChild(el('summary', { style: 'cursor:pointer;color:var(--gold);min-height:32px', text: !o.galleryId ? 'Create gallery' : (o.galleryStatus === 'Draft' ? 'Gallery · Draft' : 'Gallery · Live') + ' · faces & send to client' }));
     var inner = el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-top:8px' });
     if (o.galleryId) {
+      // step 62b: Draft → only the couple and staff can open it; Publish lets guests in
+      var draft = o.galleryStatus === 'Draft', st = el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' });
+      st.appendChild(el('b', { style: 'font-size:12px;color:' + (draft ? '#d99a1e' : '#2f9e5b'), text: draft ? '● Draft · guests can’t open it yet' : '● Live · guests can open it' }));
+      st.appendChild(act(draft ? 'Publish to guests' : 'Unpublish', function () { return api('publishGallery', { g: o.galleryId, publish: draft }).then(function (r) { return r.status === 'Draft' ? 'Back to Draft' : 'Published: guests can open it now'; }); }));
+      inner.appendChild(st);
       // step 61: one link per person (the couple link, with its private key, is on the faces page)
       [['G · Guest', '/g/'], ['PH · Photographer', '/ph/'], ['PG · PicGrades', '/pg/']].forEach(function (L) {
         var u = location.origin + L[1] + o.galleryId, row = el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' });
@@ -303,7 +308,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     var title = el('input', { placeholder: 'Couple names, e.g. Aarav & Kavya', style: 'min-height:40px' });
     var date = el('input', { type: 'date', style: 'min-height:40px', 'aria-label': 'Wedding date' });
     var msg = el('span', { class: 'muted' });
-    var go = el('button', { type: 'button', class: 'mini', text: o.galleryId ? 'Refresh photos / save' : 'Publish gallery' });
+    var go = el('button', { type: 'button', class: 'mini', text: o.galleryId ? 'Refresh photos / save' : 'Create gallery (Draft)' });
     go.addEventListener('click', function () {
       msg.textContent = 'Reading the Drive folder…';
       busy(go, api('setGallery', { orderId: o.orderId, folderUrl: folder.value, title: title.value, eventDate: date.value })).then(function (r) {

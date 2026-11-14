@@ -57,12 +57,20 @@ function pgDevice() {
   try { let d = localStorage.getItem('pg_device'); if (!d) { d = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('pg_device', d); } return d; }
   catch (e) { if (!window.__pgDev) window.__pgDev = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); return window.__pgDev; }
 }
+// step 62b: a Draft wedding opens only for the couple, the photographer and PicGrades, so every call from their link
+// says who they are (the first load runs before 08-guests adds anything, so it is done here)
+function pgAuthBody() {
+  const o = {};
+  if (PG_AS === 'couple') { try { const k = JSON.parse(localStorage.getItem('pg_couple_' + GALLERY_ID) || 'null'); if (k) o.coupleKey = k; } catch (e) {} }
+  const t = pgToken(); if (t) o.token = t;
+  return o;
+}
 function pgApi(action, body) {
   // step 60b: never wait forever (a blocked or lost answer left "Saving…" on screen): stop after 45 seconds and say so
   const stop = window.AbortController ? new AbortController() : null, timer = stop && setTimeout(() => stop.abort(), 45000);
-  return fetch(API, { method: 'POST', signal: stop ? stop.signal : undefined, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, PG_STUDIO_SLUG ? { slug: PG_STUDIO_SLUG } : {}, body || {})) })
+  return fetch(API, { method: 'POST', signal: stop ? stop.signal : undefined, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action, g: GALLERY_ID, device: pgDevice() }, PG_STUDIO_SLUG ? { slug: PG_STUDIO_SLUG } : {}, pgAuthBody(), body || {})) })
     .then(r => r.json(), e => { throw new Error(e && e.name === 'AbortError' ? 'The server did not answer. Please check your internet and try again.' : 'Your browser could not reach the PicGrades server. If your internet works, an ad blocker or another browser extension may be blocking it: allow this site, or open the link in another browser.'); })
-    .then(res => { if (!res.ok) throw new Error(res.error || 'Something went wrong.'); return res; })
+    .then(res => { if (!res.ok) { const err = new Error(res.error || 'Something went wrong.'); err.draft = !!res.draft; err.res = res; throw err; } return res; })
     .finally(() => { if (timer) clearTimeout(timer); });
 }
 function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
@@ -637,7 +645,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     if (!started) { started = true; return start(res, false); }
     // already showing the kept copy: bring in new hearts, notes and approved posts without moving the guest
     GALLERY.likes = res.gallery.likes || {}; GALLERY.notes = res.gallery.notes || {}; GALLERY.recentNotes = res.gallery.recentNotes; GALLERY.isCouple = res.gallery.isCouple;
-    GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate;
+    GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate; GALLERY.status = res.gallery.status;   // step 62b: Draft / Published
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
     pgDemoMerge(res.gallery); GALLERY.demo = res.gallery.demo;
     const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}, x.story || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
@@ -650,7 +658,28 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     GALLERY.guestPosts = res.gallery.guestPosts || [];
     if (newPosts && !document.getElementById('view-moments').classList.contains('active')) { ROOT_SET = buildRootSet(); renderMoments(); }
     renderGalleries();
-  }).catch(err => { if (!started) bootMsg.textContent = err.message; });
+  }).catch(err => {
+    if (err && err.draft) { try { localStorage.removeItem(CK); } catch (e) {} return pgDraftScreen(err.res && err.res.title); }
+    if (!started) bootMsg.textContent = err.message;
+  });
+  // step 62b: the guest link of a wedding that is not published yet: a friendly page, no photos (also replaces a kept copy)
+  function pgDraftScreen(title) {
+    document.body.classList.add('pg-draft-wait');
+    let d = document.getElementById('pgDraft');
+    if (!d) { d = document.createElement('div'); d.id = 'pgDraft'; d.className = 'pg-draft'; d.setAttribute('role', 'status'); document.body.appendChild(d); }
+    d.innerHTML = '<div class="pg-draft-in"><p class="pg-draft-eyebrow">' + (title ? pgEsc(title) : 'The wedding') + '</p><h1>Your photos are being prepared</h1>' +
+      '<p>The couple and the photographer are checking the photos. This link opens as soon as they publish the wedding.</p>' +
+      '<p class="pg-draft-small">Please come back soon, or ask the couple when it is ready.</p><button type="button" class="mk-btn-peach" id="pgDraftAgain">Check again</button></div>';
+    d.querySelector('#pgDraftAgain').addEventListener('click', () => location.reload());
+    if (bootEl) bootEl.remove();
+    // the couple or staff who reach this page: a way in (a couple link that is not valid, or a staff link without a sign-in)
+    const inner = d.querySelector('.pg-draft-in'), more = document.createElement('p'); more.className = 'pg-draft-small';
+    let ck = null; try { ck = JSON.parse(localStorage.getItem('pg_couple_' + GALLERY_ID) || 'null'); } catch (e) {}
+    if (PG_STAFF_LINK) { more.innerHTML = 'Photographer or PicGrades? <a href="#" id="pgDraftIn">Sign in</a> to see the draft.'; inner.appendChild(more);
+      more.querySelector('a').addEventListener('click', e => { e.preventDefault(); ready.then(() => window.PGLinks && PGLinks.signIn()); }); }
+    else if (PG_AS === 'couple') { more.textContent = 'This couple link is not valid. Please ask your photographer for the right link.'; inner.appendChild(more); }
+    else if (ck) { more.innerHTML = 'Are you the couple? <a href="' + pgLinkFor('couple') + '">Open your couple link</a>.'; inner.appendChild(more); }
+  }
   function start(res, fromKept) {
     GALLERY = pgDemoMerge(res.gallery); GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
     const total = (GALLERY.events || []).reduce((t, e) => t + e.photos.length, 0) || (GALLERY.root || []).length;

@@ -306,6 +306,38 @@
     p.appendChild(form); return p;
   }
 
+  // ---- Publish (step 62b): a new wedding is a Draft; guests can open the link only after the couple or the photographer publishes ----
+  function publishStrip() {
+    const wrap = h('div', 'pgpub');
+    const paint = () => {
+      const live = GALLERY.status !== 'Draft', ev = GALLERY.events || [];
+      const photos = ev.reduce((t, e) => t + (e.photos || []).length, 0) + (GALLERY.root || []).length;
+      const fm = (GALLERY.features || {}).findme !== 'off';
+      const cover = ((GALLERY.story || {}).cover || []).length > 0;
+      const items = [[photos > 0, photos ? photos + ' photos are in' : 'No photos yet'], [ev.length > 0, ev.length ? ev.length + (ev.length === 1 ? ' event found' : ' events found') : 'No event folders found'],
+        [cover, cover ? 'Cover photos chosen' : 'Cover photos not chosen (optional · Story tab)', true]];
+      if (fm) items.push([!!GALLERY.faceSearch, GALLERY.faceSearch ? 'Faces are read: Find me is ready' : 'Faces not read yet: Find me will not work']);
+      const ready = photos > 0;
+      wrap.className = 'pgpub ' + (live ? 'live' : 'draft');
+      wrap.innerHTML = '<div class="pgpub-row"><span class="pgpub-dot"></span><div class="pgpub-txt"><b>' + (live ? 'Live' : 'Draft') + '</b><small>' +
+        (live ? 'Guests can open the guest link.' : 'Guests can’t see this yet. Check everything, then publish.') + '</small></div>' +
+        (ROLE === 'demo' ? '' : '<button type="button" class="pgpub-btn ' + (live ? 'off' : 'on') + '"' + (!live && !ready ? ' disabled' : '') + '>' + (live ? 'Unpublish' : 'Publish') + '</button>') + '</div>' +
+        (live ? '' : '<ul class="pgpub-list">' + items.map(([ok, t, opt]) => '<li class="' + (ok ? 'ok' : opt ? 'opt' : 'no') + '">' + esc(t) + '</li>').join('') + '</ul>');
+      const b = wrap.querySelector('.pgpub-btn'); if (!b) return;
+      b.addEventListener('click', () => {
+        if (live && !confirmBox()) return;
+        b.disabled = true; b.textContent = live ? 'Unpublishing…' : 'Publishing…';
+        pgApi('publishGallery', Object.assign(ROLE === 'couple' ? {} : { token: token() }, { publish: !live })).then(r => {
+          GALLERY.status = r.status; paint(); if (window.PGLinks && PGLinks.paint) PGLinks.paint(); document.dispatchEvent(new CustomEvent('pg:status'));
+          showToast(r.status === 'Draft' ? 'Back to Draft — guests can’t open it now' : 'Published — guests can open the guest link now');
+        }).catch(err => { showToast(err.message); paint(); });
+      });
+    };
+    // unpublishing stops guests who already have the link: ask once, inside the panel (no browser pop-up)
+    function confirmBox() { if (wrap.dataset.sure === '1') { wrap.dataset.sure = ''; return true; } wrap.dataset.sure = '1'; showToast('Guests will be stopped. Tap Unpublish again to confirm'); setTimeout(() => { wrap.dataset.sure = ''; }, 5000); return false; }
+    paint(); return wrap;
+  }
+
   // ---- the panel ----
   let tab = 'look', repaint = () => {};
   function open() {
@@ -328,6 +360,7 @@
     const rs = head.querySelector('.pgcp-reset');
     if (rs) rs.addEventListener('click', () => { try { localStorage.removeItem(pgDemoKey()); } catch (e) {} showToast('Back to the demo as it was'); setTimeout(() => location.reload(), 500); });
     head.querySelector('.pgcp-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; repaint(); } });
+    if (ROLE !== 'demo' && !GALLERY.isStudio) head.insertBefore(publishStrip(), head.querySelector('.pgcp-tabs'));
     box.append(head, body, done); document.body.append(back, box);
     repaint();
   }
