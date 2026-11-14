@@ -165,7 +165,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step63b-findme-gate',
+    version: 'step63c-welcome',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1074,7 +1074,7 @@ function photoMap_(m) { var o = {}; (m.root || []).forEach(function (x) { o[x.id
 /** What this guest may see: { found, ids (set), events (event name → true for events opened in full) }. */
 function guestSees_(g, m, p) {
   var st = picksOf_(g.storyPicks), ids = {}, add = function (l) { (l || []).forEach(function (id) { if (id) ids[id] = true; }); };
-  add(st.wh); add(st.cover); add([st.bride, st.groom]);
+  add(st.wh); add(st.cover); add([st.bride, st.groom, st.welcome]);
   var guest = null, row = null, full = {};
   try { guest = guestFor_(g, p); row = foundRow_(g, guest.phone); } catch (e) {}
   if (row) {
@@ -1294,7 +1294,7 @@ function facesProxy_(p, user) {
 // =====================================================================
 // 6c. Guests: name + phone (OTP later), saved "Find me" collections, Root Moment uploads with couple approval
 // =====================================================================
-var GUEST_COLUMNS = ['at', 'galleryId', 'guestId', 'keyHash', 'name', 'phone', 'device', 'status'];
+var GUEST_COLUMNS = ['at', 'galleryId', 'guestId', 'keyHash', 'name', 'phone', 'device', 'status', 'side', 'attended'];   // side / attended: the guest welcome (step 63c)
 var SET_COLUMNS = ['at', 'galleryId', 'code', 'name', 'guestId', 'device', 'ids'];
 var POST_COLUMNS = ['at', 'galleryId', 'postId', 'guestId', 'name', 'phone', 'caption', 'fileId', 'mime', 'type', 'status', 'reviewedAt'];
 var MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // same as TKG Moments: Apps Script request bodies stay well under ~50 MB
@@ -1329,6 +1329,8 @@ function coupleKey_(g) {
   updateRowByNumber_('Galleries', g._row, { coupleKey: k }); g.coupleKey = k;
   return k;
 }
+/** step 63c: the guest welcome asks "Which side are you from?" */
+function sideOf_(v) { v = String(v || ''); return v === 'bride' || v === 'groom' || v === 'both' ? v : ''; }
 function guestFor_(g, p) {
   ensureTab_('Guests', GUEST_COLUMNS);
   var id = String(p.guestId || ''), key = String(p.guestKey || '');
@@ -1347,7 +1349,7 @@ function guestJoin_(p) {
   if (!limitOk_('gj:' + String(p.device || phone).slice(0, 40), 5, 3600) || !limitOk_('gjg:' + g.galleryId, 600, 3600)) return { ok: false, error: 'Too many sign-ins for now. Please try again later.' };
   ensureTab_('Guests', GUEST_COLUMNS);
   var key = randomId_(24), id = 'gst_' + randomId_(10);
-  appendRow_('Guests', { at: fmt_(new Date()), galleryId: g.galleryId, guestId: id, keyHash: hash_(key), name: name, phone: phone, device: String(p.device || '').slice(0, 40), status: 'ok' });
+  appendRow_('Guests', { at: fmt_(new Date()), galleryId: g.galleryId, guestId: id, keyHash: hash_(key), name: name, phone: phone, device: String(p.device || '').slice(0, 40), status: 'ok', side: sideOf_(p.side), attended: p.attended === 'yes' || p.attended === 'no' ? p.attended : '' });
   var out = { guestId: id, guestKey: key, name: name }, done = foundRow_(g, phone);
   if (done) out.found = foundOut_(done, true);   // same number on a new phone: their photos come back, no second search
   return out;
@@ -1714,7 +1716,7 @@ function picksOf_(v) {
   var list = function (a) { var out = []; (Array.isArray(a) ? a : []).forEach(function (x) { x = id(x); if (x && out.indexOf(x) < 0 && out.length < STORY_MAX) out.push(x); }); return out; };
   var hl = {}, n = 0;
   Object.keys(o.hl || {}).forEach(function (k) { var ids = list(o.hl[k]), name = String(k).slice(0, 80); if (ids.length && n < 40) { hl[name] = ids; n++; } });
-  return { cover: list(o.cover), bride: id(o.bride), groom: id(o.groom), hl: hl, wh: list(o.wh) };   // wh: Wedding Highlights (step 63a) — 10–15 photos of the whole wedding, the public ones
+  return { cover: list(o.cover), bride: id(o.bride), groom: id(o.groom), hl: hl, wh: list(o.wh), welcome: id(o.welcome) };   // welcome (step 63c): the full-length couple photo of the guest welcome   // wh: Wedding Highlights (step 63a) — 10–15 photos of the whole wedding, the public ones
 }
 /** Couple link or staff login: save the story photos (the whole choice at once; only photos of this wedding are kept). */
 function storyPicks_(p) {
@@ -1725,7 +1727,7 @@ function storyPicks_(p) {
   (m.events || []).forEach(function (e) { evs[e.name] = {}; e.photos.forEach(function (ph) { evs[e.name][ph.id] = true; }); });
   var want = picksOf_(p.picks), hl = {};
   Object.keys(want.hl).forEach(function (k) { if (evs[k]) { var ids = want.hl[k].filter(function (x) { return evs[k][x]; }); if (ids.length) hl[k] = ids; } });
-  var out = { cover: want.cover.filter(function (x) { return all[x]; }), bride: all[want.bride] ? want.bride : '', groom: all[want.groom] ? want.groom : '', hl: hl, wh: want.wh.filter(function (x) { return all[x]; }) };
+  var out = { cover: want.cover.filter(function (x) { return all[x]; }), bride: all[want.bride] ? want.bride : '', groom: all[want.groom] ? want.groom : '', hl: hl, wh: want.wh.filter(function (x) { return all[x]; }), welcome: all[want.welcome] ? want.welcome : '' };
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, { storyPicks: JSON.stringify(out), updatedAt: fmt_(new Date()) });
   return { story: out };

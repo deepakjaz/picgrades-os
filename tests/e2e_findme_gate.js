@@ -28,7 +28,8 @@ const srv = http.createServer((req, res) => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = []; let bad = 0;
   const check = (ok, msg) => { if (!ok) bad++; console.log((ok ? 'ok   ' : 'FAIL ') + msg); };
   const SHOTS = process.env.PG_SHOTS; const shot = async (pg, n) => { if (SHOTS) await pg.screenshot({ path: path.join(SHOTS, n + '.png') }); };
-  const ctxOf = () => b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  // the guest welcome (step 63c) has its own test: here it is already answered
+  const ctxOf = async () => { const c = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }); await c.addInitScript(g => localStorage.setItem('pg_welcome_' + g, '{"side":"bride","attended":"yes"}'), gid); return c; };
   async function open(ctx, url, store) {
     const pg = await ctx.newPage(); pg.on('pageerror', e => errors.push(url + ': ' + e.message)); await pg.route('**fonts.g**', r => r.abort());
     if (store) await pg.addInitScript(s => { Object.keys(s).forEach(k => localStorage.setItem(k, s[k])); }, store);
