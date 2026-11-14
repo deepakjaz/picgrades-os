@@ -66,5 +66,7 @@ module.exports = { DRIVE, advance: h => { global.__clock += h * 3600000; }, call
     // step 62b: new weddings start as drafts; older tests expect them live, so the test helper publishes them
     // (tests about drafts set global.__autoPublish = false)
     if (action === 'setGallery' && r && r.galleryId && r.status === 'Draft' && global.__autoPublish !== false) one('publishGallery', { g: r.galleryId, token: p.token, publish: true });
+    // step 63b: new weddings show guests photos only after Find me; older tests expect an open gallery (tests about the gate set global.__autoOpen = false)
+    if (action === 'setGallery' && r && r.galleryId && r.status === 'Draft' && global.__autoOpen !== false) one('guestPhotos', { g: r.galleryId, token: p.token, mode: 'open' });
     return r;
   }, DB, mail };

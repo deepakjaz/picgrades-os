@@ -50,7 +50,7 @@ pgOpenReel = function (photos, choose) {
 };
 
 // ---------- saved "Find me" collections (on this phone + a link for any phone) ----------
-function pgPhotoById() { const m = {}; (GALLERY.events || []).forEach(e => e.photos.forEach(p => { m[p.id] = p; })); (GALLERY.root || []).forEach(p => { m[p.id] = m[p.id] || p; }); return m; }
+function pgPhotoById() { const m = {}; (GALLERY.events || []).forEach(e => e.photos.forEach(p => { m[p.id] = p; })); (GALLERY.root || []).concat(GALLERY.pool || []).forEach(p => { m[p.id] = m[p.id] || p; }); return m; }
 function pgLoadSavedSets() {
   const map = pgPhotoById(), sets = pgStore('sets') || [];
   const keep = (GALLERY.personal || []).filter(x => !x.saved);
