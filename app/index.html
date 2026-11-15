@@ -56,6 +56,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
 @media (max-width:640px){.duebox{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}header .wrap{padding-top:10px;padding-bottom:10px}.big{font-size:56px!important}h1{font-size:38px!important}}
 /* step 65b: sign up and wedding galleries */
 a.btn{color:#141413}
+.readnow{display:flex;flex-direction:column;gap:6px;padding:14px 16px;margin:0 0 16px;border:1px solid var(--gold);border-radius:16px;background:rgba(212,175,55,.07)}
 .seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06)}
 .seg button{flex:1;min-height:44px;border:0;border-radius:10px;background:none;color:var(--soft);font:600 14px/1.2 inherit;cursor:pointer;padding:8px}
 .seg button[aria-selected="true"]{background:var(--text);color:#141413}
@@ -319,7 +320,7 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
   function renderWeddings() {
     var list = state.weddings || [];
     $('weddings').replaceChildren.apply($('weddings'), list.length ? list.map(function (w) {
-      var faces = w.features && w.features.findme === 'on' ? (w.facesStatus === 'Ready' ? 'Find me ready' : 'Find me: faces read within 24 hours') : 'Find me off';
+      var faces = w.features && w.features.findme === 'on' ? (w.facesStatus === 'Ready' ? 'Find me ready ✓' : 'Find me: faces not read yet') : 'Find me off';
       var trial = w.plan === 'trial' ? (w.daysLeft > 0 ? w.daysLeft + ' days left in your free trial' : 'Free trial ended') : '';
       var copy = el('button', { type: 'button', class: 'mini', text: 'Copy guest link' });
       copy.addEventListener('click', function () { (navigator.clipboard ? navigator.clipboard.writeText(w.guestLink) : Promise.reject()).then(function () { toast('Guest link copied'); }, function () { window.prompt('Guest link', w.guestLink); }); });
@@ -327,7 +328,8 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
         el('div', { style: 'flex:2 1 260px;min-width:0' }, [el('p', { style: 'margin:0;font-weight:600;font-size:17px', text: w.title }),
           el('p', { class: 'muted', style: 'margin:4px 0 0;font-size:13px', text: [w.eventDate ? dmy(w.eventDate) : '', num(w.photoCount) + ' photos', faces, trial].filter(Boolean).join(' · ') })]),
         el('span', { class: 'pill ' + (w.status === 'Draft' ? 'p-hold' : 'p-done'), text: w.status === 'Draft' ? 'DRAFT' : 'LIVE' }),
-        el('div', { class: 'wbtns' }, [el('a', { class: 'mini', href: w.coupleLink, target: '_blank', rel: 'noopener', text: 'Open my wedding app' }), w.status === 'Draft' ? null : copy,
+        el('div', { class: 'wbtns' }, [w.features && w.features.findme === 'on' && w.facesStatus !== 'Ready' ? el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), style: 'border-color:var(--gold)', text: 'Read faces now' }) : null,
+          el('a', { class: 'mini', href: w.coupleLink, target: '_blank', rel: 'noopener', text: 'Open my wedding app' }), w.status === 'Draft' ? null : copy,
           el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), target: '_blank', rel: 'noopener', text: 'Links & settings' })].filter(Boolean))]);
     }) : [el('p', { class: 'muted', style: 'margin:0', text: 'No wedding galleries yet. Create one from your Google Drive folder — free for 30 days.' })]);
   }
@@ -346,14 +348,17 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     var btn = $('wBtn'); btn.disabled = true; btn.textContent = 'Reading your folder…';
     api('createWedding', { title: $('wTitle').value.trim(), eventDate: $('wDate').value, folderUrl: $('wFolder').value.trim(), functions: fn }).then(function (r) {
       show('wedForm', false); show('wDone', true);
-      $('wDone').replaceChildren(
+      $('wDone').replaceChildren.apply($('wDone'), [
         el('p', { class: 'eyebrow gold', style: 'margin:0', text: 'Your wedding app is ready as a Draft' }),
         el('h2', { style: 'margin:6px 0 10px;font-size:28px', text: r.title }),
         el('p', { style: 'margin:0 0 10px', text: 'We found ' + num(r.photoCount) + ' photos in ' + r.events.length + ' collection' + (r.events.length === 1 ? '' : 's') + ':' }),
         el('ul', { style: 'margin:0 0 14px;padding-left:20px' }, r.events.map(function (ev) { return el('li', { text: ev.name + ' — ' + num(ev.count) + ' photos' }); })),
-        el('p', { class: 'muted', style: 'margin:0 0 16px;font-size:14px', text: (r.features.findme === 'on' ? 'Find me: we read the faces within 24 hours. ' : '') + 'Guests can’t see anything until you publish. Open your wedding app, pick your highlights, then tap Publish in the Control Panel.' }),
-        el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap' }, [el('a', { class: 'btn', href: r.coupleLink, target: '_blank', rel: 'noopener', style: 'text-decoration:none;border-radius:999px', text: 'Open my wedding app' }),
-          el('button', { class: 'ghost', type: 'button', style: 'border-radius:12px', text: 'Back to my galleries' })]));
+        el('p', { class: 'muted', style: 'margin:0 0 16px;font-size:14px', text: 'Guests can’t see anything until you publish. Open your wedding app, pick your highlights, then tap Publish in the Control Panel.' + (r.features.findme === 'on' ? ' If you don’t read the faces yourself, we read them within 24 hours.' : '') }),
+        r.features.findme === 'on' ? el('div', { class: 'readnow' }, [el('b', { text: 'Read the faces now, on this phone or computer' }),
+          el('span', { class: 'muted', text: 'About ' + Math.max(2, Math.round(r.photoCount * 2 * 1.1 / 60)) + ' minutes. Then Find me is ready straight away — no waiting for us.' }),
+          el('a', { class: 'btn', href: '/app/faces.html?g=' + encodeURIComponent(r.galleryId), style: 'text-decoration:none;border-radius:999px;align-self:flex-start', text: 'Read faces now' })]) : null,
+        el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap' }, [el('a', { class: r.features.findme === 'on' ? 'mini' : 'btn', href: r.coupleLink, target: '_blank', rel: 'noopener', style: 'text-decoration:none;border-radius:999px;display:inline-flex;align-items:center', text: 'Open my wedding app' }),
+          el('button', { class: 'ghost', type: 'button', style: 'border-radius:12px', text: 'Back to my galleries' })])].filter(Boolean));
       $('wDone').querySelector('button.ghost').addEventListener('click', function () { refresh().then(function () { go('dash'); }); });
       ['wTitle', 'wDate', 'wFolder'].forEach(function (k) { $(k).value = ''; });
     }).catch(function (x) { err('wErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Create my wedding app'; });

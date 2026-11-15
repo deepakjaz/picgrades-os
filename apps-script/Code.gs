@@ -169,7 +169,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step65b-signup',
+    version: 'step65c-faces-self',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1347,12 +1347,13 @@ function facesStatus_(p, user) {
   var photos = [], seen = {};
   (m.root || []).forEach(function (ph) { if (!seen[ph.id]) { seen[ph.id] = 1; photos.push({ id: ph.id, set: 'Root Moment' }); } });
   (m.events || []).forEach(function (e) { e.photos.forEach(function (ph) { if (!seen[ph.id]) { seen[ph.id] = 1; photos.push({ id: ph.id, set: e.name }); } }); });
-  var done = parseDate_(o.completedAt);
-  var due = done.getTime() > 0 ? fmt_(new Date(done.getTime() + FACE_DUE_HOURS * 3600000)) : '';
+  var self = /^W/.test(String(g.orderId)), done = parseDate_(self ? g.createdAt : o.completedAt);   // step 65c: sign-up weddings: due 24 h after they were made
+  var due = done.getTime() > 0 ? fmt_(new Date(done.getTime() + (self ? 24 : FACE_DUE_HOURS) * 3600000)) : '';
   return {
     gallery: { galleryId: g.galleryId, title: g.title, studio: g.companyName, catalogName: o.catalogName,
       status: g.facesStatus || '', faceCount: Number(g.faceCount || 0), sentAt: g.sentAt || '', sentTo: g.sentTo || '',
-      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g), features: featuresOf_(g), demo: isDemo_(g), published: g.status !== 'Draft' },
+      dueAt: due, clientEmail: o.email || '', coupleKey: coupleKey_(g), features: featuresOf_(g), demo: isDemo_(g), published: g.status !== 'Draft',
+      selfMade: self, staff: isStaff_(user), plan: g.plan || '' },   // step 65c: the couple / photographer who made it reads faces on their own phone (simple page)
     photos: photos, faces: f
   };
 }

@@ -320,13 +320,15 @@
       const cover = ((GALLERY.story || {}).cover || []).length > 0;
       const items = [[photos > 0, photos ? photos + ' photos are in' : 'No photos yet'], [ev.length > 0, ev.length ? ev.length + (ev.length === 1 ? ' event found' : ' events found') : 'No event folders found'],
         [cover, cover ? 'Cover photos chosen' : 'Cover photos not chosen (optional · Story tab)', true]];
-      if (fm) items.push([!!GALLERY.faceSearch, GALLERY.faceSearch ? 'Faces are read: Find me is ready' : 'Faces not read yet: Find me will not work']);
+      if (fm) items.push([!!GALLERY.faceSearch, GALLERY.faceSearch ? 'Faces are read: Find me is ready' : 'Faces not read yet: Find me will not work', false,
+        !GALLERY.faceSearch && pgSavedToken() ? '/app/faces.html?g=' + encodeURIComponent(GALLERY_ID) : '']);   // step 65c: read them now, on this phone
       const ready = photos > 0;
       wrap.className = 'pgpub ' + (live ? 'live' : 'draft');
       wrap.innerHTML = '<div class="pgpub-row"><span class="pgpub-dot"></span><div class="pgpub-txt"><b>' + (live ? 'Live' : 'Draft') + '</b><small>' +
         (live ? 'Guests can open the guest link.' : 'Guests can’t see this yet. Check everything, then publish.') + '</small></div>' +
         (ROLE === 'demo' ? '' : '<button type="button" class="pgpub-btn ' + (live ? 'off' : 'on') + '"' + (!live && !ready ? ' disabled' : '') + '>' + (live ? 'Unpublish' : 'Publish') + '</button>') + '</div>' +
-        (live ? '' : '<ul class="pgpub-list">' + items.map(([ok, t, opt]) => '<li class="' + (ok ? 'ok' : opt ? 'opt' : 'no') + '">' + esc(t) + '</li>').join('') + '</ul>');
+        (live ? '' : '<ul class="pgpub-list">' + items.map(([ok, t, opt, href]) => '<li class="' + (ok ? 'ok' : opt ? 'opt' : 'no') + '">' + esc(t) +
+          (href ? ' <a class="pgpub-go" href="' + esc(href) + '" target="_blank" rel="noopener">Read faces now</a>' : '') + '</li>').join('') + '</ul>');
       const b = wrap.querySelector('.pgpub-btn'); if (!b) return;
       b.addEventListener('click', () => {
         if (live && !confirmBox()) return;
