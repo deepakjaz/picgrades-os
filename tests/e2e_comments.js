@@ -57,7 +57,7 @@ const srv = http.createServer((req, res) => {
   await c.close();
   // the couple picks "Typing" in the Control Panel
   [c, p] = await open(390, 844, '?couple=' + ck); await p.waitForFunction(() => PGControl.role() === 'couple', null, { timeout: 10000 });
-  await p.click('.tkg-nav-item[data-nav=studio]'); await p.waitForSelector('.pgcp-style[data-pagekey=comments]');
+  await p.click('.tkg-nav-item[data-nav=studio]'); await p.waitForSelector('.pgcp-sheet'); await p.evaluate(() => PGControl.go('look')); await p.waitForSelector('.pgcp-style[data-pagekey=comments]');
   console.log('panel choices:', (await p.locator('.pgcp-style[data-pagekey=comments] b').allTextContents()).join(' · '));
   await p.locator('.pgcp-style[data-pagekey=comments][data-style=typing]').scrollIntoViewIfNeeded(); await p.waitForTimeout(300);
   await p.screenshot({ path: '/tmp/s47_panel.png' });

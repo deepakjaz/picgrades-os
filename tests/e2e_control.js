@@ -32,8 +32,8 @@ const srv = http.createServer((req, res) => {
   await pg.goto(URL + '?couple=' + ck); await boot(pg); await pg.waitForFunction(() => PGControl.role() !== 'guest', null, { timeout: 10000 });
   console.log('couple: role', await pg.evaluate(() => PGControl.role()), '| gear shown:', await gearShown(pg), '| bar', JSON.stringify(await navBox(pg)));
   await pg.screenshot({ path: '/tmp/s34_couple_bar.png', clip: { x: 0, y: 744, width: 390, height: 100 } });
-  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet .pgcp-tcard'); await pg.waitForTimeout(500);
-  console.log('panel: badge', await pg.textContent('.pgcp-badge'), '| theme cards', await pg.locator('.pgcp-tcard').count(), '| layouts', await pg.locator('.pgcp-layout').count(), '| studio screen not opened:', await pg.evaluate(() => !document.getElementById('view-studio').classList.contains('active')));
+  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet .pgcp-badge'); const badge0 = await pg.textContent('.pgcp-badge'), who0 = await pg.textContent('.pgcp-who'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-sheet .pgcp-tcard'); await pg.waitForTimeout(500);
+  console.log('panel: badge', badge0, '| theme cards', await pg.locator('.pgcp-tcard').count(), '| layouts', await pg.locator('.pgcp-layout').count(), '| studio screen not opened:', await pg.evaluate(() => !document.getElementById('view-studio').classList.contains('active')));
   await pg.screenshot({ path: '/tmp/s34_panel_look.png' });
   // tap a theme → preview window; nothing changes for guests yet
   const pvReady = async () => { await pg.waitForSelector('.pgcp-pv'); await pg.waitForSelector('.pgcp-pv-wait[hidden]', { state: 'attached', timeout: 20000 }); await pg.waitForTimeout(900); };
@@ -84,10 +84,10 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/s38_pv_classic.png' });
   await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
   console.log('Apply → saved', JSON.stringify(call('getGallery', { g: pub.galleryId }).gallery.pages), '| this phone', await pg.evaluate(() => pgViewerClassic.style()));
-  await pg.click('.pgcp-tabs [data-tab=functions]'); await pg.waitForTimeout(300);
+  await pg.evaluate(() => PGControl.go('functions')); await pg.waitForTimeout(300);
   console.log('functions tab: switches', await pg.locator('.pgcp-sheet .pgf-sw').count(), '| no Plan switches for the couple:', !(await pg.locator('.pgcp-plan').count()));
   await pg.screenshot({ path: '/tmp/s34_panel_functions.png' });
-  await pg.click('.pgcp-sheet .ios-wide'); await pg.waitForTimeout(400);
+  await pg.click('.pgcp-sheet .pgcp-x'); await pg.waitForTimeout(400);
   console.log('old Hub "Functions" button gone:', !(await pg.locator('#pgfOpen').count()), '| no test menus:', !(await pg.locator('.pg-thbtn').count()));
   // ---- a guest on another phone ----
   const ctx2 = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true }); const gp = await ctx2.newPage(); gp.on('pageerror', e => errors.push('guest: ' + e.message)); await img(gp);
@@ -131,14 +131,14 @@ const srv = http.createServer((req, res) => {
   await st.addInitScript(t => { try { localStorage.setItem('pg_token', t); } catch (e) {} }, admin);
   await st.goto(URL.replace('/g/', '/pg/')); await boot(st); await st.waitForFunction(() => PGControl.role() !== 'guest', null, { timeout: 10000 });
   console.log('staff: role', await st.evaluate(() => PGControl.role()), '| gear shown:', await gearShown(st));
-  await st.click('.tkg-nav-item[data-nav=studio]'); await st.waitForSelector('.pgcp-sheet'); await st.click('.pgcp-tabs [data-tab=functions]'); await st.waitForTimeout(300);
+  await st.click('.tkg-nav-item[data-nav=studio]'); await st.waitForSelector('.pgcp-sheet'); await st.evaluate(() => PGControl.go('functions')); await st.waitForTimeout(300);
   console.log('PicGrades sees Plan switches:', await st.locator('.pgcp-plan').count());
   await st.click('input[data-plan=post]'); await st.waitForTimeout(700);
   console.log('PicGrades locked Post Edits:', call('getGallery', { g: pub.galleryId }).gallery.features.post, '| row shows locked:', await st.locator('.pgf-row.locked').count());
   await st.screenshot({ path: '/tmp/s34_panel_picgrades.png' });
   await st.click('input[data-plan=post]'); await st.waitForTimeout(700);
   console.log('… unlocked again:', call('getGallery', { g: pub.galleryId }).gallery.features.post);
-  await st.click('.pgcp-tabs [data-tab=look]'); await st.waitForTimeout(300); await st.click('.pgcp-tcard[data-theme="midnight-velvet"]');
+  await st.evaluate(() => PGControl.go('look')); await st.waitForTimeout(300); await st.click('.pgcp-tcard[data-theme="midnight-velvet"]');
   await st.waitForSelector('.pgcp-pv-wait[hidden]', { state: 'attached', timeout: 20000 }); await st.click('.pgcp-pv-apply'); await st.waitForTimeout(900);
   console.log('PicGrades changed the theme (last change wins):', call('getGallery', { g: pub.galleryId }).gallery.theme);
   await ctx3.close();

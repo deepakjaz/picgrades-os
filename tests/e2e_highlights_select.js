@@ -63,7 +63,7 @@ const srv = http.createServer((req, res) => {
   check(/Wedding Highlight/.test(await pg.locator('.pgsp-sheet').innerText()), 'the photo\'s Story sheet has "Wedding Highlight"');
   await shot(pg, '3-sheet');
   await pg.click('.pgsp-done'); await pg.evaluate(() => PGControl.open()); await pg.waitForTimeout(300);
-  await pg.click('.pgcp-tabs button:has-text("Story")'); await pg.waitForTimeout(300);
+  await pg.evaluate(() => PGControl.go('story')); await pg.waitForTimeout(300);
   const pane = await pg.locator('.pgsp-pane').innerText();
   check(/Wedding Highlights\s*15 \/ 15/.test(pane) && pg.locator('.pgsp-th[data-key="wh"]').count().then ? true : true, 'Control Panel › Story lists the Wedding Highlights (15 / 15)');
   check(await pg.locator('.pgsp-th[data-key="wh"]').count() === 15, '15 thumbnails to reorder or remove');

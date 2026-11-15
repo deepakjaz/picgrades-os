@@ -74,7 +74,7 @@ const srv = http.createServer((req, res) => {
   // 3. the couple approves in Control Panel › Requests
   const cctx = await ctxOf(); pg = await open(cctx, '/c/' + gid + '/' + ck);
   await pg.evaluate(() => PGControl.open()); await pg.waitForTimeout(300);
-  await pg.click('.pgcp-tabs [data-tab="requests"]'); await pg.waitForTimeout(800);
+  await pg.evaluate(() => PGControl.go('requests')); await pg.waitForTimeout(800);
   const reqTxt = await pg.locator('.pgcp-sheet').innerText();
   check(/More photos · Haldi/.test(reqTxt) && /wants every photo of this event/.test(reqTxt), 'the couple sees "More photos · wants every Haldi photo"');
   await shot(pg, '4-requests');
@@ -89,8 +89,8 @@ const srv = http.createServer((req, res) => {
   await pg2.close();
 
   // 5. Control Panel › Functions: the choice
-  await pg.click('.pgcp-tabs [data-tab="functions"]'); await pg.waitForTimeout(300);
-  check(await pg.locator('.pggt-seg [data-m="findme"][aria-checked="true"]').count() === 1, 'Functions shows "Only after Find me" chosen');
+  await pg.evaluate(() => PGControl.go('guests')); await pg.waitForTimeout(300);
+  check(await pg.locator('.pggt-seg [data-m="findme"][aria-checked="true"]').count() === 1, 'Control Panel › Guest photos shows "Only after Find me" chosen');
   await pg.locator('.pggt-choice').scrollIntoViewIfNeeded(); await shot(pg, '5-choice');
   await pg.click('.pggt-seg [data-m="open"]'); await pg.waitForTimeout(800);
   check(call('getGallery', { g: gid }).gallery.guestPhotos === 'open', 'the couple chose "Open to everyone"');

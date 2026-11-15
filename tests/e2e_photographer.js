@@ -27,7 +27,7 @@ const srv = http.createServer((req, res) => {
     if (tok) await p.addInitScript(t => { try { localStorage.setItem('pg_token', t); } catch (e) {} }, tok); return [c, p]; };
   // PicGrades sets WFA as the photographer
   let [cs, st] = await phone(admin); await st.goto(URL.replace('/g/', '/pg/'));   // step 61: the PicGrades link await boot(st); await st.waitForFunction(() => PGControl.role() === 'picgrades', null, { timeout: 10000 });
-  await st.click('.tkg-nav-item[data-nav=studio]'); await st.waitForSelector('.pgcp-sheet'); await st.click('.pgcp-tabs [data-tab=photographer]'); await st.waitForTimeout(300);
+  await st.click('.tkg-nav-item[data-nav=studio]'); await st.waitForSelector('.pgcp-sheet'); await st.evaluate(() => PGControl.go('photographer')); await st.waitForTimeout(300);
   console.log('Photographer tab: fields', await st.locator('.pgcp-form input, .pgcp-form textarea').count(), '| credit switch (PicGrades):', await st.locator('.pgcp-form input[name=credit]').count());
   const fill = { name: 'WFA', instagram: 'https://www.instagram.com/wfa.with.love?psln=dzZmcWRwNGxxY245', website: 'wfa.example.com', phone: '+91 98765-43210', city: 'Surat, Gujarat', about: 'Wedding films and photographs, made with love.' };
   for (const [k, v] of Object.entries(fill)) await st.fill('.pgcp-form [name=' + k + ']', v);

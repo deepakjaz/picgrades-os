@@ -36,7 +36,7 @@ const srv = http.createServer((req, res) => {
   await pg.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
   await pg.goto('http://localhost:8798/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(800);
   const shown = sel => pg.evaluate(s => { const e = document.querySelector(s); return !!e && getComputedStyle(e).display !== 'none'; }, sel);
-  const openFunctions = async () => { await pg.waitForFunction(() => PGControl.role() !== 'guest', null, { timeout: 10000 }); await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.click('.pgcp-tabs [data-tab=functions]'); };
+  const openFunctions = async () => { await pg.waitForFunction(() => PGControl.role() !== 'guest', null, { timeout: 10000 }); await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('functions')); };
   console.log('Control Panel gear (couple):', await shown('.tkg-nav-item[data-nav=studio]'));
   await openFunctions();
   console.log('switches:', (await pg.locator('.pgf-row b').allTextContents()).join(', '), '| all on:', await pg.$$eval('.pgf-sw', l => l.every(x => x.checked)));
@@ -47,7 +47,7 @@ const srv = http.createServer((req, res) => {
   const saved = call('getGallery', { g: pub.galleryId }).gallery.features;
   console.log('saved in the backend:', JSON.stringify(saved));
   await pg.screenshot({ path: '/tmp/s33_sheet_off.png' });
-  await pg.click('.pgcp-sheet .ios-wide');
+  await pg.click('.pgcp-sheet .pgcp-x');
   console.log('Hub: Reel tile hidden:', !(await shown('#pghReel')), '| Add a moment hidden:', !(await shown('#pgcUpload')), '| Post still there:', await shown('#pgcPost'));
   console.log('Reel opener refuses:', await pg.evaluate(() => { pgOpenReel([{ id: 'x' }]); return !document.querySelector('.rl-wrap'); }));
   // viewer: heart + download hidden, double-tap heart does nothing
@@ -69,7 +69,7 @@ const srv = http.createServer((req, res) => {
   console.log('guest: Reel hidden:', await g2.evaluate(() => getComputedStyle(document.getElementById('pghReel')).display === 'none'), '| no gear for guests:', !(await g2.evaluate(() => getComputedStyle(document.querySelector('.tkg-nav-item[data-nav=studio]')).display !== 'none')));
   await ctx2.close();
   // switch back on
-  await openFunctions(); for (const k of ['reel', 'hearts', 'download', 'upload']) await flip(k); await pg.click('.pgcp-sheet .ios-wide');
+  await openFunctions(); for (const k of ['reel', 'hearts', 'download', 'upload']) await flip(k); await pg.click('.pgcp-sheet .pgcp-x');
   console.log('all back on:', Object.values(call('getGallery', { g: pub.galleryId }).gallery.features).every(v => v === 'on'), '| Reel tile back:', await shown('#pghReel'));
   // photographer's page (faces.html): the same switches
   const ctx3 = await b.newContext({ viewport: { width: 900, height: 1100 } }); const ph = await ctx3.newPage(); const perr = []; ph.on('pageerror', e => perr.push(e.message));
