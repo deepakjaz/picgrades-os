@@ -54,6 +54,26 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
 .muted{color:var(--mute)}
 .duebox{border-left:1px solid var(--line);padding-left:24px}
 @media (max-width:640px){.duebox{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}header .wrap{padding-top:10px;padding-bottom:10px}.big{font-size:56px!important}h1{font-size:38px!important}}
+/* step 65b: sign up and wedding galleries */
+a.btn{color:#141413}
+.seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06)}
+.seg button{flex:1;min-height:44px;border:0;border-radius:10px;background:none;color:var(--soft);font:600 14px/1.2 inherit;cursor:pointer;padding:8px}
+.seg button[aria-selected="true"]{background:var(--text);color:#141413}
+fieldset{border:0;margin:0;padding:0}
+legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
+.who{display:flex;gap:10px;flex-wrap:wrap}
+.who label{flex:1 1 140px;display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #3A352C;border-radius:14px;cursor:pointer;margin:0}
+.who label:has(input:checked){border-color:var(--gold);background:rgba(212,175,55,.08)}
+.who input{margin-top:3px;width:auto;min-height:0}
+.who span{display:flex;flex-direction:column;gap:2px}.who small{color:var(--soft);font-size:13px}
+.funcs #wFuncs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.funcs label{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #3A352C;border-radius:12px;cursor:pointer;margin:0;font-weight:400}
+.funcs input{width:auto;min-height:0;margin-top:3px}
+.funcs b{display:block;font-size:14px}.funcs small{color:var(--soft);font-size:12.5px}
+.help{margin-top:8px;font-size:14px;color:var(--soft)}.help summary{cursor:pointer;font-weight:600;color:var(--text)}.help ol{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.wcard{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.wcard .wbtns{display:flex;gap:8px;flex-wrap:wrap}
+.wcard a.mini,.wcard button.mini{text-decoration:none}
 </style>
 </head>
 <body>
@@ -69,17 +89,33 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   <section id="v-login" class="hidden">
     <div class="row" style="align-items:stretch">
       <div style="flex:1 1 380px;padding:20px 0">
-        <p class="eyebrow gold">Client login</p>
-        <h1 style="margin:0 0 14px;font-size:52px;line-height:1.05">Your editing balance, orders and deliveries in one place.</h1>
-        <p class="muted" style="max-width:460px;margin:0">Log in with your studio email. We send a 6-digit code — no password needed.</p>
+        <p class="eyebrow gold" id="heroEyebrow">Client login</p>
+        <h1 id="heroTitle" style="margin:0 0 14px;font-size:52px;line-height:1.05">Your editing balance, orders and deliveries in one place.</h1>
+        <p class="muted" id="heroText" style="max-width:460px;margin:0">Log in with your studio email. We send a 6-digit code — no password needed.</p>
       </div>
-      <form id="loginForm" class="card" style="flex:1 1 340px;display:flex;flex-direction:column;gap:14px" novalidate>
+      <div class="card" style="flex:1 1 340px;display:flex;flex-direction:column;gap:16px">
+      <div class="seg" role="tablist" aria-label="Log in or sign up"><button type="button" role="tab" id="tabLogin" aria-selected="true">Log in</button><button type="button" role="tab" id="tabSignup" aria-selected="false">Create your wedding gallery</button></div>
+      <form id="signupForm" class="hidden" style="display:flex;flex-direction:column;gap:14px" novalidate>
+        <p class="muted" style="margin:0;font-size:14px">Free for 30 days — your photos stay in your own Google Drive.</p>
+        <fieldset class="who"><legend>I am</legend>
+          <label><input type="radio" name="kind" value="couple" checked><span><b>The couple</b><small>Our own wedding</small></span></label>
+          <label><input type="radio" name="kind" value="photographer"><span><b>A photographer</b><small>For my clients' weddings</small></span></label>
+        </fieldset>
+        <div><label for="suName">Your name</label><input id="suName" autocomplete="name" placeholder="Riya Shah" required></div>
+        <div id="suStudioBox" class="hidden"><label for="suStudio">Studio or business name</label><input id="suStudio" autocomplete="organization" placeholder="Lens & Light Studio"></div>
+        <div><label for="suEmail">Email</label><input id="suEmail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+        <div><label for="suPhone">Mobile (optional)</label><input id="suPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="98765 43210"></div>
+        <p id="suErr" class="err hidden" role="alert"></p>
+        <button id="suBtn" class="btn" type="submit">Create account &amp; send code</button>
+      </form>
+      <form id="loginForm" style="display:flex;flex-direction:column;gap:14px" novalidate>
         <div id="step1"><label for="email">Studio email</label><input id="email" type="email" autocomplete="email" placeholder="you@studio.com" required></div>
         <div id="step2" class="hidden"><p id="sentMsg" class="muted" style="margin:0 0 10px;font-size:14px"></p><label for="code">6-digit code</label><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="letter-spacing:6px;font-size:20px"></div>
         <p id="loginErr" class="err hidden" role="alert"></p>
         <button id="loginBtn" class="btn" type="submit">Send login code</button>
         <button id="backBtn" class="ghost hidden" type="button" style="border-radius:12px">Use another email</button>
       </form>
+      </div>
     </div>
   </section>
 
@@ -109,6 +145,33 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
       <h2 style="font-size:18px;margin:0 0 12px">Your orders</h2>
       <div id="orders" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
+    <div id="wedBox" style="margin-top:26px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
+        <h2 style="font-size:18px;margin:0">Your wedding galleries</h2>
+        <button class="btn" type="button" data-go="wedding" style="border-radius:999px">+ Create a wedding gallery</button>
+      </div>
+      <div id="weddings" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </section>
+
+  <!-- NEW WEDDING GALLERY (step 65b) -->
+  <section id="v-wedding" class="hidden">
+    <p class="eyebrow gold">Free for 30 days · up to 500 photos</p>
+    <h1 style="margin:0 0 10px;font-size:46px;line-height:1.05">Create your wedding gallery</h1>
+    <p class="muted" style="margin:0 0 22px;max-width:620px">Your photos stay in your own Google Drive. We read the folder, make one collection for each event folder inside it, and build your wedding app as a Draft — you check it, then publish it to your guests.</p>
+    <form id="wedForm" class="card" style="display:flex;flex-direction:column;gap:16px;max-width:720px" novalidate>
+      <div><label for="wTitle">Wedding name</label><input id="wTitle" placeholder="Riya &amp; Arjun" maxlength="80" required></div>
+      <div><label for="wDate">Wedding date</label><input id="wDate" type="date"></div>
+      <div><label for="wFolder">Google Drive folder link</label><input id="wFolder" inputmode="url" placeholder="https://drive.google.com/drive/folders/…" required>
+        <details class="help"><summary>How to share the folder</summary><ol>
+          <li>In Google Drive, open your wedding folder. Inside it, keep one folder per event — Haldi, Sangeet, Wedding… Each one becomes a collection.</li>
+          <li>Tap <b>Share</b> → General access → <b>Anyone with the link</b> → Viewer.</li>
+          <li>Tap <b>Copy link</b> and paste it here.</li></ol></details></div>
+      <fieldset class="funcs"><legend>Functions</legend><p class="muted" style="margin:0 0 8px;font-size:13px">Tick what you want in your wedding app. You can change these later in the Control Panel.</p><div id="wFuncs"></div></fieldset>
+      <p id="wErr" class="err hidden" role="alert"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button id="wBtn" class="btn" type="submit">Create my wedding app</button><button class="ghost" type="button" data-go="dash" style="border-radius:12px">Cancel</button></div>
+    </form>
+    <div id="wDone" class="card hidden" style="max-width:720px" role="status"></div>
   </section>
 
   <!-- NEW ORDER -->
@@ -191,10 +254,11 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   // ---- views ----
   function go(view) {
     state.view = view;
-    ['login', 'dash', 'order'].forEach(function (v) { show('v-' + v, v === view); });
+    ['login', 'dash', 'order', 'wedding'].forEach(function (v) { show('v-' + v, v === view); });
     show('dock', view !== 'login'); show('logoutBtn', view !== 'login');
     document.querySelectorAll('nav.dock button').forEach(function (b) { b.setAttribute('aria-current', b.dataset.go === view ? 'page' : 'false'); });
     if (view === 'order') renderOrder();
+    if (view === 'wedding') renderWedding();
     window.scrollTo(0, 0);
   }
   document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { toast(''); if (state.editing) stopEdit(); go(b.dataset.go); }); });
@@ -211,7 +275,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
         loginStep = 2; $('sentMsg').textContent = res.message; show('step2', true); show('backBtn', true);
         $('email').readOnly = true; btn.textContent = 'Log in'; $('code').focus();
       } else {
-        state.token = res.token; save('pg_token', res.token); resetLogin(); refresh().then(function () { go('dash'); });
+        state.token = res.token; save('pg_token', res.token); resetLogin(); refresh().then(function () { var to = state.afterLogin || 'dash'; state.afterLogin = ''; go(to === 'wedding' && state.weddings && state.weddings.length ? 'dash' : to); });
       }
     }).catch(function (x) { err('loginErr', x.message); }).then(function () { btn.disabled = false; });
   });
@@ -220,8 +284,80 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   $('logoutBtn').addEventListener('click', function () { api('logout').catch(function () {}); logoutLocal(); });
   function logoutLocal() { state.token = null; state.data = null; save('pg_token', null); $('who').textContent = ''; go('login'); }
 
+  // ---- sign up yourself (step 65b): a couple or a photographer makes an account, then logs in with the same email code ----
+  function tab(signup) {
+    $('tabLogin').setAttribute('aria-selected', String(!signup)); $('tabSignup').setAttribute('aria-selected', String(signup));
+    show('signupForm', signup); show('loginForm', !signup); err('suErr', ''); err('loginErr', '');
+    $('heroEyebrow').textContent = signup ? 'Wedding gallery · free for 30 days' : 'Client login';
+    $('heroTitle').textContent = signup ? 'Your wedding app, made from your own Google Drive.' : 'Your editing balance, orders and deliveries in one place.';
+    $('heroText').textContent = signup ? 'Your guests find their own photos with a selfie. Your photos never leave your Drive. No password — we send a 6-digit code.' : 'Log in with your studio email. We send a 6-digit code — no password needed.';
+    (signup ? $('suName') : $('email')).focus();
+  }
+  $('tabLogin').addEventListener('click', function () { tab(false); });
+  $('tabSignup').addEventListener('click', function () { tab(true); });
+  document.querySelectorAll('#signupForm input[name=kind]').forEach(function (r) { r.addEventListener('change', function () { show('suStudioBox', r.value === 'photographer' && r.checked); }); });
+  $('signupForm').addEventListener('submit', function (e) {
+    e.preventDefault(); err('suErr', '');
+    var kind = document.querySelector('#signupForm input[name=kind]:checked').value, btn = $('suBtn'); btn.disabled = true;
+    var email = $('suEmail').value.trim();
+    api('signUp', { kind: kind, name: $('suName').value.trim(), studio: $('suStudio').value.trim(), email: email, phone: $('suPhone').value.trim() }).then(function (res) {
+      state.afterLogin = 'wedding';   // a new account goes straight to "Create your wedding gallery"
+      tab(false); $('email').value = email; loginStep = 2; $('sentMsg').textContent = res.message; show('step2', true); show('backBtn', true);
+      $('email').readOnly = true; $('loginBtn').textContent = 'Log in'; $('code').focus();
+    }).catch(function (x) { err('suErr', x.message); }).then(function () { btn.disabled = false; });
+  });
+  if (/[?&#]signup\b/.test(location.search + location.hash)) tab(true);   // the wedding app's ☰ menu links here
+
   // ---- dashboard ----
-  function refresh() { return api('me').then(function (res) { state.data = res; renderDash(); }); }
+  function refresh() { return Promise.all([api('me'), api('myWeddings').catch(function () { return { weddings: [] }; })]).then(function (r) { state.data = r[0]; state.weddings = r[1].weddings || []; renderDash(); }); }
+
+  // ---- wedding galleries (step 65b) ----
+  var FUNCS = [['findme', 'Find me', 'Guests find their own photos with a selfie'], ['reel', 'Reel Edits', 'Guests make short reels from the photos'],
+    ['post', 'Post Edits', 'Instagram posts and albums'], ['upload', 'Guest moments', 'Guests share their own photos and videos'],
+    ['notes', 'Notes', 'Wishes and comments'], ['hearts', 'Hearts', 'Guests heart their favourite photos'],
+    ['download', 'Downloads', 'Guests download their photos'], ['share', 'Share', 'Share buttons'], ['install', 'Install as app', 'Add to the phone home screen']];
+  function renderWeddings() {
+    var list = state.weddings || [];
+    $('weddings').replaceChildren.apply($('weddings'), list.length ? list.map(function (w) {
+      var faces = w.features && w.features.findme === 'on' ? (w.facesStatus === 'Ready' ? 'Find me ready' : 'Find me: faces read within 24 hours') : 'Find me off';
+      var trial = w.plan === 'trial' ? (w.daysLeft > 0 ? w.daysLeft + ' days left in your free trial' : 'Free trial ended') : '';
+      var copy = el('button', { type: 'button', class: 'mini', text: 'Copy guest link' });
+      copy.addEventListener('click', function () { (navigator.clipboard ? navigator.clipboard.writeText(w.guestLink) : Promise.reject()).then(function () { toast('Guest link copied'); }, function () { window.prompt('Guest link', w.guestLink); }); });
+      return el('div', { class: 'card wcard' }, [
+        el('div', { style: 'flex:2 1 260px;min-width:0' }, [el('p', { style: 'margin:0;font-weight:600;font-size:17px', text: w.title }),
+          el('p', { class: 'muted', style: 'margin:4px 0 0;font-size:13px', text: [w.eventDate ? dmy(w.eventDate) : '', num(w.photoCount) + ' photos', faces, trial].filter(Boolean).join(' · ') })]),
+        el('span', { class: 'pill ' + (w.status === 'Draft' ? 'p-hold' : 'p-done'), text: w.status === 'Draft' ? 'DRAFT' : 'LIVE' }),
+        el('div', { class: 'wbtns' }, [el('a', { class: 'mini', href: w.coupleLink, target: '_blank', rel: 'noopener', text: 'Open my wedding app' }), w.status === 'Draft' ? null : copy,
+          el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), target: '_blank', rel: 'noopener', text: 'Links & settings' })].filter(Boolean))]);
+    }) : [el('p', { class: 'muted', style: 'margin:0', text: 'No wedding galleries yet. Create one from your Google Drive folder — free for 30 days.' })]);
+  }
+  function renderWedding() {
+    show('wedForm', true); show('wDone', false); err('wErr', '');
+    $('wFuncs').replaceChildren.apply($('wFuncs'), FUNCS.map(function (f) {
+      return el('label', {}, [el('input', { type: 'checkbox', 'data-k': f[0], checked: 'checked' }), el('span', {}, [el('b', { text: f[1] }), el('small', { text: f[2] })])]);
+    }));
+    setTimeout(function () { $('wTitle').focus(); }, 0);
+  }
+  $('wedForm').addEventListener('submit', function (e) {
+    e.preventDefault(); err('wErr', '');
+    if (!$('wTitle').value.trim()) return err('wErr', 'Please write the wedding name.');
+    if (!/\/folders\//.test($('wFolder').value)) return err('wErr', 'Paste the Google Drive folder link (it contains /folders/).');
+    var fn = {}; document.querySelectorAll('#wFuncs input').forEach(function (i) { fn[i.dataset.k] = i.checked ? 'on' : 'off'; });
+    var btn = $('wBtn'); btn.disabled = true; btn.textContent = 'Reading your folder…';
+    api('createWedding', { title: $('wTitle').value.trim(), eventDate: $('wDate').value, folderUrl: $('wFolder').value.trim(), functions: fn }).then(function (r) {
+      show('wedForm', false); show('wDone', true);
+      $('wDone').replaceChildren(
+        el('p', { class: 'eyebrow gold', style: 'margin:0', text: 'Your wedding app is ready as a Draft' }),
+        el('h2', { style: 'margin:6px 0 10px;font-size:28px', text: r.title }),
+        el('p', { style: 'margin:0 0 10px', text: 'We found ' + num(r.photoCount) + ' photos in ' + r.events.length + ' collection' + (r.events.length === 1 ? '' : 's') + ':' }),
+        el('ul', { style: 'margin:0 0 14px;padding-left:20px' }, r.events.map(function (ev) { return el('li', { text: ev.name + ' — ' + num(ev.count) + ' photos' }); })),
+        el('p', { class: 'muted', style: 'margin:0 0 16px;font-size:14px', text: (r.features.findme === 'on' ? 'Find me: we read the faces within 24 hours. ' : '') + 'Guests can’t see anything until you publish. Open your wedding app, pick your highlights, then tap Publish in the Control Panel.' }),
+        el('div', { style: 'display:flex;gap:10px;flex-wrap:wrap' }, [el('a', { class: 'btn', href: r.coupleLink, target: '_blank', rel: 'noopener', style: 'text-decoration:none;border-radius:999px', text: 'Open my wedding app' }),
+          el('button', { class: 'ghost', type: 'button', style: 'border-radius:12px', text: 'Back to my galleries' })]));
+      $('wDone').querySelector('button.ghost').addEventListener('click', function () { refresh().then(function () { go('dash'); }); });
+      ['wTitle', 'wDate', 'wFolder'].forEach(function (k) { $(k).value = ''; });
+    }).catch(function (x) { err('wErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Create my wedding app'; });
+  });
 
   function pillClass(st) { st = (st || '').toLowerCase(); return st.indexOf('completed') > -1 ? 'p-done' : st.indexOf('hold') > -1 ? 'p-hold' : st.indexOf('editing') > -1 ? 'p-edit' : 'p-rev'; }
 
@@ -229,9 +365,13 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     var d = state.data, c = d.company;
     $('who').textContent = d.user.name || d.user.email;
     show('adminLink', d.user.role === 'admin' || d.user.role === 'editor');
-    show('noCompany', !c); show('dashBody', !!c);
+    var selfMade = c && !c.packageType;   // step 65b: signed up themselves — no editing package, so no balance or editing orders
+    show('noCompany', !c); show('dashBody', !!c && !selfMade); show('wedBox', !!c);
+    document.querySelectorAll('[data-go="order"]').forEach(function (b) { b.classList.toggle('hidden', !!selfMade); });
     $('dashName').textContent = c ? c.companyName : (d.user.companyName || 'Welcome');
+    renderWeddings();
     if (!c) return;
+    if (selfMade) { $('dashEyebrow').textContent = 'Your wedding galleries · free trial'; return; }
     $('dashEyebrow').textContent = 'Dashboard · ' + c.packageType + ' package · ' + c.currency;
     var b = c.balance;
     $('bal').textContent = (b < 0 ? '−' : '') + num(Math.abs(b));

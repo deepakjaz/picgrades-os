@@ -37,6 +37,9 @@
     L.push([IC.mode, dark ? 'Light mode' : 'Dark mode', () => document.getElementById('pgModeBtn').click()]);
     const gear = document.querySelector('.tkg-nav-item[data-nav="studio"]');
     if (gear && getComputedStyle(gear).display !== 'none' && !document.body.classList.contains('pg-nav4')) { L.push(['h', 'Manage']); L.push([navIcon('studio'), 'Control Panel', () => gear.click()]); }
+    // step 65b: anyone can make their own wedding app (free for 30 days) — quietly, here in the menu only, never as a pop-up
+    L.push(['h', 'PicGrades']);
+    L.push([IC.heart, 'Create your own wedding gallery', () => { window.open(location.origin + '/app/?signup', '_blank', 'noopener'); }]);
     return L;
   }
   let wrap = null;
