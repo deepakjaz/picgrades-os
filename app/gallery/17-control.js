@@ -353,6 +353,7 @@
     guests: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
     functions: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
     requests: '<path d="M4 6.5h16v11H4z"/><path d="M4 7l8 6 8-6"/>',
+    found: '<circle cx="12" cy="9" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/><path d="M16.5 4.5l1.3 1.3 2.6-2.6"/>',
     photographer: '<path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4z"/><circle cx="12" cy="13.3" r="3.3"/>'
   };
   const icon = (k, c) => '<i class="pgcp-ic" style="background:' + c + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg></i>';
@@ -365,12 +366,16 @@
       ['Look', [['theme', 'Theme', th ? th.name : 'Original', '#c2410c'], ['layout', 'Hub layout', GALLERY.layout === 'custom' ? 'Our own Hub' : la ? la.name : 'Original', '#7c3aed'], ['pages', 'Page styles', 'Events, photos, notes', '#0e7490']]],
       ['Photos', [['story', 'Story & highlights', (st.wh || []).length ? (st.wh || []).length + ' Wedding Highlights' : 'Choose what guests see first', '#d97706']].concat(
         window.PGGate && ROLE !== 'demo' && !GALLERY.isStudio ? [['guests', 'Guest photos', GALLERY.guestPhotos === 'findme' ? 'Only after Find me' : 'Open to everyone', '#15803d']] : [])],
-      ['App', [['functions', 'Functions', feats.length ? onN + ' of ' + feats.length + ' on' : '', '#2563eb']].concat(window.PGRules ? [['requests', 'Requests', 'Downloads and Find me', '#db2777']] : [])]
+      ['App', [['functions', 'Functions', feats.length ? onN + ' of ' + feats.length + ' on' : '', '#2563eb']]]
     ];
+    // step 65a: Guests — who Find me found (the couple, and PicGrades for support; not the photographer) and the requests
+    const guestRows = (window.PGFound && (ROLE === 'couple' || ROLE === 'picgrades') ? [['found', 'Found with Find me', PGFound.summary(), '#0891b2']] : [])
+      .concat(window.PGRules ? [['requests', 'Requests', 'Downloads and Find me', '#db2777']] : []);
+    if (guestRows.length) groups.splice(2, 0, ['Guests', guestRows]);
     if (STAFF) groups.push(['Studio', [['photographer', 'Photographer', GALLERY.photographer && GALLERY.photographer.name ? GALLERY.photographer.name : 'Name, Instagram, website', '#57534e']]]);
     return groups;
   }
-  const TITLE = { theme: 'Theme', layout: 'Hub layout', pages: 'Page styles', look: 'Look', story: 'Story & highlights', guests: 'Guest photos', functions: 'Functions', requests: 'Requests', photographer: 'Photographer' };
+  const TITLE = { theme: 'Theme', layout: 'Hub layout', pages: 'Page styles', look: 'Look', story: 'Story & highlights', guests: 'Guest photos', functions: 'Functions', requests: 'Requests', photographer: 'Photographer', found: 'Found with Find me' };
   function guestsPane() {
     const p = h('div', 'pgcp-pane');
     p.appendChild(PGGate.choice()); return p;
@@ -414,6 +419,7 @@
       if (k === 'story' && window.PGStoryPicks) return PGStoryPicks.pane();
       if (k === 'requests' && window.PGRules) return PGRules.pane();
       if (k === 'guests' && window.PGGate) return guestsPane();
+      if (k === 'found' && window.PGFound) return PGFound.pane();
       return funcPane();
     }
     repaint = () => {

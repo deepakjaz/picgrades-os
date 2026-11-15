@@ -33,8 +33,8 @@ const srv = http.createServer((req, res) => {
   await pg.evaluate(() => PGControl.open()); await pg.waitForTimeout(500);
   let st = await pg.evaluate(() => { const s = document.querySelector('.pgcp-sheet'), r = s.getBoundingClientRect(); return { w: r.width, h: r.height, home: s.classList.contains('at-home'), rows: [...s.querySelectorAll('.pgcp-item')].map(b => b.dataset.tab), groups: [...s.querySelectorAll('.pgcp-group')].map(x => x.textContent), live: !!s.querySelector('.pgpub'), locked: document.documentElement.classList.contains('pgcp-open') }; });
   check(st.w === 390 && st.h === 844, 'phone: the panel fills the whole screen ' + st.w + '×' + st.h);
-  check(st.home && st.live && JSON.stringify(st.groups) === '["Look","Photos","App","Studio"]', 'home: Draft/Live box and the groups Look · Photos · App · Studio');
-  check(['theme', 'layout', 'pages', 'story', 'guests', 'functions', 'requests', 'photographer'].every(k => st.rows.includes(k)), 'every section is in the list: ' + st.rows.join(' '));
+  check(st.home && st.live && JSON.stringify(st.groups) === '["Look","Photos","Guests","App","Studio"]', 'home: Draft/Live box and the groups Look · Photos · Guests · App · Studio');
+  check(['theme', 'layout', 'pages', 'story', 'guests', 'found', 'functions', 'requests', 'photographer'].every(k => st.rows.includes(k)), 'every section is in the list: ' + st.rows.join(' '));
   check(st.locked, 'the page behind does not scroll while the panel is open');
   await shot(pg, '1-home');
   for (const k of st.rows) {
