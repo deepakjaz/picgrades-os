@@ -41,7 +41,7 @@ const srv = http.createServer((req, res) => {
   await p.evaluate(() => openCollection('Sangeet', 1)); await p.waitForTimeout(1200);
   console.log('couple:', JSON.stringify(await probe(p)));
   await p.evaluate(() => switchViewFromNav('hub')); await p.waitForTimeout(300);
-  await p.click('.pg-topnav [data-go=studio]'); await p.waitForSelector('.pgcp-sheet'); await p.click('.pgcp-tabs [data-tab=functions]'); await p.waitForSelector('.pgwm-pane');
+  await p.click('.pg-topnav [data-go=studio]'); await p.waitForSelector('.pgcp-sheet'); await p.evaluate(() => PGControl.go('functions')); await p.waitForSelector('.pgwm-pane');
   console.log('Functions › Photo protection:', (await p.locator('.pgwm-pane .pgf-row b').allTextContents()).join(' · '), '| words box hidden while off:', await p.locator('.pgwm-lab').isHidden());
   await p.locator('.pgwm-pane .pgf-sw').check(); await p.waitForTimeout(300); await p.fill('.pgwm-text', 'Tara & Vikram · WFA'); await p.waitForTimeout(1600);
   await p.locator('.pgwm-pane').scrollIntoViewIfNeeded(); await p.screenshot({ path: '/tmp/s48_panel.png' });

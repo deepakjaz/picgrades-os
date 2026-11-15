@@ -50,10 +50,10 @@ const srv = http.createServer((req, res) => {
   // the couple: counts in the Control Panel only; moves the logo left and keeps light/dark right, then both left
   [c, p] = await open(390, 844, '?couple=' + ck); await p.waitForFunction(() => PGControl.role() === 'couple', null, { timeout: 10000 });
   console.log('couple sees no counts on the Hub either:', JSON.stringify(await counts(p)));
-  await p.click('.tkg-nav-item[data-nav=studio]'); await p.waitForSelector('.pgcp-sheet'); await p.click('.pgcp-tabs [data-tab=functions]'); await p.waitForSelector('.pgcp-stats');
+  await p.click('.tkg-nav-item[data-nav=studio]'); await p.waitForSelector('.pgcp-sheet'); await p.evaluate(() => PGControl.go('functions')); await p.waitForSelector('.pgcp-stats');
   console.log('Control Panel numbers:', (await p.locator('.pgcp-stat').allTextContents()).join(' · ')); await p.click('.pgcp-statlist summary'); await p.waitForTimeout(200);
   await p.screenshot({ path: '/tmp/s49_panel.png' });
-  await p.evaluate(() => { document.querySelector('.pgcp-tabs [data-tab=look]').click(); }); await p.waitForTimeout(300);
+  await p.evaluate(() => { PGControl.go('look'); }); await p.waitForTimeout(300);
   await p.click('.pgcp-design'); await p.waitForSelector('.pged');
   await p.click('.pged-logo [data-logo=left]'); await p.waitForTimeout(200);
   console.log('editor: logo left, light/dark still right:', await p.evaluate(() => [document.querySelector('.pged-logo .on').dataset.logo, document.querySelector('.pged-mode .on').dataset.mode].join('/')));

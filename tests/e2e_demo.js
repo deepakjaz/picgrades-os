@@ -32,13 +32,13 @@ const srv = http.createServer((req, res) => {
   // demo: photographer A tries things
   let [ca, pa] = await phone(); await pa.goto(URL); await boot(pa);
   console.log('demo wedding, visitor A:', await pa.evaluate(() => PGControl.role()), '| gear shown:', await pa.evaluate(() => getComputedStyle(document.querySelector('.tkg-nav-item[data-nav=studio]')).display !== 'none'));
-  await pa.click('.tkg-nav-item[data-nav=studio]'); await pa.waitForSelector('.pgcp-sheet .pgcp-tcard'); await pa.waitForTimeout(400);
-  console.log('panel badge:', await pa.textContent('.pgcp-badge'), '|', (await pa.textContent('.pgcp-who')).slice(0, 90));
+  await pa.click('.tkg-nav-item[data-nav=studio]'); await pa.waitForSelector('.pgcp-sheet .pgcp-badge'); const badge0 = await pa.textContent('.pgcp-badge'), who0 = await pa.textContent('.pgcp-who'); await pa.evaluate(() => PGControl.go('look')); await pa.waitForSelector('.pgcp-sheet .pgcp-tcard'); await pa.waitForTimeout(400);
+  console.log('panel badge:', badge0, '|', who0.slice(0, 90));
   await pa.screenshot({ path: '/tmp/s39_demo_panel.png' });
   await pa.click('.pgcp-tcard[data-theme="jaipur-rose"]'); await pa.waitForSelector('.pgcp-pv-wait[hidden]', { state: 'attached', timeout: 20000 });
   console.log('apply button:', await pa.textContent('.pgcp-pv-apply')); await pa.click('.pgcp-pv-apply'); await pa.waitForTimeout(800);
   await pa.locator('.pgcp-style[data-pagekey=events][data-style=shapes]').scrollIntoViewIfNeeded(); await pa.click('.pgcp-style[data-pagekey=events][data-style=shapes]'); await pa.waitForSelector('.pgcp-pv-wait[hidden]', { state: 'attached', timeout: 20000 }); await pa.click('.pgcp-pv-apply'); await pa.waitForTimeout(800);
-  await pa.click('.pgcp-tabs [data-tab=functions]'); await pa.waitForTimeout(300); await pa.click('.pgcp-sheet input.pgf-sw[data-k=reel]'); await pa.waitForTimeout(500);
+  await pa.evaluate(() => PGControl.go('functions')); await pa.waitForTimeout(300); await pa.click('.pgcp-sheet input.pgf-sw[data-k=reel]'); await pa.waitForTimeout(500);
   console.log('A sees: theme', await pa.evaluate(() => PGTheme.current()), '| events', await pa.evaluate(() => PGEvents.style()), '| reel', await pa.evaluate(() => GALLERY.features.reel));
   const G = call('getGallery', { g: pub.galleryId }).gallery;
   console.log('the wedding itself unchanged:', JSON.stringify({ theme: G.theme, pages: G.pages, reel: G.features.reel }));

@@ -109,7 +109,7 @@ const srv = http.createServer((req, res) => {
   await c.pg.click('#fmCamBtn'); await c.pg.waitForSelector('#fmCam:not(.hidden)'); await c.pg.waitForTimeout(700);
   check(await c.pg.evaluate(() => !document.getElementById('fmShoot').disabled && !document.getElementById('fmSheet').dataset.live && !document.getElementById('fmGuide')), 'the couple: no instructions, no live check, "Take selfie" as before');
   await c.pg.click('#fmClose');
-  await c.pg.evaluate(() => PGControl.open()); await c.pg.click('.pgcp-tabs [data-tab=requests]'); await c.pg.waitForSelector('.pgr-row');
+  await c.pg.evaluate(() => PGControl.open()); await c.pg.evaluate(() => PGControl.go('requests')); await c.pg.waitForSelector('.pgr-row');
   const help = await c.pg.evaluate(() => { const r = [...document.querySelectorAll('.pgr-row')].find(x => /not found/.test(x.textContent)); return r ? { t: r.textContent, mail: (r.querySelector('.pgr-mail') || {}).href || '', yes: !!r.querySelector('.pgr-yes') } : null; });
   check(help && /Stranger/.test(help.t) && /asks for their photos/.test(help.t) && /^mailto:stranger%40example\.com|^mailto:stranger@example\.com/.test(help.mail) && !help.yes, 'Requests: "Find me · not found" with "Email them" and "Done" (no Approve)');
   const row = await c.pg.evaluate(() => [...document.querySelectorAll('.pgr-row')].find(x => /close match/.test(x.textContent)).textContent);

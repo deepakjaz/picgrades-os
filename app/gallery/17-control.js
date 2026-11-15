@@ -148,23 +148,26 @@
   }
   function paintLook(box) {
     if (!box || !box.isConnected) return;
-    const th = box.querySelector('.pgcp-themes'), la = box.querySelector('.pgcp-layouts'); if (!th || !la) return;
+    const th = box.querySelector('.pgcp-themes'), la = box.querySelector('.pgcp-layouts');
     const themes = window.PGTheme ? PGTheme.list() : [], layouts = window.PGLayout ? PGLayout.list() : [];
-    th.innerHTML = ''; th.appendChild(themeCard(ORIGINAL_T, !GALLERY.theme)); themes.forEach(t => th.appendChild(themeCard(t, GALLERY.theme === t.id)));
-    la.innerHTML = ''; la.appendChild(layoutCard(null, !GALLERY.layout));
-    if (GALLERY.custom && GALLERY.custom.story) la.appendChild(layoutCard({ id: 'custom', name: 'Our own Hub', story: GALLERY.custom.story.kind, blocks: [] }, GALLERY.layout === 'custom'));   // a story Hub changed in the editor (step 54)
+    if (th) { th.innerHTML = ''; th.appendChild(themeCard(ORIGINAL_T, !GALLERY.theme)); themes.forEach(t => th.appendChild(themeCard(t, GALLERY.theme === t.id))); }
+    if (la) { la.innerHTML = ''; la.appendChild(layoutCard(null, !GALLERY.layout)); }
+    if (!la) { /* only the theme or the page styles */ }
+    else if (GALLERY.custom && GALLERY.custom.story) la.appendChild(layoutCard({ id: 'custom', name: 'Our own Hub', story: GALLERY.custom.story.kind, blocks: [] }, GALLERY.layout === 'custom'));   // a story Hub changed in the editor (step 54)
     else if (GALLERY.custom && GALLERY.custom.blocks && GALLERY.custom.blocks.length) la.appendChild(layoutCard({ id: 'custom', name: 'Our own Hub', blocks: GALLERY.custom.blocks.map(b => ({ block: b.block, size: 'W' })) }, GALLERY.layout === 'custom'));
-    layouts.forEach(l => la.appendChild(layoutCard(l, GALLERY.layout === l.id)));
+    if (la) layouts.forEach(l => la.appendChild(layoutCard(l, GALLERY.layout === l.id)));
     box.querySelectorAll('.pgcp-pagestyles').forEach(ps => { const key = ps.dataset.pagekey; ps.innerHTML = ''; Object.keys(PAGE_DEFS[key].styles).forEach(k => ps.appendChild(styleCard(key, k, curStyle(key) === k))); });
   }
-  function lookPane() {
-    const p = h('div', 'pgcp-pane', '<h4>Theme</h4><p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' +
-      '<h4>Hub layout</h4><p class="pgcp-note">How the Hub is arranged. Tap one to preview it — or design your own: place the cards where you want them, any size.</p>' +
-      '<button type="button" class="pgcp-design">✎ Design your own Hub</button><div class="pgcp-row pgcp-layouts"></div>' +
-      Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join(''));
+  function lookPane(part) {
+    part = part || 'all';
+    const p = h('div', 'pgcp-pane',
+      (part === 'all' || part === 'theme' ? (part === 'all' ? '<h4>Theme</h4>' : '') + '<p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' : '') +
+      (part === 'all' || part === 'layout' ? (part === 'all' ? '<h4>Hub layout</h4>' : '') + '<p class="pgcp-note">How the Hub is arranged. Tap one to preview it — or design your own: place the cards where you want them, any size.</p>' +
+      '<button type="button" class="pgcp-design">✎ Design your own Hub</button><div class="pgcp-row pgcp-layouts"></div>' : '') +
+      (part === 'all' || part === 'pages' ? Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join('') : ''));
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }
-      if (e.target.closest('.pgcp-design')) { const s = document.querySelector('.pgcp-sheet'); if (s) { s.remove(); document.querySelectorAll('.overlay-backdrop.show').forEach(x => x.remove()); } PGHubEditor.open(); return; }
+      if (e.target.closest('.pgcp-design')) { const s = document.querySelector('.pgcp-sheet'); if (s) { s.remove(); document.documentElement.classList.remove('pgcp-open'); document.querySelectorAll('.overlay-backdrop.show').forEach(x => x.remove()); } PGHubEditor.open(); return; }
       const st = e.target.closest('.pgcp-style'); if (st) { preview({ pages: { [st.dataset.pagekey]: st.dataset.style } }, p.parentNode); return; }
       const l = e.target.closest('.pgcp-layout'); if (l) preview({ layout: l.dataset.layout }, p.parentNode);
     });
@@ -242,16 +245,16 @@
 
   // ---- Functions ----
   function funcPane() {
-    const p = h('div', 'pgcp-pane', '<p class="pgcp-note">Switch off anything you don’t want in this wedding app. Root Moment and the photos are always there.</p>');
+    const note = h('p', 'pgcp-note', 'Switch off anything you don’t want in this wedding app. Root Moment and the photos are always there.');
+    const p = h('div', 'pgcp-pane'); p.appendChild(note);
     // step 49: photo counts live only here — the app itself shows no numbers of photos
     const evs = GALLERY.events || [], total = evs.reduce((t, e) => t + e.photos.length, 0);
     const stats = h('div', 'pgcp-stats', '<div class="pgcp-stat"><b>' + evs.length + '</b><span>Collections</span></div><div class="pgcp-stat"><b>' + total.toLocaleString('en-IN') + '</b><span>Photos</span></div>' +
       '<details class="pgcp-statlist"><summary>Photos in each collection</summary>' + evs.map(e => '<p><span>' + esc(e.name) + '</span><b>' + e.photos.length.toLocaleString('en-IN') + '</b></p>').join('') + '</details>' +
       '<small>Only you see these numbers. Guests never see how many photos there are.</small>');
     p.insertBefore(stats, p.firstChild);
-    if (window.PGGate && ROLE !== 'demo') p.insertBefore(PGGate.choice(), stats.nextSibling);   // step 63b: guest photos only after Find me / open
     const list = h('div', 'pgf-list'), canLock = !!(STAFF && STAFF.canLock);
-    if (canLock) p.firstChild.textContent += ' The small “Plan” switch is PicGrades’ own: off locks a function for the couple and the photographer.';
+    if (canLock) note.textContent += ' The small “Plan” switch is PicGrades’ own: off locks a function for the couple and the photographer.';
     (window.PGFeatures ? PGFeatures.list() : []).forEach(([k, name, line]) => {
       const st = (GALLERY.features || {})[k] || 'on', locked = st === 'locked';
       const row = h('div', 'pgf-row' + (locked ? ' locked' : ''), '<div><b>' + name + '</b><small>' + (locked ? 'Not included in this wedding’s plan' : line) + '</small></div>');
@@ -339,32 +342,98 @@
     paint(); return wrap;
   }
 
-  // ---- the panel ----
-  let tab = 'look', repaint = () => {};
-  function open() {
-    if (document.querySelector('.pgcp-sheet')) return;   // step 59: a double tap on the gear opened two panels
-    const back = h('div', 'overlay-backdrop show'), box = h('div', 'reg-overlay show pgcp-sheet');
-    box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Control Panel');
-    const close = () => { box.remove(); back.remove(); repaint = () => {}; };
-    back.addEventListener('click', close);
+  // ---- the panel (step 64): a full-screen app page, like a phone's Settings ----
+  // Home: who you are, Draft / Live, then a list of sections. Tap a section → it opens full screen with ‹ back.
+  // On a computer it is the same phone-sized panel in the middle of the screen.
+  const ICON = {
+    theme: '<path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.6 1.7-1.6H16a5 5 0 0 0 5-5C21 6.1 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7.5" r="1.2"/><circle cx="15" cy="8" r="1.2"/>',
+    layout: '<rect x="3.5" y="3.5" width="7" height="9" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.5"/>',
+    pages: '<rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    story: '<path d="M12 3.8l2.4 5 5.4.6-4 3.7 1.1 5.3L12 15.7l-4.9 2.7 1.1-5.3-4-3.7 5.4-.6z"/>',
+    guests: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+    functions: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    requests: '<path d="M4 6.5h16v11H4z"/><path d="M4 7l8 6 8-6"/>',
+    photographer: '<path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4z"/><circle cx="12" cy="13.3" r="3.3"/>'
+  };
+  const icon = (k, c) => '<i class="pgcp-ic" style="background:' + c + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg></i>';
+  function sections() {
+    const themes = window.PGTheme ? PGTheme.list() : [], layouts = window.PGLayout ? PGLayout.list() : [];
+    const th = themes.find(t => t.id === GALLERY.theme), la = layouts.find(l => l.id === GALLERY.layout);
+    const feats = window.PGFeatures ? PGFeatures.list() : [], onN = feats.filter(([k]) => ((GALLERY.features || {})[k] || 'on') === 'on').length;
+    const st = GALLERY.story || {};
+    const groups = [
+      ['Look', [['theme', 'Theme', th ? th.name : 'Original', '#c2410c'], ['layout', 'Hub layout', GALLERY.layout === 'custom' ? 'Our own Hub' : la ? la.name : 'Original', '#7c3aed'], ['pages', 'Page styles', 'Events, photos, notes', '#0e7490']]],
+      ['Photos', [['story', 'Story & highlights', (st.wh || []).length ? (st.wh || []).length + ' Wedding Highlights' : 'Choose what guests see first', '#d97706']].concat(
+        window.PGGate && ROLE !== 'demo' && !GALLERY.isStudio ? [['guests', 'Guest photos', GALLERY.guestPhotos === 'findme' ? 'Only after Find me' : 'Open to everyone', '#15803d']] : [])],
+      ['App', [['functions', 'Functions', feats.length ? onN + ' of ' + feats.length + ' on' : '', '#2563eb']].concat(window.PGRules ? [['requests', 'Requests', 'Downloads and Find me', '#db2777']] : [])]
+    ];
+    if (STAFF) groups.push(['Studio', [['photographer', 'Photographer', GALLERY.photographer && GALLERY.photographer.name ? GALLERY.photographer.name : 'Name, Instagram, website', '#57534e']]]);
+    return groups;
+  }
+  const TITLE = { theme: 'Theme', layout: 'Hub layout', pages: 'Page styles', look: 'Look', story: 'Story & highlights', guests: 'Guest photos', functions: 'Functions', requests: 'Requests', photographer: 'Photographer' };
+  function guestsPane() {
+    const p = h('div', 'pgcp-pane');
+    p.appendChild(PGGate.choice()); return p;
+  }
+  let tab = 'home', repaint = () => {}, goTo = () => {};
+  function open(start) {
+    if (document.querySelector('.pgcp-sheet')) { if (start) goTo(start); return; }   // step 59: a double tap on the gear opened two panels
+    const back = h('div', 'overlay-backdrop show pgcp-dim'), box = h('div', 'pgcp-sheet pgcp-app');
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'pgcpTitle');
     const who = WHO[ROLE] || WHO.couple;
-    const head = h('div', 'pgcp-head', '<div class="reg-overlay-handle"></div><div class="pgcp-top"><h3 class="fm-title">Control Panel</h3><span class="pgcp-badge">' + who[0] + '</span></div>' +
-      '<p class="pgcp-who">' + who[1] + (ROLE === 'demo' ? ' Your changes stay on this phone only, so everyone can play — <button type="button" class="pgcp-reset">start again</button>.' : ' Changes are saved for this wedding and reach every guest straight away.') + '</p>' +
-      '<div class="pgcp-tabs' + (STAFF ? ' five' : ' four') + '" role="tablist"><button type="button" role="tab" data-tab="look">Look</button><button type="button" role="tab" data-tab="story">Story</button><button type="button" role="tab" data-tab="functions">Functions</button>' + (window.PGRules ? '<button type="button" role="tab" data-tab="requests">Requests</button>' : '') + (STAFF ? '<button type="button" role="tab" data-tab="photographer">Photographer</button>' : '') + '</div>');
-    const body = h('div', 'pgcp-body'), done = h('button', 'mk-btn-peach ios-wide', 'Done'); done.type = 'button'; done.addEventListener('click', close);
+    box.innerHTML = '<header class="pgcp-bar"><button type="button" class="pgcp-nav-back" aria-label="Back to the Control Panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back</span></button>' +
+      '<h3 class="pgcp-bar-title" id="pgcpTitle">Control Panel</h3><button type="button" class="pgcp-x" aria-label="Close the Control Panel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>' +
+      '<div class="pgcp-scroll"><div class="pgcp-body"></div></div>';
+    const body = box.querySelector('.pgcp-body'), scroll = box.querySelector('.pgcp-scroll'), title = box.querySelector('.pgcp-bar-title');
+    const close = () => { box.classList.add('out'); back.classList.remove('show'); document.documentElement.classList.remove('pgcp-open'); setTimeout(() => { box.remove(); back.remove(); }, 220); repaint = () => {}; goTo = () => {}; };
+    back.addEventListener('click', close); box.querySelector('.pgcp-x').addEventListener('click', close);
+    box.querySelector('.pgcp-nav-back').addEventListener('click', () => goTo('home', true));
+    box.addEventListener('keydown', e => { if (e.key === 'Escape') { if (tab !== 'home') goTo('home', true); else close(); } });
+    function home() {
+      const wrap = h('div', 'pgcp-home');
+      wrap.appendChild(h('div', 'pgcp-hero', '<div><h2>' + esc(GALLERY.title || 'Your wedding') + '</h2><p class="pgcp-who">' + who[1] +
+        (ROLE === 'demo' ? ' Your changes stay on this phone only, so everyone can play — <button type="button" class="pgcp-reset">start again</button>.' : ' Changes reach every guest straight away.') + '</p></div><span class="pgcp-badge">' + who[0] + '</span>'));
+      if (ROLE !== 'demo' && !GALLERY.isStudio) wrap.appendChild(publishStrip());
+      const list = h('nav', 'pgcp-tabs pgcp-list'); list.setAttribute('aria-label', 'Sections');
+      sections().forEach(([g, rows]) => {
+        list.appendChild(h('p', 'pgcp-group', esc(g)));
+        const card = h('div', 'pgcp-card');
+        rows.forEach(([k, name, val, c]) => card.insertAdjacentHTML('beforeend', '<button type="button" class="pgcp-item" data-tab="' + k + '">' + icon(k, c) +
+          '<span class="pgcp-item-t"><b>' + esc(name) + '</b>' + (val ? '<small>' + esc(val) + '</small>' : '') + '</span><svg class="pgcp-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>'));
+        list.appendChild(card);
+      });
+      wrap.appendChild(list);
+      list.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) goTo(b.dataset.tab); });
+      const rs = wrap.querySelector('.pgcp-reset');
+      if (rs) rs.addEventListener('click', () => { try { localStorage.removeItem(pgDemoKey()); } catch (e) {} showToast('Back to the demo as it was'); setTimeout(() => location.reload(), 500); });
+      return wrap;
+    }
+    function pane(k) {
+      if (k === 'theme' || k === 'layout' || k === 'pages' || k === 'look') return lookPane(k === 'look' ? 'all' : k);
+      if (k === 'photographer') return photogPane();
+      if (k === 'story' && window.PGStoryPicks) return PGStoryPicks.pane();
+      if (k === 'requests' && window.PGRules) return PGRules.pane();
+      if (k === 'guests' && window.PGGate) return guestsPane();
+      return funcPane();
+    }
     repaint = () => {
-      head.querySelectorAll('[data-tab]').forEach(b => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-      if (tab === 'photographer' && !STAFF) tab = 'look';
-      body.innerHTML = ''; body.appendChild(tab === 'look' ? lookPane() : tab === 'photographer' ? photogPane() : tab === 'story' && window.PGStoryPicks ? PGStoryPicks.pane() : tab === 'requests' && window.PGRules ? PGRules.pane() : funcPane()); body.dataset.tab = tab;
-      if (tab === 'look') { paintLook(body); Promise.all([window.PGTheme && PGTheme.ready, window.PGLayout && PGLayout.ready]).then(() => paintLook(body)); }
+      if (tab === 'photographer' && !STAFF) tab = 'home';
+      const isHome = tab === 'home';
+      box.classList.toggle('at-home', isHome);
+      title.textContent = isHome ? 'Control Panel' : TITLE[tab] || 'Control Panel';
+      body.innerHTML = ''; body.appendChild(isHome ? home() : pane(tab)); body.dataset.tab = tab;
+      if (['theme', 'layout', 'pages', 'look'].indexOf(tab) > -1) { paintLook(body); Promise.all([window.PGTheme && PGTheme.ready, window.PGLayout && PGLayout.ready]).then(() => paintLook(body)); }
     };
-    const rs = head.querySelector('.pgcp-reset');
-    if (rs) rs.addEventListener('click', () => { try { localStorage.removeItem(pgDemoKey()); } catch (e) {} showToast('Back to the demo as it was'); setTimeout(() => location.reload(), 500); });
-    head.querySelector('.pgcp-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; repaint(); } });
-    if (ROLE !== 'demo' && !GALLERY.isStudio) head.insertBefore(publishStrip(), head.querySelector('.pgcp-tabs'));
-    box.append(head, body, done); document.body.append(back, box);
-    repaint();
+    goTo = (k, backwards) => {
+      const was = tab; tab = k || 'home'; repaint(); scroll.scrollTop = 0;
+      body.classList.remove('slide-in', 'slide-back'); void body.offsetWidth; if (was !== tab) body.classList.add(backwards ? 'slide-back' : 'slide-in');
+      const f = tab === 'home' ? box.querySelector('[data-tab="' + was + '"]') : box.querySelector('.pgcp-nav-back'); if (f) f.focus({ preventScroll: true });
+    };
+    document.body.append(back, box); document.documentElement.classList.add('pgcp-open');
+    requestAnimationFrame(() => box.classList.add('in'));
+    tab = start || 'home'; repaint();
+    box.tabIndex = -1; box.focus({ preventScroll: true });   // the panel itself, so no ring appears on a button straight away
   }
   // the Hub editor (23-editor.js) publishes through the same saving as the panel (couple link, login, or this phone in a demo)
-  window.PGControl = { role: () => ROLE, checked: () => checked, open, refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
+  window.PGControl = { role: () => ROLE, checked: () => checked, open, go: k => (document.querySelector('.pgcp-sheet') ? goTo(k) : open(k)), refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
 })();

@@ -79,7 +79,7 @@ const srv = http.createServer((req, res) => {
   // 5. Control Panel: a double tap opens one panel
   await pg2.evaluate(() => { PGControl.open(); PGControl.open(); }); await pg2.waitForTimeout(300);
   check(await pg2.evaluate(() => document.querySelectorAll('.pgcp-sheet').length) === 1, 'a double tap on the gear opens one Control Panel');
-  await pg2.click('.pgcp-tabs [data-tab=story]'); await pg2.waitForSelector('.pgsp-pane');
+  await pg2.evaluate(() => PGControl.go('story')); await pg2.waitForSelector('.pgsp-pane');
   await pg2.click('.pgsp-th[data-key=cover][data-i="1"] [data-do=del]'); await pg2.waitForTimeout(60);
   check(await pg2.evaluate(() => getComputedStyle(document.querySelector('.pgsp-pane')).opacity === '1' && document.querySelectorAll('.pgsp-th[data-key=cover]').length === 1), 'Control Panel › Story: removing a cover photo shows at once, the pane stays clear');
   await pg2.waitForFunction(() => !PGStoryPicks.saving()); await pg2.screenshot({ path: '/tmp/s59_panel.png' });

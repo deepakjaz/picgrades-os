@@ -73,7 +73,7 @@ const srv = http.createServer((req, res) => {
   // ---------- 4. the couple approves in the Control Panel ----------
   let [c3, cp] = await ctx(); await cp.goto(URL + '?couple=' + ck); await boot(cp); await cp.waitForFunction(() => PGControl.role() === 'couple', null, { timeout: 10000 });
   console.log('couple: Find me card still says', ((await cp.locator(hubFind).first().textContent().catch(() => '')) || '').replace(/\s+/g, ' ').trim(), '| couple downloads anything:', await tryDl(cp, 'RL04'));
-  await cp.click('.tkg-nav-item[data-nav=studio]'); await cp.waitForSelector('.pgcp-sheet'); await cp.click('.pgcp-tabs [data-tab=requests]'); await cp.waitForSelector('.pgr-row', { timeout: 8000 });
+  await cp.click('.tkg-nav-item[data-nav=studio]'); await cp.waitForSelector('.pgcp-sheet'); await cp.evaluate(() => PGControl.go('requests')); await cp.waitForSelector('.pgr-row', { timeout: 8000 });
   console.log('couple sees requests:', (await cp.locator('.pgr-row .pgr-who').allTextContents()).join(' | '));
   await cp.waitForTimeout(400); await cp.screenshot({ path: '/tmp/s45_requests.png' });
   const before = mail.length;

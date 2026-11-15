@@ -59,7 +59,7 @@ const srv = http.createServer((req, res) => {
   sp = picksOnServer(); check(sp.bride === 'SP301' && sp.groom === 'SP304', 'bride and groom set again: ' + sp.bride + ' / ' + sp.groom);
   // Control Panel › Story
   await pg.evaluate(() => { if (document.body.dataset.view !== 'hub') switchViewFromNav('hub'); PGControl.open(); }); await pg.waitForSelector('.pgcp-sheet');
-  await pg.click('.pgcp-tabs [data-tab=story]'); await pg.waitForSelector('.pgsp-pane');
+  await pg.evaluate(() => PGControl.go('story')); await pg.waitForSelector('.pgsp-pane');
   const pane = await pg.evaluate(() => ({ slots: [...document.querySelectorAll('.pgsp-slot img')].length, cover: document.querySelectorAll('.pgsp-th[data-key=cover]').length, haldi: document.querySelectorAll('.pgsp-th[data-key="hl:Haldi"]').length, empty: document.querySelectorAll('.pgsp-empty').length }));
   check(pane.slots === 2 && pane.cover === 2 && pane.haldi === 1 && pane.empty >= 3, 'Control Panel › Story shows the choice ' + JSON.stringify(pane));
   await pg.screenshot({ path: '/tmp/s56_panel.png' });
@@ -67,7 +67,7 @@ const srv = http.createServer((req, res) => {
   check(picksOnServer().cover.join() === 'SP304,SP002', 'cover photos reordered');
   await pg.click('.pgsp-th[data-key="hl:Haldi"] [data-do=del]'); await pg.waitForFunction(() => !PGStoryPicks.saving()); await pg.waitForTimeout(200);
   check(!picksOnServer().hl.Haldi, 'a highlight removed');
-  await pg.click('.pgcp-sheet .mk-btn-peach.ios-wide');
+  await pg.click('.pgcp-sheet .pgcp-x');
   // the story Hub uses the choice: varmala with the chosen portraits, cover first
   await pg.evaluate(() => PGControl.save({ layout: 'story-living' }).then(r => { GALLERY.layout = r.layout; PGLayout.refresh(); }));
   await pg.waitForSelector('#pgStory'); await pg.waitForTimeout(800);
