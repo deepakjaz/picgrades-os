@@ -139,6 +139,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     <h1 style="margin:0 0 6px;font-size:44px;line-height:1.05">Order queue</h1>
     <p class="muted" style="margin:0 0 18px">Soonest delivery first. Paste the LR link to complete an order — the client gets the email right away.</p>
     <div class="row" style="align-items:flex-start">
+      <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">New wedding galleries (sign-ups · free trial)</p><div id="qWed"></div></div>
       <div class="card" style="flex:999 1 560px;min-width:0"><p class="eyebrow" style="margin:0">Open orders</p><div id="qOpen"></div></div>
       <div class="card" style="flex:1 1 300px;min-width:0"><p class="eyebrow" style="margin:0">Recently completed</p><div id="qDone"></div></div>
     </div>
@@ -322,6 +323,19 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     return box;
   }
   function renderQueue(res) {
+    // step 65b: weddings made by signing up (no editing order). With Find me on, faces are due within 24 hours.
+    fill('qWed', (res.weddings || []).length ? res.weddings.map(function (w) {
+      var needFaces = w.features && w.features.findme === 'on' && w.facesStatus !== 'Ready';
+      var late = needFaces && w.facesDue && new Date(w.facesDue.replace(' ', 'T')) < new Date();
+      var head = el('div', { style: 'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [el('b', { text: w.title }), el('span', { class: 'pill ' + (w.status === 'Draft' ? 'p-hold' : 'p-done'), text: w.status === 'Draft' ? 'Draft' : 'Live' })]);
+      if (late) head.appendChild(el('span', { class: 'pill p-hold', text: 'FACES OVERDUE' }));
+      var meta = el('span', { class: 'muted', style: 'font-size:13px', text: w.companyName + ' · ' + w.createdBy + ' · ' + num(w.photoCount) + ' photos · trial: ' + (w.daysLeft == null ? '—' : w.daysLeft + ' days left') +
+        ' · Find me: ' + (w.features && w.features.findme === 'on' ? (w.facesStatus === 'Ready' ? 'faces read ✓' : 'read faces by ' + (w.facesDue || '').slice(0, 16)) : 'off') });
+      var links = el('span', { style: 'font-size:13px;display:flex;gap:12px;flex-wrap:wrap' }, [
+        el('a', { href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), target: '_blank', rel: 'noopener', text: needFaces ? 'Read faces (Find me) →' : 'Faces & links →' }),
+        el('a', { href: '/pg/' + w.galleryId, target: '_blank', rel: 'noopener', text: 'Open (PicGrades view)' })]);
+      return el('div', { class: 'qitem' }, [head, meta, links]);
+    }) : [el('p', { class: 'muted', text: 'No sign-up weddings yet.' })]);
     fill('qOpen', res.open.length ? res.open.map(function (o) {
       var k = String(o.status).toLowerCase();
       var head = el('div', { style: 'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [el('b', { text: o.catalogName }), pill(o.status)]);

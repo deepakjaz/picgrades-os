@@ -49,6 +49,7 @@ function doPost(e) {
 var PUBLIC_ROUTES = {
   health: health_,
   requestCode: requestCode_,
+  signUp: signUp_,
   verifyCode: verifyCode_,
   getGallery: getGallery_,
   likePhoto: likePhoto_,
@@ -86,6 +87,8 @@ var PUBLIC_ROUTES = {
 var USER_ROUTES = {
   logout: logout_,
   me: me_,
+  createWedding: createWedding_,
+  myWeddings: myWeddings_,
   placeOrder: placeOrder_,
   editOrder: editOrder_,
   cancelOrder: cancelOrder_,
@@ -166,7 +169,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step65a-found-list',
+    version: 'step65b-signup',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -277,6 +280,64 @@ function authUser_(token) {
 function findUser_(email) {
   email = normEmail_(email);
   return readTable_('Users').filter(function (u) { return normEmail_(u.email) === email; })[0] || null;
+}
+
+// ---------- Sign up yourself (step 65b) ----------
+// A couple or a photographer makes their own account: one account (a "company" row with no editing package, so the editing
+// order form stays closed) and one user. Then the normal email code signs them in. Always the same answer, so nobody can test
+// which emails already have an account.
+var TRIAL_DAYS = 30, TRIAL_PHOTOS = 500;
+function signUp_(p) {
+  var email = normEmail_(p.email), name = String(p.name || '').trim().slice(0, 60), kind = p.kind === 'photographer' ? 'photographer' : 'couple';
+  var studio = String(p.studio || '').trim().slice(0, 60), phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'Enter a valid email.' };
+  if (name.length < 2) return { ok: false, error: 'Please write your name.' };
+  if (kind === 'photographer' && studio.length < 2) return { ok: false, error: 'Please write your studio or business name.' };
+  if (String(getSettings_().signupOpen || 'on').toLowerCase() === 'off') return { ok: false, error: 'New sign-ups are paused. Please contact PicGrades.' };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    if (!findUser_(email)) {
+      var base = kind === 'photographer' ? studio : name, company = base, n = 2;
+      while (findCompany_(company)) company = base + ' (' + n++ + ')';
+      var ids = readTable_('Companies').map(function (c) { return +(String(c.companyId || '').replace(/\D/g, '')) || 0; });
+      appendRow_('Companies', { companyId: 'C' + String(Math.max.apply(null, ids.concat([0])) + 1).padStart(3, '0'), companyName: company, adminEmail: email, contactName: name,
+        phone: phone, packageType: '', currency: 'INR', status: 'Active', createdAt: fmt_(new Date()) });
+      appendRow_('Users', { email: email, name: name, companyName: company, role: 'client', profession: kind, phone: phone, status: 'Active', joinedAt: fmt_(new Date()) });
+      var adm = String(getSettings_().adminNotifyEmail || '').trim();
+      if (adm) sendEmail_(adm, 'New sign-up: ' + name + ' (' + kind + ')', 'New sign-up',
+        [esc_(name) + ' signed up as a <b>' + kind + '</b>.', 'Email: ' + esc_(email) + (phone ? ' · Mobile: ' + esc_(phone) : ''), kind === 'photographer' ? 'Studio: ' + esc_(company) : ''], 'signup', email);
+    }
+  } finally { lock.releaseLock(); }
+  return requestCode_({ email: email });
+}
+/** A signed-in couple or photographer makes a wedding gallery from their Drive folder: a Draft with a 30-day trial. */
+function createWedding_(p, user) {
+  var keys = p.functions && typeof p.functions === 'object' ? p.functions : null, features = {};
+  if (keys) FEATURE_KEYS.forEach(function (k) { if (k in keys) features[k] = keys[k] === 'off' || keys[k] === false ? 'off' : 'on'; });
+  var now = new Date(), ends = new Date(now.getTime() + TRIAL_DAYS * 86400000);
+  var r = makeGallery_({ orderId: 'W' + randomId_(10), folderUrl: p.folderUrl, title: p.title, eventDate: p.eventDate }, user,
+    { made: true, limit: isStaff_(user) ? 0 : TRIAL_PHOTOS, extra: { plan: 'trial', trialEnds: fmt_(ends), features: JSON.stringify(features) } });
+  if (r.ok === false || !r.galleryId) return r;
+  var g = findGallery_(r.galleryId);
+  var adm = String(getSettings_().adminNotifyEmail || '').trim();
+  if (adm) sendEmail_(adm, 'New wedding: ' + g.title + ' (' + r.photoCount + ' photos)', 'New wedding gallery',
+    [esc_(user.name || user.email) + ' made <b>' + esc_(g.title) + '</b> with ' + r.photoCount + ' photos in ' + r.events.length + ' collections.',
+     'Trial ends ' + esc_(fmt_(ends).slice(0, 10)) + '.', featuresOf_(g).findme === 'on' ? 'Find me is on: faces should be read within 24 hours.' : 'Find me is off.'], 'wedding-new', g.galleryId);
+  return Object.assign(r, weddingCard_(g));
+}
+/** The signed-in account's own weddings (the ones made by signing up). */
+function myWeddings_(p, user) {
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  var key = String(user.companyName).trim().toLowerCase();
+  return { weddings: readTable_('Galleries').filter(function (g) { return /^W/.test(String(g.orderId)) && String(g.companyName).trim().toLowerCase() === key; })
+    .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).map(weddingCard_) };
+}
+function weddingCard_(g) {
+  var ends = g.trialEnds ? parseDate_(g.trialEnds) : null, left = ends ? Math.max(0, Math.ceil((ends - new Date()) / 86400000)) : null;
+  var site = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '');
+  return { galleryId: g.galleryId, title: g.title, eventDate: g.eventDate, photoCount: Number(g.photoCount || 0), status: g.status === 'Draft' ? 'Draft' : 'Published',
+    plan: g.plan || '', trialEnds: g.trialEnds || '', daysLeft: left, facesStatus: g.facesStatus || '', features: featuresOf_(g),
+    guestLink: site + '/g/' + g.galleryId, coupleLink: site + '/c/' + g.galleryId + '/' + coupleKey_(g), photographerLink: site + '/ph/' + g.galleryId };
 }
 
 function publicUser_(u) {
@@ -545,6 +606,18 @@ function orderFlags_(o, s, user) {
 }
 
 /** Load an order the user may act on. Staff may load any order. */
+/** step 65b: the owner of a gallery. Weddings made with an editing order use the order; weddings made by signing up yourself
+ *  ('W…' ids, no editing order) belong to the account that made them. Billing and credits never see the 'W' weddings. */
+function ownerOrder_(orderId, user, makeNew) {
+  if (/^W[A-Za-z0-9]+$/.test(String(orderId || ''))) {
+    if (makeNew) return { orderId: orderId, companyName: user.companyName, status: 'Gallery', _row: 0 };
+    ensureTab_('Galleries', GALLERY_COLUMNS);
+    var g = readTable_('Galleries').filter(function (x) { return String(x.orderId) === String(orderId); })[0];
+    if (!g || (!isStaff_(user) && String(g.companyName).trim().toLowerCase() !== String(user.companyName).trim().toLowerCase())) throw new Error('Wedding not found.');
+    return { orderId: orderId, companyName: g.companyName, status: 'Gallery', _row: 0 };
+  }
+  return loadOrder_(orderId, user);
+}
 function loadOrder_(orderId, user) {
   var o = readTable_('Orders').filter(function (x) { return String(x.orderId) === String(orderId); })[0];
   if (!o) throw new Error('Order not found.');
@@ -685,7 +758,13 @@ function queue_(p, user) {
     .sort(function (a, b) { return parseDate_(a.deliveryDue || a.placedAt) - parseDate_(b.deliveryDue || b.placedAt); });
   var done = all.filter(function (o) { return statusKey_(o.status) === 'completed'; })
     .sort(function (a, b) { return parseDate_(b.completedAt || b.placedAt) - parseDate_(a.completedAt || a.placedAt); }).slice(0, 20);
-  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }) };
+  // step 65b: weddings people made themselves (no editing order) — Find me faces are due within 24 hours
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  var self = readTable_('Galleries').filter(function (g) { return /^W/.test(String(g.orderId)); })
+    .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).slice(0, 30)
+    .map(function (g) { var c = weddingCard_(g); c.companyName = g.companyName; c.createdAt = g.createdAt; c.createdBy = g.createdBy;
+      c.facesDue = fmt_(new Date(parseDate_(g.createdAt).getTime() + 24 * 3600000)); return c; });
+  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }), weddings: self };
 }
 
 var STATUS_SUBJECT = {
@@ -889,7 +968,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos'];   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds'];   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -977,17 +1056,22 @@ function randomId_(n) {
 }
 
 /** Create or refresh the gallery for an order. Staff: any order. Client: own studio's orders. */
-function setGallery_(p, user) {
+function setGallery_(p, user) { return makeGallery_(p, user, {}); }
+/** opts (step 65b, never from the browser): made = a new 'W' wedding, limit = most photos allowed, extra = more columns for a new row. */
+function makeGallery_(p, user, opts) {
   // Reading the wedding folder can take a minute for 2,000 photos, so it happens before the lock:
   // other studios and guests are not kept waiting meanwhile. Only the Sheet writes are locked.
   {
     ensureOrderColumns_(); ensureTab_('Galleries', GALLERY_COLUMNS);
-    var o = loadOrder_(p.orderId, user);
+    var o = ownerOrder_(p.orderId, user, !!opts.made);
     if (statusKey_(o.status) === 'cancelled') return { ok: false, error: 'This order was cancelled.' };
     var existing = readTable_('Galleries').filter(function (g) { return String(g.orderId) === String(o.orderId); })[0];
     var folderId = folderIdFromUrl_(p.folderUrl) || (existing && existing.folderId);
     if (!folderId) return { ok: false, error: 'Paste the Google Drive folder link (it contains /folders/).' };
     var scan = scanWeddingFolder_(folderId);
+    var lim = opts.limit || (existing && existing.plan === 'trial' && !isStaff_(user) ? TRIAL_PHOTOS : 0);   // trial weddings stay within 500 photos, also when refreshed
+    if (lim && scan.photoCount > lim) return { ok: false, tooMany: true, photoCount: scan.photoCount,
+      error: 'The free trial is for weddings up to ' + lim + ' photos. This folder has ' + scan.photoCount + '. Please share a folder with your best ' + lim + ' photos, or contact PicGrades for more.' };
     var title = String(p.title || (existing && existing.title) || scan.folderName.replace(/[_]+/g, ' ')).trim().slice(0, 80);
     var eventDate = /^\d{4}-\d{2}-\d{2}$/.test(String(p.eventDate || '')) ? p.eventDate : (existing ? existing.eventDate : '');
     var manifest = {
@@ -1013,7 +1097,7 @@ function setGallery_(p, user) {
     if (existing) { gid = existing.galleryId; updateRowByNumber_('Galleries', existing._row, row); }
     else {
       gid = randomId_(12);
-      appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email), guestPhotos: 'findme' }, row));   // step 63b: new weddings: photos only after Find me
+      appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email), guestPhotos: 'findme' }, opts.extra || {}, row));   // step 63b: new weddings: photos only after Find me
     }
     if (existing && existing.facesFileId) {
       var known = readFacesFile_(existing).pass, ids = allPhotoIds_(manifest);
@@ -1021,7 +1105,7 @@ function setGallery_(p, user) {
       if (missing) updateRowByNumber_('Galleries', existing._row, { facesStatus: 'Needs update' });
     }
     cacheRemoveBig_('gal:' + gid); dropSummary_(gid);
-    updateRowByNumber_('Orders', o._row, { galleryLink: gid });
+    if (o._row) updateRowByNumber_('Orders', o._row, { galleryLink: gid });
     return { galleryId: gid, status: row.status, photoCount: scan.photoCount, rootCount: scan.root.length,
       events: scan.events.map(function (e) { return { name: e.name, count: e.photos.length }; }) };
   } finally { lock.releaseLock(); }
@@ -1253,7 +1337,7 @@ function allPhotoIds_(m) {
 function staffGallery_(gid, user) {
   var g = findGallery_(gid);
   if (!g) throw new Error('Gallery not found.');
-  var o = loadOrder_(g.orderId, user); // clients only reach their own studio's galleries
+  var o = ownerOrder_(g.orderId, user); // clients only reach their own studio's galleries (step 65b: also their own 'W' weddings)
   return { g: g, o: o };
 }
 
@@ -1467,7 +1551,7 @@ function savePost_(p) {
   if (p.coupleKey && g.coupleKey && String(p.coupleKey) === String(g.coupleKey)) { who = { guestId: 'couple', name: g.title, phone: '' }; status = 'approved'; }
   if (!who && p.token) {
     var u = authUser_(p.token);
-    if (u) { try { loadOrder_(g.orderId, u); who = { guestId: 'staff:' + u.email, name: g.companyName || 'Photographer', phone: '' }; status = 'approved'; } catch (e) {} }
+    if (u) { try { ownerOrder_(g.orderId, u); who = { guestId: 'staff:' + u.email, name: g.companyName || 'Photographer', phone: '' }; status = 'approved'; } catch (e) {} }
   }
   if (!who) { who = guestFor_(g, p); if (!limitOk_('spg:' + g.galleryId, 200, 3600)) return { ok: false, error: 'Many guests are posting right now. Please try again in a little while.' }; }
   var kind = p.kind === 'post' ? 'post' : 'album';   // step 53: a post is ONE picture; an album is many slides
