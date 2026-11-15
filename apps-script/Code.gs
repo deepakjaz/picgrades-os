@@ -75,6 +75,7 @@ var PUBLIC_ROUTES = {
   askDownload: askDownload_,
   askAccess: askAccess_,
   guestPhotos: guestPhotos_,
+  foundList: foundList_,
   publishGallery: publishGallery_,
   dlRequests: dlRequests_,
   dlDecide: dlDecide_,
@@ -165,7 +166,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step63c-welcome',
+    version: 'step65a-found-list',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1108,6 +1109,44 @@ function gateManifest_(g, m, p) {
   m.recentNotes = (m.recentNotes || []).filter(function (n) { return see.ids[n.photoId]; });
   return m;
 }
+// ---------- Found with Find me (step 65a) ----------
+// The couple sees every guest Find me found: their face from a wedding photo (never their selfie), name, mobile, side,
+// whether they attended, how many photos and when. Only the couple — and PicGrades staff, for support. Not the photographer.
+function foundList_(p) {
+  var g = findGallery_(p.g); if (!g) return { ok: false, error: 'This gallery is not available.' };
+  var who = privileged_(g, p), staff = false;
+  if (who !== 'couple' && p.token) { var u = authUser_(p.token); staff = !!(u && isStaff_(u)); }
+  if (who !== 'couple' && !staff) return { ok: false, error: 'Only the couple can see this list.' };
+  ensureTab_('FindMe', FIND_COLUMNS); ensureTab_('Guests', GUEST_COLUMNS);
+  var guests = {}; readTable_('Guests').forEach(function (x) { if (x.galleryId === g.galleryId) guests[x.guestId] = x; });
+  var f = readFacesFile_(g), last = {};
+  readTable_('FindMe').forEach(function (x) {   // the latest found / close row per mobile number
+    if (x.galleryId !== g.galleryId || (x.status !== 'ok' && x.status !== 'close')) return;
+    last[digits_(x.phone)] = x;
+  });
+  var list = Object.keys(last).map(function (k) {
+    var x = last[k], gu = guests[x.guestId] || {}, sure = String(x.sure || '').split(',').filter(String);
+    return { name: x.name, phone: String(x.phone || '').replace(/^'/, ''), side: gu.side || '', attended: gu.attended || '',
+      status: x.status, count: sure.length, at: x.at, photos: sure, face: faceOf_(f, x.face, sure) };
+  });
+  list.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+  return { guests: list };
+}
+/** The guest's face in a wedding photo: the saved 'photoId:n', or — for finds from before step 65a — the face that appears
+ *  in all of their photos (the one closest to faces in their other photos). */
+function faceOf_(f, ref, sure) {
+  var ph = f.photos || {}, pick = function (pid, k) { var e = ph[pid]; if (!e || !e.f || !e.f[k]) return null; return { pid: pid, box: e.f[k][0], w: e.w, h: e.h }; };
+  if (ref) { var r = String(ref).split(':'); var out = pick(r[0], +r[1]); if (out) return out; }
+  var ids = sure.filter(function (id) { return ph[id] && (ph[id].f || []).length; }).slice(0, 6); if (!ids.length) return null;
+  var first = ph[ids[0]].f, best = 0, bestScore = Infinity;
+  if (first.length > 1 && ids.length > 1) first.forEach(function (fc, k) {
+    var a = faceBytes_(fc[1]); if (!a) return; var score = 0;
+    ids.slice(1).forEach(function (id) { var m = Infinity; ph[id].f.forEach(function (o) { var b = faceBytes_(o[1]); if (b) m = Math.min(m, faceDist_(a, b)); }); score += m; });
+    if (score < bestScore) { bestScore = score; best = k; }
+  });
+  return pick(ids[0], best);
+}
+
 /** Couple link or staff login: guests see photos only after Find me ('findme') or the gallery is open to everyone ('open'). */
 function guestPhotos_(p) {
   var g = findGallery_(p.g); if (!g) return { ok: false, error: 'This gallery is not available.' };
@@ -1516,7 +1555,7 @@ function coupleThanks_(p) {
 // Guests may download only the photos Find me found of them. For any other photo they send a request with their email;
 // the couple (or the photographer / PicGrades) approves it and the guest gets an email with a download link.
 // This is PicGrades' privacy policy for every wedding, so the couple never has to be the one who says no.
-var FIND_COLUMNS = ['at', 'galleryId', 'phone', 'guestId', 'name', 'sure', 'maybe', 'status'];
+var FIND_COLUMNS = ['at', 'galleryId', 'phone', 'guestId', 'name', 'sure', 'maybe', 'status', 'face'];   // face (step 65a): 'photoId:n' — which face in which wedding photo is this guest
 var DLREQ_COLUMNS = ['at', 'galleryId', 'reqId', 'guestId', 'name', 'phone', 'email', 'ids', 'status', 'grant', 'decidedAt', 'decidedBy', 'kind', 'event'];   // kind 'more' (step 63b): a found guest asks for all photos of one event
 var DL_MAX_IDS = 50;
 function digits_(v) { return String(v == null ? '' : v).replace(/\D/g, '').slice(-10); }
@@ -1918,9 +1957,9 @@ function withItems_(g, out) {
 function guestFind_(g, f, scale, me, guest) {
   var R = guestFaceRules_(), scan = (R.lim + FACE_BAND) * scale, near = [];
   Object.keys(f.photos || {}).forEach(function (pid) {
-    (f.photos[pid].f || []).forEach(function (fc) {
+    (f.photos[pid].f || []).forEach(function (fc, k) {
       var x = faceBytes_(fc[1]); if (!x) return;
-      var t = faceDist_(me, x, scan); if (t <= scan) near.push({ pid: pid, d: t, x: x });
+      var t = faceDist_(me, x, scan); if (t <= scan) near.push({ pid: pid, d: t, x: x, k: k });
     });
   });
   near.sort(function (a, b) { return a.d - b.d; });
@@ -1943,11 +1982,11 @@ function guestFind_(g, f, scale, me, guest) {
   near.forEach(function (n) { if (n.d <= keep && ids.indexOf(n.pid) < 0) ids.push(n.pid); });
   ensureTab_('FindMe', FIND_COLUMNS);
   if (ids.length >= R.min) {
-    appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: ids.join(','), maybe: '', status: 'ok' });
+    appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: ids.join(','), maybe: '', status: 'ok', face: near[0].pid + ':' + near[0].k });
     out.sure = ids; return out;
   }
   // a close match: the photos stay hidden; they are kept here for the couple to approve
-  appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: ids.join(','), maybe: '', status: 'close' });
+  appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: ids.join(','), maybe: '', status: 'close', face: near[0].pid + ':' + near[0].k });
   out.close = true; out.need = R.min;
   return out;
 }
