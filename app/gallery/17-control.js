@@ -255,6 +255,7 @@
     p.insertBefore(stats, p.firstChild);
     const list = h('div', 'pgf-list'), canLock = !!(STAFF && STAFF.canLock);
     if (canLock) note.textContent += ' The small “Plan” switch is PicGrades’ own: off locks a function for the couple and the photographer.';
+    if (window.PGPlan && PGPlan.basic()) p.insertBefore(PGPlan.note('Your free trial has ended. Find me, Reel Edits, Post Edits and guest moments are part of the paid plan — everything else stays free until ' + PGPlan.until() + '.'), note.nextSibling);
     (window.PGFeatures ? PGFeatures.list() : []).forEach(([k, name, line]) => {
       const st = (GALLERY.features || {})[k] || 'on', locked = st === 'locked';
       const row = h('div', 'pgf-row' + (locked ? ' locked' : ''), '<div><b>' + name + '</b><small>' + (locked ? 'Not included in this wedding’s plan' : line) + '</small></div>');
@@ -380,7 +381,9 @@
   const TITLE = { theme: 'Theme', layout: 'Hub layout', pages: 'Page styles', look: 'Look', story: 'Story & highlights', guests: 'Guest photos', functions: 'Functions', requests: 'Requests', photographer: 'Photographer', found: 'Found with Find me' };
   function guestsPane() {
     const p = h('div', 'pgcp-pane');
-    p.appendChild(PGGate.choice()); return p;
+    p.appendChild(PGGate.choice());
+    if (window.PGPlan && PGPlan.basic() && GALLERY.guestPhotos === 'findme') p.appendChild(PGPlan.note('Find me is off since the free trial ended, so guests see only the Wedding Highlights. Choose “Open to everyone” to show them every photo, or upgrade to keep Find me.'));
+    return p;
   }
   let tab = 'home', repaint = () => {}, goTo = () => {};
   function open(start) {
@@ -401,6 +404,7 @@
       wrap.appendChild(h('div', 'pgcp-hero', '<div><h2>' + esc(GALLERY.title || 'Your wedding') + '</h2><p class="pgcp-who">' + who[1] +
         (ROLE === 'demo' ? ' Your changes stay on this phone only, so everyone can play — <button type="button" class="pgcp-reset">start again</button>.' : ' Changes reach every guest straight away.') + '</p></div><span class="pgcp-badge">' + who[0] + '</span>'));
       if (ROLE !== 'demo' && !GALLERY.isStudio) wrap.appendChild(publishStrip());
+      if (window.PGPlan && PGPlan.line()) wrap.appendChild(PGPlan.line());   // step 65d: free trial / free basic gallery
       const list = h('nav', 'pgcp-tabs pgcp-list'); list.setAttribute('aria-label', 'Sections');
       sections().forEach(([g, rows]) => {
         list.appendChild(h('p', 'pgcp-group', esc(g)));

@@ -321,7 +321,7 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     var list = state.weddings || [];
     $('weddings').replaceChildren.apply($('weddings'), list.length ? list.map(function (w) {
       var faces = w.features && w.features.findme === 'on' ? (w.facesStatus === 'Ready' ? 'Find me ready ✓' : 'Find me: faces not read yet') : 'Find me off';
-      var trial = w.plan === 'trial' ? (w.daysLeft > 0 ? w.daysLeft + ' days left in your free trial' : 'Free trial ended') : '';
+      var trial = w.plan === 'trial' ? w.daysLeft + ' days left in your free trial' : w.plan === 'basic' ? 'Free basic gallery until ' + dmy(w.basicEnds) + ' · Find me and the editors are off' : '';   // step 65d
       var copy = el('button', { type: 'button', class: 'mini', text: 'Copy guest link' });
       copy.addEventListener('click', function () { (navigator.clipboard ? navigator.clipboard.writeText(w.guestLink) : Promise.reject()).then(function () { toast('Guest link copied'); }, function () { window.prompt('Guest link', w.guestLink); }); });
       return el('div', { class: 'card wcard' }, [
@@ -330,6 +330,7 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
         el('span', { class: 'pill ' + (w.status === 'Draft' ? 'p-hold' : 'p-done'), text: w.status === 'Draft' ? 'DRAFT' : 'LIVE' }),
         el('div', { class: 'wbtns' }, [w.features && w.features.findme === 'on' && w.facesStatus !== 'Ready' ? el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), style: 'border-color:var(--gold)', text: 'Read faces now' }) : null,
           el('a', { class: 'mini', href: w.coupleLink, target: '_blank', rel: 'noopener', text: 'Open my wedding app' }), w.status === 'Draft' ? null : copy,
+          w.plan === 'basic' && w.upgrade ? el('a', { class: 'mini', href: w.upgrade, target: /^mailto:/.test(w.upgrade) ? '_self' : '_blank', rel: 'noopener', style: 'border-color:var(--gold)', text: 'Upgrade' }) : null,
           el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), target: '_blank', rel: 'noopener', text: 'Links & settings' })].filter(Boolean))]);
     }) : [el('p', { class: 'muted', style: 'margin:0', text: 'No wedding galleries yet. Create one from your Google Drive folder — free for 30 days.' })]);
   }
