@@ -88,6 +88,8 @@ var USER_ROUTES = {
   logout: logout_,
   me: me_,
   createWedding: createWedding_,
+  editingEnquiry: editingEnquiry_,
+  enquiryStatus: enquiryStatus_,
   myWeddings: myWeddings_,
   placeOrder: placeOrder_,
   editOrder: editOrder_,
@@ -169,7 +171,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step65c-faces-self',
+    version: 'step65e-editing',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -326,6 +328,48 @@ function createWedding_(p, user) {
   return Object.assign(r, weddingCard_(g));
 }
 /** The signed-in account's own weddings (the ones made by signing up). */
+// ---------- Human editing enquiry (step 65e) ----------
+// A couple (or photographer) who signed up themselves and has raw, unedited photos asks PicGrades for editing. Every photo is
+// edited by a person — no AI fast editing — and it takes 4 days. There is no package for these accounts, so it is an enquiry:
+// PicGrades replies with a price; once confirmed it becomes a normal editing order.
+var ENQ_COLUMNS = ['at', 'enqId', 'email', 'name', 'companyName', 'galleryId', 'title', 'photos', 'folderUrl', 'wantBy', 'phone', 'notes', 'status', 'repliedAt', 'repliedBy'];
+var EDIT_DAYS = 4;
+function editingEnquiry_(p, user) {
+  var photos = Math.floor(Number(p.photos) || 0), folder = String(p.folderUrl || '').trim().slice(0, 300), notes = String(p.notes || '').trim().slice(0, 1000);
+  var phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20), wantBy = String(p.wantBy || '').slice(0, 10);
+  if (photos < 1 || photos > 20000) return { ok: false, error: 'About how many photos? Please write a number.' };
+  if (!folderIdFromUrl_(folder)) return { ok: false, error: 'Paste the Google Drive folder link of the photos to edit.' };
+  if (wantBy && !/^\d{4}-\d{2}-\d{2}$/.test(wantBy)) return { ok: false, error: 'Choose a date.' };
+  var earliest = fmt_(new Date(Date.now() + EDIT_DAYS * 86400000)).slice(0, 10);
+  if (wantBy && wantBy < earliest) return { ok: false, error: 'Editing by hand takes ' + EDIT_DAYS + ' days — the earliest date is ' + earliest + '.' };
+  if (!limitOk_('enq:' + normEmail_(user.email), 5, 86400)) return { ok: false, error: 'You have sent several requests today. We will reply soon.' };
+  var g = null;
+  if (p.galleryId) { g = findGallery_(p.galleryId); if (!g || String(g.companyName).trim().toLowerCase() !== String(user.companyName).trim().toLowerCase()) g = null; }
+  ensureTab_('Enquiries', ENQ_COLUMNS);
+  var id = 'E' + randomId_(8);
+  appendRow_('Enquiries', { at: fmt_(new Date()), enqId: id, email: normEmail_(user.email), name: user.name || '', companyName: user.companyName || '', galleryId: g ? g.galleryId : '',
+    title: g ? g.title : '', photos: photos, folderUrl: folder, wantBy: wantBy, phone: phone ? "'" + phone : '', notes: notes, status: 'new', repliedAt: '', repliedBy: '' });
+  var adm = String(getSettings_().adminNotifyEmail || '').trim();
+  var lines = [esc_(user.name || user.email) + ' (' + esc_(user.email) + (phone ? ' · ' + esc_(phone) : '') + ') asks for human editing.',
+    '<b>' + photos + ' photos</b>' + (g ? ' · wedding: ' + esc_(g.title) : '') + (wantBy ? ' · wanted by ' + esc_(wantBy) : ''),
+    'Photos: <a href="' + esc_(folder) + '">' + esc_(folder) + '</a>', notes ? 'Notes: ' + esc_(notes) : '', 'Reply with a price, then make an editing order for them.'];
+  if (adm) sendEmail_(adm, 'Editing enquiry: ' + photos + ' photos from ' + (user.name || user.email), 'Human editing enquiry', lines, 'enquiry', id);
+  sendEmail_(user.email, 'We got your editing request', 'We got your editing request',
+    ['Thank you' + (user.name ? ', ' + esc_(String(user.name).split(' ')[0]) : '') + '. We will reply within a day with the price for editing ' + photos + ' photos.',
+     'Every photo is edited by a person on our team — no AI fast editing — because the emotion in a photo is read and understood by people. It takes ' + EDIT_DAYS + ' days once you confirm.',
+     'Your photos stay in your own Google Drive.'], 'enquiry-thanks', id);
+  return { enqId: id, earliest: earliest };
+}
+/** PicGrades staff: mark an enquiry replied or closed. */
+function enquiryStatus_(p, user) {
+  if (!isStaff_(user)) return { ok: false, error: 'Only PicGrades can do this.' };
+  var st = p.status === 'closed' ? 'closed' : p.status === 'new' ? 'new' : 'replied';
+  ensureTab_('Enquiries', ENQ_COLUMNS);
+  var e = readTable_('Enquiries').filter(function (x) { return x.enqId === p.enqId; })[0];
+  if (!e) return { ok: false, error: 'Enquiry not found.' };
+  updateRowByNumber_('Enquiries', e._row, { status: st, repliedAt: st === 'new' ? '' : fmt_(new Date()), repliedBy: st === 'new' ? '' : normEmail_(user.email) });
+  return { enqId: e.enqId, status: st };
+}
 function myWeddings_(p, user) {
   ensureTab_('Galleries', GALLERY_COLUMNS);
   var key = String(user.companyName).trim().toLowerCase();
@@ -336,7 +380,7 @@ function weddingCard_(g) {
   var ends = g.trialEnds ? parseDate_(g.trialEnds) : null, left = ends ? Math.max(0, Math.ceil((ends - new Date()) / 86400000)) : null;
   var site = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '');
   return { galleryId: g.galleryId, title: g.title, eventDate: g.eventDate, photoCount: Number(g.photoCount || 0), status: g.status === 'Draft' ? 'Draft' : 'Published',
-    plan: g.plan || '', trialEnds: g.trialEnds || '', daysLeft: left, facesStatus: g.facesStatus || '', features: featuresOf_(g),
+    plan: planOf_(g).plan, trialEnds: g.trialEnds || '', daysLeft: left, basicEnds: planOf_(g).basicEnds || '', upgrade: upgradeLink_(), facesStatus: g.facesStatus || '', features: featuresOf_(g),
     guestLink: site + '/g/' + g.galleryId, coupleLink: site + '/c/' + g.galleryId + '/' + coupleKey_(g), photographerLink: site + '/ph/' + g.galleryId };
 }
 
@@ -764,7 +808,10 @@ function queue_(p, user) {
     .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).slice(0, 30)
     .map(function (g) { var c = weddingCard_(g); c.companyName = g.companyName; c.createdAt = g.createdAt; c.createdBy = g.createdBy;
       c.facesDue = fmt_(new Date(parseDate_(g.createdAt).getTime() + 24 * 3600000)); return c; });
-  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }), weddings: self };
+  ensureTab_('Enquiries', ENQ_COLUMNS);
+  var enq = readTable_('Enquiries').sort(function (a, b) { return (a.status === 'new' ? 0 : 1) - (b.status === 'new' ? 0 : 1) || String(b.at).localeCompare(String(a.at)); }).slice(0, 30)
+    .map(function (e) { var o = {}; ENQ_COLUMNS.forEach(function (k) { o[k] = e[k]; }); o.phone = String(o.phone || '').replace(/^'/, ''); return o; });
+  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }), weddings: self, enquiries: enq };
 }
 
 var STATUS_SUBJECT = {
@@ -968,7 +1015,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds'];   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail'];   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1146,6 +1193,7 @@ function getGallery_(p) {
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   m.guestPhotos = guestPhotosOf_(g);
   if (gatedFor_(g, p)) gateManifest_(g, m, p);
+  if (g.plan && privileged_(g, p)) { m.plan = planOf_(g); m.plan.upgrade = upgradeLink_(); }   // step 65d: only the couple / photographer see the plan
   return { gallery: m };
 }
 
@@ -1514,7 +1562,8 @@ function guestFolder_(g) {
 
 /** Public (guest with name + phone): upload one photo or short video to Root Moment. It waits for the couple's approval. */
 function uploadMoment_(p) {
-  var g = publishedGallery_(p.g), guest = guestFor_(g, p);
+  var g = publishedGallery_(p.g); needFeature_(g, 'upload');   // step 65d
+  var guest = guestFor_(g, p);
   var mime = String(p.mime || ''), isVideo = /^video\//.test(mime), isPhoto = /^image\/(jpeg|png|webp|heic|heif)$/.test(mime);
   if (!isVideo && !isPhoto) return { ok: false, error: 'Only photos and videos can be uploaded.' };
   var data = String(p.base64 || '').replace(/^data:[^,]*,/, '');
@@ -1784,9 +1833,26 @@ var FEATURE_KEYS = ['findme', 'reel', 'post', 'upload', 'notes', 'hearts', 'down
 function jsonObj_(s) { try { var o = JSON.parse(String(s || '') || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch (e) { return {}; } }
 /** on / off / locked for every function of this wedding. */
 function featuresOf_(g) {
-  var f = jsonObj_(g.features), a = jsonObj_(g.allowed), out = {};
-  FEATURE_KEYS.forEach(function (k) { out[k] = a[k] === 'off' ? 'locked' : f[k] === 'off' ? 'off' : 'on'; });
+  var f = jsonObj_(g.features), a = jsonObj_(g.allowed), out = {}, basic = planOf_(g).plan === 'basic';
+  FEATURE_KEYS.forEach(function (k) { out[k] = a[k] === 'off' || (basic && TRIAL_EXTRAS.indexOf(k) > -1) ? 'locked' : f[k] === 'off' ? 'off' : 'on'; });
   return out;
+}
+// ---------- After the free trial (step 65d) ----------
+// A wedding made by signing up is a 30-day trial with everything on. After that it is the free basic gallery for a year
+// (counted from when it was made): the photos, layouts, highlights, Root Moment, notes and hearts stay; the paid functions lock.
+var TRIAL_EXTRAS = ['findme', 'reel', 'post', 'upload'];
+function planOf_(g) {
+  if (!g || g.plan !== 'trial') return { plan: g && g.plan || '' };
+  var now = new Date(), ends = parseDate_(g.trialEnds), made = parseDate_(g.createdAt), day = 86400000;
+  var basicEnds = made.getTime() > 0 ? new Date(made.getTime() + 365 * day) : null;
+  var over = ends.getTime() > 0 && now > ends;
+  return { plan: over ? 'basic' : 'trial', trialEnds: g.trialEnds || '', daysLeft: over ? 0 : Math.max(0, Math.ceil((ends - now) / day)),
+    basicEnds: basicEnds ? fmt_(basicEnds) : '' };
+}
+function needFeature_(g, k) { if (featuresOf_(g)[k] !== 'on') throw new Error(k === 'findme' ? 'Find me is not on for this wedding.' : 'This function is not on for this wedding.'); }
+function upgradeLink_() {
+  var s = getSettings_();
+  return String(s.upgradeUrl || '').trim() || (s.supportEmail ? 'mailto:' + String(s.supportEmail).trim() + '?subject=' + encodeURIComponent('Upgrade my wedding app') : 'https://picgrades-os.vercel.app/app/');
 }
 function saveFeatures_(g, input) {
   var want = typeof input === 'string' ? jsonObj_(input) : (input || {}), cur = jsonObj_(g.features), a = jsonObj_(g.allowed);
@@ -2004,6 +2070,7 @@ function faceDist_(a, b, stop) {
 function findFaces_(p) {
   var g = faceGallery_(p.g), device = String(p.device || '').slice(0, 40);
   if (device.length < 8) return { ok: false, error: 'Missing details.' };
+  if (!privileged_(g, p)) needFeature_(g, 'findme');   // step 65d: the server refuses too, not only the button
   if (!limitOk_('ff:' + device, 20, 3600) || !limitOk_('ffg:' + g.galleryId, 1500, 3600)) return { ok: false, error: 'Too many searches for now. Please try again in an hour.' };
   // Step 45: guests need their name + mobile first, and get one search per mobile number (the couple and staff search freely)
   var guest = null;
@@ -2343,6 +2410,31 @@ function setupNightly() {
 /** Every night: old login codes and sessions go; hidden guest uploads are deleted after 7 days;
  *  guest phone numbers are removed 6 months after the wedding and face data 12 months after it.
  *  Posts, albums, approved moments, names and notes stay. */
+/** step 65d: one email 7 days before the free trial ends, one when it has ended (to whoever made the wedding). */
+function trialMails_(now) {
+  var sent = 0, day = 86400000;
+  readTable_('Galleries').forEach(function (g) {
+    if (g.plan !== 'trial' || !g.createdBy) return;
+    var ends = parseDate_(g.trialEnds); if (!(ends.getTime() > 0)) return;
+    var left = (ends - now) / day, pl = planOf_(g), up = upgradeLink_(), site = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '');
+    var keep = 'Your photos, layouts, highlights, Root Moment, notes and hearts stay free until ' + esc_(String(pl.basicEnds).slice(0, 10)) + '.';
+    if (left <= 0 && g.trialMail !== 'ended') {
+      sendEmail_(g.createdBy, 'Your free trial has ended: ' + g.title, 'Your free trial has ended',
+        ['Your wedding app <b>' + esc_(g.title) + '</b> is now the free basic gallery.', keep,
+         'Find me, Reel Edits, Post Edits and guest moments are switched off. To keep them, upgrade your wedding app.',
+         '<a href="' + esc_(up) + '" style="display:inline-block;padding:12px 22px;border-radius:24px;background:#141413;color:#fff;text-decoration:none">Upgrade</a>',
+         'Your galleries: <a href="' + site + '/app/">' + site + '/app/</a>'], 'trial-ended', g.galleryId);
+      updateRowByNumber_('Galleries', g._row, { trialMail: 'ended' }); sent++;
+    } else if (left > 0 && left <= 7 && !g.trialMail) {
+      sendEmail_(g.createdBy, Math.ceil(left) + ' days left in your free trial: ' + g.title, 'Your free trial ends soon',
+        ['Your free trial of <b>' + esc_(g.title) + '</b> ends on ' + esc_(String(g.trialEnds).slice(0, 10)) + '.', keep,
+         'After that, Find me, Reel Edits, Post Edits and guest moments switch off unless you upgrade.',
+         '<a href="' + esc_(up) + '" style="display:inline-block;padding:12px 22px;border-radius:24px;background:#141413;color:#fff;text-decoration:none">Upgrade</a>'], 'trial-warn', g.galleryId);
+      updateRowByNumber_('Galleries', g._row, { trialMail: 'warned' }); sent++;
+    }
+  });
+  return sent;
+}
 function nightlyCleanup() {
   var lock = LockService.getScriptLock(); lock.waitLock(60000);
   var out = { sessions: 0, hiddenDeleted: 0, phonesRemoved: 0, facesRemoved: 0 };
@@ -2359,6 +2451,7 @@ function nightlyCleanup() {
     });
 
     ensureTab_('Galleries', GALLERY_COLUMNS); ensureTab_('Guests', GUEST_COLUMNS);
+    out.trialMails = trialMails_(now);
     var phoneGone = {}, guests = readTable_('Guests'), posts = readTable_('GuestPosts');
     readTable_('Galleries').forEach(function (g) {
       var wed = parseDate_(String(g.eventDate || '').length === 10 ? g.eventDate + ' 00:00:00' : g.createdAt); if (!(wed.getTime() > 0)) return;   // no date known: keep
