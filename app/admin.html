@@ -139,7 +139,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     <h1 style="margin:0 0 6px;font-size:44px;line-height:1.05">Order queue</h1>
     <p class="muted" style="margin:0 0 18px">Soonest delivery first. Paste the LR link to complete an order — the client gets the email right away.</p>
     <div class="row" style="align-items:flex-start">
-      <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">Editing requests (Human touch · AI + Human · AI)</p><div id="qEnq"></div></div>
+      <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">Editing requests (Human touch · AI + Human · After AI · AI)</p><div id="qEnq"></div></div>
       <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">New wedding galleries (sign-ups · free trial)</p><div id="qWed"></div></div>
       <div class="card" style="flex:999 1 560px;min-width:0"><p class="eyebrow" style="margin:0">Open orders</p><div id="qOpen"></div></div>
       <div class="card" style="flex:1 1 300px;min-width:0"><p class="eyebrow" style="margin:0">Recently completed</p><div id="qDone"></div></div>
@@ -326,13 +326,14 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   function renderQueue(res) {
     // step 65e: human editing enquiries from people who signed up themselves — reply with a price, then make an editing order
     fill('qEnq', (res.enquiries || []).length ? res.enquiries.map(function (e) {
-      var KIND = { human: 'Human touch', aihuman: 'AI + Human', ai: 'AI' }, k = KIND[e.kind] || 'Human touch';
+      var KIND = { human: 'Human touch', aihuman: 'AI + Human', afterai: 'After AI', ai: 'AI' }, k = KIND[e.kind] || 'Human touch';
       var head = el('div', { style: 'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [el('b', { text: (e.name || e.email) + ' · ' + k + (e.profile ? ' (' + e.profile + ')' : '') + ' · ' + num(e.photos) + ' photos' + (Number(e.freePhotos) ? ' · ' + e.freePhotos + ' free' : '') + (e.total !== '' && e.total != null ? ' · ₹' + Number(e.total).toLocaleString('en-IN') : '') }),
         el('span', { class: 'pill ' + (e.status === 'new' ? 'p-hold' : 'p-done'), text: e.status === 'new' ? 'NEW' : e.status.toUpperCase() })]);
       var meta = el('span', { class: 'muted', style: 'font-size:13px', text: [e.email, e.phone, e.title ? 'wedding: ' + e.title : '', e.wantBy ? 'wanted by ' + e.wantBy : '', 'asked ' + String(e.at).slice(0, 16)].filter(Boolean).join(' · ') });
       var notes = e.notes ? el('span', { style: 'font-size:13px', text: (e.kind === 'aihuman' ? 'Tone: ' : '') + '“' + e.notes + '”' }) : null;
+      var ref = e.reference ? el('span', { style: 'font-size:13px', text: 'Style reference: ' + e.reference + (e.aiTool ? ' · AI used: ' + e.aiTool : '') }) : null;
       var consent = el('span', { style: 'font-size:12px;font-weight:600;color:' + (e.consent === 'yes' ? '#7FD39A' : 'var(--mute,#999)'), text: e.consent === 'yes' ? '✓ May use these edits to improve our editing' : 'Not for training — edit only' });
-      var mail = 'mailto:' + encodeURIComponent(e.email) + '?subject=' + encodeURIComponent('Your editing request — ' + e.photos + ' photos') + '&body=' + encodeURIComponent('Hi ' + String(e.name || '').split(' ')[0] + ',\n\nThank you for your request: ' + k + (e.profile ? ' (' + e.profile + ')' : '') + ', ' + e.photos + ' photos' + (Number(e.freePhotos) ? ' (' + e.freePhotos + ' free)' : '') + '.\n\nTotal: ₹' + Number(e.total || 0).toLocaleString('en-IN') + '\nReady ' + (e.kind === 'ai' ? '24 hours' : e.kind === 'aihuman' ? '48 hours' : '4 days') + ' after you confirm.\n\nPicGrades');
+      var mail = 'mailto:' + encodeURIComponent(e.email) + '?subject=' + encodeURIComponent('Your editing request — ' + e.photos + ' photos') + '&body=' + encodeURIComponent('Hi ' + String(e.name || '').split(' ')[0] + ',\n\nThank you for your request: ' + k + (e.profile ? ' (' + e.profile + ')' : '') + ', ' + e.photos + ' photos' + (Number(e.freePhotos) ? ' (' + e.freePhotos + ' free)' : '') + '.\n\nTotal: ₹' + Number(e.total || 0).toLocaleString('en-IN') + '\nReady ' + (e.kind === 'ai' ? '24 hours' : e.kind === 'aihuman' || e.kind === 'afterai' ? '48 hours' : '4 days') + ' after you confirm.\n\nPicGrades');
       var acts = el('span', { style: 'font-size:13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center' }, [
         el('a', { href: e.folderUrl, target: '_blank', rel: 'noopener', text: 'Open photos' }), el('a', { href: mail, text: 'Reply by email' })]);
       [['replied', 'Mark replied'], ['closed', 'Close'], ['new', 'Back to new']].forEach(function (x) {
@@ -341,7 +342,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
         b.addEventListener('click', function () { b.disabled = true; api('enquiryStatus', { enqId: e.enqId, status: x[0] }).then(function () { return loadQueue(); }).catch(function (er) { toast(er.message); b.disabled = false; }); });
         acts.appendChild(b);
       });
-      return el('div', { class: 'qitem' }, [head, meta, notes, consent, acts].filter(Boolean));
+      return el('div', { class: 'qitem' }, [head, meta, ref, notes, consent, acts].filter(Boolean));
     }) : [el('p', { class: 'muted', text: 'No editing enquiries yet.' })]);
     // step 65b: weddings made by signing up (no editing order). With Find me on, faces are due within 24 hours.
     fill('qWed', (res.weddings || []).length ? res.weddings.map(function (w) {

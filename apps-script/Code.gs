@@ -334,12 +334,16 @@ function createWedding_(p, user) {
 // touch — never an AI tool — so Human touch comes first; AI and AI + Human are offered because the market expects them.
 //   human   — edited by hand, 4 days, ₹8 a photo
 //   aihuman — AI first, then a person sets the tone they ask for, 48 hours, ₹7 a photo
+//   afterai — photos already edited by another AI (Aftershoot, Imagen…) that did not come out right: a person corrects and
+//             quality-checks them to the look they want, 48 hours, ₹3 a photo (the cost is only the human part). We can also
+//             help train their own profile in the AI they use.
 //   ai      — AI with one of our style profiles, 24 hours, ₹3 a photo
+// Human touch, AI + Human and After AI need a style reference (links to photos or a profile they like).
 // Prices and profiles live in Settings (editPriceHuman / editPriceAIHuman / editPriceAI, aiProfiles) so they can change.
 // The first request of an account may take 150 photos free (AI or AI + Human) — in return they allow PicGrades to use those
 // edits to improve its own editing (internal only). On paid requests that permission is optional. It is saved with each request.
 var ENQ_COLUMNS = ['at', 'enqId', 'email', 'name', 'companyName', 'galleryId', 'title', 'photos', 'folderUrl', 'wantBy', 'phone', 'notes', 'status', 'repliedAt', 'repliedBy',
-  'kind', 'profile', 'pricePer', 'freePhotos', 'total', 'consent'];
+  'kind', 'profile', 'pricePer', 'freePhotos', 'total', 'consent', 'reference', 'aiTool'];
 var EDIT_DAYS = 4, FREE_SAMPLE = 150;
 function editOffers_() {
   var s = getSettings_(), num = function (v, d) { var n = Number(v); return n > 0 ? n : d; };
@@ -347,6 +351,7 @@ function editOffers_() {
   return {
     human: { name: 'Human touch', price: num(s.editPriceHuman, 8), hours: 96, free: false },
     aihuman: { name: 'AI + Human', price: num(s.editPriceAIHuman, 7), hours: 48, free: true },
+    afterai: { name: 'After AI', price: num(s.editPriceAfterAI, 3), hours: 48, free: false },
     ai: { name: 'AI', price: num(s.editPriceAI, 3), hours: 24, free: true },
     profiles: profiles, freeSample: FREE_SAMPLE
   };
@@ -364,6 +369,8 @@ function editingEnquiry_(p, user) {
   var phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20), wantBy = String(p.wantBy || '').slice(0, 10);
   var offers = editOffers_(), kind = offers[p.kind] && p.kind !== 'profiles' && p.kind !== 'freeSample' ? p.kind : 'human', offer = offers[kind];
   var profile = kind === 'ai' ? String(p.profile || '') : '';
+  var reference = String(p.reference || '').trim().slice(0, 600), aiTool = kind === 'afterai' ? String(p.aiTool || '').trim().slice(0, 40) : '';
+  if (kind !== 'ai' && reference.length < 5) return { ok: false, error: 'Add a style reference: a link to photos or a profile you like, so we match your look.' };
   if (kind === 'ai' && offers.profiles.indexOf(profile) < 0) return { ok: false, error: 'Choose a style profile.' };
   if (photos < 1 || photos > 20000) return { ok: false, error: 'About how many photos? Please write a number.' };
   if (!folderIdFromUrl_(folder)) return { ok: false, error: 'Paste the Google Drive folder link of the photos to edit.' };
@@ -381,19 +388,20 @@ function editingEnquiry_(p, user) {
   var id = 'E' + randomId_(8);
   appendRow_('Enquiries', { at: fmt_(new Date()), enqId: id, email: normEmail_(user.email), name: user.name || '', companyName: user.companyName || '', galleryId: g ? g.galleryId : '',
     title: g ? g.title : '', photos: photos, folderUrl: folder, wantBy: wantBy, phone: phone ? "'" + phone : '', notes: notes, status: 'new', repliedAt: '', repliedBy: '',
-    kind: kind, profile: profile, pricePer: offer.price, freePhotos: free, total: total, consent: consent ? 'yes' : 'no' });
+    kind: kind, profile: profile, pricePer: offer.price, freePhotos: free, total: total, consent: consent ? 'yes' : 'no', reference: reference, aiTool: aiTool });
   var money = function (n) { return '₹' + Number(n).toLocaleString('en-IN'); };
   var what = offer.name + (profile ? ' (' + profile + ')' : '') + ' · ' + photos + ' photos' + (free ? ' · first ' + free + ' free' : '') + ' · ' + money(total) + ' estimated';
   var adm = String(getSettings_().adminNotifyEmail || '').trim();
   if (adm) sendEmail_(adm, 'Editing request: ' + offer.name + ', ' + photos + ' photos from ' + (user.name || user.email), 'Editing request',
     [esc_(user.name || user.email) + ' (' + esc_(user.email) + (phone ? ' · ' + esc_(phone) : '') + ') asks for editing.', '<b>' + esc_(what) + '</b>',
      (g ? 'Wedding: ' + esc_(g.title) + ' · ' : '') + (wantBy ? 'wanted by ' + esc_(wantBy) : 'no date given'),
-     'Photos: <a href="' + esc_(folder) + '">' + esc_(folder) + '</a>', notes ? (kind === 'aihuman' ? 'Tone they want: ' : 'Notes: ') + esc_(notes) : '',
+     'Photos: <a href="' + esc_(folder) + '">' + esc_(folder) + '</a>', reference ? 'Style reference: ' + esc_(reference) : '', aiTool ? 'AI they used: ' + esc_(aiTool) : '', notes ? (kind === 'aihuman' ? 'Tone they want: ' : 'Notes: ') + esc_(notes) : '',
      'May PicGrades use these edits to improve its editing: <b>' + (consent ? 'yes' : 'no') + '</b>.'], 'enquiry', id);
   sendEmail_(user.email, 'We got your editing request', 'We got your editing request',
     ['Thank you' + (user.name ? ', ' + esc_(String(user.name).split(' ')[0]) : '') + '. You asked for: <b>' + esc_(what) + '</b>.',
      kind === 'human' ? 'Every photo will be edited by a person on our team — because the emotion in a photo is read and understood by people.' :
-       kind === 'aihuman' ? 'AI does the first pass and a person on our team sets the tone you asked for.' : 'Edited with our AI using the “' + esc_(profile) + '” profile.',
+       kind === 'aihuman' ? 'AI does the first pass and a person on our team sets the tone you asked for.' :
+       kind === 'afterai' ? 'A person on our team corrects and quality-checks your AI-edited photos to the look you want. We can also help you train your own profile in the AI you use.' : 'Edited with our AI using the “' + esc_(profile) + '” profile.',
      'We will confirm within a day. Ready about ' + (offer.hours < 72 ? offer.hours + ' hours' : days + ' days') + ' after you confirm. Your photos stay in your own Google Drive.'], 'enquiry-thanks', id);
   return { enqId: id, earliest: earliest, free: free, total: total };
 }

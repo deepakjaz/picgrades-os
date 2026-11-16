@@ -1,6 +1,7 @@
 // Browser test (steps 65e + 66): editing requests.
 //   · the dashboard card "Edit your photos" (human touch first; ₹8 / ₹7 / ₹3; first 150 free); "Get these edited" opens the form
-//   · three choices — Human touch (our signature, 4 days) first, AI + Human (48 h, tone), AI (24 h, style profile)
+//   · four choices — Human touch (our signature, 4 days) first, AI + Human (48 h, tone), After AI (48 h, which AI), AI (24 h, profile)
+//   · Human touch, AI + Human and After AI need a style reference
 //   · the free sample needs the permission box; a live estimate; the earliest date follows the choice
 //   · the admin page lists it (NEW) with the choice, the free photos, the total and the permission
 const http = require('http'); const fs = require('fs'); const path = require('path');
@@ -44,13 +45,19 @@ const srv = http.createServer((req, res) => {
   check(await pg.locator('#v-editing').isVisible() && await pg.inputValue('#edWed') === wed.galleryId, '"Get these edited" opens the form with Nina & Raj chosen');
   await pg.waitForSelector('#edOffers .offer');
   const offers = await pg.$$eval('#edOffers .offer', l => l.map(x => x.innerText.replace(/\s+/g, ' ')));
-  check(offers.length === 3 && /^Human touch · our signature/.test(offers[0]) && /AI \+ Human/.test(offers[1]) && /^AI /.test(offers[2]) && await pg.isChecked('#edOffers input[value="human"]'), 'three choices, Human touch first and chosen');
+  check(offers.length === 4 && /^Human touch · our signature/.test(offers[0]) && /AI \+ Human/.test(offers[1]) && /^After AI/.test(offers[2]) && /^AI /.test(offers[3]) && await pg.isChecked('#edOffers input[value="human"]'), 'four choices: Human touch (first, chosen), AI + Human, After AI, AI');
   check(await pg.getAttribute('#edBy', 'min') === new Date(Date.now() + 4 * 86400000).toISOString().slice(0, 10) && !(await pg.isVisible('#edFreeBox')), 'Human touch: 4 days, no free sample');
   await pg.fill('#edCount', '650'); await pg.fill('#edFolder', 'https://drive.google.com/drive/folders/' + W);
   check(/650 photos × ₹8 = ₹5,200/.test(await pg.textContent('#edEstimate')), 'estimate: 650 × ₹8 = ₹5,200');
   await pg.click('#edOffers input[value="ai"]');
   check(await pg.isVisible('#edProfileBox') && await pg.getAttribute('#edBy', 'min') === new Date(Date.now() + 86400000).toISOString().slice(0, 10), 'AI: style profile appears, 24 hours');
+  check(!(await pg.isVisible('#edRefBox')), 'AI: no style reference needed (it uses a profile)');
+  await pg.click('#edOffers input[value="afterai"]');
+  check(await pg.isVisible('#edToolBox') && await pg.isVisible('#edRefBox') && /650 photos × ₹3 = ₹1,950/.test(await pg.textContent('#edEstimate')) && !(await pg.isVisible('#edFreeBox')), 'After AI: "Which AI did you use?", style reference, 650 × ₹3 = ₹1,950');
   await pg.click('#edOffers input[value="aihuman"]');
+  await pg.click('#edBtn'); await pg.waitForTimeout(300);
+  check(/style reference/.test(await pg.textContent('#edErr')), 'AI + Human needs a style reference');
+  await pg.fill('#edRef', 'https://instagram.com/lens.and.light');
   check(await pg.isVisible('#edFreeBox') && /650 photos − 150 free × ₹7 = ₹3,500/.test(await pg.textContent('#edEstimate')) && /tone/.test(await pg.textContent('#edNotesLabel')), 'AI + Human: tone field, 150 free → ₹3,500');
   await pg.click('#edBtn'); await pg.waitForTimeout(300);
   check(/tone and look/.test(await pg.textContent('#edErr')), 'AI + Human needs the tone');
@@ -67,7 +74,7 @@ const srv = http.createServer((req, res) => {
   pg = await open('/app/admin.html', admin, 1280); await pg.waitForTimeout(1500);
   await pg.click('nav.dock button[data-go="queue"]'); await pg.waitForSelector('#qEnq .qitem');
   const q = await pg.locator('#qEnq').innerText();
-  check(/Nina Kapoor · AI \+ Human · 650 photos · 150 free · ₹3,500/.test(q) && /NEW/.test(q) && /Tone: “Warm, natural skin tones”/.test(q) && /wedding: Nina & Raj/.test(q) && /May use these edits/.test(q), 'admin: choice, free photos, total, tone, permission, NEW');
+  check(/Nina Kapoor · AI \+ Human · 650 photos · 150 free · ₹3,500/.test(q) && /NEW/.test(q) && /Tone: “Warm, natural skin tones”/.test(q) && /wedding: Nina & Raj/.test(q) && /May use these edits/.test(q) && /Style reference: https:\/\/instagram.com\/lens.and.light/.test(q), 'admin: choice, free photos, total, tone, style reference, permission, NEW');
   check(/^mailto:nina%40example.com\?subject=/.test(await pg.getAttribute('#qEnq a:has-text("Reply by email")', 'href')), '"Reply by email" writes to her with a ready text');
   await shot(pg, '4-admin');
   await pg.click('#qEnq button:has-text("Mark replied")'); await pg.waitForTimeout(1200);

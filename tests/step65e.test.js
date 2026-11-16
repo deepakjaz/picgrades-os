@@ -10,14 +10,14 @@ call('signUp', { email: 'nina@example.com', name: 'Nina Kapoor', kind: 'couple',
 const tok = call('verifyCode', { email: 'nina@example.com', code: codeOf('nina@example.com') }).token;
 const wed = call('createWedding', { token: tok, folderUrl: W, title: 'Nina & Raj' });
 const later = d => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
-const link = 'https://drive.google.com/drive/folders/' + W;
+const link = 'https://drive.google.com/drive/folders/' + W, REF = 'https://instagram.com/somestudio';
 
-assert(!call('editingEnquiry', { token: tok, photos: 0, folderUrl: link }).ok, 'needs a number of photos');
-assert(!call('editingEnquiry', { token: tok, photos: 300, folderUrl: 'hello' }).ok, 'needs a Drive folder link');
-let r = call('editingEnquiry', { token: tok, photos: 300, folderUrl: link, wantBy: later(2) });
+assert(!call('editingEnquiry', { token: tok, photos: 0, folderUrl: link, reference: REF }).ok, 'needs a number of photos');
+assert(!call('editingEnquiry', { token: tok, photos: 300, folderUrl: 'hello', reference: REF }).ok, 'needs a Drive folder link');
+let r = call('editingEnquiry', { token: tok, photos: 300, folderUrl: link, wantBy: later(2), reference: REF });
 assert(!r.ok && /takes 4 days/.test(r.error), 'a date sooner than 4 days is refused: ' + r.error);
 const n = mail.length;
-r = call('editingEnquiry', { token: tok, photos: 300, folderUrl: link, wantBy: later(6), phone: '98000 11122', notes: 'Warm tones please', galleryId: wed.galleryId });
+r = call('editingEnquiry', { token: tok, photos: 300, folderUrl: link, reference: REF, wantBy: later(6), phone: '98000 11122', notes: 'Warm tones please', galleryId: wed.galleryId });
 assert(r.enqId && /^E/.test(r.enqId), 'the enquiry is saved');
 const sent = mail.slice(n);
 assert(sent.some(m => m.to === 'team@picgrades.com' && /Editing request: Human touch, 300 photos from Nina Kapoor/.test(m.subject)), 'PicGrades is emailed');
@@ -36,6 +36,6 @@ assert(call('queue', { token: admin }).enquiries.find(x => x.enqId === r.enqId).
 // another account's wedding id is not attached
 call('signUp', { email: 'om@example.com', name: 'Om', kind: 'couple' });
 const tok2 = call('verifyCode', { email: 'om@example.com', code: codeOf('om@example.com') }).token;
-const r2 = call('editingEnquiry', { token: tok2, photos: 50, folderUrl: link, galleryId: wed.galleryId });
+const r2 = call('editingEnquiry', { token: tok2, photos: 50, folderUrl: link, reference: REF, galleryId: wed.galleryId });
 assert(E.slice(1).find(x => x[h.indexOf('enqId')] === r2.enqId)[h.indexOf('galleryId')] === '', 'someone else\'s wedding is not attached to an enquiry');
 console.log(fails ? fails + ' FAILED' : 'all passed'); process.exit(fails ? 1 : 0);

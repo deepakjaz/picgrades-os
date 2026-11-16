@@ -165,7 +165,7 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
       <div id="weddings" style="display:flex;flex-direction:column;gap:10px"></div>
       <div class="card editcard">
         <div style="flex:2 1 280px;min-width:0"><p style="margin:0;font-weight:600;font-size:17px">Edit your photos</p>
-          <p class="muted" style="margin:6px 0 0;font-size:14px">Our heart is the human touch — the emotion in a photo is read and understood by people. <b>Human touch</b> ₹8 a photo · <b>AI + Human</b> ₹7 · <b>AI</b> ₹3. <span id="freeHint"></span></p></div>
+          <p class="muted" style="margin:6px 0 0;font-size:14px">Our heart is the human touch — the emotion in a photo is read and understood by people. <b>Human touch</b> ₹8 a photo · <b>AI + Human</b> ₹7 · <b>After AI</b> ₹3 (we fix edits another AI got wrong) · <b>AI</b> ₹3. <span id="freeHint"></span></p></div>
         <button class="btn" type="button" data-go="editing" style="border-radius:999px">Edit my photos</button>
       </div>
     </div>
@@ -199,6 +199,10 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     <form id="edForm" class="card" style="display:flex;flex-direction:column;gap:16px;max-width:720px" novalidate>
       <fieldset class="offers"><legend>How should we edit them?</legend><div id="edOffers"></div></fieldset>
       <div id="edProfileBox" class="hidden"><label for="edProfile">AI style profile</label><select id="edProfile"></select></div>
+      <div id="edToolBox" class="hidden"><label for="edTool">Which AI did you use?</label><select id="edTool"><option>Aftershoot</option><option>Imagen</option><option>Another AI</option></select>
+        <p class="muted" style="margin:6px 0 0;font-size:13px">We correct and quality-check those edits by hand. We can also help you train your own profile in the AI you use.</p></div>
+      <div id="edRefBox"><label for="edRef">Style reference</label><input id="edRef" placeholder="Links to photos or an Instagram profile whose look you like" maxlength="600">
+        <p class="muted" style="margin:6px 0 0;font-size:13px">So we match your look. A Drive folder, a website or an Instagram profile is fine.</p></div>
       <div><label for="edWed">Which wedding</label><select id="edWed"></select></div>
       <div><label for="edCount">About how many photos?</label><input id="edCount" type="number" inputmode="numeric" min="1" max="20000" placeholder="800" required></div>
       <div><label for="edFolder">Google Drive folder with the raw photos</label><input id="edFolder" inputmode="url" placeholder="https://drive.google.com/drive/folders/…" required>
@@ -379,14 +383,14 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     }) : [el('p', { class: 'muted', style: 'margin:0', text: 'No wedding galleries yet. Create one from your Google Drive folder — free for 30 days.' })]);
   }
   // ---- human editing enquiry (step 65e) ----
-  var OFFERS = null, OFFER_ORDER = ['human', 'aihuman', 'ai'];
+  var OFFERS = null, OFFER_ORDER = ['human', 'aihuman', 'afterai', 'ai'];
   function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
   function edKind() { var c = document.querySelector('#edOffers input:checked'); return c ? c.value : 'human'; }
   function paintEstimate() {
     if (!OFFERS) return;
     var k = edKind(), o = OFFERS[k], n = Math.max(0, Math.floor(+$('edCount').value || 0));
     var canFree = o.free && OFFERS.freeLeft > 0, useFree = canFree && $('edUseFree').checked, free = useFree ? Math.min(n, OFFERS.freeLeft) : 0;
-    show('edProfileBox', k === 'ai'); show('edFreeBox', canFree);
+    show('edProfileBox', k === 'ai'); show('edFreeBox', canFree); show('edToolBox', k === 'afterai'); show('edRefBox', k !== 'ai');
     $('edNotesLabel').textContent = k === 'aihuman' ? 'The tone and look you want' : 'Anything we should know? (optional)';
     $('edConsentText').textContent = (useFree ? 'Needed for the free sample: ' : 'Optional: ') + 'you allow PicGrades to use these edits to improve its own editing (internal only — never shared or sold).';
     var days = Math.ceil(o.hours / 24); $('edBy').min = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
@@ -397,7 +401,7 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     show('edForm', true); show('edDone', false); err('edErr', '');
     api('editOffers').then(function (o) {
       OFFERS = o; $('edFreeN').textContent = o.freeLeft;
-      var note = { human: 'Every photo edited by a person · 4 days', aihuman: 'AI first, then a person sets your tone · 48 hours', ai: 'Our AI with a style profile · 24 hours' };
+      var note = { human: 'Every photo edited by a person · 4 days', aihuman: 'AI first, then a person sets your tone · 48 hours', afterai: 'Already edited by an AI but not happy? A person fixes and checks them · 48 hours', ai: 'Our AI with a style profile · 24 hours' };
       $('edOffers').replaceChildren.apply($('edOffers'), OFFER_ORDER.map(function (k, i) {
         var lab = el('label', { class: 'offer' }, [el('input', { type: 'radio', name: 'edKind', value: k }), el('span', {}, [
           el('b', { text: o[k].name + (k === 'human' ? ' · our signature' : '') }), el('small', { text: note[k] }), el('em', { text: money(o[k].price) + ' a photo' + (o[k].free && o.freeLeft ? ' · ' + o.freeLeft + ' free' : '') })])]);
@@ -421,8 +425,9 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     if (!/\/folders\//.test($('edFolder').value)) return err('edErr', 'Paste the Google Drive folder link (it contains /folders/).');
     var btn = $('edBtn'); btn.disabled = true; btn.textContent = 'Sending…';
     var kind = edKind();
+    if (kind !== 'ai' && $('edRef').value.trim().length < 5) { btn.disabled = false; btn.textContent = 'Send request'; $('edRef').focus(); return err('edErr', 'Add a style reference: a link to photos or a profile you like, so we match your look.'); }
     if (kind === 'aihuman' && !$('edNotes').value.trim()) { btn.disabled = false; btn.textContent = 'Send request'; return err('edErr', 'Tell us the tone and look you want.'); }
-    api('editingEnquiry', { kind: kind, profile: $('edProfile').value, useFree: $('edUseFree').checked ? 'yes' : 'no', consent: $('edConsent').checked ? 'yes' : 'no',
+    api('editingEnquiry', { kind: kind, reference: $('edRef').value.trim(), aiTool: $('edTool').value, profile: $('edProfile').value, useFree: $('edUseFree').checked ? 'yes' : 'no', consent: $('edConsent').checked ? 'yes' : 'no',
       galleryId: $('edWed').value, photos: +$('edCount').value, folderUrl: $('edFolder').value.trim(), wantBy: $('edBy').value, phone: $('edPhone').value.trim(), notes: $('edNotes').value.trim() }).then(function (r) {
       var o = OFFERS[kind], days = Math.ceil(o.hours / 24);
       show('edForm', false); show('edDone', true);
@@ -430,7 +435,7 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
         el('p', { class: 'muted', style: 'margin:0 0 16px', text: o.name + ' · ' + $('edCount').value + ' photos' + (r.free ? ' (' + r.free + ' free)' : '') + ' · ' + money(r.total) + ' estimated. Ready about ' + (o.hours < 72 ? o.hours + ' hours' : days + ' days') + ' after you confirm.' }),
         el('button', { class: 'ghost', type: 'button', style: 'border-radius:12px', text: 'Back to my galleries' }));
       $('edDone').querySelector('button').addEventListener('click', function () { go('dash'); });
-      ['edCount', 'edFolder', 'edBy', 'edNotes'].forEach(function (k) { $(k).value = ''; }); $('edConsent').checked = false;
+      ['edCount', 'edFolder', 'edBy', 'edNotes', 'edRef'].forEach(function (k) { $(k).value = ''; }); $('edConsent').checked = false;
     }).catch(function (x) { err('edErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Send request'; });
   });
 
