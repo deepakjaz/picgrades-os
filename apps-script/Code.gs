@@ -88,6 +88,8 @@ var USER_ROUTES = {
   logout: logout_,
   me: me_,
   createWedding: createWedding_,
+  editingEnquiry: editingEnquiry_,
+  enquiryStatus: enquiryStatus_,
   myWeddings: myWeddings_,
   placeOrder: placeOrder_,
   editOrder: editOrder_,
@@ -169,7 +171,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step65d-trial-end',
+    version: 'step65e-editing',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -326,6 +328,48 @@ function createWedding_(p, user) {
   return Object.assign(r, weddingCard_(g));
 }
 /** The signed-in account's own weddings (the ones made by signing up). */
+// ---------- Human editing enquiry (step 65e) ----------
+// A couple (or photographer) who signed up themselves and has raw, unedited photos asks PicGrades for editing. Every photo is
+// edited by a person — no AI fast editing — and it takes 4 days. There is no package for these accounts, so it is an enquiry:
+// PicGrades replies with a price; once confirmed it becomes a normal editing order.
+var ENQ_COLUMNS = ['at', 'enqId', 'email', 'name', 'companyName', 'galleryId', 'title', 'photos', 'folderUrl', 'wantBy', 'phone', 'notes', 'status', 'repliedAt', 'repliedBy'];
+var EDIT_DAYS = 4;
+function editingEnquiry_(p, user) {
+  var photos = Math.floor(Number(p.photos) || 0), folder = String(p.folderUrl || '').trim().slice(0, 300), notes = String(p.notes || '').trim().slice(0, 1000);
+  var phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20), wantBy = String(p.wantBy || '').slice(0, 10);
+  if (photos < 1 || photos > 20000) return { ok: false, error: 'About how many photos? Please write a number.' };
+  if (!folderIdFromUrl_(folder)) return { ok: false, error: 'Paste the Google Drive folder link of the photos to edit.' };
+  if (wantBy && !/^\d{4}-\d{2}-\d{2}$/.test(wantBy)) return { ok: false, error: 'Choose a date.' };
+  var earliest = fmt_(new Date(Date.now() + EDIT_DAYS * 86400000)).slice(0, 10);
+  if (wantBy && wantBy < earliest) return { ok: false, error: 'Editing by hand takes ' + EDIT_DAYS + ' days — the earliest date is ' + earliest + '.' };
+  if (!limitOk_('enq:' + normEmail_(user.email), 5, 86400)) return { ok: false, error: 'You have sent several requests today. We will reply soon.' };
+  var g = null;
+  if (p.galleryId) { g = findGallery_(p.galleryId); if (!g || String(g.companyName).trim().toLowerCase() !== String(user.companyName).trim().toLowerCase()) g = null; }
+  ensureTab_('Enquiries', ENQ_COLUMNS);
+  var id = 'E' + randomId_(8);
+  appendRow_('Enquiries', { at: fmt_(new Date()), enqId: id, email: normEmail_(user.email), name: user.name || '', companyName: user.companyName || '', galleryId: g ? g.galleryId : '',
+    title: g ? g.title : '', photos: photos, folderUrl: folder, wantBy: wantBy, phone: phone ? "'" + phone : '', notes: notes, status: 'new', repliedAt: '', repliedBy: '' });
+  var adm = String(getSettings_().adminNotifyEmail || '').trim();
+  var lines = [esc_(user.name || user.email) + ' (' + esc_(user.email) + (phone ? ' · ' + esc_(phone) : '') + ') asks for human editing.',
+    '<b>' + photos + ' photos</b>' + (g ? ' · wedding: ' + esc_(g.title) : '') + (wantBy ? ' · wanted by ' + esc_(wantBy) : ''),
+    'Photos: <a href="' + esc_(folder) + '">' + esc_(folder) + '</a>', notes ? 'Notes: ' + esc_(notes) : '', 'Reply with a price, then make an editing order for them.'];
+  if (adm) sendEmail_(adm, 'Editing enquiry: ' + photos + ' photos from ' + (user.name || user.email), 'Human editing enquiry', lines, 'enquiry', id);
+  sendEmail_(user.email, 'We got your editing request', 'We got your editing request',
+    ['Thank you' + (user.name ? ', ' + esc_(String(user.name).split(' ')[0]) : '') + '. We will reply within a day with the price for editing ' + photos + ' photos.',
+     'Every photo is edited by a person on our team — no AI fast editing — because the emotion in a photo is read and understood by people. It takes ' + EDIT_DAYS + ' days once you confirm.',
+     'Your photos stay in your own Google Drive.'], 'enquiry-thanks', id);
+  return { enqId: id, earliest: earliest };
+}
+/** PicGrades staff: mark an enquiry replied or closed. */
+function enquiryStatus_(p, user) {
+  if (!isStaff_(user)) return { ok: false, error: 'Only PicGrades can do this.' };
+  var st = p.status === 'closed' ? 'closed' : p.status === 'new' ? 'new' : 'replied';
+  ensureTab_('Enquiries', ENQ_COLUMNS);
+  var e = readTable_('Enquiries').filter(function (x) { return x.enqId === p.enqId; })[0];
+  if (!e) return { ok: false, error: 'Enquiry not found.' };
+  updateRowByNumber_('Enquiries', e._row, { status: st, repliedAt: st === 'new' ? '' : fmt_(new Date()), repliedBy: st === 'new' ? '' : normEmail_(user.email) });
+  return { enqId: e.enqId, status: st };
+}
 function myWeddings_(p, user) {
   ensureTab_('Galleries', GALLERY_COLUMNS);
   var key = String(user.companyName).trim().toLowerCase();
@@ -764,7 +808,10 @@ function queue_(p, user) {
     .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).slice(0, 30)
     .map(function (g) { var c = weddingCard_(g); c.companyName = g.companyName; c.createdAt = g.createdAt; c.createdBy = g.createdBy;
       c.facesDue = fmt_(new Date(parseDate_(g.createdAt).getTime() + 24 * 3600000)); return c; });
-  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }), weddings: self };
+  ensureTab_('Enquiries', ENQ_COLUMNS);
+  var enq = readTable_('Enquiries').sort(function (a, b) { return (a.status === 'new' ? 0 : 1) - (b.status === 'new' ? 0 : 1) || String(b.at).localeCompare(String(a.at)); }).slice(0, 30)
+    .map(function (e) { var o = {}; ENQ_COLUMNS.forEach(function (k) { o[k] = e[k]; }); o.phone = String(o.phone || '').replace(/^'/, ''); return o; });
+  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }), weddings: self, enquiries: enq };
 }
 
 var STATUS_SUBJECT = {

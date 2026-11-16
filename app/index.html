@@ -13,8 +13,8 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-
 h1,.serif{font-family:'Instrument Serif',serif;font-weight:400}
 a{color:var(--gold)}a:hover{color:var(--gold2)}
 button,input,textarea{font:inherit}
-input,textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40;border-radius:12px;padding:12px 14px;min-height:46px}
-input:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+input,textarea,select{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40;border-radius:12px;padding:12px 14px;min-height:46px}
+input:focus,textarea:focus,select:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 label{display:block;font-size:13px;color:var(--mute);margin-bottom:6px}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
 header{border-bottom:1px solid var(--line);background:var(--bar)}
@@ -56,6 +56,9 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
 @media (max-width:640px){.duebox{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}header .wrap{padding-top:10px;padding-bottom:10px}.big{font-size:56px!important}h1{font-size:38px!important}}
 /* step 65b: sign up and wedding galleries */
 a.btn{color:#141413}
+#v-dash,#v-wedding,#v-editing,#v-order{padding-bottom:calc(110px + env(safe-area-inset-bottom))}   /* room for the floating bottom bar, so it never covers a button */
+.editcard{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-top:10px;border-style:dashed}
+textarea{width:100%;box-sizing:border-box;font:inherit;border-radius:12px;padding:10px 12px}
 .readnow{display:flex;flex-direction:column;gap:6px;padding:14px 16px;margin:0 0 16px;border:1px solid var(--gold);border-radius:16px;background:rgba(212,175,55,.07)}
 .seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06)}
 .seg button{flex:1;min-height:44px;border:0;border-radius:10px;background:none;color:var(--soft);font:600 14px/1.2 inherit;cursor:pointer;padding:8px}
@@ -152,6 +155,11 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
         <button class="btn" type="button" data-go="wedding" style="border-radius:999px">+ Create a wedding gallery</button>
       </div>
       <div id="weddings" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div class="card editcard">
+        <div style="flex:2 1 280px;min-width:0"><p style="margin:0;font-weight:600;font-size:17px">Need human editing?</p>
+          <p class="muted" style="margin:6px 0 0;font-size:14px">Shot raw and want your photos edited before you share them? Every photo is edited by a person on our team — no AI fast editing, because the emotion in a photo is read and understood by people. It takes 4 days.</p></div>
+        <button class="btn" type="button" data-go="editing" style="border-radius:999px">Ask for editing</button>
+      </div>
     </div>
   </section>
 
@@ -173,6 +181,25 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button id="wBtn" class="btn" type="submit">Create my wedding app</button><button class="ghost" type="button" data-go="dash" style="border-radius:12px">Cancel</button></div>
     </form>
     <div id="wDone" class="card hidden" style="max-width:720px" role="status"></div>
+  </section>
+
+  <!-- HUMAN EDITING ENQUIRY (step 65e) -->
+  <section id="v-editing" class="hidden">
+    <p class="eyebrow gold">Edited by hand · 4 days</p>
+    <h1 style="margin:0 0 10px;font-size:46px;line-height:1.05">Ask for human editing</h1>
+    <p class="muted" style="margin:0 0 22px;max-width:620px">Tell us about the photos. We reply within a day with the price; once you confirm, our editors finish them in 4 days. Your photos stay in your own Google Drive.</p>
+    <form id="edForm" class="card" style="display:flex;flex-direction:column;gap:16px;max-width:720px" novalidate>
+      <div><label for="edWed">Which wedding</label><select id="edWed"></select></div>
+      <div><label for="edCount">About how many photos?</label><input id="edCount" type="number" inputmode="numeric" min="1" max="20000" placeholder="800" required></div>
+      <div><label for="edFolder">Google Drive folder with the raw photos</label><input id="edFolder" inputmode="url" placeholder="https://drive.google.com/drive/folders/…" required>
+        <p class="muted" style="margin:6px 0 0;font-size:13px">Share it as “Anyone with the link → Viewer”, the same way as your wedding folder.</p></div>
+      <div><label for="edBy">Wanted by (optional)</label><input id="edBy" type="date"></div>
+      <div><label for="edPhone">Mobile (optional)</label><input id="edPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98765 43210"></div>
+      <div><label for="edNotes">Anything we should know? (optional)</label><textarea id="edNotes" rows="3" maxlength="1000" placeholder="The look you like, skin tones, which events matter most…"></textarea></div>
+      <p id="edErr" class="err hidden" role="alert"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button id="edBtn" class="btn" type="submit">Send request</button><button class="ghost" type="button" data-go="dash" style="border-radius:12px">Cancel</button></div>
+    </form>
+    <div id="edDone" class="card hidden" style="max-width:720px" role="status"></div>
   </section>
 
   <!-- NEW ORDER -->
@@ -255,11 +282,12 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
   // ---- views ----
   function go(view) {
     state.view = view;
-    ['login', 'dash', 'order', 'wedding'].forEach(function (v) { show('v-' + v, v === view); });
+    ['login', 'dash', 'order', 'wedding', 'editing'].forEach(function (v) { show('v-' + v, v === view); });
     show('dock', view !== 'login'); show('logoutBtn', view !== 'login');
     document.querySelectorAll('nav.dock button').forEach(function (b) { b.setAttribute('aria-current', b.dataset.go === view ? 'page' : 'false'); });
     if (view === 'order') renderOrder();
     if (view === 'wedding') renderWedding();
+    if (view === 'editing') renderEditing();
     window.scrollTo(0, 0);
   }
   document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { toast(''); if (state.editing) stopEdit(); go(b.dataset.go); }); });
@@ -330,10 +358,37 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
         el('span', { class: 'pill ' + (w.status === 'Draft' ? 'p-hold' : 'p-done'), text: w.status === 'Draft' ? 'DRAFT' : 'LIVE' }),
         el('div', { class: 'wbtns' }, [w.features && w.features.findme === 'on' && w.facesStatus !== 'Ready' ? el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), style: 'border-color:var(--gold)', text: 'Read faces now' }) : null,
           el('a', { class: 'mini', href: w.coupleLink, target: '_blank', rel: 'noopener', text: 'Open my wedding app' }), w.status === 'Draft' ? null : copy,
+          (function () { var b = el('button', { type: 'button', class: 'mini', text: 'Get these edited' }); b.addEventListener('click', function () { state.editFor = w.galleryId; go('editing'); }); return b; })(),
           w.plan === 'basic' && w.upgrade ? el('a', { class: 'mini', href: w.upgrade, target: /^mailto:/.test(w.upgrade) ? '_self' : '_blank', rel: 'noopener', style: 'border-color:var(--gold)', text: 'Upgrade' }) : null,
           el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), target: '_blank', rel: 'noopener', text: 'Links & settings' })].filter(Boolean))]);
     }) : [el('p', { class: 'muted', style: 'margin:0', text: 'No wedding galleries yet. Create one from your Google Drive folder — free for 30 days.' })]);
   }
+  // ---- human editing enquiry (step 65e) ----
+  function renderEditing(gid) {
+    show('edForm', true); show('edDone', false); err('edErr', '');
+    var opts = (state.weddings || []).map(function (w) { return el('option', { value: w.galleryId, text: w.title }); });
+    opts.push(el('option', { value: '', text: 'Not made in PicGrades yet' }));
+    $('edWed').replaceChildren.apply($('edWed'), opts);
+    if (gid || state.editFor) $('edWed').value = gid || state.editFor; state.editFor = '';
+    var min = new Date(Date.now() + 4 * 86400000); $('edBy').min = min.toISOString().slice(0, 10);
+    if (state.data && state.data.user && state.data.user.phone && !$('edPhone').value) $('edPhone').value = state.data.user.phone;
+    setTimeout(function () { $('edCount').focus(); }, 0);
+  }
+  $('edForm').addEventListener('submit', function (e) {
+    e.preventDefault(); err('edErr', '');
+    if (!(+$('edCount').value > 0)) return err('edErr', 'About how many photos? Please write a number.');
+    if (!/\/folders\//.test($('edFolder').value)) return err('edErr', 'Paste the Google Drive folder link (it contains /folders/).');
+    var btn = $('edBtn'); btn.disabled = true; btn.textContent = 'Sending…';
+    api('editingEnquiry', { galleryId: $('edWed').value, photos: +$('edCount').value, folderUrl: $('edFolder').value.trim(), wantBy: $('edBy').value, phone: $('edPhone').value.trim(), notes: $('edNotes').value.trim() }).then(function () {
+      show('edForm', false); show('edDone', true);
+      $('edDone').replaceChildren(el('p', { class: 'eyebrow gold', style: 'margin:0', text: 'Request sent' }), el('h2', { style: 'margin:6px 0 10px;font-size:28px', text: 'Thank you — we will reply within a day' }),
+        el('p', { class: 'muted', style: 'margin:0 0 16px', text: 'We will email you the price for editing ' + $('edCount').value + ' photos. Once you confirm, our editors finish them by hand in 4 days.' }),
+        el('button', { class: 'ghost', type: 'button', style: 'border-radius:12px', text: 'Back to my galleries' }));
+      $('edDone').querySelector('button').addEventListener('click', function () { go('dash'); });
+      ['edCount', 'edFolder', 'edBy', 'edNotes'].forEach(function (k) { $(k).value = ''; });
+    }).catch(function (x) { err('edErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Send request'; });
+  });
+
   function renderWedding() {
     show('wedForm', true); show('wDone', false); err('wErr', '');
     $('wFuncs').replaceChildren.apply($('wFuncs'), FUNCS.map(function (f) {
