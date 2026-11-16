@@ -35,6 +35,13 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
 .feat-row b{display:block;font-size:14px}.feat-row small{display:block;font-size:12px;opacity:.65;margin-top:2px}.feat-row.locked{opacity:.5}
 .feat-row input{width:20px;height:20px;accent-color:#2E9D5B}
   .links4 .row{margin-bottom:8px;align-items:center}.links4 .lk{flex:0 0 140px;font-size:12px;letter-spacing:.04em}
+/* step 65c: the simple page for the couple / photographer who made the wedding themselves */
+body.simple #peopleCard,body.simple #sendCard,body.simple .staff-only,body.simple #tDueTile{display:none!important}
+body.simple .wrap{max-width:560px}
+body.simple h1{font-size:30px}
+body.simple #readCard h2{font-size:22px}
+body.simple .tiles{grid-template-columns:repeat(3,1fr)}
+#doneCard .btn{text-decoration:none;display:inline-flex;align-items:center}
 </style>
 </head>
 <body>
@@ -56,13 +63,20 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
       <div class="tile"><p class="muted">Photos read</p><p class="v" id="tRead">0</p></div>
       <div class="tile"><p class="muted">Faces found</p><p class="v" id="tFaces">0</p></div>
       <div class="tile"><p class="muted">Time left</p><p class="v" id="tEta">—</p></div>
-      <div class="tile"><p class="muted">Send to client by</p><p class="v" id="tDue" style="font-size:16px;margin-top:8px">—</p></div>
+      <div class="tile" id="tDueTile"><p class="muted">Send to client by</p><p class="v" id="tDue" style="font-size:16px;margin-top:8px">—</p></div>
     </div>
     <div class="row" style="margin-top:14px">
       <button class="btn" id="startBtn" type="button">Start reading faces</button>
       <button class="mini hidden" id="pauseBtn" type="button">Pause</button>
       <span class="muted" style="font-size:13px" id="engine"></span>
     </div>
+  </section>
+
+  <section class="card hidden" id="doneCard" role="status">
+    <p class="eyebrow" style="color:#7FD39A">Done</p>
+    <h2 style="margin:0 0 8px">Find me is ready ✓</h2>
+    <p class="muted" style="margin:0 0 16px">Every photo is read. When you publish your wedding app, guests can find their own photos with a quick selfie. No selfie and no photo is kept — only the face “fingerprints”.</p>
+    <div class="row"><a class="btn" id="doneOpen" href="#">Open my wedding app</a><a class="mini" href="/app/" style="text-decoration:none;display:inline-flex;align-items:center">Back to my galleries</a></div>
   </section>
 
   <section class="card hidden" id="peopleCard">
@@ -123,7 +137,7 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
   function dmyhm(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(s || ''); return m ? m[3] + '/' + m[2] + ' ' + m[4] + ':' + m[5] : '—'; }
   function minutes(ms) { var m = Math.round(ms / 60000); return m < 1 ? '< 1 min' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; }
 
-  if (!token) { $('title').textContent = 'Please log in first'; fail('Open the Admin page, log in, then come back to this link.'); return; }
+  if (!token) { $('title').textContent = 'Please log in first'; fail('Log in at PicGrades (picgrades-os.vercel.app/app/) with the email you signed up with, then open this link again.'); return; }
   if (!GID) { $('title').textContent = 'No gallery'; fail('This link is missing the gallery id.'); return; }
 
   function counts() {
@@ -135,19 +149,20 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     var c = counts(), g = S.gallery, st = g.status || '';
     var work = c.total * 2, doneWork = c.read + c.p2;
     $('barFill').style.width = Math.round(doneWork / Math.max(1, work) * 100) + '%';
-    $('tRead').textContent = c.read + ' / ' + c.total + (c.p2 ? ' · pass 2: ' + c.p2 : '');
+    $('tRead').textContent = S.simple ? Math.round((c.read + c.p2) / 2) + ' / ' + c.total : c.read + ' / ' + c.total + (c.p2 ? ' · pass 2: ' + c.p2 : '');   // simple page: one plain count
     $('tFaces').textContent = c.faces.toLocaleString('en-IN');
     var late = g.dueAt && !g.sentAt && new Date(g.dueAt.replace(' ', 'T')) < new Date();
     $('tDue').textContent = g.sentAt ? 'Sent ' + dmyhm(g.sentAt) : (g.dueAt ? dmyhm(g.dueAt) + (late ? ' · late' : '') : 'after order is completed');
     var pill = $('statusPill');
     var label = S.running ? 'Reading…' : st === 'Ready' ? 'Ready' : st === 'Needs update' ? 'New photos to read' : c.read ? 'Paused' : 'Not started';
     pill.textContent = label; pill.className = 'pill ' + (label === 'Ready' ? 'p-ready' : S.running ? 'p-read' : late ? 'p-late' : 'p-wait');
-    $('progressText').textContent = extra || (st === 'Ready' ? 'All photos read in 2 passes. Find me is switched on in the gallery.' : '');
+    $('progressText').textContent = extra || (st === 'Ready' ? (S.simple ? 'All photos read.' : 'All photos read in 2 passes. Find me is switched on in the gallery.') : '');
     var complete = c.p2 >= c.total && c.total > 0;
     $('startBtn').textContent = complete ? 'Read again' : c.read ? 'Continue' : 'Start reading faces';
-    $('startBtn').classList.toggle('hidden', S.running);
+    $('startBtn').classList.toggle('hidden', S.running || (S.simple && complete));   // simple page: nothing to do once it is done
     $('pauseBtn').classList.toggle('hidden', !S.running);
     $('peopleCard').classList.toggle('hidden', !c.faces || S.running);
+    if (S.simple) $('doneCard').classList.toggle('hidden', S.running || st !== 'Ready');
     $('sendCard').classList.toggle('hidden', S.running);
   }
 
@@ -226,7 +241,7 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
     }).then(function () { return runPass(2); }).then(function () {
       return save({}, 2, true);
     }).then(function () {
-      S.running = false; $('tEta').textContent = 'Done'; paint(); showPeople();
+      S.running = false; $('tEta').textContent = 'Done'; paint(); if (!S.simple) showPeople(); else $('doneCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }).catch(function (e) {
       S.running = false; paint(e.message === 'paused' ? 'Paused. Press Continue to carry on.' : '');
       if (e.message !== 'paused') fail(e.message + ' — press Continue to try again.');
@@ -327,7 +342,20 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
       api('setDemo', { on: on ? 'yes' : '' }).then(function (x) { $('demoSw').checked = !!x.demo; $('demoMsg').textContent = x.demo ? 'Demo is on: anyone with the gallery link can try every setting (on their own phone).' : 'Demo is off: a normal wedding.'; })
         .catch(function (e) { $('demoSw').checked = !on; $('demoMsg').textContent = e.message; });
     };
-    paint(); if (counts().faces) showPeople();
+    // step 65c: the couple / photographer who made this wedding themselves get the simple page — read faces, then done
+    S.simple = !r.gallery.staff && (r.gallery.selfMade || /[?&]simple\b/.test(location.search));
+    if (S.simple) {
+      document.body.classList.add('simple');
+      document.querySelector('.eyebrow').textContent = 'Find me · face reading';
+      $('readCard').querySelector('h2').textContent = 'Read the faces for Find me';
+      var est = Math.max(2, Math.round(r.photos.length * 2 * 1.1 / 60));   // about 1 second per photo per pass on a phone
+      $('readCard').querySelector('p.muted').textContent = 'Your phone or computer looks at each photo to find the faces, so guests can find themselves later. ' +
+        'Nothing leaves your Google Drive and no photo is saved. It takes about ' + est + ' minutes for ' + r.photos.length + ' photos — keep this screen open (plug in the charger). You can pause and continue later; it remembers where it stopped.';
+      $('sub').textContent = r.photos.length + ' photos';
+      $('doneOpen').href = location.origin + '/c/' + gid + '/' + r.gallery.coupleKey;
+      Array.prototype.forEach.call(document.querySelectorAll('section.card'), function (sec) { if (['readCard', 'doneCard'].indexOf(sec.id) < 0) sec.classList.add('staff-only'); });
+    }
+    paint(); if (counts().faces && !S.simple) showPeople();
   }).catch(function (e) { $('title').textContent = 'Face reading'; fail(e.message); });
 })();
 </script>

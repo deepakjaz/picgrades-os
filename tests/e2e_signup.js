@@ -40,9 +40,10 @@ const srv = http.createServer((req, res) => {
   await shot(pg, '2-create');
   await pg.click('#wBtn'); await pg.waitForSelector('#wDone:not(.hidden)', { timeout: 15000 });
   const done = await pg.locator('#wDone').innerText();
-  check(/ready as a Draft/i.test(done) && /12 photos in 3 collections/.test(done) && /Haldi — 4 photos/.test(done) && /faces within 24 hours/.test(done), 'result: Draft, 12 photos in 3 collections, Find me within 24 hours');
+  check(/ready as a Draft/i.test(done) && /12 photos in 3 collections/.test(done) && /Haldi — 4 photos/.test(done) && /Read the faces now/.test(done) && /within 24 hours/.test(done), 'result: Draft, 12 photos in 3 collections, "Read faces now" (or we do it within 24 hours)');
   await shot(pg, '3-done');
-  const couple = await pg.getAttribute('#wDone a.btn', 'href');
+  const couple = await pg.getAttribute('#wDone a:has-text("Open my wedding app")', 'href');
+  check(await pg.getAttribute('#wDone a:has-text("Read faces now")', 'href') === '/app/faces.html?g=' + DB.Galleries.slice(1).find(g => g[DB.Galleries[0].indexOf('title')] === 'Riya & Arjun')[DB.Galleries[0].indexOf('galleryId')], '"Read faces now" opens the face page for this wedding');
   check(/\/c\/[a-z0-9]+\/[A-Za-z0-9_-]+$/.test(couple), '"Open my wedding app" is her couple link');
   const row = DB.Galleries.slice(1).find(g => g[DB.Galleries[0].indexOf('title')] === 'Riya & Arjun');
   check(JSON.parse(row[DB.Galleries[0].indexOf('features')]).reel === 'off', 'Reel Edits saved as off');
