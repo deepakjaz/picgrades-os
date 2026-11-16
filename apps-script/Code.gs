@@ -89,6 +89,7 @@ var USER_ROUTES = {
   me: me_,
   createWedding: createWedding_,
   editingEnquiry: editingEnquiry_,
+  editOffers: editOffersFor_,
   enquiryStatus: enquiryStatus_,
   myWeddings: myWeddings_,
   placeOrder: placeOrder_,
@@ -171,7 +172,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step65e-editing',
+    version: 'step66-edit-offers',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -328,37 +329,73 @@ function createWedding_(p, user) {
   return Object.assign(r, weddingCard_(g));
 }
 /** The signed-in account's own weddings (the ones made by signing up). */
-// ---------- Human editing enquiry (step 65e) ----------
-// A couple (or photographer) who signed up themselves and has raw, unedited photos asks PicGrades for editing. Every photo is
-// edited by a person — no AI fast editing — and it takes 4 days. There is no package for these accounts, so it is an enquiry:
-// PicGrades replies with a price; once confirmed it becomes a normal editing order.
-var ENQ_COLUMNS = ['at', 'enqId', 'email', 'name', 'companyName', 'galleryId', 'title', 'photos', 'folderUrl', 'wantBy', 'phone', 'notes', 'status', 'repliedAt', 'repliedBy'];
-var EDIT_DAYS = 4;
+// ---------- Editing requests (step 65e, offers in step 66) ----------
+// A couple or photographer who signed up themselves asks PicGrades to edit their photos. PicGrades is a promoter of the human
+// touch — never an AI tool — so Human touch comes first; AI and AI + Human are offered because the market expects them.
+//   human   — edited by hand, 4 days, ₹8 a photo
+//   aihuman — AI first, then a person sets the tone they ask for, 48 hours, ₹7 a photo
+//   ai      — AI with one of our style profiles, 24 hours, ₹3 a photo
+// Prices and profiles live in Settings (editPriceHuman / editPriceAIHuman / editPriceAI, aiProfiles) so they can change.
+// The first request of an account may take 150 photos free (AI or AI + Human) — in return they allow PicGrades to use those
+// edits to improve its own editing (internal only). On paid requests that permission is optional. It is saved with each request.
+var ENQ_COLUMNS = ['at', 'enqId', 'email', 'name', 'companyName', 'galleryId', 'title', 'photos', 'folderUrl', 'wantBy', 'phone', 'notes', 'status', 'repliedAt', 'repliedBy',
+  'kind', 'profile', 'pricePer', 'freePhotos', 'total', 'consent'];
+var EDIT_DAYS = 4, FREE_SAMPLE = 150;
+function editOffers_() {
+  var s = getSettings_(), num = function (v, d) { var n = Number(v); return n > 0 ? n : d; };
+  var profiles = String(s.aiProfiles || 'Natural,Warm & golden,Bright & airy,Rich & moody').split(',').map(function (x) { return x.trim(); }).filter(String).slice(0, 12);
+  return {
+    human: { name: 'Human touch', price: num(s.editPriceHuman, 8), hours: 96, free: false },
+    aihuman: { name: 'AI + Human', price: num(s.editPriceAIHuman, 7), hours: 48, free: true },
+    ai: { name: 'AI', price: num(s.editPriceAI, 3), hours: 24, free: true },
+    profiles: profiles, freeSample: FREE_SAMPLE
+  };
+}
+function freeLeft_(user) {
+  ensureTab_('Enquiries', ENQ_COLUMNS);
+  var used = readTable_('Enquiries').some(function (x) { return normEmail_(x.email) === normEmail_(user.email) && Number(x.freePhotos) > 0 && x.status !== 'closed'; });
+  var c = findCompany_(user.companyName);
+  return used || (c && c.packageType) ? 0 : FREE_SAMPLE;   // studios with an editing package already have their own terms
+}
+/** What the portal shows before a request: the three offers, the profiles and whether the free sample is still there. */
+function editOffersFor_(p, user) { var o = editOffers_(); o.freeLeft = freeLeft_(user); return o; }
 function editingEnquiry_(p, user) {
   var photos = Math.floor(Number(p.photos) || 0), folder = String(p.folderUrl || '').trim().slice(0, 300), notes = String(p.notes || '').trim().slice(0, 1000);
   var phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20), wantBy = String(p.wantBy || '').slice(0, 10);
+  var offers = editOffers_(), kind = offers[p.kind] && p.kind !== 'profiles' && p.kind !== 'freeSample' ? p.kind : 'human', offer = offers[kind];
+  var profile = kind === 'ai' ? String(p.profile || '') : '';
+  if (kind === 'ai' && offers.profiles.indexOf(profile) < 0) return { ok: false, error: 'Choose a style profile.' };
   if (photos < 1 || photos > 20000) return { ok: false, error: 'About how many photos? Please write a number.' };
   if (!folderIdFromUrl_(folder)) return { ok: false, error: 'Paste the Google Drive folder link of the photos to edit.' };
   if (wantBy && !/^\d{4}-\d{2}-\d{2}$/.test(wantBy)) return { ok: false, error: 'Choose a date.' };
-  var earliest = fmt_(new Date(Date.now() + EDIT_DAYS * 86400000)).slice(0, 10);
-  if (wantBy && wantBy < earliest) return { ok: false, error: 'Editing by hand takes ' + EDIT_DAYS + ' days — the earliest date is ' + earliest + '.' };
+  var days = Math.ceil(offer.hours / 24), earliest = fmt_(new Date(Date.now() + days * 86400000)).slice(0, 10);
+  if (wantBy && wantBy < earliest) return { ok: false, error: offer.name + ' takes ' + (offer.hours < 72 ? offer.hours + ' hours' : days + ' days') + ' — the earliest date is ' + earliest + '.' };
+  var consent = p.consent === true || p.consent === 'yes';
+  var free = offer.free && p.useFree !== false && p.useFree !== 'no' ? Math.min(photos, freeLeft_(user)) : 0;
+  if (free && !consent) return { ok: false, error: 'The free sample needs your permission to use these edits to improve our editing (tick the box), or choose to pay for all photos.' };
   if (!limitOk_('enq:' + normEmail_(user.email), 5, 86400)) return { ok: false, error: 'You have sent several requests today. We will reply soon.' };
   var g = null;
   if (p.galleryId) { g = findGallery_(p.galleryId); if (!g || String(g.companyName).trim().toLowerCase() !== String(user.companyName).trim().toLowerCase()) g = null; }
+  var total = Math.round((photos - free) * offer.price * 100) / 100;
   ensureTab_('Enquiries', ENQ_COLUMNS);
   var id = 'E' + randomId_(8);
   appendRow_('Enquiries', { at: fmt_(new Date()), enqId: id, email: normEmail_(user.email), name: user.name || '', companyName: user.companyName || '', galleryId: g ? g.galleryId : '',
-    title: g ? g.title : '', photos: photos, folderUrl: folder, wantBy: wantBy, phone: phone ? "'" + phone : '', notes: notes, status: 'new', repliedAt: '', repliedBy: '' });
+    title: g ? g.title : '', photos: photos, folderUrl: folder, wantBy: wantBy, phone: phone ? "'" + phone : '', notes: notes, status: 'new', repliedAt: '', repliedBy: '',
+    kind: kind, profile: profile, pricePer: offer.price, freePhotos: free, total: total, consent: consent ? 'yes' : 'no' });
+  var money = function (n) { return '₹' + Number(n).toLocaleString('en-IN'); };
+  var what = offer.name + (profile ? ' (' + profile + ')' : '') + ' · ' + photos + ' photos' + (free ? ' · first ' + free + ' free' : '') + ' · ' + money(total) + ' estimated';
   var adm = String(getSettings_().adminNotifyEmail || '').trim();
-  var lines = [esc_(user.name || user.email) + ' (' + esc_(user.email) + (phone ? ' · ' + esc_(phone) : '') + ') asks for human editing.',
-    '<b>' + photos + ' photos</b>' + (g ? ' · wedding: ' + esc_(g.title) : '') + (wantBy ? ' · wanted by ' + esc_(wantBy) : ''),
-    'Photos: <a href="' + esc_(folder) + '">' + esc_(folder) + '</a>', notes ? 'Notes: ' + esc_(notes) : '', 'Reply with a price, then make an editing order for them.'];
-  if (adm) sendEmail_(adm, 'Editing enquiry: ' + photos + ' photos from ' + (user.name || user.email), 'Human editing enquiry', lines, 'enquiry', id);
+  if (adm) sendEmail_(adm, 'Editing request: ' + offer.name + ', ' + photos + ' photos from ' + (user.name || user.email), 'Editing request',
+    [esc_(user.name || user.email) + ' (' + esc_(user.email) + (phone ? ' · ' + esc_(phone) : '') + ') asks for editing.', '<b>' + esc_(what) + '</b>',
+     (g ? 'Wedding: ' + esc_(g.title) + ' · ' : '') + (wantBy ? 'wanted by ' + esc_(wantBy) : 'no date given'),
+     'Photos: <a href="' + esc_(folder) + '">' + esc_(folder) + '</a>', notes ? (kind === 'aihuman' ? 'Tone they want: ' : 'Notes: ') + esc_(notes) : '',
+     'May PicGrades use these edits to improve its editing: <b>' + (consent ? 'yes' : 'no') + '</b>.'], 'enquiry', id);
   sendEmail_(user.email, 'We got your editing request', 'We got your editing request',
-    ['Thank you' + (user.name ? ', ' + esc_(String(user.name).split(' ')[0]) : '') + '. We will reply within a day with the price for editing ' + photos + ' photos.',
-     'Every photo is edited by a person on our team — no AI fast editing — because the emotion in a photo is read and understood by people. It takes ' + EDIT_DAYS + ' days once you confirm.',
-     'Your photos stay in your own Google Drive.'], 'enquiry-thanks', id);
-  return { enqId: id, earliest: earliest };
+    ['Thank you' + (user.name ? ', ' + esc_(String(user.name).split(' ')[0]) : '') + '. You asked for: <b>' + esc_(what) + '</b>.',
+     kind === 'human' ? 'Every photo will be edited by a person on our team — because the emotion in a photo is read and understood by people.' :
+       kind === 'aihuman' ? 'AI does the first pass and a person on our team sets the tone you asked for.' : 'Edited with our AI using the “' + esc_(profile) + '” profile.',
+     'We will confirm within a day. Ready about ' + (offer.hours < 72 ? offer.hours + ' hours' : days + ' days') + ' after you confirm. Your photos stay in your own Google Drive.'], 'enquiry-thanks', id);
+  return { enqId: id, earliest: earliest, free: free, total: total };
 }
 /** PicGrades staff: mark an enquiry replied or closed. */
 function enquiryStatus_(p, user) {

@@ -20,8 +20,8 @@ const n = mail.length;
 r = call('editingEnquiry', { token: tok, photos: 300, folderUrl: link, wantBy: later(6), phone: '98000 11122', notes: 'Warm tones please', galleryId: wed.galleryId });
 assert(r.enqId && /^E/.test(r.enqId), 'the enquiry is saved');
 const sent = mail.slice(n);
-assert(sent.some(m => m.to === 'team@picgrades.com' && /Editing enquiry: 300 photos from Nina Kapoor/.test(m.subject)), 'PicGrades is emailed');
-assert(sent.some(m => m.to === 'nina@example.com' && /We got your editing request/.test(m.subject) && /no AI fast editing/.test(JSON.stringify(m))), 'Nina gets a thank-you (human editing, 4 days)');
+assert(sent.some(m => m.to === 'team@picgrades.com' && /Editing request: Human touch, 300 photos from Nina Kapoor/.test(m.subject)), 'PicGrades is emailed');
+assert(sent.some(m => m.to === 'nina@example.com' && /We got your editing request/.test(m.subject) && /edited by a person/.test(JSON.stringify(m))), 'Nina gets a thank-you (human editing, 4 days)');
 const E = DB.Enquiries, h = E[0], row = E.slice(1).find(x => x[h.indexOf('enqId')] === r.enqId);
 assert(row[h.indexOf('title')] === 'Nina & Raj' && row[h.indexOf('status')] === 'new' && row[h.indexOf('notes')] === 'Warm tones please', 'linked to her wedding, status "new", notes kept');
 
