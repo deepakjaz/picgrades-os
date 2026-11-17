@@ -386,6 +386,10 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     }).catch(function (x) { err('suErr', x.message); }).then(function () { btn.disabled = false; });
   });
   if (/[?&#]signup\b/.test(location.search + location.hash)) tab(true);   // the wedding app's ☰ menu links here
+  (function () {   // step 68: the hub's "couple / photographer" doorway chooses this for them
+    var k = (/[?&]kind=(couple|photographer)/.exec(location.search) || [])[1], r = k && document.querySelector('#signupForm input[name=kind][value=' + k + ']');
+    if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+  })();
 
   // ---- dashboard ----
   function refresh() { return Promise.all([api('me'), api('myWeddings').catch(function () { return { weddings: [] }; })]).then(function (r) { state.data = r[0]; state.weddings = r[1].weddings || []; renderDash(); }); }

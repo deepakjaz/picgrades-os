@@ -59,6 +59,7 @@ var PUBLIC_ROUTES = {
   getStudio: getStudio_,
   faceBoxes: faceBoxes_,
   resolveHost: resolveHost_,
+  publicOffers: publicOffers_,
   videoOk: videoOk_,
   photoData: photoData_,
   guestJoin: guestJoin_,
@@ -177,7 +178,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step67-domains',
+    version: 'step68-hub',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -375,6 +376,14 @@ function editOffers_() {
     retouch: { name: 'Retouching', price: num(s.retouchPrice, 120), included: 3, extraFix: num(s.retouchExtraFix, 40), hours: num(s.retouchHours, 72), free: false, studio: true },
     fixes: RETOUCH_FIXES, profiles: profiles, freeSample: FREE_SAMPLE
   };
+}
+/** Public (step 68): the prices the PicGrades hub page shows — always the same as the Settings tab. */
+function publicOffers_() {
+  var o = editOffers_(), s = getSettings_();
+  delete o.profiles;
+  o.trialDays = TRIAL_DAYS; o.trialPhotos = TRIAL_PHOTOS; o.galleryDomain = galleryDomain_(); o.domainFee = domainFee_();
+  o.contact = String(s.supportEmail || '').trim();
+  return o;
 }
 function freeLeft_(user) {
   ensureTab_('Enquiries', ENQ_COLUMNS);
