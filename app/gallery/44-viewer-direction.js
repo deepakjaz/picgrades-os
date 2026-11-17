@@ -19,6 +19,8 @@
     'body.pgv-swipe .pgv-item{flex:0 0 100%;width:100%;touch-action:pan-x}',
     // the photo sits above the filmstrip and the buttons, so nothing covers it
     'body.pgv-swipe .pgv-item img{top:0;bottom:auto;height:calc(100% - var(--pgd-strip) - var(--pgd-bar) - env(safe-area-inset-bottom,0px));object-fit:contain;object-position:center}',
+    // wide (landscape) photos stay in the middle of the screen, same place as in up / down mode, with equal room above and below so the filmstrip never covers them
+    'body.pgv-swipe .pgv-item img.pgd-wide{top:calc(var(--pgd-strip) + var(--pgd-bar) + env(safe-area-inset-bottom,0px));height:calc(100% - 2 * (var(--pgd-strip) + var(--pgd-bar) + env(safe-area-inset-bottom,0px)))}',
     'body.pgv-swipe{--pgd-strip:84px;--pgd-bar:78px;--thumb-inactive-w:40px;--thumb-inactive-h:52px;--thumb-near-w:46px;--thumb-near-h:60px;--thumb-active-w:58px;--thumb-active-h:74px}',
     // the filmstrip along the bottom, just above the buttons
     'body.pgv-swipe #view-root .mk-filmstrip-rail{top:auto;left:0;right:0;width:auto;height:var(--pgd-strip);bottom:calc(var(--pgd-bar) + env(safe-area-inset-bottom,0px));flex-direction:row;align-items:center;touch-action:pan-x}',
@@ -116,6 +118,11 @@
     setTimeout(() => { const f = wrap.querySelector('.pgd-opt'); if (f) f.focus({ preventScroll: true }); }, 50);
   }
   pgAfter('switchView', key => { if (key === 'root') setTimeout(ask, 700); });
+
+  // mark wide photos (a photo is wide when it is clearly wider than tall)
+  const markWide = img => { if (img.naturalWidth) img.classList.toggle('pgd-wide', img.naturalWidth > img.naturalHeight * 1.05); };
+  view.addEventListener('load', e => { if (e.target.tagName === 'IMG' && e.target.closest('.pgv-item')) markWide(e.target); }, true);
+  view.querySelectorAll('.pgv-item img').forEach(markWide);
 
   set(read() === 'h' ? 'h' : 'v', false);
   window.PGDir = { mode, set: m => set(m, true), ask };

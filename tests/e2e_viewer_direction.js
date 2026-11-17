@@ -58,8 +58,9 @@ const srv = http.createServer((req, res) => {
   const rail = await box(pg, '#view-root .mk-filmstrip-rail'), bar = await pg.evaluate(() => Math.min(...[...document.querySelectorAll('#pgvBar .pgv-ic')].filter(b => b.offsetParent).map(b => b.getBoundingClientRect().top)));
   check(rail.w > 380 && rail.h < 100 && rail.b <= bar + 1, 'filmstrip lies along the bottom, just above the buttons (no overlap)');
   const img = await pg.evaluate(() => { const i = document.querySelectorAll('.pgv-item img')[activeIdx], r = i.getBoundingClientRect(), k = Math.min(r.width / i.naturalWidth, r.height / i.naturalHeight); return { t: r.top, b: r.bottom, h: r.height, ph: i.naturalHeight * k }; });
-  check(img.b <= rail.t + 1 && img.h > 500, 'the photo box fills the space above the filmstrip (' + Math.round(img.t) + '–' + Math.round(img.b) + ')');
-  check(img.ph < img.h - 20, 'a wide photo is centred in that space, not stuck to the top');
+  const mid = img.t + img.h / 2, vmid = await pg.evaluate(() => innerHeight / 2);
+  check(Math.abs(mid - vmid) < 3, 'a wide photo sits in the middle of the screen, same as up/down mode (' + Math.round(mid) + ' vs ' + Math.round(vmid) + ')');
+  check(mid + img.ph / 2 <= rail.t + 1, 'the wide photo stays above the filmstrip');
   const topBtns = await pg.evaluate(() => [...document.querySelectorAll('#pgvTop .pgv-ic')].filter(b => b.offsetParent).map(b => { const r = b.getBoundingClientRect(); return [r.left, r.right]; }));
   check(topBtns.every(([l, r]) => l >= 0 && r <= 390), 'top buttons stay on screen');
   await shot(pg, 'dir-2-swipe');

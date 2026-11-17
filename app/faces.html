@@ -26,7 +26,19 @@ input{width:100%;background:var(--bg);color:var(--text);border:1px solid #3A3A40
 .pill{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;white-space:nowrap;display:inline-block}
 .p-ready{background:#1E2A1F;color:#A8E6B4;border:1px solid #3F6B45}.p-read{background:#14233A;color:#A9CBFF;border:1px solid #2F5486}.p-wait{background:#2A2614;color:#F5DE8E;border:1px solid #6B5A22}.p-late{background:#2C1414;color:#FFC9C2;border:1px solid #7A2E2E}
 .people{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px;margin-top:12px}
-.person{text-align:center;font-size:12px;color:var(--mute)}.person i{display:block;width:76px;height:76px;border-radius:50%;margin:0 auto 6px;background-color:#222;border:2px solid var(--line2)}
+.person{text-align:center;font-size:12px;color:var(--mute);background:none;border:0;padding:4px 0;cursor:pointer;font-family:inherit;border-radius:12px}.person i{display:block;width:76px;height:76px;border-radius:50%;margin:0 auto 6px;background-color:#222;border:2px solid var(--line2)}
+.person b{display:block;color:var(--text);font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
+.person.named i{border-color:var(--gold)}.person:focus-visible{outline:2px solid var(--gold)}
+body.joining .person i{border-style:dashed}.person.pick i{border-color:var(--gold);box-shadow:0 0 0 4px rgba(250,233,0,.25)}
+.joinbar{position:sticky;top:8px;z-index:5;display:flex;gap:10px;align-items:center;justify-content:space-between;background:#2A2614;border:1px solid #6B5A22;color:#F5DE8E;border-radius:12px;padding:8px 12px;margin-top:12px;font-size:14px}
+.hiddenppl{margin-top:14px}.hiddenppl summary{cursor:pointer;color:var(--mute);font-size:14px}
+.pp{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6)}
+.pp-card{width:100%;max-width:640px;max-height:88vh;overflow:auto;background:#151517;border:1px solid var(--line2);border-radius:20px 20px 0 0;padding:18px}
+@media (min-width:700px){.pp{align-items:center}.pp-card{border-radius:20px}}
+.pp-head{display:flex;gap:14px;align-items:center}.pp-head i{flex:0 0 72px;width:72px;height:72px;border-radius:50%;background-color:#222;border:2px solid var(--gold)}
+.pp-faces{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px;margin-top:10px}
+.pp-face{position:relative}.pp-face i{display:block;width:60px;height:60px;border-radius:50%;margin:0 auto;background-color:#222}
+.pp-face button{position:absolute;top:-4px;right:2px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line2);background:#000;color:#fff;cursor:pointer;font-size:14px;line-height:1;padding:0}
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-top:10px}.thumbs img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#222}
 .msg{margin:10px 0 0;font-size:14px}.bad{color:#FFB4A8}
 .hidden{display:none!important}
@@ -81,8 +93,11 @@ body.simple .tiles{grid-template-columns:repeat(3,1fr)}
 
   <section class="card hidden" id="peopleCard">
     <h2>2 · Check the result</h2>
-    <p class="muted" style="margin:0">People found in this wedding (only you see this). Test with your own photo or selfie to see what a guest gets from “Find me”.</p>
+    <p class="muted" style="margin:0">People found in this wedding. Tap a person to give a name, join two circles that are the same person, or take out a wrong photo. Guests never see these names. Test with your own photo or selfie to see what a guest gets from “Find me”.</p>
+    <div class="joinbar hidden" id="joinBar" role="status"><span>Now tap the other circle of the same person</span><button class="mini" type="button" id="joinCancel">Cancel</button></div>
     <div class="people" id="people"></div>
+    <details class="hiddenppl hidden" id="hiddenWrap"><summary id="hiddenSum">Hidden</summary><div class="people" id="hiddenPeople"></div></details>
+    <p class="msg" id="peopleMsg" role="status"></p>
     <div class="row" style="margin-top:16px">
       <label class="mini" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">Test with a photo / selfie<input type="file" accept="image/*" id="testFile" class="hidden"></label>
       <span class="muted" style="font-size:14px" id="testMsg"></span>
@@ -251,16 +266,101 @@ body.simple .tiles{grid-template-columns:repeat(3,1fr)}
   $('pauseBtn').addEventListener('click', function () { S.stop = true; $('pauseBtn').disabled = true; setTimeout(function () { $('pauseBtn').disabled = false; }, 1500); });
   window.addEventListener('beforeunload', function (e) { if (S.running) { e.preventDefault(); e.returnValue = ''; } });
 
-  var FLAT = null;
+  // Step 73: people — the reader groups faces (two passes), then the photographer fixes it by hand: join, name, hide, take out a face.
+  var FLAT = null, PEOPLE = [], JOIN = null;
+  function saved() { return (S.faces && S.faces.people) || []; }
+  function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+  function faceStyle(x, size) { return PGFaces.cropStyle(x, size, img(x.pid, 800)); }
+  function keysOf(p) { return p.faces.map(function (x) { return x.key; }); }
+  function storePeople(list, msg) {
+    $('peopleMsg').textContent = 'Saving…';
+    return api('savePeople', { people: list }).then(function (r) {
+      S.faces.people = r.people; showPeople(); $('peopleMsg').textContent = msg || 'Saved';
+    }).catch(function (e) { $('peopleMsg').textContent = e.message; });
+  }
+  /** a saved record for a shown person (new one if the reader made it), with extra changes */
+  function recordFor(p, change) {
+    var list = saved().slice(), i = p.id ? list.map(function (q) { return q.id; }).indexOf(p.id) : -1;
+    var rec = i >= 0 ? Object.assign({}, list[i]) : { id: newId(), name: '', hide: false, out: [] };
+    rec.faces = keysOf(p); rec.out = (rec.out || []).slice();
+    change(rec);
+    if (i >= 0) list[i] = rec; else list.push(rec);
+    return list;
+  }
+  function personBtn(p) {
+    var d = document.createElement('button'); d.type = 'button'; d.className = 'person' + (p.name ? ' named' : '');
+    var i = document.createElement('i'); i.setAttribute('style', faceStyle(p.cover, 76)); d.appendChild(i);
+    if (p.name) { var b = document.createElement('b'); b.textContent = p.name; d.appendChild(b); }
+    d.appendChild(document.createTextNode(p.photos.length + (p.photos.length === 1 ? ' photo' : ' photos')));
+    d.setAttribute('aria-label', (p.name || 'Person') + ', ' + p.photos.length + ' photos');
+    d.addEventListener('click', function () { if (JOIN) joinWith(p); else openPerson(p); });
+    if (JOIN && JOIN === p) d.classList.add('pick');
+    return d;
+  }
   function showPeople() {
     FLAT = PGFaces.flatten(S.faces);
-    var groups = PGFaces.cluster(FLAT, 2).slice(0, 60);
-    $('people').replaceChildren.apply($('people'), groups.length ? groups.map(function (gr) {
-      var d = document.createElement('div'); d.className = 'person';
-      var i = document.createElement('i'); i.setAttribute('style', PGFaces.cropStyle(gr.cover, 76, img(gr.cover.pid, 800)));
-      d.appendChild(i); d.appendChild(document.createTextNode(gr.photos.length + ' photos'));
-      return d;
-    }) : [Object.assign(document.createElement('p'), { className: 'muted', style: 'grid-column:1/-1;margin:0', textContent: 'No person found in 2 or more photos yet.' })]);
+    PEOPLE = PGFaces.people(FLAT, saved(), 2);
+    var shown = PEOPLE.filter(function (p) { return !p.hide; }).slice(0, 80), hid = PEOPLE.filter(function (p) { return p.hide; });
+    $('people').replaceChildren.apply($('people'), shown.length ? shown.map(personBtn) : [Object.assign(document.createElement('p'), { className: 'muted', style: 'grid-column:1/-1;margin:0', textContent: 'No person found in 2 or more photos yet.' })]);
+    $('hiddenPeople').replaceChildren.apply($('hiddenPeople'), hid.map(personBtn));
+    $('hiddenWrap').classList.toggle('hidden', !hid.length); $('hiddenSum').textContent = 'Hidden (' + hid.length + ')';
+  }
+  // join: tap "Same person as…" on one, then tap the other circle
+  function startJoin(p) { JOIN = p; document.body.classList.add('joining'); $('joinBar').classList.remove('hidden'); showPeople(); $('joinBar').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  function stopJoin() { JOIN = null; document.body.classList.remove('joining'); $('joinBar').classList.add('hidden'); showPeople(); }
+  $('joinCancel').addEventListener('click', stopJoin);
+  function joinWith(q) {
+    var p = JOIN; if (!p || q === p) { stopJoin(); return; }
+    var keep = p.id ? p : q.id ? q : p, other = keep === p ? q : p;
+    var list = recordFor(keep, function (rec) {
+      var have = {}; rec.faces.forEach(function (k) { have[k] = 1; });
+      keysOf(other).forEach(function (k) { if (!have[k]) rec.faces.push(k); });
+      if (!rec.name && other.name) rec.name = other.name;
+      rec.out = rec.out.filter(function (k) { return !have[k] && keysOf(other).indexOf(k) < 0; }).concat(other.out || []);
+      rec.hide = false;
+    });
+    if (other.id) list = list.filter(function (r) { return r.id !== other.id; });
+    JOIN = null; document.body.classList.remove('joining'); $('joinBar').classList.add('hidden');
+    storePeople(list, 'Joined: ' + (keep.photos.length + other.photos.length) + ' photos as one person');
+  }
+  function openPerson(p) {
+    var wrap = document.createElement('div'); wrap.className = 'pp'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-label', 'Person');
+    var card = document.createElement('div'); card.className = 'pp-card'; wrap.appendChild(card);
+    card.innerHTML = '<div class="pp-head"><i></i><div style="flex:1"><input id="ppName" maxlength="40" placeholder="Name, e.g. Bride, Dadi" aria-label="Name"><p class="muted" style="margin:6px 0 0;font-size:13px" id="ppCount"></p></div></div>' +
+      '<div class="row" style="margin-top:14px"><button class="btn" type="button" id="ppSave">Save name</button><button class="mini" type="button" id="ppJoin">Same person as…</button>' +
+      '<button class="mini" type="button" id="ppHide"></button><button class="mini hidden" type="button" id="ppSplit">Undo my changes</button><button class="mini" type="button" id="ppClose">Close</button></div>' +
+      '<p class="muted" style="margin:16px 0 0;font-size:13px">Faces of this person. Tap × on any face that is someone else.</p><div class="pp-faces" id="ppFaces"></div>';
+    card.querySelector('.pp-head i').setAttribute('style', faceStyle(p.cover, 72));
+    var q = function (id) { return card.querySelector('#' + id); };
+    q('ppName').value = p.name || '';
+    q('ppCount').textContent = p.photos.length + (p.photos.length === 1 ? ' photo' : ' photos') + (p.id ? ' · changed by hand' : '');
+    q('ppHide').textContent = p.hide ? 'Show again' : 'Hide';
+    q('ppSplit').classList.toggle('hidden', !p.id);
+    var close = function () { wrap.remove(); document.removeEventListener('keydown', esc); };
+    var esc = function (e) { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', esc);
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    q('ppClose').addEventListener('click', close);
+    q('ppSave').addEventListener('click', function () { var n = q('ppName').value.trim(); close(); storePeople(recordFor(p, function (r) { r.name = n; }), n ? 'Saved: ' + n : 'Name removed'); });
+    q('ppName').addEventListener('keydown', function (e) { if (e.key === 'Enter') q('ppSave').click(); });
+    q('ppJoin').addEventListener('click', function () { close(); startJoin(p); });
+    q('ppHide').addEventListener('click', function () { close(); storePeople(recordFor(p, function (r) { r.hide = !p.hide; }), p.hide ? 'Shown again' : 'Hidden'); });
+    q('ppSplit').addEventListener('click', function () { close(); storePeople(saved().filter(function (r) { return r.id !== p.id; }), 'Back to how the reader grouped it'); });
+    var box = q('ppFaces');
+    p.faces.slice().sort(function (a, b) { return b.box[2] * b.w - a.box[2] * a.w; }).slice(0, 150).forEach(function (x) {
+      var d = document.createElement('div'); d.className = 'pp-face';
+      var i = document.createElement('i'); i.setAttribute('style', faceStyle(x, 60)); d.appendChild(i);
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Not this person');
+      b.addEventListener('click', function () {
+        d.remove();
+        p.faces = p.faces.filter(function (y) { return y !== x; });
+        var list = recordFor(p, function (r) { if (r.out.indexOf(x.key) < 0) r.out.push(x.key); });
+        storePeople(list, 'Taken out');
+        q('ppCount').textContent = 'Taken out — ' + p.faces.length + ' faces left';
+      });
+      d.appendChild(b); box.appendChild(d);
+    });
+    document.body.appendChild(wrap); setTimeout(function () { q('ppName').focus(); }, 30);
   }
 
   $('testFile').addEventListener('change', function () {
@@ -272,9 +372,13 @@ body.simple .tiles{grid-template-columns:repeat(3,1fr)}
       if (!found.length) { $('testMsg').textContent = 'No face found in that photo. Try a clear, front-facing one.'; return; }
       var me = found.sort(function (a, b) { return b.box.width * b.box.height - a.box.width * a.box.height; })[0];
       if (!FLAT) FLAT = PGFaces.flatten(S.faces);
-      var m = PGFaces.match(me.descriptor, FLAT);
-      $('testMsg').textContent = m.sure.length + (m.sure.length === 1 ? ' photo' : ' photos') + ' found' + (m.maybe.length ? ' + ' + m.maybe.length + ' maybe' : '') + (found.length > 1 ? ' (used the biggest face in your photo)' : '');
-      m.sure.concat(m.maybe).slice(0, 60).forEach(function (pid) { var t = document.createElement('img'); t.src = img(pid, 300); t.loading = 'lazy'; t.alt = ''; $('testThumbs').appendChild(t); });
+      // step 73: show what a GUEST really gets (stricter rules), and what you / the couple get
+      var gm = PGFaces.guestMatch(me.descriptor, FLAT, saved()), m = PGFaces.match(me.descriptor, FLAT);
+      var guest = gm.status === 'ok' ? 'A guest gets ' + gm.ids.length + ' photos' + (gm.ids.length > gm.plain ? ' (' + (gm.ids.length - gm.plain) + ' of them because you joined this person)' : '')
+        : gm.status === 'close' ? 'A guest gets only ' + gm.ids.length + ' close ' + (gm.ids.length === 1 ? 'match' : 'matches') + ' (kept for the couple to approve)'
+        : gm.status === 'unclear' ? 'A guest gets nothing: the face looks like two people' : 'A guest gets nothing: no close face';
+      $('testMsg').textContent = guest + '. You and the couple: ' + m.sure.length + ' found' + (m.maybe.length ? ' + ' + m.maybe.length + ' maybe' : '') + '.' + (found.length > 1 ? ' (Used the biggest face in your photo.)' : '');
+      (gm.ids.length ? gm.ids : m.sure.concat(m.maybe)).slice(0, 60).forEach(function (pid) { var t = document.createElement('img'); t.src = img(pid, 300); t.loading = 'lazy'; t.alt = ''; $('testThumbs').appendChild(t); });
     }).catch(function (e) { $('testMsg').textContent = e.message; });
     this.value = '';
   });
