@@ -6,16 +6,17 @@
 <title>PicGrades — your own wedding app, and photo editing with the human touch</title>
 <meta name="description" content="PicGrades turns your Google Drive folder into your own wedding app. Guests find their photos with a selfie. Photo editing by people, for couples and photographers.">
 <meta name="theme-color" content="#0B0B0B">
-<link rel="icon" href="/app/icons/icon-192.png">
+<link rel="icon" href="/app/hub/icon.png">
+<link rel="apple-touch-icon" href="/app/hub/icon.png">
 <script>/* step 67: on a wedding address, hide this page while the wedding opens */if(!/(^|\.)vercel\.app$|^localhost$|^127\.0\.0\.1$|^(www\.)?picgrades\.com$/.test(location.hostname))document.documentElement.style.visibility="hidden"</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* PicGrades hub (step 68). The PicGrades brand: black, yellow and white. Pictures first, few words.
-   To match the logo exactly, change --yellow here (one place). */
+   --yellow is the yellow of the PicGrades logo (#FAE900). */
 :root{
-  --yellow:#FFCB05; --yellow2:#FFE066;
+  --yellow:#FAE900; --yellow2:#FFF45E;
   --black:#0B0B0B; --ink:#151515; --ink2:#1E1E1E; --line:#2C2C2C;
   --white:#FFFFFF; --soft:#C9C9C9; --mute:#8E8E8E;
   --head:'Bricolage Grotesque','Arial Black',system-ui,sans-serif; --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -46,7 +47,8 @@ h3{font-size:clamp(22px,2.2vw,28px);letter-spacing:-.02em;line-height:1.1}
 .top .shell{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:68px}
 .mark{display:inline-flex;align-items:center;gap:10px;font:800 24px/1 var(--head);letter-spacing:-.03em;color:#fff;text-decoration:none}
 .mark i{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--yellow);color:#0B0B0B;font:800 15px/1 var(--head);font-style:normal;letter-spacing:-.04em}
-.mark img{height:36px;width:auto;display:block}
+.mark img{height:40px;width:auto;display:block}
+.mark span{font:800 19px/1 var(--sans);letter-spacing:.04em}.mark b{color:var(--yellow);font-weight:800}
 .top nav{display:flex;align-items:center;gap:clamp(14px,2.4vw,34px)}
 .top nav a{color:var(--soft);text-decoration:none;font-size:15px;font-weight:600}
 .top nav a:hover{color:var(--yellow)}
@@ -66,7 +68,7 @@ h3{font-size:clamp(22px,2.2vw,28px);letter-spacing:-.02em;line-height:1.1}
 .tile.tall{aspect-ratio:3/5}
 .tile.word{background:var(--yellow);color:#0B0B0B;display:flex;align-items:flex-end;padding:18px;font:800 clamp(17px,1.7vw,25px)/.95 var(--head);letter-spacing:-.03em;aspect-ratio:1}
 .tile.word.w{background:#fff}
-.tile:not(.word):not(.has)::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(255,203,5,.16),transparent 55%)}
+.tile:not(.word):not(.has)::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(250,233,0,.14),transparent 55%)}
 @media (prefers-reduced-motion:no-preference){
   .col{animation:driftY 46s linear infinite}
   .col:nth-child(2){animation-duration:58s;animation-direction:reverse}
@@ -181,7 +183,7 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
 
 <header class="top">
   <div class="shell">
-    <a class="mark" href="/" aria-label="PicGrades home"><i>PG</i>PicGrades</a>
+    <a class="mark" href="/" aria-label="PicGrades home"><img src="/app/hub/logo-mark.png" alt="" width="53" height="40"><span>PIC <b>GRADES</b></span></a>
     <nav aria-label="Main">
       <a class="hide-s" href="#wedding-app">Wedding app</a>
       <a class="hide-s" href="#editing">Photo editing</a>
@@ -216,7 +218,7 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
     <span class="go">Make our wedding app</span>
   </a>
   <a class="p" href="/app/?signup&amp;kind=photographer">
-    <svg viewBox="0 0 120 120" fill="none" stroke="#0B0B0B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="36" width="96" height="66" rx="12"/><path d="M42 36l7-14h22l7 14"/><circle cx="60" cy="69" r="20"/><circle cx="60" cy="69" r="7" fill="#FFCB05" stroke="none"/></svg>
+    <svg viewBox="0 0 120 120" fill="none" stroke="#0B0B0B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="36" width="96" height="66" rx="12"/><path d="M42 36l7-14h22l7 14"/><circle cx="60" cy="69" r="20"/><circle cx="60" cy="69" r="7" fill="#FAE900" stroke="none"/></svg>
     <h2>I am a photographer</h2>
     <p>Give every couple an app, not a Drive link. Your name stays on it.</p>
     <span class="go">Make one for my couples</span>
@@ -244,7 +246,7 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
         <h3>Post Edits</h3><p>Instagram posts and albums in wedding styles.</p>
       </div>
       <div class="cell s2">
-        <div class="art"><div class="lock"><svg viewBox="0 0 96 96" fill="none" stroke="#FFCB05" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="42" width="60" height="42" rx="10"/><path d="M30 42V30a18 18 0 0 1 36 0v12"/><circle cx="48" cy="63" r="5" fill="#FFCB05"/></svg></div></div>
+        <div class="art"><div class="lock"><svg viewBox="0 0 96 96" fill="none" stroke="#FAE900" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="42" width="60" height="42" rx="10"/><path d="M30 42V30a18 18 0 0 1 36 0v12"/><circle cx="48" cy="63" r="5" fill="#FAE900"/></svg></div></div>
         <h3>Your privacy</h3><p>Guests see highlights only. The rest, they ask you.</p>
       </div>
       <div class="cell s4 yel">
@@ -321,7 +323,7 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
 
 <footer>
   <div class="shell">
-    <a class="mark" href="/"><i>PG</i>PicGrades</a>
+    <a class="mark" href="/"><img src="/app/hub/logo-mark.png" alt="" width="53" height="40"><span>PIC <b>GRADES</b></span></a>
     <nav aria-label="Footer">
       <a href="#wedding-app">Wedding app</a>
       <a href="#editing">Photo editing</a>
