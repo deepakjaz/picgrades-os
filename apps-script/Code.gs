@@ -105,6 +105,7 @@ var USER_ROUTES = {
   setGallery: setGallery_,
   facesStatus: facesStatus_,
   saveFaces: saveFaces_,
+  savePeople: savePeople_,
   facesProxy: facesProxy_,
   sendGallery: sendGallery_,
   setFeatures: setFeatures_,
@@ -178,7 +179,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step72-reel-demo',
+    version: 'step73-faces-people',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -1692,9 +1693,7 @@ function saveFaces_(p, user) {
       f.photos[id] = { w: Math.round(batch[id].w), h: Math.round(batch[id].h), f: batch[id].f };
       f.pass[id] = Math.max(pass, Number(f.pass[id] || 0));
     }
-    var json = JSON.stringify(f), fileId = g.facesFileId;
-    if (fileId) { try { DriveApp.getFileById(fileId).setContent(json); } catch (e) { fileId = ''; } }
-    if (!fileId) fileId = manifestFolder_().createFile('faces-' + g.galleryId + '.json', json, 'application/json').getId();
+    var fileId = writeFacesFile_(g, f);
     var faceCount = Object.keys(f.photos).reduce(function (t, k) { return t + f.photos[k].f.length; }, 0);
     var read = Object.keys(f.pass).filter(function (k) { return ids[k]; }).length;
     var total = Object.keys(ids).length;
@@ -1704,6 +1703,58 @@ function saveFaces_(p, user) {
     updateRowByNumber_('Galleries', g._row, patch);
     return { status: status, faceCount: faceCount, photosRead: read, photosTotal: total };
   } finally { lock.releaseLock(); }
+}
+
+function writeFacesFile_(g, f) {
+  var json = JSON.stringify(f), fileId = g.facesFileId;
+  if (fileId) { try { DriveApp.getFileById(fileId).setContent(json); } catch (e) { fileId = ''; } }
+  if (!fileId) fileId = manifestFolder_().createFile('faces-' + g.galleryId + '.json', json, 'application/json').getId();
+  return fileId;
+}
+
+// Step 73: people fixed by hand on the face-reading page — the same person joined, a name, hidden, wrong faces taken out.
+// Kept in the faces file as people:[{id, name, hide, faces:['photoId:n'…], out:['photoId:n'…]}]. Guests never see names.
+// Find me uses it: when a guest's closest face belongs to a joined person, the guest gets every photo of that person
+// (so side faces the reader could not match on its own are included).
+var PEOPLE_MAX = 400, PEOPLE_KEYS_MAX = 30000;
+function savePeople_(p, user) {
+  var lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    var x = staffGallery_(p.g, user), g = x.g;
+    if (!g.facesFileId) return { ok: false, error: 'Read the faces first.' };
+    var ids = {}; allPhotoIds_(loadManifest_(g)).forEach(function (id) { ids[id] = true; });
+    var list = Array.isArray(p.people) ? p.people : null;
+    if (!list || list.length > PEOPLE_MAX) return { ok: false, error: 'People list looks wrong.' };
+    var total = 0, seenId = {}, bad = '';
+    var keys = function (a) {
+      if (!Array.isArray(a)) return [];
+      var out = [], seen = {};
+      a.forEach(function (k) {
+        var m = /^([A-Za-z0-9_-]{1,100}):(\d{1,2})$/.exec(String(k));
+        if (!m || !ids[m[1]]) { bad = 'A face is not part of this wedding.'; return; }
+        if (!seen[k]) { seen[k] = 1; out.push(String(k)); }
+      });
+      total += out.length; return out;
+    };
+    var clean = list.map(function (q) {
+      var id = String(q && q.id || '');
+      if (!/^p[a-z0-9]{2,16}$/.test(id) || seenId[id]) { bad = 'People list looks wrong.'; return null; }
+      seenId[id] = 1;
+      return { id: id, name: String(q.name || '').replace(/[<>]/g, '').trim().slice(0, 40), hide: !!q.hide, faces: keys(q.faces), out: keys(q.out) };
+    }).filter(function (q) { return q && (q.faces.length || q.out.length); });
+    if (bad) return { ok: false, error: bad };
+    if (total > PEOPLE_KEYS_MAX) return { ok: false, error: 'Too many faces in the people list.' };
+    var f = readFacesFile_(g); f.people = clean; writeFacesFile_(g, f);
+    return { people: clean };
+  } finally { lock.releaseLock(); }
+}
+/** Photos of the hand-joined person a face ('photoId:n') belongs to; hidden people do not count. */
+function personPhotos_(f, key) {
+  var p = (f.people || []).filter(function (q) { return !q.hide && (q.faces || []).indexOf(key) >= 0 && (q.out || []).indexOf(key) < 0; })[0];
+  if (!p) return [];
+  var seen = {}, out = [];
+  p.faces.forEach(function (k) { if ((p.out || []).indexOf(k) >= 0) return; var pid = k.slice(0, k.lastIndexOf(':')); if (!seen[pid] && f.photos[pid]) { seen[pid] = 1; out.push(pid); } });
+  return out;
 }
 
 /** Logged in: photo bytes for face reading when the browser cannot read Drive images directly. */
@@ -2344,15 +2395,17 @@ function findFaces_(p) {
   var f = readFacesFile_(g), scale = f.scale || 250, me = faceBytes_(String(p.d || ''));
   if (!me) return { ok: false, error: 'The face could not be read. Please try again.' };
   if (guest) return withItems_(g, guestFind_(g, f, scale, me, guest));
-  var limSure = FACE_SURE * scale, limMaybe = FACE_MAYBE * scale, sure = [], maybe = [], best = {};
+  var limSure = FACE_SURE * scale, limMaybe = FACE_MAYBE * scale, sure = [], maybe = [], best = {}, top = null, topD = 1e9;
   Object.keys(f.photos || {}).forEach(function (pid) {
     var b = 1e9;
-    (f.photos[pid].f || []).forEach(function (fc) {
+    (f.photos[pid].f || []).forEach(function (fc, k) {
       var x = faceBytes_(fc[1]); if (!x) return;
       var t = faceDist_(me, x, limMaybe); if (t < b) b = t;
+      if (t < topD) { topD = t; top = pid + ':' + k; }
     });
     if (b <= limMaybe) best[pid] = b;
   });
+  if (top && topD <= limSure) personPhotos_(f, top).forEach(function (pid) { best[pid] = Math.min(best[pid] === undefined ? 1e9 : best[pid], limSure); });   // step 73
   Object.keys(best).sort(function (a, c) { return best[a] - best[c]; }).forEach(function (pid) { (best[pid] <= limSure ? sure : maybe).push(pid); });
   return { sure: sure, maybe: maybe, photos: Object.keys(f.photos || {}).length };
 }
@@ -2394,6 +2447,7 @@ function guestFind_(g, f, scale, me, guest) {
   }
   var keep = Math.min(R.lim, d1 / scale + FACE_TIGHT) * scale, ids = [];
   near.forEach(function (n) { if (n.d <= keep && ids.indexOf(n.pid) < 0) ids.push(n.pid); });
+  personPhotos_(f, near[0].pid + ':' + near[0].k).forEach(function (pid) { if (ids.indexOf(pid) < 0) ids.push(pid); });   // step 73
   ensureTab_('FindMe', FIND_COLUMNS);
   if (ids.length >= R.min) {
     appendRow_('FindMe', { at: fmt_(new Date()), galleryId: g.galleryId, phone: "'" + guest.phone, guestId: guest.guestId, name: guest.name, sure: ids.join(','), maybe: '', status: 'ok', face: near[0].pid + ':' + near[0].k });
