@@ -119,8 +119,10 @@
     s.forEach(([k, v, l]) => { const x = h('button', 'pgl-stat', '<b>' + Number(v).toLocaleString('en-IN') + '</b><span>' + l + '</span>'); x.type = 'button'; x.addEventListener('click', () => pgStatTap(k)); el.appendChild(x); });
   };
   const action = (el, b, D, k) => {
-    const a = (window.PGRules && PGRules.act(k)) || ACT[k]; tapOn(el, a[2]); el.classList.add('pgl-act-' + b.variant);
-    if (b.variant === 'photo' || b.variant === 'slideshow') { rot(el, picks(D, 8), 700); el.appendChild(h('div', 'pgl-scrim')); el.classList.add('pgl-act-photo'); }
+    const a = (window.PGRules && PGRules.act(k)) || ACT[k]; tapOn(el, a[2]); el.classList.add('pgl-act-' + (b.variant === 'photo' || b.variant === 'slideshow' ? 'plain' : b.variant));   // step 71: no photo styling
+    // step 71: function cards never carry wedding photos (photos belong to reels); Find me is only a small pill
+    if (k === 'findme') el.classList.add('pgl-fm-pill');
+    else if (b.variant === 'photo' || b.variant === 'slideshow') el.classList.add('pgl-act-center');
     const small = b._letter === 'S';
     el.appendChild(h('div', 'pgl-actin', '<i>' + ic(k) + '</i><div><b>' + a[0] + '</b>' + (small ? '' : '<small>' + a[1] + '</small>') + '</div>' + (small ? '' : '<em>' + ic('arrow') + '</em>')));
   };
@@ -194,7 +196,8 @@
     return blocks.slice(0, at).concat(add, blocks.slice(at));
   }
   function plan(layout, scr, D) {
-    const shown = moreChapters(layout.blocks || [], D).filter(b0 => (B[b0.block] || (window.PGX && PGX.has(b0.block))) && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
+    // step 71: Find me is never a card in the grid; it is the small pinned button (pinFindme) — the other cards close the gap
+    const shown = moreChapters(layout.blocks || [], D).filter(b0 => b0.block !== 'findme' && (B[b0.block] || (window.PGX && PGX.has(b0.block))) && visible(b0.block) && !(Array.isArray(b0.hide) && b0.hide.indexOf(scr) > -1)
       && !(b0.block === 'loved' && !D.loved.length) && !(b0.block === 'notes' && !D.notes.length));
     const wide = scr === 'wide' && shown.some(b0 => !Array.isArray(b0.wide) && !(b0.pos && b0.pos.wide)) ? planWide(shown) : null;
     // an own Hub (cards with fixed places) where a card has nothing to show right now (no hearts yet, a function off):
@@ -233,8 +236,15 @@
         if (B[b.block] ? B[b.block](el, b, D) === false : !PGX.render(el, b, D, { scr: sc, cols: it.cols, rows: it.rows, editing: !!editing, act: storyAct })) return;
         box.appendChild(el); out.push({ b0, el });
       });
+      if (!editing) pinFindme(box);
       return out;
     } finally { SCR_FOR = null; SKIP_REPACK = false; }
+  }
+  // step 71: the small pinned Find me button on the grid layouts (the same one the story layouts have)
+  function pinFindme(box) {
+    if (!visible('findme')) return;
+    const fm = h('button', 'pgs-findme', '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg><span>Find me</span>');
+    fm.type = 'button'; fm.dataset.findme = ''; fm.addEventListener('click', () => press('pgcFind')); box.appendChild(fm);
   }
   // ---------- Story Hubs (step 53): a whole scrolling page instead of cards ----------
   // "living" = Living Story (Gemini), "editorial" = Editorial Album (ChatGPT). They get the wedding's data and call back here to open things.
