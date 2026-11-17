@@ -35,7 +35,17 @@
     '.pgs-glow{position:absolute;width:420px;height:420px;border-radius:50%;filter:blur(70px);opacity:.28;z-index:-1;animation:pgsFloat 9s ease-in-out infinite}',
     '@keyframes pgsFloat{0%,100%{transform:translate(-30px,-20px)}50%{transform:translate(30px,30px)}}',
     '.pgs-end a{margin-top:22px;display:inline-block;padding:15px 28px;border-radius:999px;background:#FAC646;color:#1E1916;font-weight:800;text-decoration:none}',
-    '@media (prefers-reduced-motion:reduce){.pgs-sec .rv,.pgs-badge{transition:none!important}.pgs-glow{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.pgs-sec .rv,.pgs-badge{transition:none!important}.pgs-glow{animation:none}}',
+    // step 70: try the editors (a demo: nothing saved, shared or downloaded)
+    '.pgs-try{margin:6px 16px 4px;padding:18px;border-radius:22px;background:#111;color:#f4eee6}',
+    '.pgs-try b{display:block;font:500 22px/1.15 var(--font-serif)}.pgs-try p{margin:6px 0 14px;font:400 13.5px/1.5 var(--font-sans);letter-spacing:0;color:rgba(244,238,230,.75)}',
+    '.pgs-try-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}',
+    '.pgs-try-row button,.pgs-sec .pgs-trybtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:12px 16px;border-radius:999px;border:0;background:#FAE900;color:#111;font:800 15px/1.2 var(--font-sans);cursor:pointer}',
+    '.pgs-try-row button+button{background:#fff}',
+    '.pgs-try-row svg,.pgs-trybtn svg{width:20px;height:20px}',
+    '.pgs-sec .pgs-trybtn{margin-top:22px}',
+    // a small "Demo" tag in the editor's own header (never over its buttons)
+    '.pgs-tag{display:inline-block;margin-left:2px;padding:3px 8px;border-radius:999px;background:#FAE900;color:#111;font:800 10.5px/1.2 var(--font-sans);letter-spacing:.04em;vertical-align:middle}'
   ].join('');
   document.head.appendChild(css);
 
@@ -49,9 +59,9 @@
       badges: [['Double-tap to love', 'hearts and notes'], ['Guest videos too', 'after the couple approves']] },
     { k: 'findme', eb: 'Find me', t: 'A selfie finds your photos', p: 'Guests take a selfie and see every photo they are in, out of thousands, in seconds. They can save them as their own collection and share the link.', shots: ['findme'], glow: '#2E8B57',
       badges: [['One selfie', 'all your photos'], ['Private', 'only a face code is checked']] },
-    { k: 'reel', eb: 'Reel maker', t: 'Reels with music, made on the phone', p: 'Pick photos and a style: South, Haldi, Sangeet, Royal, Cinema and more. Cuts land on the beat of the music, even your own song.', shots: ['reel'], glow: '#D4A017',
+    { k: 'reel', try: 'reel', eb: 'Reel maker', t: 'Reels with music, made on the phone', p: 'Pick photos and a style: South, Haldi, Sangeet, Royal, Cinema and more. Cuts land on the beat of the music, even your own song.', shots: ['reel'], glow: '#D4A017',
       badges: [['Cuts on the beat', 'of any song'], ['38 styles', 'for every ceremony']] },
-    { k: 'album', eb: 'Album maker', t: 'Instagram albums in a minute', p: 'Album strips, carousels and single posts with 48 templates, wedding drawings and rose petal showers. Move, zoom or replace any photo.', shots: ['album'], glow: '#C2185B',
+    { k: 'album', try: 'post', eb: 'Album maker', t: 'Instagram albums in a minute', p: 'Album strips, carousels and single posts with 48 templates, wedding drawings and rose petal showers. Move, zoom or replace any photo.', shots: ['album'], glow: '#C2185B',
       badges: [['48 templates', 'per ceremony'], ['Faces kept in frame', 'automatically']] },
     { k: 'upload', eb: 'Guest moments', t: 'Guests add their moments', p: 'Guests share their own photos and videos into Root Moment. The couple approves each one and sends a thank-you note.', shots: ['upload', 'moments'], glow: '#1565C0',
       badges: [['Couple approves', 'every moment'], ['Thank-you note', 'from the bride and groom']] }
@@ -74,7 +84,9 @@
       const ph = document.createElement('div'); ph.className = 'pgs-phone rv'; const scr = document.createElement('div'); scr.className = 'scr'; ph.appendChild(scr);
       f.shots.forEach((n, j) => { const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; im.src = IMG(n); if (!j) im.classList.add('on'); scr.appendChild(im); });
       f.badges.forEach((b, j) => { const d = document.createElement('div'); d.className = 'pgs-badge b' + (j + 1) + ' ' + (j ? 'r' : 'l'); d.style.top = (j ? 62 : 18) + '%'; d.textContent = b[0]; const sp = document.createElement('span'); sp.textContent = b[1]; d.appendChild(sp); ph.appendChild(d); });
-      s.append(eb, h, p, ph); wrap.appendChild(s); secs.push(s);
+      s.append(eb, h, p, ph);
+      if (f.try && GALLERY.tryDemo) { const t = document.createElement('button'); t.type = 'button'; t.className = 'pgs-trybtn rv d2'; t.innerHTML = TRY_IC[f.try] + '<span>Try it yourself</span>'; t.onclick = () => { close(); pgsTry(f.try); }; s.appendChild(t); }
+      wrap.appendChild(s); secs.push(s);
       dots.appendChild(document.createElement('i'));
     });
     // last screen: how to get it
@@ -97,6 +109,41 @@
     x.onclick = close;
     const first = secs.find(s => s.dataset.k === startKey); if (first) requestAnimationFrame(() => wrap.scrollTo({ top: first.offsetTop, behavior: 'auto' }));
   }
+  // ---- step 70: try Reel Edits / Post Edits on the demo wedding (GALLERY.tryDemo), nothing saved, shared or downloaded ----
+  const TRY_IC = {
+    reel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>',
+    post: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9.5" cy="9.5" r="1.8"/><path d="m20 15-4.5-4.5L6 20"/></svg>'
+  };
+  const DEMO_MSG = 'This is a demo. With your own wedding app you can save, download and share everything.';
+  const loaded = {};
+  function load(src, name) {
+    if (window[name]) return Promise.resolve();
+    if (!loaded[src]) loaded[src] = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => { loaded[src] = null; rej(new Error('Could not open it. Check the internet.')); }; document.head.appendChild(sc); });
+    return loaded[src];
+  }
+  function ribbon() {
+    // every header of the open editor gets a "Demo" tag (they appear as the editor moves between its screens)
+    const tagAll = () => document.querySelectorAll('.rl-wrap .re-logo span:not(.pgs-tag), .pe-wrap .pe-logo span:not(.pgs-tag)').forEach(sp => {
+      if (sp.nextElementSibling && sp.nextElementSibling.classList.contains('pgs-tag')) return;
+      const t = document.createElement('span'); t.className = 'pgs-tag'; t.textContent = 'DEMO'; sp.after(t);
+    });
+    tagAll();
+    const t = setInterval(() => { if (!document.querySelector('.rl-wrap, .pe-wrap, .ps-wrap')) { clearInterval(t); return; } tagAll(); }, 600);
+  }
+  function pgsTry(kind, chosen) {
+    const d = GALLERY.tryDemo; if (!d) { showToast('The demo is not ready yet.'); return; }
+    const api = (a, b) => pgApi(a, Object.assign({}, b || {}, { g: d.galleryId }));   // photos come from the demo wedding
+    const pools = d.events.map(e => e.photos.slice()), pick = [];
+    while (pick.length < (kind === 'reel' ? 12 : 6) && pools.some(x => x.length)) pools.forEach(x => { if (x.length && pick.length < (kind === 'reel' ? 12 : 6)) pick.push(x.shift()); });
+    const labels = {}; d.events.forEach(e => e.photos.forEach(x => { labels[x.id] = e.name; }));
+    const base = { demo: true, demoMsg: DEMO_MSG, title: d.title, date: pgDate(d.date), api, collections: d.events };
+    const go = kind === 'reel'
+      ? load('/app/reel.js', 'PGReel').then(() => PGReel.open(Object.assign({}, base, { photos: chosen || pick, choose: !chosen, studio: (GALLERY.studioInfo || {}).name || '' })))
+      : load('/app/post.js', 'PGPost').then(() => PGPost.open(Object.assign({}, base, { photos: pick, labels, recent: [], openReel: ph => pgsTry('reel', ph),
+          post: () => Promise.reject(new Error(DEMO_MSG)) })));
+    go.then(ribbon).catch(e => showToast(e.message));
+  }
+  window.pgsTry = pgsTry;
   function contactHref(info) {
     const ph = String(info.phone || '').replace(/[^\d]/g, '');
     if (ph) return 'https://wa.me/' + (ph.length === 10 ? '91' + ph : ph) + '?text=' + encodeURIComponent('Hi ' + (info.name || '') + ', I saw your page and would like to ask about our wedding date.');
@@ -132,6 +179,12 @@
         card.querySelector('img').src = IMG(f.shots[0]); card.querySelector('em').textContent = f.eb; card.querySelector('b').textContent = f.t; card.querySelector('span').textContent = 'See how it works →';
         card.onclick = () => story(f.k); row.appendChild(card);
       });
+      if (GALLERY.tryDemo) {   // step 70
+        const box = document.createElement('div'); box.className = 'pgs-try'; box.id = 'pgsTry';
+        box.innerHTML = '<b>Try the editors yourself</b><p>Make a reel or an Instagram post from a real wedding. This is a demo: nothing is saved or downloaded. With your own wedding app, everything is yours to keep and share.</p><div class="pgs-try-row"></div>';
+        [['reel', 'Reel Edits'], ['post', 'Post Edits']].forEach(([k, t]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.try = k; b.innerHTML = TRY_IC[k] + '<span>' + t + '</span>'; b.onclick = () => pgsTry(k); box.querySelector('.pgs-try-row').appendChild(b); });
+        sec.appendChild(box);
+      }
       create.parentNode.insertBefore(about, create); create.parentNode.insertBefore(cta, create); create.parentNode.insertBefore(sec, create);
     }
   });
