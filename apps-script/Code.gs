@@ -178,7 +178,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step68-hub',
+    version: 'step70-try-editors',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -2290,12 +2290,13 @@ function myRole_(p, user) {
 /** Public: photo bytes for the reel maker when the phone cannot read Drive photos directly.
  *  Only photos of a published gallery; at most 4 per call and 150 per device per hour. */
 function photoData_(p) {
-  var g = findGallery_(p.g);
-  if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
+  var g = findGallery_(p.g), tryIds = g ? demoTryIds_(g.galleryId) : null, open = openTo_(g, p);   // step 70: + the demo wedding's try-it photos
+  if (!tryIds && !open) return { ok: false, error: 'This gallery is not available.' };
   var device = String(p.device || '').slice(0, 40);
   if (device.length < 8) return { ok: false, error: 'Missing details.' };
-  var m = loadManifest_(g), ids = {};
-  if (gatedFor_(g, p)) ids = guestSees_(g, m, p).ids; else allPhotoIds_(m).forEach(function (id) { ids[id] = true; });   // step 63b
+  var ids = {};
+  if (open) { var m = loadManifest_(g); if (gatedFor_(g, p)) ids = guestSees_(g, m, p).ids; else allPhotoIds_(m).forEach(function (id) { ids[id] = true; }); }   // step 63b
+  if (tryIds) Object.keys(tryIds).forEach(function (id) { ids[id] = true; });
   var want = (p.ids || []).slice(0, 4).filter(function (id) { return ids[id]; });
   var cache = CacheService.getScriptCache(), key = 'pd:' + g.galleryId + ':' + device, used = Number(cache.get(key) || 0);
   if (used + want.length > 150) return { ok: false, error: 'Too many photos for now. Please try again in an hour.' };
@@ -2792,6 +2793,29 @@ function studioRow_(slug) {
 
 /** Public: the photographer's app. Weddings = their published galleries the couple has not hidden (portfolio on by default)
  *  plus any listed in the 'galleries' column. Each wedding shows only the photographer's picks (00_Portfolio), never the full wedding. */
+// ---------- Try the editors (step 70) ----------
+// The photographer page lets visitors try Reel Edits and Post Edits on a real wedding, as a demo: nothing is saved,
+// shared or downloaded. The photos come from the wedding in Settings demoGallery (PicGrades chooses it, e.g. a wedding
+// it may show), or else the first wedding on the page. A few photos per event, never the whole wedding.
+var TRY_PER_EVENT = 8, TRY_MAX = 48;
+function demoTry_(fallbackGid) {
+  var s = getSettings_(), gid = String(s.demoGallery || '').trim(), g = gid ? findGallery_(gid) : null, chosen = !!g;
+  if (!g && fallbackGid) g = findGallery_(fallbackGid);
+  if (!g || (!chosen && g.status !== 'Published')) return null;
+  var m; try { m = loadManifest_(g); } catch (e) { return null; }
+  var events = [], n = 0;
+  (m.events || []).forEach(function (e) {
+    if (e.isHighlights || n >= TRY_MAX) return;
+    var ph = (e.photos || []).filter(function (x, i, a) { return i % Math.max(1, Math.floor(a.length / TRY_PER_EVENT)) === 0; }).slice(0, Math.min(TRY_PER_EVENT, TRY_MAX - n))
+      .map(function (x) { return { id: x.id }; });
+    if (ph.length) { events.push({ name: e.name, photos: ph }); n += ph.length; }
+  });
+  return events.length ? { galleryId: g.galleryId, title: g.title || m.title || 'Wedding', date: g.eventDate || '', events: events, chosen: chosen } : null;
+}
+function demoTryIds_(gid) {
+  var d = demoTry_(); if (!d || d.galleryId !== gid) return null;
+  var ids = {}; d.events.forEach(function (e) { e.photos.forEach(function (x) { ids[x.id] = true; }); }); return ids;
+}
 function getStudio_(p) {
   var st = studioRow_(p.slug);
   if (!st) return { ok: false, error: 'This photographer page is not available.' };
@@ -2818,7 +2842,8 @@ function getStudio_(p) {
     posts.push({ postId: 'w-' + g.galleryId, fileId: picks.slice(0, 10).map(function (x) { return x.id; }).join(','), type: 'album', name: st.name, caption: title, at: g.eventDate || g.createdAt });
     if (String(g.thanksNote || '').trim()) reviews.push({ photoId: picks[0].id, name: title, text: String(g.thanksNote).slice(0, 400), at: g.eventDate || g.createdAt });
   });
-  var out = { isStudio: true, title: st.name, studio: st.name, eventDate: '', events: events, personal: [], root: [], guestPosts: posts,
+  var tryIt = demoTry_(events.length ? events[0].folder : '');
+  var out = { isStudio: true, title: st.name, studio: st.name, eventDate: '', events: events, personal: [], root: [], guestPosts: posts, tryDemo: tryIt,
     likes: {}, notes: {}, recentNotes: reviews, mine: {}, faceSearch: false, isCouple: false, guestGate: 'open',
     studioInfo: { slug: st.slug, name: st.name, tagline: st.tagline || '', about: st.about || '', city: st.city || '', phone: st.phone || '', email: st.email || '', instagram: st.instagram || '', website: st.website || '' } };
   cachePutBig_(key, JSON.stringify(out), 300);
