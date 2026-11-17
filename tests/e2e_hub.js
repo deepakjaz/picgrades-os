@@ -23,15 +23,15 @@ const srv = http.createServer((req, res) => {
     await pg.goto('http://localhost:8879' + url); await pg.waitForTimeout(3200); return pg;
   }
   let pg = await open('/', 390, 844);
-  check(/home of their own/.test(await pg.textContent('h1')) && await pg.isVisible('.phone'), 'hero: the headline and the Find me phone');
+  check(/Your own app/.test(await pg.textContent('h1')) && await pg.locator('#wall .tile').count() === 36 && await pg.locator('#wall .tile.word').count() >= 6, 'hero: the headline and the photo wall');
   check(await pg.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'phone: no sideways scroll');
   check(await pg.textContent('[data-price="ai"]') === '₹2.50' && await pg.textContent('[data-price="human"]') === '₹8' && await pg.textContent('[data-price="cull"]') === '₹0.80' && await pg.textContent('[data-price="retouch"]') === 'from ₹120', 'prices come from Settings (AI ₹2.50 in the offer season, Human ₹8, Culling ₹0.80, Retouching from ₹120)');
-  check(await pg.textContent('[data-when="human"]') === '4 days' && await pg.textContent('[data-when="ai"]') === '24 hours', 'delivery: Human touch 4 days, AI 24 hours');
+  check(await pg.textContent('[data-when="human"]') === 'Ready in 4 days' && await pg.textContent('[data-when="ai"]') === 'Ready in 24 hours', 'delivery: Human touch 4 days, AI 24 hours');
   check(await pg.getAttribute('#contact', 'href') === 'mailto:hello@picgrades.com', 'contact email comes from Settings');
   const doors = await pg.$$eval('.door a', l => l.map(a => a.getAttribute('href')));
   check(doors[0] === '/app/?signup&kind=couple' && doors[1] === '/app/?signup&kind=photographer', 'doorway: couple and photographer');
   if (SHOTS) await pg.screenshot({ path: path.join(SHOTS, 'hub-phone.png'), fullPage: true });
-  await pg.click('.door a:nth-child(2)'); await pg.waitForTimeout(1200);
+  await pg.click('.door a.p h2'); await pg.waitForSelector('#signupForm', { state: 'visible', timeout: 8000 }).catch(() => {}); await pg.waitForTimeout(400);
   check(await pg.isVisible('#signupForm') && await pg.isChecked('#signupForm input[value="photographer"]') && await pg.isVisible('#suStudioBox'), '"I am a photographer" opens sign-up with photographer chosen');
   await pg.context().close();
   pg = await open('/', 1440, 900);
