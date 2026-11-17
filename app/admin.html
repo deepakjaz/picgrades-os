@@ -139,8 +139,9 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     <h1 style="margin:0 0 6px;font-size:44px;line-height:1.05">Order queue</h1>
     <p class="muted" style="margin:0 0 18px">Soonest delivery first. Paste the LR link to complete an order — the client gets the email right away.</p>
     <div class="row" style="align-items:flex-start">
-      <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">Editing requests (Human touch · AI + Human · After AI · AI)</p><div id="qEnq"></div></div>
+      <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">Editing requests (Human touch · AI + Human · After AI · AI · Culling · Retouching)</p><div id="qEnq"></div></div>
       <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">New wedding galleries (sign-ups · free trial)</p><div id="qWed"></div></div>
+      <div class="card" style="flex:1 1 100%;min-width:0"><p class="eyebrow" style="margin:0">Own domains (buy in the customer’s name · domain price + yearly fee)</p><div id="qDom"></div></div>
       <div class="card" style="flex:999 1 560px;min-width:0"><p class="eyebrow" style="margin:0">Open orders</p><div id="qOpen"></div></div>
       <div class="card" style="flex:1 1 300px;min-width:0"><p class="eyebrow" style="margin:0">Recently completed</p><div id="qDone"></div></div>
     </div>
@@ -326,14 +327,14 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
   function renderQueue(res) {
     // step 65e: human editing enquiries from people who signed up themselves — reply with a price, then make an editing order
     fill('qEnq', (res.enquiries || []).length ? res.enquiries.map(function (e) {
-      var KIND = { human: 'Human touch', aihuman: 'AI + Human', afterai: 'After AI', ai: 'AI' }, k = KIND[e.kind] || 'Human touch';
+      var KIND = { human: 'Human touch', aihuman: 'AI + Human', afterai: 'After AI', ai: 'AI', cull: 'Culling', cullcc: 'Culling + Colour Correction', retouch: 'Retouching' }, k = (KIND[e.kind] || 'Human touch') + (e.editKind ? ', edited ' + (KIND[e.editKind] || e.editKind) : '') + (e.keep ? ', keep ' + e.keep : '') + (e.fixes ? ' (' + String(e.fixes).split(',').join(', ') + ')' : '');
       var head = el('div', { style: 'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [el('b', { text: (e.name || e.email) + ' · ' + k + (e.profile ? ' (' + e.profile + ')' : '') + ' · ' + num(e.photos) + ' photos' + (Number(e.freePhotos) ? ' · ' + e.freePhotos + ' free' : '') + (e.total !== '' && e.total != null ? ' · ₹' + Number(e.total).toLocaleString('en-IN') : '') }),
         el('span', { class: 'pill ' + (e.status === 'new' ? 'p-hold' : 'p-done'), text: e.status === 'new' ? 'NEW' : e.status.toUpperCase() })]);
       var meta = el('span', { class: 'muted', style: 'font-size:13px', text: [e.email, e.phone, e.title ? 'wedding: ' + e.title : '', e.wantBy ? 'wanted by ' + e.wantBy : '', 'asked ' + String(e.at).slice(0, 16)].filter(Boolean).join(' · ') });
       var notes = e.notes ? el('span', { style: 'font-size:13px', text: (e.kind === 'aihuman' ? 'Tone: ' : '') + '“' + e.notes + '”' }) : null;
       var ref = e.reference ? el('span', { style: 'font-size:13px', text: 'Style reference: ' + e.reference + (e.aiTool ? ' · AI used: ' + e.aiTool : '') }) : null;
       var consent = el('span', { style: 'font-size:12px;font-weight:600;color:' + (e.consent === 'yes' ? '#7FD39A' : 'var(--mute,#999)'), text: e.consent === 'yes' ? '✓ May use these edits to improve our editing' : 'Not for training — edit only' });
-      var mail = 'mailto:' + encodeURIComponent(e.email) + '?subject=' + encodeURIComponent('Your editing request — ' + e.photos + ' photos') + '&body=' + encodeURIComponent('Hi ' + String(e.name || '').split(' ')[0] + ',\n\nThank you for your request: ' + k + (e.profile ? ' (' + e.profile + ')' : '') + ', ' + e.photos + ' photos' + (Number(e.freePhotos) ? ' (' + e.freePhotos + ' free)' : '') + '.\n\nTotal: ₹' + Number(e.total || 0).toLocaleString('en-IN') + '\nReady ' + (e.kind === 'ai' ? '24 hours' : e.kind === 'aihuman' || e.kind === 'afterai' ? '48 hours' : '4 days') + ' after you confirm.\n\nPicGrades');
+      var mail = 'mailto:' + encodeURIComponent(e.email) + '?subject=' + encodeURIComponent('Your editing request — ' + e.photos + ' photos') + '&body=' + encodeURIComponent('Hi ' + String(e.name || '').split(' ')[0] + ',\n\nThank you for your request: ' + k + (e.profile ? ' (' + e.profile + ')' : '') + ', ' + e.photos + ' photos' + (Number(e.freePhotos) ? ' (' + e.freePhotos + ' free)' : '') + '.\n\nTotal: ₹' + Number(e.total || 0).toLocaleString('en-IN') + '\nReady ' + (e.kind === 'ai' ? '24 hours' : e.kind === 'aihuman' || e.kind === 'afterai' ? '48 hours' : e.kind === 'cull' || e.kind === 'retouch' ? '72 hours' : e.kind === 'cullcc' ? 'a few days' : '4 days') + ' after you confirm.\n\nPicGrades');
       var acts = el('span', { style: 'font-size:13px;display:flex;gap:12px;flex-wrap:wrap;align-items:center' }, [
         el('a', { href: e.folderUrl, target: '_blank', rel: 'noopener', text: 'Open photos' }), el('a', { href: mail, text: 'Reply by email' })]);
       [['replied', 'Mark replied'], ['closed', 'Close'], ['new', 'Back to new']].forEach(function (x) {
@@ -355,8 +356,30 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
       var links = el('span', { style: 'font-size:13px;display:flex;gap:12px;flex-wrap:wrap' }, [
         el('a', { href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), target: '_blank', rel: 'noopener', text: needFaces ? 'Read faces (Find me) →' : 'Faces & links →' }),
         el('a', { href: '/pg/' + w.galleryId, target: '_blank', rel: 'noopener', text: 'Open (PicGrades view)' })]);
+      // step 67: after the customer pays, mark the wedding paid — everything unlocks and they may use their own domain
+      var paid = el('button', { type: 'button', class: 'mini', text: w.plan === 'paid' ? 'Paid ✓ — back to trial' : 'Mark paid' });
+      paid.addEventListener('click', function () { paid.disabled = true; api('setPlan', { g: w.galleryId, plan: w.plan === 'paid' ? 'trial' : 'paid' }).then(function () { return loadQueue(); }).catch(function (er) { toast(er.message); paid.disabled = false; }); });
+      links.appendChild(paid);
       return el('div', { class: 'qitem' }, [head, meta, links]);
     }) : [el('p', { class: 'muted', text: 'No sign-up weddings yet.' })]);
+    // step 67: own domains. Buy → in the customer's name, then set the price; own → add it in Vercel; then mark live.
+    fill('qDom', (res.domains || []).length ? res.domains.map(function (d) {
+      var ST = { requested: 'NEW', waiting: 'WAITING', live: 'LIVE', closed: 'CLOSED' };
+      var head = el('div', { style: 'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [el('b', { text: d.host + ' · ' + (d.mode === 'buy' ? 'buy for them' : 'they have it') + ' · ' + (d.galleryId ? 'one wedding' : 'all weddings of ' + d.companyName) }),
+        el('span', { class: 'pill ' + (d.status === 'live' ? 'p-done' : 'p-hold'), text: ST[d.status] || d.status })]);
+      var meta = el('span', { class: 'muted', style: 'font-size:13px', text: [d.name, d.email, String(d.phone || '').replace(/^'/, ''), 'asked ' + String(d.at).slice(0, 16), d.price ? 'domain ₹' + d.price : '', d.renewal ? 'renews ₹' + d.renewal : '', d.expires ? 'expires ' + String(d.expires).slice(0, 10) : ''].filter(Boolean).join(' · ') });
+      var recs = d.mode === 'own' ? el('span', { style: 'font-size:13px', text: 'Records: ' + (d.records || []).map(function (r) { return r.type + ' ' + r.name + ' → ' + r.value; }).join(' · ') + ' — add ' + d.host + (d.galleryId ? '' : ' (and www)') + ' to the project in Vercel.' }) : el('span', { style: 'font-size:13px', text: 'Buy it in the customer’s name, then write the price here and email them.' });
+      var price = el('input', { placeholder: 'Domain ₹', value: d.price || '', style: 'width:96px;min-height:36px', inputmode: 'decimal' }), renew = el('input', { placeholder: 'Renewal ₹', value: d.renewal || '', style: 'width:96px;min-height:36px', inputmode: 'decimal' });
+      var exp = el('input', { type: 'date', value: String(d.expires || '').slice(0, 10), style: 'min-height:36px', 'aria-label': 'Expires on' });
+      var acts = el('span', { style: 'font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center' }, [price, renew, exp]);
+      [['', 'Save'], ['waiting', 'Waiting'], ['live', 'Mark live'], ['closed', 'Close']].forEach(function (x) {
+        if (x[0] && x[0] === d.status) return;
+        var b = el('button', { type: 'button', class: 'mini', text: x[1] });
+        b.addEventListener('click', function () { b.disabled = true; api('domainStatus', { domainId: d.domainId, status: x[0] || d.status, price: price.value, renewal: renew.value, expires: exp.value }).then(function () { return loadQueue(); }).catch(function (er) { toast(er.message); b.disabled = false; }); });
+        acts.appendChild(b);
+      });
+      return el('div', { class: 'qitem' }, [head, meta, recs, acts]);
+    }) : [el('p', { class: 'muted', text: 'No domain requests yet.' })]);
     fill('qOpen', res.open.length ? res.open.map(function (o) {
       var k = String(o.status).toLowerCase();
       var head = el('div', { style: 'display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap' }, [el('b', { text: o.catalogName }), pill(o.status)]);

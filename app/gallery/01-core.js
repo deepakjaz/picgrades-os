@@ -323,7 +323,7 @@ function pgToggleLike(m) {
   }).finally(() => { likeBusy[m.id] = false; syncCounts(m.id); });
 }
 function pgShare() {
-  const url = location.origin + '/g/' + encodeURIComponent(GALLERY_ID);
+  const url = (GALLERY && GALLERY.address) || location.origin + '/g/' + encodeURIComponent(GALLERY_ID);   // step 67: the wedding's own address when it has one
   const title = (GALLERY && GALLERY.title) ? GALLERY.title + ' · PicGrades' : 'PicGrades Gallery';
   if (navigator.share) { navigator.share({ title: title, url: url }).catch(() => {}); return; }
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => showToast('Gallery link copied'), () => showToast(url));

@@ -58,6 +58,7 @@ var PUBLIC_ROUTES = {
   findFaces: findFaces_,
   getStudio: getStudio_,
   faceBoxes: faceBoxes_,
+  resolveHost: resolveHost_,
   videoOk: videoOk_,
   photoData: photoData_,
   guestJoin: guestJoin_,
@@ -91,6 +92,9 @@ var USER_ROUTES = {
   editingEnquiry: editingEnquiry_,
   editOffers: editOffersFor_,
   enquiryStatus: enquiryStatus_,
+  setAddress: setAddress_,
+  domainRequest: domainRequest_,
+  domainStatus: domainStatus_,
   myWeddings: myWeddings_,
   placeOrder: placeOrder_,
   editOrder: editOrder_,
@@ -124,7 +128,8 @@ var ADMIN_ROUTES = {
   adjustQuota: adjustQuota_,
   addCredits: addCredits_,
   updateCompany: updateCompany_,
-  setAllowed: setAllowed_
+  setAllowed: setAllowed_,
+  setPlan: setPlan_
 };
 
 function route_(action, params) {
@@ -172,7 +177,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step66-edit-offers',
+    version: 'step67-domains',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -343,8 +348,19 @@ function createWedding_(p, user) {
 // The first request of an account may take 150 photos free (AI or AI + Human) — in return they allow PicGrades to use those
 // edits to improve its own editing (internal only). On paid requests that permission is optional. It is saved with each request.
 var ENQ_COLUMNS = ['at', 'enqId', 'email', 'name', 'companyName', 'galleryId', 'title', 'photos', 'folderUrl', 'wantBy', 'phone', 'notes', 'status', 'repliedAt', 'repliedBy',
-  'kind', 'profile', 'pricePer', 'freePhotos', 'total', 'consent', 'reference', 'aiTool'];
+  'kind', 'profile', 'pricePer', 'freePhotos', 'total', 'consent', 'reference', 'aiTool', 'editKind', 'keep', 'fixes'];
 var EDIT_DAYS = 4, FREE_SAMPLE = 150;
+var EDIT_KINDS = ['human', 'aihuman', 'afterai', 'ai'], STUDIO_KINDS = ['cull', 'cullcc', 'retouch'];
+// Retouching (step 67): the price covers any 3 fixes; each fix after that costs extra; a heavy fix counts as 2.
+var RETOUCH_FIXES = [['spots', 'Spots'], ['blemish', 'Blemishes'], ['acne', 'Acne'], ['undereye', 'Under-eye'], ['teeth', 'Teeth whitening'], ['hair', 'Flyaway hair'],
+  ['skin', 'Skin smoothing'], ['bgclean', 'Small background clean-up'], ['body', 'Body shaping', 2], ['remove', 'Remove a person or object', 2], ['bgchange', 'Background change', 2]]
+  .map(function (x) { return { key: x[0], name: x[1], units: x[2] || 1 }; });
+function isPhotographer_(user) { return isStaff_(user) || String(user.profession || '').toLowerCase() === 'photographer'; }
+/** Retouching price for one image with these fixes. */
+function retouchPer_(offer, keys) {
+  var units = RETOUCH_FIXES.filter(function (f) { return keys.indexOf(f.key) > -1; }).reduce(function (t, f) { return t + f.units; }, 0);
+  return { units: units, per: offer.price + Math.max(0, units - offer.included) * offer.extraFix };
+}
 function editOffers_() {
   var s = getSettings_(), num = function (v, d) { var n = Number(v); return n > 0 ? n : d; };
   var profiles = String(s.aiProfiles || 'Natural,Warm & golden,Bright & airy,Rich & moody').split(',').map(function (x) { return x.trim(); }).filter(String).slice(0, 12);
@@ -353,7 +369,11 @@ function editOffers_() {
     aihuman: { name: 'AI + Human', price: num(s.editPriceAIHuman, 7), hours: 48, free: true },
     afterai: { name: 'After AI', price: num(s.editPriceAfterAI, 3), hours: 48, free: false },
     ai: { name: 'AI', price: num(s.editPriceAI, 3), hours: 24, free: true },
-    profiles: profiles, freeSample: FREE_SAMPLE
+    // step 67: for photographers only (couples never see these). Package clients keep ordering in the portal at their own rates.
+    cull: { name: 'Culling', price: num(s.cullPrice, 0.8), hours: num(s.cullingOnlyHours, 72), free: false, studio: true },
+    cullcc: { name: 'Culling + Colour Correction', price: num(s.cullComboPrice, 0.7), extraDays: num(s.cullingExtraDays, 3), free: false, studio: true },
+    retouch: { name: 'Retouching', price: num(s.retouchPrice, 120), included: 3, extraFix: num(s.retouchExtraFix, 40), hours: num(s.retouchHours, 72), free: false, studio: true },
+    fixes: RETOUCH_FIXES, profiles: profiles, freeSample: FREE_SAMPLE
   };
 }
 function freeLeft_(user) {
@@ -363,34 +383,52 @@ function freeLeft_(user) {
   return used || (c && c.packageType) ? 0 : FREE_SAMPLE;   // studios with an editing package already have their own terms
 }
 /** What the portal shows before a request: the three offers, the profiles and whether the free sample is still there. */
-function editOffersFor_(p, user) { var o = editOffers_(); o.freeLeft = freeLeft_(user); return o; }
+function editOffersFor_(p, user) {
+  var o = editOffers_(); o.freeLeft = freeLeft_(user); o.photographer = isPhotographer_(user);
+  if (!o.photographer) STUDIO_KINDS.forEach(function (k) { delete o[k]; });
+  return o;
+}
 function editingEnquiry_(p, user) {
   var photos = Math.floor(Number(p.photos) || 0), folder = String(p.folderUrl || '').trim().slice(0, 300), notes = String(p.notes || '').trim().slice(0, 1000);
   var phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20), wantBy = String(p.wantBy || '').slice(0, 10);
-  var offers = editOffers_(), kind = offers[p.kind] && p.kind !== 'profiles' && p.kind !== 'freeSample' ? p.kind : 'human', offer = offers[kind];
-  var profile = kind === 'ai' ? String(p.profile || '') : '';
-  var reference = String(p.reference || '').trim().slice(0, 600), aiTool = kind === 'afterai' ? String(p.aiTool || '').trim().slice(0, 40) : '';
-  if (kind !== 'ai' && reference.length < 5) return { ok: false, error: 'Add a style reference: a link to photos or a profile you like, so we match your look.' };
-  if (kind === 'ai' && offers.profiles.indexOf(profile) < 0) return { ok: false, error: 'Choose a style profile.' };
+  var offers = editOffers_(), kind = EDIT_KINDS.concat(STUDIO_KINDS).indexOf(p.kind) > -1 ? p.kind : 'human', offer = offers[kind];
+  var studio = STUDIO_KINDS.indexOf(kind) > -1;
+  if (studio && !isPhotographer_(user)) return { ok: false, error: 'Culling and retouching are for photographers.' };
+  // Culling + Colour Correction: the culling price for the whole catalog, plus the editing they choose for the photos kept
+  var editKind = kind === 'cullcc' ? (EDIT_KINDS.indexOf(p.editKind) > -1 ? p.editKind : 'human') : '', ed = editKind ? offers[editKind] : null;
+  var look = ed ? editKind : kind;   // what the style reference / profile rules follow
+  var profile = look === 'ai' ? String(p.profile || '') : '';
+  var reference = String(p.reference || '').trim().slice(0, 600), aiTool = look === 'afterai' ? String(p.aiTool || '').trim().slice(0, 40) : '';
+  if (EDIT_KINDS.indexOf(look) > -1 && look !== 'ai' && reference.length < 5) return { ok: false, error: 'Add a style reference: a link to photos or a profile you like, so we match your look.' };
+  if (look === 'ai' && offers.profiles.indexOf(profile) < 0) return { ok: false, error: 'Choose a style profile.' };
   if (photos < 1 || photos > 20000) return { ok: false, error: 'About how many photos? Please write a number.' };
+  var keep = kind === 'cullcc' ? Math.floor(Number(p.keep) || 0) : 0;
+  if (kind === 'cullcc' && (keep < 1 || keep > photos)) return { ok: false, error: 'About how many photos should we keep and edit? It can’t be more than the catalog.' };
+  var fixKeys = kind === 'retouch' ? (Array.isArray(p.fixes) ? p.fixes : String(p.fixes || '').split(',')).map(String).filter(function (k) { return RETOUCH_FIXES.some(function (f) { return f.key === k; }); }) : [];
+  if (kind === 'retouch' && !fixKeys.length) return { ok: false, error: 'Choose what to retouch.' };
+  var rt = kind === 'retouch' ? retouchPer_(offer, fixKeys) : null;
+  offer = Object.assign({}, offer, { hours: ed ? ed.hours + offer.extraDays * 24 : offer.hours });
   if (!folderIdFromUrl_(folder)) return { ok: false, error: 'Paste the Google Drive folder link of the photos to edit.' };
   if (wantBy && !/^\d{4}-\d{2}-\d{2}$/.test(wantBy)) return { ok: false, error: 'Choose a date.' };
   var days = Math.ceil(offer.hours / 24), earliest = fmt_(new Date(Date.now() + days * 86400000)).slice(0, 10);
   if (wantBy && wantBy < earliest) return { ok: false, error: offer.name + ' takes ' + (offer.hours < 72 ? offer.hours + ' hours' : days + ' days') + ' — the earliest date is ' + earliest + '.' };
   var consent = p.consent === true || p.consent === 'yes';
-  var free = offer.free && p.useFree !== false && p.useFree !== 'no' ? Math.min(photos, freeLeft_(user)) : 0;
+  var free = !studio && offer.free && p.useFree !== false && p.useFree !== 'no' ? Math.min(photos, freeLeft_(user)) : 0;
   if (free && !consent) return { ok: false, error: 'The free sample needs your permission to use these edits to improve our editing (tick the box), or choose to pay for all photos.' };
   if (!limitOk_('enq:' + normEmail_(user.email), 5, 86400)) return { ok: false, error: 'You have sent several requests today. We will reply soon.' };
   var g = null;
   if (p.galleryId) { g = findGallery_(p.galleryId); if (!g || String(g.companyName).trim().toLowerCase() !== String(user.companyName).trim().toLowerCase()) g = null; }
-  var total = Math.round((photos - free) * offer.price * 100) / 100;
+  var per = rt ? rt.per : offer.price;
+  var total = Math.round(((photos - free) * per + (ed ? keep * ed.price : 0)) * 100) / 100;
   ensureTab_('Enquiries', ENQ_COLUMNS);
   var id = 'E' + randomId_(8);
   appendRow_('Enquiries', { at: fmt_(new Date()), enqId: id, email: normEmail_(user.email), name: user.name || '', companyName: user.companyName || '', galleryId: g ? g.galleryId : '',
     title: g ? g.title : '', photos: photos, folderUrl: folder, wantBy: wantBy, phone: phone ? "'" + phone : '', notes: notes, status: 'new', repliedAt: '', repliedBy: '',
-    kind: kind, profile: profile, pricePer: offer.price, freePhotos: free, total: total, consent: consent ? 'yes' : 'no', reference: reference, aiTool: aiTool });
+    kind: kind, profile: profile, pricePer: per, freePhotos: free, total: total, consent: consent ? 'yes' : 'no', reference: reference, aiTool: aiTool,
+    editKind: editKind, keep: keep || '', fixes: fixKeys.join(',') });
   var money = function (n) { return '₹' + Number(n).toLocaleString('en-IN'); };
-  var what = offer.name + (profile ? ' (' + profile + ')' : '') + ' · ' + photos + ' photos' + (free ? ' · first ' + free + ' free' : '') + ' · ' + money(total) + ' estimated';
+  var what = offer.name + (ed ? ', edited ' + ed.name : '') + (profile ? ' (' + profile + ')' : '') + ' · ' + photos + ' photos' + (ed ? ', keep about ' + keep : '') + (free ? ' · first ' + free + ' free' : '') +
+    (rt ? ' · ' + fixKeys.length + ' fix' + (fixKeys.length === 1 ? '' : 'es') + ', ' + money(rt.per) + ' an image' : '') + ' · ' + money(total) + ' estimated';
   var adm = String(getSettings_().adminNotifyEmail || '').trim();
   if (adm) sendEmail_(adm, 'Editing request: ' + offer.name + ', ' + photos + ' photos from ' + (user.name || user.email), 'Editing request',
     [esc_(user.name || user.email) + ' (' + esc_(user.email) + (phone ? ' · ' + esc_(phone) : '') + ') asks for editing.', '<b>' + esc_(what) + '</b>',
@@ -399,6 +437,8 @@ function editingEnquiry_(p, user) {
      'May PicGrades use these edits to improve its editing: <b>' + (consent ? 'yes' : 'no') + '</b>.'], 'enquiry', id);
   sendEmail_(user.email, 'We got your editing request', 'We got your editing request',
     ['Thank you' + (user.name ? ', ' + esc_(String(user.name).split(' ')[0]) : '') + '. You asked for: <b>' + esc_(what) + '</b>.',
+     kind === 'cull' ? 'A person on our team picks the best photos of your catalog.' : kind === 'cullcc' ? 'We pick the best photos, then edit the ones we keep.' :
+       kind === 'retouch' ? 'Each photo is retouched by hand: ' + esc_(RETOUCH_FIXES.filter(function (f) { return fixKeys.indexOf(f.key) > -1; }).map(function (f) { return f.name; }).join(', ')) + '.' :
      kind === 'human' ? 'Every photo will be edited by a person on our team — because the emotion in a photo is read and understood by people.' :
        kind === 'aihuman' ? 'AI does the first pass and a person on our team sets the tone you asked for.' :
        kind === 'afterai' ? 'A person on our team corrects and quality-checks your AI-edited photos to the look you want. We can also help you train your own profile in the AI you use.' : 'Edited with our AI using the “' + esc_(profile) + '” profile.',
@@ -415,6 +455,168 @@ function enquiryStatus_(p, user) {
   updateRowByNumber_('Enquiries', e._row, { status: st, repliedAt: st === 'new' ? '' : fmt_(new Date()), repliedBy: st === 'new' ? '' : normEmail_(user.email) });
   return { enqId: e.enqId, status: st };
 }
+// ---------- Addresses and own domains (step 67) ----------
+// Every wedding has its own address, the couple's names first: anika-rohan.picgrades.in (the wildcard *.picgrades.in points
+// to the app on Vercel). After they pay, a couple can use their own domain (anikaandrohan.com) and a photographer one domain
+// for all their weddings (studioname.com/anika-rohan). Either they already have one (we show the DNS records to add) or we
+// buy it for them — always registered in the customer's name, so it is theirs forever. They pay what the domain costs us
+// plus our yearly fee (Settings domainFee, ₹100) + GST on our fee. Our team adds the domain in Vercel and marks it live.
+var DOMAIN_COLUMNS = ['at', 'domainId', 'host', 'mode', 'galleryId', 'companyName', 'email', 'name', 'phone', 'status', 'price', 'renewal', 'expires', 'liveAt', 'remindedAt', 'notes'];
+var RESERVED_SLUGS = ['www', 'app', 'api', 'admin', 'mail', 'hub', 'studio', 'picgrades', 'g', 'c', 'p', 'ph', 'pg', 'help', 'support', 'blog'];
+function galleryDomain_() { return String(getSettings_().galleryDomain || 'picgrades.in').trim().toLowerCase().replace(/^\.+|\/.*$/g, ''); }
+function domainFee_() { var n = Number(getSettings_().domainFee); return n >= 0 && String(getSettings_().domainFee || '') !== '' ? n : 100; }
+function slugBase_(title) {
+  var t = String(title || '').toLowerCase().replace(/&|\+|\bweds\b|\band\b|\bwith\b|\bwedding\b|\bshaadi\b|\bthe\b/g, ' ');
+  t = t.normalize ? t.normalize('NFKD').replace(/[̀-ͯ]/g, '') : t;
+  t = t.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
+  return t.length >= 3 && RESERVED_SLUGS.indexOf(t) < 0 ? t : (t ? t + '-wedding' : 'wedding');
+}
+function slugTaken_(slug, exceptGid) {
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  return RESERVED_SLUGS.indexOf(slug) > -1 || readTable_('Galleries').some(function (g) { return String(g.slug) === slug && String(g.galleryId) !== String(exceptGid || ''); });
+}
+function newSlug_(title, exceptGid) {
+  var base = slugBase_(title), slug = base, n = 2;
+  while (slugTaken_(slug, exceptGid)) slug = base.slice(0, 36) + '-' + (n++);
+  return slug;
+}
+/** A wedding's slug; older weddings get one the first time it is needed. */
+function slugOf_(g) {
+  if (g.slug) return String(g.slug);
+  var slug = newSlug_(g.title, g.galleryId);
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { slug: slug }); g.slug = slug;
+  return slug;
+}
+/** Paid = not on the free trial or the free basic gallery (weddings made with an editing order are paid). */
+/** Settings addressesLive = on once *.picgrades.in points to the app (until then the PicGrades links are shared). */
+function addressesLive_() { return String(getSettings_().addressesLive || '').toLowerCase() === 'on'; }
+function shareAddress_(g) {
+  var d = domainRows_().filter(function (x) { return String(x.galleryId) === String(g.galleryId) && x.status === 'live'; })[0];
+  return d ? 'https://' + cleanHost_(d.host) : g.slug && addressesLive_() ? 'https://' + g.slug + '.' + galleryDomain_() : '';
+}
+function isPaid_(g) { var pl = planOf_(g).plan; return pl !== 'trial' && pl !== 'basic'; }
+function ownsGallery_(g, user) { return g && (isStaff_(user) || String(g.companyName).trim().toLowerCase() === String(user.companyName).trim().toLowerCase()); }
+/** The couple (owner account) or PicGrades: change the wedding's address. */
+function setAddress_(p, user) {
+  var g = findGallery_(p.g || p.galleryId);
+  if (!ownsGallery_(g, user)) return { ok: false, error: 'Wedding not found.' };
+  var slug = String(p.slug || '').trim().toLowerCase();
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || slug.length < 3 || slug.length > 40) return { ok: false, error: 'Use 3 to 40 small letters, numbers and dashes — for example anika-rohan.' };
+  if (slugTaken_(slug, g.galleryId)) return { ok: false, error: slug + '.' + galleryDomain_() + ' is already taken. Try another, for example ' + slug + '-' + String(g.eventDate || '').slice(0, 4) + '.' };
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { slug: slug });
+  return { slug: slug, address: 'https://' + slug + '.' + galleryDomain_() };
+}
+function cleanHost_(h) { return String(h || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/[\/:?#].*$/, '').replace(/^www\./, '').replace(/\.+$/, ''); }
+function apexOf_(host) { var parts = host.split('.'), n = /\.(co|net|org|gov|ac|edu|firm|gen|ind)\.[a-z]{2}$/.test(host) ? 3 : 2; return parts.slice(-n).join('.'); }
+/** The records a customer adds at their domain company so the domain opens their wedding app. */
+function dnsRecords_(host) {
+  host = cleanHost_(host); var s = getSettings_(), a = String(s.dnsA || '76.76.21.21'), cname = String(s.dnsCname || 'cname.vercel-dns.com');
+  if (!host) return [];
+  var apex = apexOf_(host);
+  if (apex === host) return [{ type: 'A', name: '@', value: a }, { type: 'CNAME', name: 'www', value: cname }];
+  return [{ type: 'CNAME', name: host.slice(0, host.length - apex.length - 1), value: cname }];
+}
+function domainRows_() { ensureTab_('Domains', DOMAIN_COLUMNS); return readTable_('Domains'); }
+function domainOfGallery_(gid) {
+  var d = domainRows_().filter(function (x) { return String(x.galleryId) === String(gid) && x.status !== 'closed'; }).pop();
+  return d ? { host: d.host, status: d.status, mode: d.mode, price: d.price, renewal: d.renewal, expires: d.expires, records: dnsRecords_(d.host) } : null;
+}
+/** Public: which wedding (or photographer page) does this address open? */
+function resolveHost_(p) {
+  var host = cleanHost_(p.host), path = String(p.path || '').replace(/^\/+|\/+$/g, '').split('/')[0].toLowerCase(), gd = galleryDomain_();
+  if (!host) return { ok: false, error: 'No address.' };
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  var bySlug = function (slug, company) { return readTable_('Galleries').filter(function (g) { return String(g.slug) === slug && (!company || String(g.companyName).trim().toLowerCase() === String(company).trim().toLowerCase()); })[0]; };
+  if (host === gd) return { home: true };
+  if (host.slice(-gd.length - 1) === '.' + gd) {
+    var g = bySlug(host.slice(0, -gd.length - 1));
+    return g ? { galleryId: g.galleryId } : { ok: false, error: 'This wedding address is not set up.' };
+  }
+  var d = domainRows_().filter(function (x) { return cleanHost_(x.host) === host && x.status === 'live'; })[0];
+  if (!d) return { ok: false, error: 'This address is not set up yet.' };
+  if (d.galleryId) return { galleryId: d.galleryId };
+  if (path) { var w = bySlug(path, d.companyName); return w ? { galleryId: w.galleryId } : { ok: false, error: 'This wedding is not on this page.' }; }
+  ensureTab_('Studios', STUDIO_COLUMNS);
+  var st = readTable_('Studios').filter(function (x) { return String(x.companyName).trim().toLowerCase() === String(d.companyName).trim().toLowerCase() && x.status !== 'Off'; })[0];
+  return st ? { studio: String(st.slug) } : { ok: false, error: 'This photographer page is not ready yet.' };
+}
+/** A couple (one wedding) or a photographer (all their weddings) asks for their own domain — only after they pay. */
+function domainRequest_(p, user) {
+  var host = cleanHost_(p.host), mode = p.mode === 'buy' ? 'buy' : 'own';
+  if (!/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/.test(host) || host.length > 80) return { ok: false, error: 'Write the domain like anikaandrohan.com' };
+  if (host.indexOf('picgrades') > -1 || host.slice(-galleryDomain_().length) === galleryDomain_()) return { ok: false, error: 'Write your own domain, not a PicGrades address.' };
+  var g = null, company = '';
+  if (p.studio) {
+    if (!isPhotographer_(user)) return { ok: false, error: 'One domain for all weddings is for photographers.' };
+    company = String(user.companyName || '');
+    var c = findCompany_(company), mine = readTable_('Galleries').filter(function (x) { return String(x.companyName).trim().toLowerCase() === company.trim().toLowerCase(); });
+    if (!isStaff_(user) && !(c && c.packageType) && !mine.some(isPaid_)) return { ok: false, error: 'Your own domain comes with the paid plan. Please upgrade first.', upgrade: upgradeLink_() };
+  } else {
+    g = findGallery_(p.g || p.galleryId);
+    if (!ownsGallery_(g, user)) return { ok: false, error: 'Wedding not found.' };
+    if (!isStaff_(user) && !isPaid_(g)) return { ok: false, error: 'Your own domain comes with the paid plan. Please upgrade first.', upgrade: upgradeLink_() };
+  }
+  if (domainRows_().some(function (x) { return cleanHost_(x.host) === host && x.status !== 'closed'; })) return { ok: false, error: host + ' is already asked for. We will be in touch.' };
+  if (!limitOk_('dom:' + normEmail_(user.email), 5, 86400)) return { ok: false, error: 'You have sent several requests today. We will reply soon.' };
+  var phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20), id = 'D' + randomId_(8), fee = domainFee_(), records = dnsRecords_(host);
+  appendRow_('Domains', { at: fmt_(new Date()), domainId: id, host: host, mode: mode, galleryId: g ? g.galleryId : '', companyName: g ? g.companyName : company, email: normEmail_(user.email),
+    name: user.name || '', phone: phone ? "'" + phone : '', status: 'requested', price: '', renewal: '', expires: '', liveAt: '', remindedAt: '', notes: String(p.notes || '').trim().slice(0, 500) });
+  var what = host + (g ? ' for ' + g.title : ' for all weddings of ' + company), recs = records.map(function (r) { return r.type + ' · ' + r.name + ' → ' + r.value; });
+  var adm = String(getSettings_().adminNotifyEmail || '').trim();
+  if (adm) sendEmail_(adm, 'Domain request: ' + host + (mode === 'buy' ? ' (buy for them)' : ' (they have it)'), 'Domain request',
+    [esc_(user.name || user.email) + ' (' + esc_(user.email) + (phone ? ' · ' + esc_(phone) : '') + ') asks for <b>' + esc_(what) + '</b>.',
+     mode === 'buy' ? 'Buy it in the customer’s name, then tell them the price: the domain price + ₹' + fee + ' a year + GST on our fee.' : 'They already have it. Add it to the project in Vercel; they add these records:',
+     mode === 'own' ? recs.map(esc_).join('<br>') : '', 'Then mark it live on the admin page.'], 'domain', id);
+  sendEmail_(user.email, 'We got your domain request: ' + host, 'Your own domain',
+    ['Thank you' + (user.name ? ', ' + esc_(String(user.name).split(' ')[0]) : '') + '. You asked for <b>' + esc_(what) + '</b>.',
+     mode === 'buy' ? 'We check the price and reply within a day. The domain is registered in <b>your name</b>, so it is yours forever. You pay what the domain costs + ₹' + fee + ' a year for us to look after it (+ GST on our fee). We show the renewal price too.' :
+       'At the company where you bought it, add these records:<br>' + recs.map(esc_).join('<br>') + '<br>It can take a few hours to start working. We tell you when it is live.',
+     'Your PicGrades address keeps working too.'], 'domain-thanks', id);
+  return { domainId: id, host: host, mode: mode, records: mode === 'own' ? records : [], fee: fee };
+}
+/** PicGrades staff: move a domain request along. Live sends the customer their new address. */
+function domainStatus_(p, user) {
+  if (!isStaff_(user)) return { ok: false, error: 'Only PicGrades can do this.' };
+  var d = domainRows_().filter(function (x) { return x.domainId === p.domainId; })[0];
+  if (!d) return { ok: false, error: 'Domain request not found.' };
+  var st = ['requested', 'waiting', 'live', 'closed'].indexOf(p.status) > -1 ? p.status : d.status, patch = { status: st };
+  ['price', 'renewal'].forEach(function (k) { if (p[k] !== undefined && p[k] !== '') { var n = Number(p[k]); if (!(n >= 0)) throw new Error(k + ' must be a number.'); patch[k] = n; } });
+  if (p.expires !== undefined && p.expires !== '') { if (!/^\d{4}-\d{2}-\d{2}$/.test(p.expires)) throw new Error('Expiry date like 2027-11-17.'); patch.expires = p.expires; patch.remindedAt = ''; }
+  if (st === 'live' && d.status !== 'live') {
+    patch.liveAt = fmt_(new Date());
+    sendEmail_(d.email, 'Your own address is live: ' + d.host, 'Your address is live',
+      ['Your wedding app now opens at <a href="https://' + esc_(d.host) + '">https://' + esc_(d.host) + '</a>' + (d.galleryId ? '' : ' — each wedding at https://' + esc_(d.host) + '/couple-names') + '.',
+       'Share it with your guests. Your PicGrades address keeps working too.'], 'domain-live', d.domainId);
+  }
+  updateRowByNumber_('Domains', d._row, patch);
+  return { domainId: d.domainId, status: st };
+}
+/** Nightly: remind 30 days and 7 days before an own domain expires, so a wedding site never goes offline by mistake. */
+function domainMails_(now) {
+  var sent = 0, day = 86400000, adm = String(getSettings_().adminNotifyEmail || '').trim();
+  domainRows_().forEach(function (d) {
+    if (d.status !== 'live' || !/^\d{4}-\d{2}-\d{2}/.test(String(d.expires))) return;
+    var left = Math.ceil((parseDate_(String(d.expires).slice(0, 10) + ' 00:00:00') - now) / day), step = left <= 7 ? '7' : left <= 30 ? '30' : '';
+    if (!step || left < 0 || String(d.remindedAt) === step || (step === '30' && String(d.remindedAt) === '7')) return;
+    var price = Number(d.renewal) > 0 ? ' Renewal: ₹' + Number(d.renewal).toLocaleString('en-IN') + ' + ₹' + domainFee_() + ' (+ GST on our fee).' : '';
+    [d.email, adm].filter(String).forEach(function (to) {
+      sendEmail_(to, d.host + ' expires in ' + left + ' days', 'Renew your domain', ['<b>' + esc_(d.host) + '</b> expires on ' + esc_(String(d.expires).slice(0, 10)) + '.' + esc_(price),
+        'Reply to this email and we renew it for you, so your wedding app stays online.'], 'domain-renew', d.domainId);
+    });
+    updateRowByNumber_('Domains', d._row, { remindedAt: step }); sent++;
+  });
+  return sent;
+}
+/** PicGrades (admin): mark a wedding paid (unlocks everything and its own domain) or back to its trial. */
+function setPlan_(p, user) {
+  var g = findGallery_(p.g); if (!g) throw new Error('Gallery not found.');
+  var plan = p.plan === 'paid' ? 'paid' : 'trial';
+  ensureTab_('Galleries', GALLERY_COLUMNS);
+  updateRowByNumber_('Galleries', g._row, { plan: plan }); g.plan = plan;
+  return { plan: planOf_(g).plan, paid: isPaid_(g) };
+}
 function myWeddings_(p, user) {
   ensureTab_('Galleries', GALLERY_COLUMNS);
   var key = String(user.companyName).trim().toLowerCase();
@@ -426,11 +628,12 @@ function weddingCard_(g) {
   var site = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '');
   return { galleryId: g.galleryId, title: g.title, eventDate: g.eventDate, photoCount: Number(g.photoCount || 0), status: g.status === 'Draft' ? 'Draft' : 'Published',
     plan: planOf_(g).plan, trialEnds: g.trialEnds || '', daysLeft: left, basicEnds: planOf_(g).basicEnds || '', upgrade: upgradeLink_(), facesStatus: g.facesStatus || '', features: featuresOf_(g),
-    guestLink: site + '/g/' + g.galleryId, coupleLink: site + '/c/' + g.galleryId + '/' + coupleKey_(g), photographerLink: site + '/ph/' + g.galleryId };
+    guestLink: site + '/g/' + g.galleryId, coupleLink: site + '/c/' + g.galleryId + '/' + coupleKey_(g), photographerLink: site + '/ph/' + g.galleryId,
+    address: 'https://' + slugOf_(g) + '.' + galleryDomain_(), slug: slugOf_(g), addressLive: addressesLive_(), paid: isPaid_(g), domain: domainOfGallery_(g.galleryId), domainFee: domainFee_() };
 }
 
 function publicUser_(u) {
-  return { email: normEmail_(u.email), name: u.name, companyName: u.companyName, role: u.role };
+  return { email: normEmail_(u.email), name: u.name, companyName: u.companyName, role: u.role, profession: u.profession || '' };
 }
 
 function hash_(s) {
@@ -856,7 +1059,10 @@ function queue_(p, user) {
   ensureTab_('Enquiries', ENQ_COLUMNS);
   var enq = readTable_('Enquiries').sort(function (a, b) { return (a.status === 'new' ? 0 : 1) - (b.status === 'new' ? 0 : 1) || String(b.at).localeCompare(String(a.at)); }).slice(0, 30)
     .map(function (e) { var o = {}; ENQ_COLUMNS.forEach(function (k) { o[k] = e[k]; }); o.phone = String(o.phone || '').replace(/^'/, ''); return o; });
-  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }), weddings: self, enquiries: enq };
+  ensureTab_('Domains', DOMAIN_COLUMNS);
+  var doms = readTable_('Domains').sort(function (a, b) { return (a.status === 'live' || a.status === 'closed' ? 1 : 0) - (b.status === 'live' || b.status === 'closed' ? 1 : 0) || String(b.at).localeCompare(String(a.at)); }).slice(0, 30)
+    .map(function (d) { var o = {}; DOMAIN_COLUMNS.forEach(function (k) { o[k] = d[k]; }); o.records = dnsRecords_(d.host); return o; });
+  return { open: open.map(function (o) { return publicOrder_(o, s, user); }), recentDone: done.map(function (o) { return publicOrder_(o, s, user); }), weddings: self, enquiries: enq, domains: doms };
 }
 
 var STATUS_SUBJECT = {
@@ -1060,7 +1266,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail'];   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug'];   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1189,7 +1395,7 @@ function makeGallery_(p, user, opts) {
     if (existing) { gid = existing.galleryId; updateRowByNumber_('Galleries', existing._row, row); }
     else {
       gid = randomId_(12);
-      appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email), guestPhotos: 'findme' }, opts.extra || {}, row));   // step 63b: new weddings: photos only after Find me
+      appendRow_('Galleries', Object.assign({ galleryId: gid, createdAt: fmt_(new Date()), createdBy: normEmail_(user.email), guestPhotos: 'findme', slug: newSlug_(row.title || p.title) }, opts.extra || {}, row));   // step 63b: new weddings: photos only after Find me
     }
     if (existing && existing.facesFileId) {
       var known = readFacesFile_(existing).pass, ids = allPhotoIds_(manifest);
@@ -1239,6 +1445,7 @@ function getGallery_(p) {
   m.guestPhotos = guestPhotosOf_(g);
   if (gatedFor_(g, p)) gateManifest_(g, m, p);
   if (g.plan && privileged_(g, p)) { m.plan = planOf_(g); m.plan.upgrade = upgradeLink_(); }   // step 65d: only the couple / photographer see the plan
+  m.address = shareAddress_(g);   // step 67: the link guests share — their own domain, or anika-rohan.picgrades.in once that is switched on
   return { gallery: m };
 }
 
@@ -2497,6 +2704,7 @@ function nightlyCleanup() {
 
     ensureTab_('Galleries', GALLERY_COLUMNS); ensureTab_('Guests', GUEST_COLUMNS);
     out.trialMails = trialMails_(now);
+    out.domainMails = domainMails_(now);
     var phoneGone = {}, guests = readTable_('Guests'), posts = readTable_('GuestPosts');
     readTable_('Galleries').forEach(function (g) {
       var wed = parseDate_(String(g.eventDate || '').length === 10 ? g.eventDate + ' 00:00:00' : g.createdAt); if (!(wed.getTime() > 0)) return;   // no date known: keep
