@@ -2809,12 +2809,13 @@ function demoTry_(fallbackGid) {
     var mine = {}; (e.photos || []).forEach(function (x) { mine[x.id] = true; });
     var chosen = (hl[e.name] || []).filter(function (id) { return mine[id]; }).map(function (id) { return { id: id }; });
     var pool = chosen.length >= 4 ? chosen : (e.photos || []);
-    var ph = pgShuffle_(pool).slice(0, Math.min(TRY_PER_EVENT, TRY_MAX - n)).map(function (x) { return { id: x.id }; });
+    // always the same choice (the page and photoData must agree): highlights in their order, else spread evenly through the event
+    var take = Math.min(TRY_PER_EVENT, TRY_MAX - n), step = Math.max(1, Math.floor(pool.length / take));
+    var ph = pool.filter(function (x, i) { return i % step === 0; }).slice(0, take).map(function (x) { return { id: x.id }; });
     if (ph.length) { events.push({ name: e.name, photos: ph }); n += ph.length; }
   });
   return events.length ? { galleryId: g.galleryId, title: g.title || m.title || 'Wedding', date: g.eventDate || '', events: events, chosen: chosen } : null;
 }
-function pgShuffle_(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 function demoTryIds_(gid) {
   var d = demoTry_(); if (!d || d.galleryId !== gid) return null;
   var ids = {}; d.events.forEach(function (e) { e.photos.forEach(function (x) { ids[x.id] = true; }); }); return ids;
