@@ -56,7 +56,7 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
 @media (max-width:640px){.duebox{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:18px}header .wrap{padding-top:10px;padding-bottom:10px}.big{font-size:56px!important}h1{font-size:38px!important}}
 /* step 65b: sign up and wedding galleries */
 a.btn{color:#141413}
-#v-dash,#v-wedding,#v-editing,#v-order{padding-bottom:calc(110px + env(safe-area-inset-bottom))}   /* room for the floating bottom bar, so it never covers a button */
+#v-dash,#v-wedding,#v-editing,#v-order,#v-domain{padding-bottom:calc(110px + env(safe-area-inset-bottom))}   /* room for the floating bottom bar, so it never covers a button */
 .offers #edOffers{display:flex;flex-direction:column;gap:8px}
 .offer{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid #3A352C;border-radius:14px;cursor:pointer;margin:0;font-weight:400}
 .offer:has(input:checked){border-color:var(--gold);background:rgba(212,175,55,.08)}
@@ -73,6 +73,14 @@ textarea{width:100%;box-sizing:border-box;font:inherit;border-radius:12px;paddin
 .seg button[aria-selected="true"]{background:var(--text);color:#141413}
 fieldset{border:0;margin:0;padding:0}
 legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
+/* step 67: the wedding's own address and own domain */
+.waddr{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:6px 0 0;font-size:13px}
+.waddr a{color:var(--gold);text-decoration:none;font-weight:600;word-break:break-all}
+.waddr input{width:auto;flex:1 1 160px;min-height:36px;padding:6px 10px;font-size:16px}
+.dnsrec{width:100%;border-collapse:collapse;font-size:14px}.dnsrec th,.dnsrec td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}.dnsrec td:last-child{font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.fixes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}.fixes label{display:flex;gap:8px;align-items:center;font-weight:400;margin:0;font-size:14px;padding:8px 10px;border:1px solid #3A352C;border-radius:10px;cursor:pointer}
+.fixes label:has(input:checked){border-color:var(--gold);background:rgba(212,175,55,.08)}.fixes input{width:auto;min-height:0;margin:0}.fixes small{color:var(--soft)}
+.offer-head{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin:10px 2px 2px}
 .who{display:flex;gap:10px;flex-wrap:wrap}
 .who label{flex:1 1 140px;display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid #3A352C;border-radius:14px;cursor:pointer;margin:0}
 .who label:has(input:checked){border-color:var(--gold);background:rgba(212,175,55,.08)}
@@ -198,13 +206,16 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     <p class="muted" style="margin:0 0 22px;max-width:620px">Choose how you want them edited. We confirm within a day; your photos stay in your own Google Drive.</p>
     <form id="edForm" class="card" style="display:flex;flex-direction:column;gap:16px;max-width:720px" novalidate>
       <fieldset class="offers"><legend>How should we edit them?</legend><div id="edOffers"></div></fieldset>
+      <div id="edEditKindBox" class="hidden"><label for="edEditKind">How should we edit the photos we keep?</label><select id="edEditKind"></select></div>
+      <div id="edFixBox" class="hidden"><fieldset><legend>What should we retouch? <span class="muted" id="edFixNote" style="font-weight:400"></span></legend><div id="edFixes" class="fixes"></div></fieldset></div>
       <div id="edProfileBox" class="hidden"><label for="edProfile">AI style profile</label><select id="edProfile"></select></div>
       <div id="edToolBox" class="hidden"><label for="edTool">Which AI did you use?</label><select id="edTool"><option>Aftershoot</option><option>Imagen</option><option>Another AI</option></select>
         <p class="muted" style="margin:6px 0 0;font-size:13px">We correct and quality-check those edits by hand. We can also help you train your own profile in the AI you use.</p></div>
       <div id="edRefBox"><label for="edRef">Style reference</label><input id="edRef" placeholder="Links to photos or an Instagram profile whose look you like" maxlength="600">
         <p class="muted" style="margin:6px 0 0;font-size:13px">So we match your look. A Drive folder, a website or an Instagram profile is fine.</p></div>
       <div><label for="edWed">Which wedding</label><select id="edWed"></select></div>
-      <div><label for="edCount">About how many photos?</label><input id="edCount" type="number" inputmode="numeric" min="1" max="20000" placeholder="800" required></div>
+      <div><label for="edCount" id="edCountLabel">About how many photos?</label><input id="edCount" type="number" inputmode="numeric" min="1" max="20000" placeholder="800" required></div>
+      <div id="edKeepBox" class="hidden"><label for="edKeep">About how many should we keep and edit?</label><input id="edKeep" type="number" inputmode="numeric" min="1" max="20000" placeholder="400"></div>
       <div><label for="edFolder">Google Drive folder with the raw photos</label><input id="edFolder" inputmode="url" placeholder="https://drive.google.com/drive/folders/…" required>
         <p class="muted" style="margin:6px 0 0;font-size:13px">Share it as “Anyone with the link → Viewer”, the same way as your wedding folder.</p></div>
       <div><label for="edBy">Wanted by (optional)</label><input id="edBy" type="date"></div>
@@ -217,6 +228,27 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button id="edBtn" class="btn" type="submit">Send request</button><button class="ghost" type="button" data-go="dash" style="border-radius:12px">Cancel</button></div>
     </form>
     <div id="edDone" class="card hidden" style="max-width:720px" role="status"></div>
+  </section>
+
+  <!-- OWN DOMAIN (step 67) -->
+  <section id="v-domain" class="hidden">
+    <p class="eyebrow gold">Your own address</p>
+    <h1 style="margin:0 0 10px;font-size:46px;line-height:1.05">Your own domain</h1>
+    <p class="muted" id="dmIntro" style="margin:0 0 22px;max-width:620px"></p>
+    <div id="dmLocked" class="card hidden" style="max-width:720px"></div>
+    <form id="dmForm" class="card" style="display:flex;flex-direction:column;gap:16px;max-width:720px" novalidate>
+      <fieldset class="offers"><legend>Do you have a domain?</legend><div style="display:flex;flex-direction:column;gap:8px">
+        <label class="offer"><input type="radio" name="dmMode" value="own" checked> <span><b>I already have one</b><small>We show you two records to add where you bought it.</small></span></label>
+        <label class="offer"><input type="radio" name="dmMode" value="buy"> <span><b>Buy one for me</b><small>Registered in your name, so it is yours forever. We look after it every year.</small></span></label></div></fieldset>
+      <div id="dmStudioBox" class="hidden"><label class="consent"><input type="checkbox" id="dmStudio"> <span>Use it for <b>all my weddings</b> — each wedding opens at yourdomain.com/couple-names</span></label></div>
+      <div><label for="dmHost">Domain</label><input id="dmHost" placeholder="anikaandrohan.com" autocapitalize="off" autocomplete="off" spellcheck="false" maxlength="80"></div>
+      <p id="dmPrice" class="muted" style="margin:0;font-size:14px"></p>
+      <div><label for="dmPhone">Mobile (optional)</label><input id="dmPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98765 43210"></div>
+      <div><label for="dmNotes">Anything else? (optional)</label><textarea id="dmNotes" rows="2" maxlength="500" placeholder="Other names you like, if this one is taken…"></textarea></div>
+      <p id="dmErr" class="err hidden" role="alert"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button id="dmBtn" class="btn" type="submit">Send request</button><button class="ghost" type="button" data-go="dash" style="border-radius:12px">Cancel</button></div>
+    </form>
+    <div id="dmDone" class="card hidden" style="max-width:720px" role="status"></div>
   </section>
 
   <!-- NEW ORDER -->
@@ -299,12 +331,13 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
   // ---- views ----
   function go(view) {
     state.view = view;
-    ['login', 'dash', 'order', 'wedding', 'editing'].forEach(function (v) { show('v-' + v, v === view); });
+    ['login', 'dash', 'order', 'wedding', 'editing', 'domain'].forEach(function (v) { show('v-' + v, v === view); });
     show('dock', view !== 'login'); show('logoutBtn', view !== 'login');
     document.querySelectorAll('nav.dock button').forEach(function (b) { b.setAttribute('aria-current', b.dataset.go === view ? 'page' : 'false'); });
     if (view === 'order') renderOrder();
     if (view === 'wedding') renderWedding();
     if (view === 'editing') renderEditing();
+    if (view === 'domain') renderDomain();
     window.scrollTo(0, 0);
   }
   document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { toast(''); if (state.editing) stopEdit(); go(b.dataset.go); }); });
@@ -373,39 +406,145 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
       copy.addEventListener('click', function () { (navigator.clipboard ? navigator.clipboard.writeText(w.guestLink) : Promise.reject()).then(function () { toast('Guest link copied'); }, function () { window.prompt('Guest link', w.guestLink); }); });
       return el('div', { class: 'card wcard' }, [
         el('div', { style: 'flex:2 1 260px;min-width:0' }, [el('p', { style: 'margin:0;font-weight:600;font-size:17px', text: w.title }),
-          el('p', { class: 'muted', style: 'margin:4px 0 0;font-size:13px', text: [w.eventDate ? dmy(w.eventDate) : '', num(w.photoCount) + ' photos', faces, trial].filter(Boolean).join(' · ') })]),
+          el('p', { class: 'muted', style: 'margin:4px 0 0;font-size:13px', text: [w.eventDate ? dmy(w.eventDate) : '', num(w.photoCount) + ' photos', faces, trial].filter(Boolean).join(' · ') }), addressLine(w)]),
         el('span', { class: 'pill ' + (w.status === 'Draft' ? 'p-hold' : 'p-done'), text: w.status === 'Draft' ? 'DRAFT' : 'LIVE' }),
         el('div', { class: 'wbtns' }, [w.features && w.features.findme === 'on' && w.facesStatus !== 'Ready' ? el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), style: 'border-color:var(--gold)', text: 'Read faces now' }) : null,
           el('a', { class: 'mini', href: w.coupleLink, target: '_blank', rel: 'noopener', text: 'Open my wedding app' }), w.status === 'Draft' ? null : copy,
           (function () { var b = el('button', { type: 'button', class: 'mini', text: 'Get these edited' }); b.addEventListener('click', function () { state.editFor = w.galleryId; go('editing'); }); return b; })(),
+          (function () { var b = el('button', { type: 'button', class: 'mini', text: w.domain ? 'Own domain · ' + (w.domain.status === 'live' ? 'live' : 'asked') : 'Own domain' }); b.addEventListener('click', function () { state.domainFor = w; go('domain'); }); return b; })(),
           w.plan === 'basic' && w.upgrade ? el('a', { class: 'mini', href: w.upgrade, target: /^mailto:/.test(w.upgrade) ? '_self' : '_blank', rel: 'noopener', style: 'border-color:var(--gold)', text: 'Upgrade' }) : null,
           el('a', { class: 'mini', href: '/app/faces.html?g=' + encodeURIComponent(w.galleryId), target: '_blank', rel: 'noopener', text: 'Links & settings' })].filter(Boolean))]);
     }) : [el('p', { class: 'muted', style: 'margin:0', text: 'No wedding galleries yet. Create one from your Google Drive folder — free for 30 days.' })]);
   }
+  // ---- the wedding's own address and own domain (step 67) ----
+  function addressLine(w) {
+    if (!w.address) return null;
+    var live = w.domain && w.domain.status === 'live', url = live ? 'https://' + w.domain.host : w.address;
+    var box = el('p', { class: 'waddr' }), change = el('button', { type: 'button', class: 'mini', text: 'Change' });
+    function view() { box.replaceChildren(live || w.addressLive ? el('a', { href: url, target: '_blank', rel: 'noopener', text: url.replace(/^https:\/\//, '') }) : el('span', {}, [el('b', { style: 'color:var(--gold)', text: url.replace(/^https:\/\//, '') }), el('span', { class: 'muted', text: ' · your address, coming soon' })]), live ? null : change); }
+    change.addEventListener('click', function () {
+      var inp = el('input', { value: w.slug, 'aria-label': 'Wedding address', autocapitalize: 'off', spellcheck: 'false', maxlength: '40' }), save = el('button', { type: 'button', class: 'mini', text: 'Save' }), back = el('button', { type: 'button', class: 'mini', text: 'Cancel' });
+      var dom = el('span', { class: 'muted', text: '.' + w.address.replace(/^https:\/\/[^.]+\./, '') });
+      inp.addEventListener('input', function () { inp.value = inp.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); });
+      back.addEventListener('click', view);
+      save.addEventListener('click', function () {
+        save.disabled = true;
+        api('setAddress', { g: w.galleryId, slug: inp.value.replace(/^-+|-+$/g, '') }).then(function (r) { w.slug = r.slug; w.address = url = r.address; view(); toast('New address: ' + r.address.replace(/^https:\/\//, '')); })
+          .catch(function (x) { toast(x.message); save.disabled = false; });
+      });
+      box.replaceChildren(inp, dom, save, back); inp.focus();
+    });
+    view();
+    return box;
+  }
+  function dnsTable(records) {
+    return el('table', { class: 'dnsrec' }, [el('tr', {}, [el('th', { text: 'Type' }), el('th', { text: 'Name' }), el('th', { text: 'Value' })])].concat(records.map(function (r) {
+      return el('tr', {}, [el('td', { text: r.type }), el('td', { text: r.name }), el('td', { text: r.value })]);
+    })));
+  }
+  function dmMode() { var c = document.querySelector('input[name=dmMode]:checked'); return c ? c.value : 'own'; }
+  function paintDomainPrice() {
+    var w = state.domainFor || {}, fee = w.domainFee == null ? 100 : w.domainFee;
+    $('dmPrice').textContent = dmMode() === 'buy' ? 'You pay what the domain costs + ₹' + fee + ' a year for us to look after it (+ GST on our fee). We tell you the price and the renewal price before we buy it.'
+      : 'Free to connect. Your PicGrades address keeps working too.';
+  }
+  document.querySelectorAll('input[name=dmMode]').forEach(function (i) { i.addEventListener('change', paintDomainPrice); });
+  function renderDomain() {
+    var w = state.domainFor || {}, user = (state.data && state.data.user) || {}, photographer = user.profession === 'photographer' || user.role === 'admin' || user.role === 'editor';
+    err('dmErr', ''); show('dmDone', false);
+    $('dmIntro').textContent = 'Open “' + (w.title || 'your wedding') + '” at your own address, like anikaandrohan.com. Today it opens at ' + String(w.address || '').replace(/^https:\/\//, '') + '.';
+    show('dmStudioBox', photographer);
+    if (w.domain) {   // already asked
+      show('dmForm', false); show('dmLocked', false); show('dmDone', true);
+      var d = w.domain, st = { requested: 'We got your request', waiting: 'Waiting for the domain to connect', live: 'Live' }[d.status] || d.status;
+      $('dmDone').replaceChildren.apply($('dmDone'), [el('p', { class: 'eyebrow gold', style: 'margin:0', text: st }), el('h2', { style: 'margin:6px 0 10px;font-size:28px', text: d.host }),
+        d.status === 'live' ? el('a', { class: 'btn', href: 'https://' + d.host, target: '_blank', rel: 'noopener', style: 'text-decoration:none;display:inline-flex', text: 'Open ' + d.host }) : null,
+        d.mode === 'own' && d.status !== 'live' ? el('p', { style: 'margin:0 0 10px', text: 'At the company where you bought it, add these records:' }) : null,
+        d.mode === 'own' && d.status !== 'live' ? dnsTable(d.records || []) : null,
+        d.mode === 'buy' && d.status !== 'live' ? el('p', { class: 'muted', style: 'margin:0', text: 'We buy it in your name and tell you the price first.' }) : null,
+        d.expires ? el('p', { class: 'muted', style: 'margin:12px 0 0;font-size:14px', text: 'Renews on ' + dmy(d.expires) + (d.renewal ? ' · ₹' + Number(d.renewal).toLocaleString('en-IN') + ' + ₹' + w.domainFee : '') + '. We remind you 30 and 7 days before.' }) : null].filter(Boolean));
+      return;
+    }
+    if (!w.paid && !photographer) {
+      show('dmForm', false); show('dmLocked', true);
+      $('dmLocked').replaceChildren(el('p', { style: 'margin:0 0 12px;font-weight:600', text: 'Your own domain comes with the paid plan.' }),
+        el('p', { class: 'muted', style: 'margin:0 0 14px', text: 'Until then your wedding opens at ' + String(w.address || '').replace(/^https:\/\//, '') + ' — share that with your guests.' }),
+        w.upgrade ? el('a', { class: 'btn', href: w.upgrade, target: /^mailto:/.test(w.upgrade) ? '_self' : '_blank', rel: 'noopener', style: 'text-decoration:none;display:inline-flex', text: 'Upgrade' }) : null);
+      return;
+    }
+    show('dmLocked', false); show('dmForm', true); paintDomainPrice();
+    if (user.phone && !$('dmPhone').value) $('dmPhone').value = user.phone;
+    setTimeout(function () { $('dmHost').focus(); }, 0);
+  }
+  $('dmHost').addEventListener('input', function () { this.value = this.value.toLowerCase().replace(/\s+/g, ''); });
+  $('dmForm').addEventListener('submit', function (e) {
+    e.preventDefault(); err('dmErr', '');
+    var w = state.domainFor || {}, host = $('dmHost').value.trim();
+    if (!/\.[a-z]{2,}$/.test(host)) return err('dmErr', 'Write the domain like anikaandrohan.com');
+    var btn = $('dmBtn'); btn.disabled = true; btn.textContent = 'Sending…';
+    api('domainRequest', { g: w.galleryId, studio: $('dmStudio').checked, host: host, mode: dmMode(), phone: $('dmPhone').value.trim(), notes: $('dmNotes').value.trim() }).then(function (r) {
+      show('dmForm', false); show('dmDone', true);
+      $('dmDone').replaceChildren.apply($('dmDone'), [el('p', { class: 'eyebrow gold', style: 'margin:0', text: 'Request sent' }), el('h2', { style: 'margin:6px 0 10px;font-size:28px', text: r.host }),
+        r.mode === 'own' ? el('p', { style: 'margin:0 0 10px', text: 'At the company where you bought it, add these records. It can take a few hours to work — we email you when it is live.' }) :
+          el('p', { style: 'margin:0 0 10px', text: 'We check the price and reply within a day. It is registered in your name, so it is yours forever.' }),
+        r.mode === 'own' ? dnsTable(r.records) : null,
+        el('button', { class: 'ghost', type: 'button', style: 'border-radius:12px;margin-top:14px', text: 'Back to my galleries' })].filter(Boolean));
+      $('dmDone').querySelector('button').addEventListener('click', function () { refresh().then(function () { go('dash'); }); });
+      ['dmHost', 'dmNotes'].forEach(function (k) { $(k).value = ''; });
+    }).catch(function (x) { err('dmErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Send request'; });
+  });
   // ---- human editing enquiry (step 65e) ----
   var OFFERS = null, OFFER_ORDER = ['human', 'aihuman', 'afterai', 'ai'];
-  function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+  function money(n) { n = Number(n); return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }); }   // ₹0.80, ₹3,500
+  var STUDIO_ORDER = ['cull', 'cullcc', 'retouch'];   // step 67: photographers only
   function edKind() { var c = document.querySelector('#edOffers input:checked'); return c ? c.value : 'human'; }
+  function edFixes() { return Array.prototype.map.call(document.querySelectorAll('#edFixes input:checked'), function (i) { return i.value; }); }
+  /** Price and delivery for the chosen kind (the server works it out again, this is only the estimate). */
+  function edQuote(k, n, free) {
+    var o = OFFERS[k], keep = Math.max(0, Math.floor(+$('edKeep').value || 0));
+    if (k === 'cullcc') { var ed = OFFERS[$('edEditKind').value] || OFFERS.human; return { hours: ed.hours + o.extraDays * 24, total: n * o.price + keep * ed.price, line: n + ' × ' + money(o.price) + ' culling + ' + keep + ' kept × ' + money(ed.price) + ' (' + ed.name + ')' }; }
+    if (k === 'retouch') {
+      var units = OFFERS.fixes.filter(function (f) { return edFixes().indexOf(f.key) > -1; }).reduce(function (t, f) { return t + f.units; }, 0), per = o.price + Math.max(0, units - o.included) * o.extraFix;
+      return { hours: o.hours, total: n * per, line: n + ' photos × ' + money(per) + (units > o.included ? ' (' + money(o.price) + ' + ' + (units - o.included) + ' × ' + money(o.extraFix) + ')' : '') };
+    }
+    return { hours: o.hours, total: (n - free) * o.price, line: n + ' photos' + (free ? ' − ' + free + ' free' : '') + ' × ' + money(o.price) };
+  }
   function paintEstimate() {
     if (!OFFERS) return;
     var k = edKind(), o = OFFERS[k], n = Math.max(0, Math.floor(+$('edCount').value || 0));
+    var look = k === 'cullcc' ? $('edEditKind').value : k, editing = OFFER_ORDER.indexOf(look) > -1;
     var canFree = o.free && OFFERS.freeLeft > 0, useFree = canFree && $('edUseFree').checked, free = useFree ? Math.min(n, OFFERS.freeLeft) : 0;
-    show('edProfileBox', k === 'ai'); show('edFreeBox', canFree); show('edToolBox', k === 'afterai'); show('edRefBox', k !== 'ai');
-    $('edNotesLabel').textContent = k === 'aihuman' ? 'The tone and look you want' : 'Anything we should know? (optional)';
+    show('edProfileBox', look === 'ai'); show('edFreeBox', canFree); show('edToolBox', look === 'afterai'); show('edRefBox', editing && look !== 'ai' || k === 'retouch');
+    show('edEditKindBox', k === 'cullcc'); show('edKeepBox', k === 'cullcc'); show('edFixBox', k === 'retouch');
+    $('edCountLabel').textContent = k === 'cull' || k === 'cullcc' ? 'How many photos in the catalog?' : k === 'retouch' ? 'How many photos to retouch?' : 'About how many photos?';
+    $('edRef').placeholder = k === 'retouch' ? 'Optional: links to retouched photos you like' : 'Links to photos or an Instagram profile whose look you like';
+    if (k === 'retouch') { var units = OFFERS.fixes.filter(function (f) { return edFixes().indexOf(f.key) > -1; }).reduce(function (t, f) { return t + f.units; }, 0);
+      $('edFixNote').textContent = units > o.included ? '· ' + (units - o.included) + ' extra × ' + money(o.extraFix) : '· ' + money(o.price) + ' covers any ' + o.included; }
+    $('edNotesLabel').textContent = look === 'aihuman' ? 'The tone and look you want' : 'Anything we should know? (optional)';
     $('edConsentText').textContent = (useFree ? 'Needed for the free sample: ' : 'Optional: ') + 'you allow PicGrades to use these edits to improve its own editing (internal only — never shared or sold).';
-    var days = Math.ceil(o.hours / 24); $('edBy').min = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
-    $('edEstimate').textContent = n ? n + ' photos' + (free ? ' − ' + free + ' free' : '') + ' × ' + money(o.price) + ' = ' + money(Math.round((n - free) * o.price * 100) / 100) + ' estimated · ready about ' + (o.hours < 72 ? o.hours + ' hours' : days + ' days') + ' after you confirm' : '';
+    var qq = edQuote(k, n, free), days = Math.ceil(qq.hours / 24); $('edBy').min = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+    $('edEstimate').textContent = n ? qq.line + ' = ' + money(Math.round(qq.total * 100) / 100) + ' estimated · ready about ' + (qq.hours < 72 ? qq.hours + ' hours' : days + ' days') + ' after you confirm' : '';
   }
-  ['edCount', 'edUseFree'].forEach(function (k) { $(k).addEventListener('input', paintEstimate); $(k).addEventListener('change', paintEstimate); });
+  ['edCount', 'edUseFree', 'edKeep', 'edEditKind'].forEach(function (k) { $(k).addEventListener('input', paintEstimate); $(k).addEventListener('change', paintEstimate); });
   function renderEditing(gid) {
     show('edForm', true); show('edDone', false); err('edErr', '');
     api('editOffers').then(function (o) {
       OFFERS = o; $('edFreeN').textContent = o.freeLeft;
-      var note = { human: 'Every photo edited by a person · 4 days', aihuman: 'AI first, then a person sets your tone · 48 hours', afterai: 'Already edited by an AI but not happy? A person fixes and checks them · 48 hours', ai: 'Our AI with a style profile · 24 hours' };
-      $('edOffers').replaceChildren.apply($('edOffers'), OFFER_ORDER.map(function (k, i) {
+      var note = { human: 'Every photo edited by a person · 4 days', aihuman: 'AI first, then a person sets your tone · 48 hours', afterai: 'Already edited by an AI but not happy? A person fixes and checks them · 48 hours', ai: 'Our AI with a style profile · 24 hours',
+        cull: 'A person picks the best photos of your catalog · ' + (o.cull ? o.cull.hours : 72) + ' hours', cullcc: 'We pick the best, then edit the ones we keep — culling at a lower price', retouch: 'Proper retouching by hand — any ' + (o.retouch ? o.retouch.included : 3) + ' fixes' + (o.retouch ? ', ' + money(o.retouch.extraFix) + ' each extra' : '') };
+      var price = { cull: function (x) { return money(x.price) + ' a photo'; }, cullcc: function (x) { return money(x.price) + ' a photo culling + the editing you choose'; }, retouch: function (x) { return 'from ' + money(x.price) + ' a photo'; } };
+      var order = OFFER_ORDER.concat(o.photographer ? STUDIO_ORDER : []);
+      var cards = order.map(function (k, i) {
         var lab = el('label', { class: 'offer' }, [el('input', { type: 'radio', name: 'edKind', value: k }), el('span', {}, [
-          el('b', { text: o[k].name + (k === 'human' ? ' · our signature' : '') }), el('small', { text: note[k] }), el('em', { text: money(o[k].price) + ' a photo' + (o[k].free && o.freeLeft ? ' · ' + o.freeLeft + ' free' : '') })])]);
+          el('b', { text: o[k].name + (k === 'human' ? ' · our signature' : '') }), el('small', { text: note[k] }), el('em', { text: price[k] ? price[k](o[k]) : money(o[k].price) + ' a photo' + (o[k].free && o.freeLeft ? ' · ' + o.freeLeft + ' free' : '') })])]);
         if (i === 0) lab.querySelector('input').checked = true;
+        lab.querySelector('input').addEventListener('change', paintEstimate); return lab;
+      });
+      if (o.photographer) cards.splice(OFFER_ORDER.length, 0, el('p', { class: 'offer-head', text: 'For photographers' }));
+      $('edOffers').replaceChildren.apply($('edOffers'), cards);
+      $('edEditKind').replaceChildren.apply($('edEditKind'), OFFER_ORDER.map(function (k) { return el('option', { value: k, text: o[k].name + ' · ' + money(o[k].price) + ' a photo' }); }));
+      if (o.fixes) $('edFixes').replaceChildren.apply($('edFixes'), o.fixes.map(function (f) {
+        var lab = el('label', {}, [el('input', { type: 'checkbox', value: f.key }), el('span', { text: f.name }), f.units > 1 ? el('small', { text: '(counts as ' + f.units + ')' }) : null].filter(Boolean));
         lab.querySelector('input').addEventListener('change', paintEstimate); return lab;
       }));
       $('edProfile').replaceChildren.apply($('edProfile'), o.profiles.map(function (p) { return el('option', { value: p, text: p }); }));
@@ -425,17 +564,20 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
     if (!/\/folders\//.test($('edFolder').value)) return err('edErr', 'Paste the Google Drive folder link (it contains /folders/).');
     var btn = $('edBtn'); btn.disabled = true; btn.textContent = 'Sending…';
     var kind = edKind();
-    if (kind !== 'ai' && $('edRef').value.trim().length < 5) { btn.disabled = false; btn.textContent = 'Send request'; $('edRef').focus(); return err('edErr', 'Add a style reference: a link to photos or a profile you like, so we match your look.'); }
-    if (kind === 'aihuman' && !$('edNotes').value.trim()) { btn.disabled = false; btn.textContent = 'Send request'; return err('edErr', 'Tell us the tone and look you want.'); }
-    api('editingEnquiry', { kind: kind, reference: $('edRef').value.trim(), aiTool: $('edTool').value, profile: $('edProfile').value, useFree: $('edUseFree').checked ? 'yes' : 'no', consent: $('edConsent').checked ? 'yes' : 'no',
+    var look = kind === 'cullcc' ? $('edEditKind').value : kind;
+    if (kind === 'cullcc' && !(+$('edKeep').value > 0)) { btn.disabled = false; btn.textContent = 'Send request'; return err('edErr', 'About how many photos should we keep and edit?'); }
+    if (kind === 'retouch' && !edFixes().length) { btn.disabled = false; btn.textContent = 'Send request'; return err('edErr', 'Choose what to retouch.'); }
+    if (OFFER_ORDER.indexOf(look) > -1 && look !== 'ai' && $('edRef').value.trim().length < 5) { btn.disabled = false; btn.textContent = 'Send request'; $('edRef').focus(); return err('edErr', 'Add a style reference: a link to photos or a profile you like, so we match your look.'); }
+    if (look === 'aihuman' && !$('edNotes').value.trim()) { btn.disabled = false; btn.textContent = 'Send request'; return err('edErr', 'Tell us the tone and look you want.'); }
+    api('editingEnquiry', { kind: kind, editKind: kind === 'cullcc' ? look : '', keep: +$('edKeep').value || 0, fixes: edFixes(), reference: $('edRef').value.trim(), aiTool: $('edTool').value, profile: $('edProfile').value, useFree: $('edUseFree').checked ? 'yes' : 'no', consent: $('edConsent').checked ? 'yes' : 'no',
       galleryId: $('edWed').value, photos: +$('edCount').value, folderUrl: $('edFolder').value.trim(), wantBy: $('edBy').value, phone: $('edPhone').value.trim(), notes: $('edNotes').value.trim() }).then(function (r) {
-      var o = OFFERS[kind], days = Math.ceil(o.hours / 24);
+      var o = OFFERS[kind], days = Math.ceil(edQuote(kind, +$('edCount').value || 0, r.free).hours / 24), hrs = edQuote(kind, +$('edCount').value || 0, r.free).hours;
       show('edForm', false); show('edDone', true);
       $('edDone').replaceChildren(el('p', { class: 'eyebrow gold', style: 'margin:0', text: 'Request sent' }), el('h2', { style: 'margin:6px 0 10px;font-size:28px', text: 'Thank you — we will confirm within a day' }),
-        el('p', { class: 'muted', style: 'margin:0 0 16px', text: o.name + ' · ' + $('edCount').value + ' photos' + (r.free ? ' (' + r.free + ' free)' : '') + ' · ' + money(r.total) + ' estimated. Ready about ' + (o.hours < 72 ? o.hours + ' hours' : days + ' days') + ' after you confirm.' }),
+        el('p', { class: 'muted', style: 'margin:0 0 16px', text: o.name + ' · ' + $('edCount').value + ' photos' + (r.free ? ' (' + r.free + ' free)' : '') + ' · ' + money(r.total) + ' estimated. Ready about ' + (hrs < 72 ? hrs + ' hours' : days + ' days') + ' after you confirm.' }),
         el('button', { class: 'ghost', type: 'button', style: 'border-radius:12px', text: 'Back to my galleries' }));
       $('edDone').querySelector('button').addEventListener('click', function () { go('dash'); });
-      ['edCount', 'edFolder', 'edBy', 'edNotes', 'edRef'].forEach(function (k) { $(k).value = ''; }); $('edConsent').checked = false;
+      ['edCount', 'edFolder', 'edBy', 'edNotes', 'edRef', 'edKeep'].forEach(function (k) { $(k).value = ''; }); document.querySelectorAll('#edFixes input').forEach(function (i) { i.checked = false; }); $('edConsent').checked = false;
     }).catch(function (x) { err('edErr', x.message); }).then(function () { btn.disabled = false; btn.textContent = 'Send request'; });
   });
 

@@ -23,6 +23,16 @@
     {
       "source": "/p/:slug",
       "destination": "/app/gallery.html?p=:slug"
+    },
+    {
+      "source": "/:w([a-z0-9]+(?:-[a-z0-9]+)*)",
+      "missing": [
+        {
+          "type": "host",
+          "value": "(.*\\.vercel\\.app|localhost|(www\\.)?picgrades\\.com)"
+        }
+      ],
+      "destination": "/app/w.html"
     }
   ],
   "headers": [
