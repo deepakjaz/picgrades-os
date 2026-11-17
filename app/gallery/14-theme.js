@@ -20,9 +20,14 @@
       ['--pg-glass', `rgba(${g.join(',')},${gl.opacity != null ? gl.opacity : 0.6})`], ['--pg-glass-line', `rgba(${hexRgb(c.ink).join(',')},${Math.min(0.25, (gl.border || 0.3) * 0.4)})`]
     ].map(([k, v]) => `${k}:${v};`).join('');
   }
+  // step 71: each font is asked for only in the weights it really has (asking for a missing one breaks the whole request)
+  const SPEC = {
+    'Great Vibes': '', 'Pinyon Script': '', 'Parisienne': '', 'Marcellus': '', 'Lato': ':ital,wght@0,400;0,700;1,400',
+    'Manrope': ':wght@400;500;600;700', 'Jost': ':ital,wght@0,400;0,500;0,600;0,700;1,400', 'Bodoni Moda': ':ital,wght@0,400;0,500;0,600;0,700;1,400'
+  };
   function fontLink(t) {
-    const fams = [t.fonts.display, t.fonts.body].filter((v, i, a) => v && a.indexOf(v) === i);
-    const q = fams.map(f => 'family=' + f.replace(/ /g, '+') + ':ital,wght@0,400;0,500;0,600;0,700;1,400;1,500').join('&');
+    const fams = [t.fonts.display, t.fonts.body, t.fonts.script].filter((v, i, a) => v && a.indexOf(v) === i);
+    const q = fams.map(f => 'family=' + f.replace(/ /g, '+') + (f in SPEC ? SPEC[f] : ':ital,wght@0,400;0,500;0,600;0,700;1,400;1,500')).join('&');
     let l = document.getElementById('pgThemeFonts');
     if (!l) { l = document.createElement('link'); l.id = 'pgThemeFonts'; l.rel = 'stylesheet'; document.head.appendChild(l); }
     l.href = 'https://fonts.googleapis.com/css2?' + q + '&display=swap';
@@ -30,7 +35,9 @@
   function apply(t) {
     if (!t) return;
     const r = t.radius || {}, gl = t.glass || {}, mo = t.motion || {};
+    // step 71: no typewriter font anywhere — small labels use the theme's body font; the couple's names use its script font
     const common = `--font-serif:'${t.fonts.display}', Georgia, serif;--font-sans:'${t.fonts.body}', -apple-system, BlinkMacSystemFont, sans-serif;` +
+      `--font-mono:'${t.fonts.body}', -apple-system, BlinkMacSystemFont, sans-serif;--font-script:'${t.fonts.script || t.fonts.display}', '${t.fonts.display}', Georgia, serif;` +
       `--pg-radius:${r.tile || 16}px;--pg-radius-btn:${r.button || 12}px;--pg-radius-sheet:${r.sheet || 24}px;--pg-glass-blur:${Math.max(0, Math.min(24, gl.blur || 16))}px;` +
       `--pg-motion:${mo.duration || 240}ms;--pg-ease:${mo.easing || 'ease'};`;
     let st = document.getElementById('pgThemeVars');
