@@ -77,9 +77,15 @@
   };
 
   function data() {
-    const all = pgAllPhotos(), likes = GALLERY.likes || {}, notes = GALLERY.notes || {};
+    let all = pgAllPhotos(), events = GALLERY.events || []; const likes = GALLERY.likes || {}, notes = GALLERY.notes || {};
+    if (GALLERY.demo) {   // step 72: a demo wedding shows its highlights (when at least 8 are chosen)
+      const S = GALLERY.story || {}, keep = new Set([].concat(S.wh || [], S.cover || [], ...Object.values(S.hl || {})));
+      const hi = all.filter(x => keep.has(x.p.id)); if (hi.length >= 8) all = hi;
+      if (hi.length >= 8) events = events.map(e => { const h = (S.hl || {})[e.name]; if (!h || !h.length) return e; const set = new Set(h);   // event cards: their own highlights
+        const ph = (e.photos || []).filter(p => set.has(p.id)); return ph.length ? Object.assign({}, e, { photos: ph, cover: ph[0].id }) : e; });
+    }
     return {
-      all, likes, events: GALLERY.events || [],
+      all, likes, events,
       loved: all.filter(x => likes[x.p.id]).sort((a, b) => likes[b.p.id] - likes[a.p.id]).slice(0, 10),
       notes: (GALLERY.recentNotes || []).slice(0, 4),
       hearts: Object.values(likes).reduce((t, v) => t + v, 0), notesN: Object.values(notes).reduce((t, v) => t + v, 0),
@@ -122,6 +128,9 @@
     const a = (window.PGRules && PGRules.act(k)) || ACT[k]; tapOn(el, a[2]); el.classList.add('pgl-act-' + (b.variant === 'photo' || b.variant === 'slideshow' ? 'plain' : b.variant));   // step 71: no photo styling
     // step 71: function cards never carry wedding photos (photos belong to reels); Find me is only a small pill
     if (k === 'findme') el.classList.add('pgl-fm-pill');
+    else if (k === 'reel' && ['M', 'L', 'XL', 'XXL'].indexOf(b._letter) > -1 && window.pgReelMock && D.all.length) {   // tall enough for a phone   // step 72: wedding photos only as a reel, in a phone
+      el.classList.add('pgl-reelcard'); const m = h('div', 'pgl-rm'); pgReelMock(m, picks(D, 6).map(p => p.id), { label: D.names, sub: 'Reel Edits' }); el.appendChild(m);
+    }
     else if (b.variant === 'photo' || b.variant === 'slideshow') el.classList.add('pgl-act-center');
     const small = b._letter === 'S';
     el.appendChild(h('div', 'pgl-actin', '<i>' + ic(k) + '</i><div><b>' + a[0] + '</b>' + (small ? '' : '<small>' + a[1] + '</small>') + '</div>' + (small ? '' : '<em>' + ic('arrow') + '</em>')));
@@ -335,7 +344,7 @@
     if (q === 'original') return null;   // preview of the original Hub
     const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {};
     if (window.PGHubDraft && PGHubDraft()) return customOf(PGHubDraft());   // the Hub editor's draft, previewed on this phone only
-    const id = q || G.layout || '';
+    const id = q || (window.pgDemoRotates && pgDemoRotates('layout') ? pgDemoPick('layout', LAYOUTS.map(l => l.id)) : G.layout || '');   // step 72: demo rotates
     if (id === 'custom') return G.custom && G.custom.blocks ? customOf(G.custom) : null;
     // (a ready layout can bring its own palette: "palette": { "id": "royal" })   // the wedding's own Hub (made in the Hub editor)
     return LAYOUTS.find(l => l.id === id) || null;

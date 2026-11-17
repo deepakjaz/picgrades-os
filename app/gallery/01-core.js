@@ -289,6 +289,21 @@ const likeBusy = {};
 // each phone remembers its own hearts for this wedding
 // Demo wedding (step 39): what this phone tried in the Control Panel (theme, layout, page styles, functions) is kept here only
 function pgDemoKey() { return 'pg_demo_' + GALLERY_ID; }
+// Step 72: on a demo wedding each visit gets the next theme / layout from a shuffled list kept on this phone, so the same
+// phone sees them all before any repeats. Within one visit it stays the same. A choice made in the Control Panel wins.
+function pgDemoPick(kind, ids) {
+  ids = (ids || []).filter(Boolean); if (!ids.length) return '';
+  const now = 'pg_demo_now_' + kind + '_' + GALLERY_ID, ck = 'pg_demo_cycle_' + kind + '_' + GALLERY_ID;
+  try {
+    const cur = sessionStorage.getItem(now); if (cur && ids.indexOf(cur) > -1) return cur;
+    let left = JSON.parse(localStorage.getItem(ck) || '[]').filter(x => ids.indexOf(x) > -1);
+    if (!left.length) { left = pgShuffle(ids.slice()); const last = localStorage.getItem(ck + '_last'); if (left.length > 1 && left[0] === last) left.push(left.shift()); }
+    const pick = left.shift();
+    localStorage.setItem(ck, JSON.stringify(left)); localStorage.setItem(ck + '_last', pick); sessionStorage.setItem(now, pick);
+    return pick;
+  } catch (e) { return ids[Math.floor(Math.random() * ids.length)]; }
+}
+function pgDemoRotates(kind) { return typeof GALLERY !== 'undefined' && !!GALLERY && !!GALLERY.demo && !GALLERY.isStudio && !(kind in pgDemoLocal()); }
 function pgDemoLocal() { try { return JSON.parse(localStorage.getItem(pgDemoKey()) || '{}') || {}; } catch (e) { return {}; } }
 function pgDemoMerge(g) {
   if (!g || !g.demo) return g;

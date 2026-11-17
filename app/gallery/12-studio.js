@@ -36,6 +36,12 @@
     '@keyframes pgsFloat{0%,100%{transform:translate(-30px,-20px)}50%{transform:translate(30px,30px)}}',
     '.pgs-end a{margin-top:22px;display:inline-block;padding:15px 28px;border-radius:999px;background:#FAC646;color:#1E1916;font-weight:800;text-decoration:none}',
     '@media (prefers-reduced-motion:reduce){.pgs-sec .rv,.pgs-badge{transition:none!important}.pgs-glow{animation:none}}',
+    // step 72: feature art — a reel in a phone, or the feature's icon on its colour
+    '.pgs-art{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}',
+    '.pgs-art-ic,.pgs-phone .scr.pgs-art-ic{display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 80% at 50% 30%,var(--glow) 0%,#141414 75%)!important;color:#fff}',
+    '.pgs-art-ic svg{width:42%;max-width:120px;height:auto;opacity:.95;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))}',
+    '.pgs-feat .pgs-art-reel{padding:8%;background:#141414}.pgs-feat .pgs-art-reel .pgrm{height:100%}',
+    '.pgs-phone .scr.pgs-art-reel{background:#141414}.pgs-phone .scr.pgs-art-reel .pgrm{height:100%;border-radius:inherit;padding:0;box-shadow:none}',
     // step 70: try the editors (a demo: nothing saved, shared or downloaded)
     '.pgs-try{margin:6px 16px 4px;padding:18px;border-radius:22px;background:#111;color:#f4eee6}',
     '.pgs-try b{display:block;font:500 22px/1.15 var(--font-serif)}.pgs-try p{margin:6px 0 14px;font:400 13.5px/1.5 var(--font-sans);letter-spacing:0;color:rgba(244,238,230,.75)}',
@@ -67,6 +73,25 @@
       badges: [['Couple approves', 'every moment'], ['Thank-you note', 'from the bride and groom']] }
   ];
   const IMG = n => '/app/demo/' + n + '.jpg';
+  // step 72: no screenshots on the feature cards. Wedding photos appear only as a reel in a phone (reel maker, Root Moment);
+  // every other feature is shown with its own icon.
+  const REEL_LIKE = { reel: 'Reel Edits', moments: 'Root Moment' };
+  const FEAT_IC = {
+    app: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+    viewer: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+    findme: '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="10" r="3"/><path d="M7 17c1.2-2 3-3 5-3s3.8 1 5 3"/>',
+    album: '<rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/><path d="m3 16 4-4 5 5"/>',
+    upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>'
+  };
+  function demoIds() {
+    const d = GALLERY.tryDemo; if (d && d.events) return pgShuffle([].concat(...d.events.map(e => e.photos.map(x => x.id)))).slice(0, 8);
+    return pgShuffle([].concat(...(GALLERY.events || []).map(e => (e.photos || []).map(x => x.id)))).slice(0, 8);
+  }
+  function featArt(box, f) {   // fills a phone-shaped box: a reel for reel-like features, an icon for the rest
+    if (REEL_LIKE[f.k] && window.pgReelMock) { const ids = demoIds(); if (ids.length) { box.classList.add('pgs-art-reel'); pgReelMock(box, ids, { label: (GALLERY.tryDemo && GALLERY.tryDemo.title) || '', sub: REEL_LIKE[f.k] }); return; } }
+    box.classList.add('pgs-art-ic'); box.style.setProperty('--glow', f.glow || '#FAC646');
+    box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (FEAT_IC[f.k] || FEAT_IC.app) + '</svg>';
+  }
 
   function story(startKey) {
     const info = GALLERY.studioInfo || {};
@@ -82,7 +107,7 @@
       const h = document.createElement('h3'); h.className = 'rv d1'; h.textContent = f.t;
       const p = document.createElement('p'); p.className = 'rv d2'; p.textContent = f.p;
       const ph = document.createElement('div'); ph.className = 'pgs-phone rv'; const scr = document.createElement('div'); scr.className = 'scr'; ph.appendChild(scr);
-      f.shots.forEach((n, j) => { const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; im.src = IMG(n); if (!j) im.classList.add('on'); scr.appendChild(im); });
+      featArt(scr, f);   // step 72
       f.badges.forEach((b, j) => { const d = document.createElement('div'); d.className = 'pgs-badge b' + (j + 1) + ' ' + (j ? 'r' : 'l'); d.style.top = (j ? 62 : 18) + '%'; d.textContent = b[0]; const sp = document.createElement('span'); sp.textContent = b[1]; d.appendChild(sp); ph.appendChild(d); });
       s.append(eb, h, p, ph);
       if (f.try && GALLERY.tryDemo) { const t = document.createElement('button'); t.type = 'button'; t.className = 'pgs-trybtn rv d2'; t.innerHTML = TRY_IC[f.try] + '<span>Try it yourself</span>'; t.onclick = () => { close(); pgsTry(f.try); }; s.appendChild(t); }
@@ -104,7 +129,7 @@
       e.target.classList.add('in'); dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === k));
     }), { root: wrap, threshold: 0.55 });
     secs.forEach(s => io.observe(s));
-    secs.forEach(s => { const ims = s.querySelectorAll('.scr img'); if (ims.length < 2) return; let n = 0; timers.push(setInterval(() => { if (!s.classList.contains('in')) return; ims[n].classList.remove('on'); n = (n + 1) % ims.length; ims[n].classList.add('on'); }, 2600)); });
+    secs.forEach(s => { const ims = s.querySelectorAll('.scr > img'); if (ims.length < 2) return; let n = 0; timers.push(setInterval(() => { if (!s.classList.contains('in')) return; ims[n].classList.remove('on'); n = (n + 1) % ims.length; ims[n].classList.add('on'); }, 2600)); });
     const close = () => { timers.forEach(clearInterval); io.disconnect(); wrap.remove(); };
     x.onclick = close;
     const first = secs.find(s => s.dataset.k === startKey); if (first) requestAnimationFrame(() => wrap.scrollTo({ top: first.offsetTop, behavior: 'auto' }));
@@ -175,8 +200,8 @@
       const row = sec.querySelector('.pgs-feats');
       FEATURES.forEach(f => {
         const card = document.createElement('button'); card.type = 'button'; card.className = 'pgs-feat'; card.dataset.feat = f.k;
-        card.innerHTML = '<div class="ph"><img alt="" loading="lazy" decoding="async"><em></em></div><b></b><span></span>';
-        card.querySelector('img').src = IMG(f.shots[0]); card.querySelector('em').textContent = f.eb; card.querySelector('b').textContent = f.t; card.querySelector('span').textContent = 'See how it works →';
+        card.innerHTML = '<div class="ph"><div class="pgs-art"></div><em></em></div><b></b><span></span>';
+        featArt(card.querySelector('.pgs-art'), f); card.querySelector('em').textContent = f.eb;   // step 72 card.querySelector('b').textContent = f.t; card.querySelector('span').textContent = 'See how it works →';
         card.onclick = () => story(f.k); row.appendChild(card);
       });
       if (GALLERY.tryDemo) {   // step 70

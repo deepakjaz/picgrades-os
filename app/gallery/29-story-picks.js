@@ -8,6 +8,7 @@
 (function pgStoryPicks() {
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const MAX = 15;
+  const HLMAX = () => (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.demo ? 40 : MAX);   // step 72: a demo wedding shows up to 40 per event
   const STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>';
   const role = () => (window.PGControl ? PGControl.role() : 'guest');
   const canPick = () => ['couple', 'photographer', 'picgrades', 'demo'].indexOf(role()) > -1;
@@ -70,11 +71,11 @@
         row('cover', 'Cover photo', P.cover.length + ' of ' + MAX + ' chosen · opens the story', P.cover.indexOf(id) > -1, P.cover.length >= MAX) +
         row('bride', 'Bride’s portrait', P.bride === id ? 'This photo' : P.bride ? 'Another photo is chosen · tap to use this one' : 'Not chosen yet · for the varmala moment', P.bride === id) +
         row('groom', 'Groom’s portrait', P.groom === id ? 'This photo' : P.groom ? 'Another photo is chosen · tap to use this one' : 'Not chosen yet · for the varmala moment', P.groom === id) +
-        (ev ? row('hl', 'Highlight of ' + pgEsc(ev), hl.length + ' of ' + MAX + ' chosen · shown when guests enter ' + pgEsc(ev), hl.indexOf(id) > -1, hl.length >= MAX) : '') +
+        (ev ? row('hl', 'Highlight of ' + pgEsc(ev), hl.length + ' of ' + HLMAX() + ' chosen · shown when guests enter ' + pgEsc(ev), hl.indexOf(id) > -1, hl.length >= HLMAX()) : '') +
         '<button type="button" class="mk-btn-peach ios-wide pgsp-done">Done</button>';
       box.querySelector('.pgsp-done').addEventListener('click', close);
       box.querySelectorAll('.pgsp-row').forEach(b => b.addEventListener('click', () => {
-        if (b.dataset.full) { showToast('Up to ' + MAX + ' — remove one in Control Panel › Story first'); return; }
+        if (b.dataset.full) { showToast('Up to ' + (b.dataset.k === 'hl' ? HLMAX() : MAX) + ' — remove one in Control Panel › Story first'); return; }
         const P2 = picks(), k = b.dataset.k, tog = (list) => { const i = list.indexOf(id); if (i > -1) list.splice(i, 1); else list.push(id); return list; };
         if (k === 'cover') tog(P2.cover);
         if (k === 'wh') tog(P2.wh);
@@ -136,7 +137,7 @@
         '<h4>Couple portraits</h4><p class="pgcp-note">For the varmala moment, when the two come together.</p><div class="pgsp-slots">' + slot('bride', 'Bride') + slot('groom', 'Groom') + '</div>' +
         '<h4>Welcome photo</h4><p class="pgcp-note">A full-length photo of you two. Guests see it first, when they open the guest link.</p><div class="pgsp-slots">' + slot('welcome', 'Welcome') + '</div>' +
         '<h4>Cover photos <small>' + P.cover.length + ' / ' + MAX + '</small></h4><p class="pgcp-note">The first thing guests see. “Next moment” moves through them.</p>' + thumbs(P.cover, 'cover') +
-        '<p class="pgcp-note" style="margin-top:14px"><b>Event highlights</b> · 10–15 for each event. Guests see them after Find me finds them.</p>' + evs.map(e => { const l = P.hl[e.name] || []; return '<h4>' + pgEsc(e.name) + ' highlights <small>' + l.length + ' / ' + MAX + '</small></h4>' + (l.length ? thumbs(l, 'hl:' + e.name) : '<p class="pgsp-empty">Not chosen · the story uses photos from across ' + pgEsc(e.name) + '.</p>'); }).join('');
+        '<p class="pgcp-note" style="margin-top:14px"><b>Event highlights</b> · ' + (HLMAX() > MAX ? 'up to ' + HLMAX() : '10–15') + ' for each event. Guests see them after Find me finds them.</p>' + evs.map(e => { const l = P.hl[e.name] || []; return '<h4>' + pgEsc(e.name) + ' highlights <small>' + l.length + ' / ' + HLMAX() + '</small></h4>' + (l.length ? thumbs(l, 'hl:' + e.name) : '<p class="pgsp-empty">Not chosen · the story uses photos from across ' + pgEsc(e.name) + '.</p>'); }).join('');
     }
     p.addEventListener('click', e => {
       const b = e.target.closest('button[data-do]'); if (!b) return;
