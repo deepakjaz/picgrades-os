@@ -1,6 +1,7 @@
-// Browser test (step 69): scroll or swipe in the photo viewer.
+// Browser test (step 69, step 73c): scroll or swipe in the photo viewer.
 //   · the first time, a question: scroll up and down, or swipe left and right; the choice flies into the top-bar button, which glows
-//   · left / right: photos move sideways, the filmstrip lies along the bottom above the buttons (no overlap), the photo sits above it
+//   · left / right: photos move sideways, the filmstrip lies along the bottom above the buttons, as an overlay on top of the photo
+//   · the photo itself keeps the exact same place and size in both modes (portrait or landscape) — only the strip moves, never the photo
 //   · the button switches back any time, on the same photo; the choice is kept on the phone
 //
 const http = require('http'); const fs = require('fs'); const path = require('path');
@@ -43,6 +44,9 @@ const srv = http.createServer((req, res) => {
   const SHOTS = process.env.PG_SHOTS, shot = async (pg, n) => { if (SHOTS) await pg.screenshot({ path: path.join(SHOTS, n + '.png') }); };
   const box = (pg, sel) => pg.evaluate(s => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { t: r.top, b: r.bottom, l: r.left, r: r.right, w: r.width, h: r.height }; }, sel);
   let { ctx, pg } = await open('/g/' + gid);
+  // baseline: the photo's place and size in the default, up/down mode (before any swipe styling applies)
+  const imgBox = pg => pg.evaluate(() => { const r = document.querySelectorAll('.pgv-item img')[activeIdx].getBoundingClientRect(); return { t: Math.round(r.top), b: Math.round(r.bottom), l: Math.round(r.left), r: Math.round(r.right) }; });
+  const before = await imgBox(pg);
   await pg.waitForSelector('.pgd-ask.show', { timeout: 4000 }).catch(() => {});
   check(await pg.isVisible('.pgd-ask') && /How do you like to see photos/.test(await pg.textContent('.pgd-ask')), 'first time: the question shows');
   check(await pg.locator('.pgd-opt').count() === 2 && /Scroll up and down/.test(await pg.textContent('.pgd-opt[data-m="v"]')) && /Swipe left and right/.test(await pg.textContent('.pgd-opt[data-m="h"]')), 'two choices: scroll up and down, swipe left and right');
@@ -54,13 +58,11 @@ const srv = http.createServer((req, res) => {
   check(await pg.evaluate(() => document.getElementById('pgvDir').classList.contains('pgd-glow')), 'the button glows so they know where to change it');
   check(!(await pg.isVisible('.pgd-ask')), 'the question is gone');
   await pg.waitForTimeout(2600);
-  // layout: filmstrip along the bottom, above the buttons, no overlap; the photo above the filmstrip
+  // layout: filmstrip along the bottom, above the buttons — it moved, the photo did not
   const rail = await box(pg, '#view-root .mk-filmstrip-rail'), bar = await pg.evaluate(() => Math.min(...[...document.querySelectorAll('#pgvBar .pgv-ic')].filter(b => b.offsetParent).map(b => b.getBoundingClientRect().top)));
-  check(rail.w > 380 && rail.h < 100 && rail.b <= bar + 1, 'filmstrip lies along the bottom, just above the buttons (no overlap)');
-  const img = await pg.evaluate(() => { const i = document.querySelectorAll('.pgv-item img')[activeIdx], r = i.getBoundingClientRect(), k = Math.min(r.width / i.naturalWidth, r.height / i.naturalHeight); return { t: r.top, b: r.bottom, h: r.height, ph: i.naturalHeight * k }; });
-  const mid = img.t + img.h / 2, vmid = await pg.evaluate(() => innerHeight / 2);
-  check(Math.abs(mid - vmid) < 3, 'a wide photo sits in the middle of the screen, same as up/down mode (' + Math.round(mid) + ' vs ' + Math.round(vmid) + ')');
-  check(mid + img.ph / 2 <= rail.t + 1, 'the wide photo stays above the filmstrip');
+  check(rail.w > 380 && rail.h < 100 && rail.b <= bar + 1, 'filmstrip lies along the bottom, just above the buttons');
+  const after = await imgBox(pg);
+  check(after.t === before.t && after.b === before.b && after.l === before.l && after.r === before.r, 'the photo keeps the exact same place and size as in up/down mode (' + JSON.stringify(before) + ' vs ' + JSON.stringify(after) + ')');
   const topBtns = await pg.evaluate(() => [...document.querySelectorAll('#pgvTop .pgv-ic')].filter(b => b.offsetParent).map(b => { const r = b.getBoundingClientRect(); return [r.left, r.right]; }));
   check(topBtns.every(([l, r]) => l >= 0 && r <= 390), 'top buttons stay on screen');
   await shot(pg, 'dir-2-swipe');
@@ -94,8 +96,8 @@ const srv = http.createServer((req, res) => {
   await pg2.addInitScript(() => { localStorage.setItem('pg_viewer_dir', 'h'); });
   await pg2.goto(B + '/g/' + gid); await pg2.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg2.waitForTimeout(900);
   await pg2.evaluate(() => openCollection(GALLERY.events[0].name, 0)); await pg2.waitForTimeout(900);
-  const d = await pg2.evaluate(() => { const i = document.querySelectorAll('.pgv-item img')[activeIdx].getBoundingClientRect(), r = document.querySelector('#view-root .mk-filmstrip-rail').getBoundingClientRect(); return { b: i.bottom, h: i.height, rt: r.top, vh: innerHeight }; });
-  check(d.b <= d.rt + 1 && d.h <= d.vh, 'computer: the photo fits the screen above the filmstrip (no overflow)');
+  const d = await pg2.evaluate(() => { const i = document.querySelectorAll('.pgv-item img')[activeIdx].getBoundingClientRect(); return { t: i.top, h: i.height, vh: innerHeight }; });
+  check(d.t === 0 && d.h === d.vh, 'computer: the photo still fills the full screen (the filmstrip overlays it, same as up/down mode)');
   await pg2.keyboard.press('ArrowRight'); await pg2.waitForTimeout(900);
   check(await pg2.evaluate(() => activeIdx) === 1 && await pg2.evaluate(() => { const f = document.getElementById('pgvFeed'); return Math.round(f.scrollLeft / f.clientWidth); }) === 1, 'computer: the right arrow key slides to the next photo');
   await shot(pg2, 'dir-4-computer');
