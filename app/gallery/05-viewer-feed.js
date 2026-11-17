@@ -6,14 +6,14 @@ function pgZoomable(box, img, scroller) {
   function apply() {
     img.style.transform = s > 1.001 ? 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')' : '';
     box.classList.toggle('is-zoomed', s > 1.001);
-    scroller.style.overflowY = s > 1.001 ? 'hidden' : '';
+    scroller.style.overflowY = scroller.style.overflowX = s > 1.001 ? 'hidden' : '';
   }
   function clamp() { const mx = (s - 1) * box.clientWidth / 2, my = (s - 1) * box.clientHeight / 2; x = Math.max(-mx, Math.min(mx, x)); y = Math.max(-my, Math.min(my, y)); }
   function rel(cx, cy) { const r = box.getBoundingClientRect(); return [cx - r.left - r.width / 2, cy - r.top - r.height / 2]; }
   function zoomAt(ns, px, py) { ns = Math.max(1, Math.min(5, ns)); const k = ns / s; x = px - k * (px - x); y = py - k * (py - y); s = ns; if (s <= 1.001) { s = 1; x = y = 0; } clamp(); apply(); }
   const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   box.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 2) { e.preventDefault(); const m = rel((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2); st = { d: dist(e.touches), s, x, y, m }; scroller.style.overflowY = 'hidden'; }
+    if (e.touches.length === 2) { e.preventDefault(); const m = rel((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2); st = { d: dist(e.touches), s, x, y, m }; scroller.style.overflowY = scroller.style.overflowX = 'hidden'; }
     else if (e.touches.length === 1 && s > 1) st = { px: e.touches[0].clientX, py: e.touches[0].clientY, x, y };
   }, { passive: false });
   box.addEventListener('touchmove', (e) => {
@@ -92,6 +92,9 @@ async function pgDownload(m) {
 (function pgViewerFeed() {
   const feed = document.getElementById('pgvFeed'), view = document.getElementById('view-root');
   let items = [], feedIdx = 0, fromFeed = false, scrollTimer = null, lockUntil = 0;
+  // step 69: photos move up/down (default) or left/right (body.pgv-swipe) — the same feed, only the axis changes
+  const sideways = () => document.body.classList.contains('pgv-swipe');
+  const fsz = () => (sideways() ? feed.clientWidth : feed.clientHeight), fpos = () => (sideways() ? feed.scrollLeft : feed.scrollTop);
   // While the app moves the photos itself (filmstrip, arrows, thumbnails), the feed's own scroll events are ignored,
   // so the filmstrip and the big photo never pull each other back.
   function build() {
@@ -125,10 +128,10 @@ async function pgDownload(m) {
   window.pgvIsZoomed = () => !!(cur() && cur().z && cur().z.zoomed());
   window.pgvZoomReset = () => !!(cur() && cur().z && cur().z.reset());
   function scrollToIdx(i, smooth) {
-    const h = feed.clientHeight; if (!h) return;
-    if (Math.abs(feed.scrollTop - i * h) < 2) return;
+    const h = fsz(); if (!h) return;
+    if (Math.abs(fpos() - i * h) < 2) return;
     lockUntil = Date.now() + (smooth ? 700 : 250);
-    feed.scrollTo({ top: i * h, behavior: smooth ? 'smooth' : 'auto' });
+    feed.scrollTo(sideways() ? { left: i * h, behavior: smooth ? 'smooth' : 'auto' } : { top: i * h, behavior: smooth ? 'smooth' : 'auto' });
   }
   const userOnStrip = () => Date.now() - stripTouchAt < 900;
   let stripTouchAt = 0, stripFingerAt = 0;
@@ -150,10 +153,10 @@ async function pgDownload(m) {
   function waitMs() { const now = Date.now(); return Math.max(120, lockUntil - now + 60, userOnStrip() ? stripTouchAt + 960 - now : 0); }
   function settle() {
     if (Date.now() < lockUntil || userOnStrip()) { scrollTimer = setTimeout(settle, waitMs()); return; }
-    const h = feed.clientHeight; if (!h || !items.length) return;
-    const i = Math.max(0, Math.min(items.length - 1, Math.round(feed.scrollTop / h)));
+    const h = fsz(); if (!h || !items.length) return;
+    const i = Math.max(0, Math.min(items.length - 1, Math.round(fpos() / h)));
     // still between two photos: show both sharp, and look again shortly (an iPhone can stop a little off a photo)
-    if (Math.abs(feed.scrollTop / h - i) > 0.08) { load(Math.floor(feed.scrollTop / h)); scrollTimer = setTimeout(settle, 250); return; }
+    if (Math.abs(fpos() / h - i) > 0.08) { load(Math.floor(fpos() / h)); scrollTimer = setTimeout(settle, 250); return; }
     load(i);
     if (i !== activeIdx) {
       items.forEach((it, k) => { if (k !== i && it.z) it.z.reset(); });
@@ -168,12 +171,14 @@ async function pgDownload(m) {
   feed.addEventListener('scroll', () => {
     if (swipeRaf || Date.now() < lockUntil) return;
     swipeRaf = requestAnimationFrame(() => {
-      swipeRaf = 0; const h = feed.clientHeight; if (!h || !items.length) return;
-      const n = Math.max(0, Math.min(items.length - 1, Math.round(feed.scrollTop / h)));
+      swipeRaf = 0; const h = fsz(); if (!h || !items.length) return;
+      const n = Math.max(0, Math.min(items.length - 1, Math.round(fpos() / h)));
       for (let j = n - 1; j <= n + 2; j++) if (items[j]) show(items[j], 'thumb');
     });
   }, { passive: true });
   window.addEventListener('resize', () => { if (items.length) scrollToIdx(feedIdx, false); });
+  // step 69: after switching between up/down and left/right, stay on the same photo
+  window.pgvRelayout = () => { if (!items.length) return; lockUntil = Date.now() + 300; feed.scrollTo({ top: 0, left: 0, behavior: 'auto' }); scrollToIdx(feedIdx, false); };
   // buttons
   document.getElementById('pgvSave').addEventListener('click', () => pgDownload(MOMENTS[activeIdx]));
   const zb = document.getElementById('pgvZoom');

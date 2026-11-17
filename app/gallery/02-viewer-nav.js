@@ -39,7 +39,7 @@
     if (e.ctrlKey || (window.pgvIsZoomed && pgvIsZoomed())) return; // zoom / pan
     e.preventDefault();
     if (Date.now() < lockUntil) return;
-    acc += e.deltaY; clearTimeout(accTimer); accTimer = setTimeout(() => { acc = 0; }, 200);
+    acc += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; clearTimeout(accTimer); accTimer = setTimeout(() => { acc = 0; }, 200);
     if (Math.abs(acc) >= 40) { go(acc > 0 ? 1 : -1); acc = 0; lockUntil = Date.now() + 450; }
   }, { passive: false });
 

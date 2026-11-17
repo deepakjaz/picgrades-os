@@ -330,15 +330,19 @@ function pgShare() {
   else showToast(url);
 }
 
+function pgStripAcross() { return document.body.classList.contains('pgv-swipe'); }
+const pgStripPos = () => (pgStripAcross() ? stripScroller.scrollLeft : stripScroller.scrollTop);
 function centerThumbnail(idx, smooth = true) {
   const el = thumbEls[idx];
   if (!el) return null;
-  const activeSlotOffset = stripScroller.clientHeight * 0.48;
-  const rawTarget = el.offsetTop - activeSlotOffset + (el.offsetHeight / 2);
-  const maxScroll = Math.max(0, stripScroller.scrollHeight - stripScroller.clientHeight);
+  // step 69: the filmstrip is on the right (photos move up/down) or along the bottom (photos move left/right)
+  const across = pgStripAcross();
+  const activeSlotOffset = across ? stripScroller.clientWidth * 0.5 : stripScroller.clientHeight * 0.48;
+  const rawTarget = across ? el.offsetLeft - activeSlotOffset + (el.offsetWidth / 2) : el.offsetTop - activeSlotOffset + (el.offsetHeight / 2);
+  const maxScroll = across ? Math.max(0, stripScroller.scrollWidth - stripScroller.clientWidth) : Math.max(0, stripScroller.scrollHeight - stripScroller.clientHeight);
   const clampedTarget = Math.max(0, Math.min(maxScroll, rawTarget));
 
-  stripScroller.scrollTo({
+  stripScroller.scrollTo(across ? { left: clampedTarget, behavior: smooth ? 'smooth' : 'auto' } : {
     top: clampedTarget,
     behavior: smooth ? 'smooth' : 'auto'
   });
@@ -400,7 +404,7 @@ function selectMomentDirectly(idx, smoothStrip = true) {
   const targetTop = centerThumbnail(clamped, smoothStrip);
   programmaticTargetTop = targetTop;
 
-  if (!smoothStrip || targetTop === null || Math.abs(stripScroller.scrollTop - targetTop) <= 1.5) {
+  if (!smoothStrip || targetTop === null || Math.abs(pgStripPos() - targetTop) <= 1.5) {
     requestAnimationFrame(clearProgrammaticStripLock);
   } else {
     scheduleProgrammaticStripRelease(180);
@@ -421,7 +425,7 @@ stripScroller.addEventListener('scrollend', () => {
 let stripRaf = false;
 stripScroller.addEventListener('scroll', () => {
   if (isProgrammaticStripScroll) {
-    if (programmaticTargetTop !== null && Math.abs(stripScroller.scrollTop - programmaticTargetTop) <= 1.5) {
+    if (programmaticTargetTop !== null && Math.abs(pgStripPos() - programmaticTargetTop) <= 1.5) {
       clearProgrammaticStripLock();
     } else {
       scheduleProgrammaticStripRelease(120);
@@ -436,14 +440,15 @@ stripScroller.addEventListener('scroll', () => {
       if (isProgrammaticStripScroll || !thumbEls.length) return;
       const rect = stripScroller.getBoundingClientRect();
       if (rect.height <= 0) return;
-      const activeLineY = rect.top + (rect.height * 0.48);
+      const across = pgStripAcross();
+      const activeLineY = across ? rect.left + (rect.width * 0.5) : rect.top + (rect.height * 0.48);
       let bestIdx = 0;
       let bestDist = Infinity;
       // only look near the current photo (measuring hundreds of thumbnails every frame makes the strip stutter)
       const from = activeIdx > 40 ? activeIdx - 40 : 0, to = activeIdx >= 0 ? Math.min(thumbEls.length, activeIdx + 41) : thumbEls.length;
       for (let i = from; i < to; i++) {
         const r = thumbEls[i].getBoundingClientRect();
-        const cY = r.top + (r.height / 2);
+        const cY = across ? r.left + (r.width / 2) : r.top + (r.height / 2);
         const d = Math.abs(cY - activeLineY);
         if (d < bestDist) {
           bestDist = d;

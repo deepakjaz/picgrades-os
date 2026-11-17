@@ -13,10 +13,12 @@
   feed.addEventListener('touchstart', e => { multi = e.touches.length > 1; if (multi) return; sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); }, { passive: true });
   feed.addEventListener('touchend', e => {
     if (multi || !e.changedTouches.length || (window.pgvIsZoomed && pgvIsZoomed())) return;
-    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
-    if (Date.now() - st > 800 || Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    // up/down mode: the feed scrolls up/down itself, and a sideways swipe also moves; left/right mode (step 69): the other way round
+    const side = document.body.classList.contains('pgv-swipe');
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy, a = side ? dy : dx, b = side ? dx : dy;
+    if (Date.now() - st > 800 || Math.abs(a) < 50 || Math.abs(a) < Math.abs(b) * 1.6) return;
     const n = MOMENTS.length; if (!n) return;
-    const to = dx < 0 ? activeIdx + 1 : activeIdx - 1;   // finger to the left = the next photo, to the right = the previous one
+    const to = a < 0 ? activeIdx + 1 : activeIdx - 1;   // finger to the left (or up) = the next photo
     if (to < 0 || to >= n) return;
     selectMomentDirectly(to, true);
   }, { passive: true });
