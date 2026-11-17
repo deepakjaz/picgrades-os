@@ -5,152 +5,177 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PicGrades — your own wedding app, and photo editing with the human touch</title>
 <meta name="description" content="PicGrades turns your Google Drive folder into your own wedding app. Guests find their photos with a selfie. Photo editing by people, for couples and photographers.">
-<meta name="theme-color" content="#24070F">
-<link rel="icon" href="/app/icons/icon-192.png">
+<meta name="theme-color" content="#0B0B0B">
+<link rel="icon" href="/app/hub/icon.png">
+<link rel="apple-touch-icon" href="/app/hub/icon.png">
 <script>/* step 67: on a wedding address, hide this page while the wedding opens */if(!/(^|\.)vercel\.app$|^localhost$|^127\.0\.0\.1$|^(www\.)?picgrades\.com$/.test(location.hostname))document.documentElement.style.visibility="hidden"</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* PicGrades hub (step 68). The look comes from wedding silk: a deep wine ground, ivory text and zari gold.
-   One decoration only — the woven zari border — because our editing is handloom, not machine-made. */
+/* PicGrades hub (step 68). The PicGrades brand: black, yellow and white. Pictures first, few words.
+   --yellow is the yellow of the PicGrades logo (#FAE900). */
 :root{
-  --wine:#24070F; --wine2:#330D18; --wine3:#451524;
-  --ivory:#F7EEDC; --soft:#D9C7B4; --mute:#B39A90;
-  --zari:#D2A84C; --zari2:#EBCB7E; --marigold:#F2962E;
-  --line:rgba(210,168,76,.26);
-  --serif:'Fraunces',Georgia,'Times New Roman',serif; --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --pad:clamp(20px,5vw,64px); --max:1200px;
+  --yellow:#FAE900; --yellow2:#FFF45E;
+  --black:#0B0B0B; --ink:#151515; --ink2:#1E1E1E; --line:#2C2C2C;
+  --white:#FFFFFF; --soft:#C9C9C9; --mute:#8E8E8E;
+  --head:'Bricolage Grotesque','Arial Black',system-ui,sans-serif; --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --pad:clamp(20px,5vw,64px); --max:1240px; --r:28px;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 html,body{overflow-x:clip}
-body{margin:0;background:var(--wine);color:var(--ivory);font:400 17px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
-img,svg{display:block;max-width:100%}
-a{color:var(--zari2);text-underline-offset:3px}
-a:focus-visible,button:focus-visible{outline:2px solid var(--zari2);outline-offset:3px;border-radius:6px}
+body{margin:0;background:var(--black);color:var(--white);font:400 17px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px;border-radius:8px}
 h1,h2,h3,p{margin:0}
-h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.01em;text-wrap:balance}
-h1{font-size:clamp(44px,8.2vw,104px);line-height:.98;font-variation-settings:'opsz' 144}
-h2{font-size:clamp(34px,5vw,60px);line-height:1.04;font-variation-settings:'opsz' 120}
-h3{font-size:clamp(23px,2.4vw,28px);line-height:1.2}
-.lead{font-size:clamp(18px,1.6vw,21px);color:var(--soft);max-width:34em}
+h1,h2,h3{font-family:var(--head);font-weight:700;letter-spacing:-.03em;line-height:1;text-wrap:balance}
+h1{font-size:clamp(46px,6.4vw,94px);font-weight:800;line-height:.92}
+h2{font-size:clamp(36px,5.6vw,72px)}
+h3{font-size:clamp(22px,2.2vw,28px);letter-spacing:-.02em;line-height:1.1}
+.y{color:var(--yellow)}
 .shell{max-width:var(--max);margin:0 auto;padding-left:var(--pad);padding-right:var(--pad)}
-.band{padding-top:clamp(72px,10vw,136px);padding-bottom:clamp(72px,10vw,136px)}
-.zari{height:14px;background:
-  linear-gradient(135deg,var(--zari) 25%,transparent 25%) -7px 0/14px 14px,
-  linear-gradient(225deg,var(--zari) 25%,transparent 25%) -7px 0/14px 14px,
-  linear-gradient(315deg,var(--zari) 25%,transparent 25%) 0 0/14px 14px,
-  linear-gradient(45deg,var(--zari) 25%,transparent 25%) 0 0/14px 14px;
-  border-top:1px solid var(--zari);border-bottom:1px solid var(--zari);opacity:.85}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:14px 28px;border-radius:999px;font:600 16px/1.2 var(--sans);text-decoration:none;cursor:pointer;border:1px solid transparent;transition:background .2s,color .2s,border-color .2s}
-.btn-gold{background:var(--zari);color:#24070F}.btn-gold:hover{background:var(--zari2)}
-.btn-line{border-color:var(--line);color:var(--ivory)}.btn-line:hover{border-color:var(--zari2);color:var(--zari2)}
+.band{padding-top:clamp(64px,9vw,120px);padding-bottom:clamp(64px,9vw,120px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:14px 30px;border-radius:999px;font:700 16px/1.2 var(--sans);text-decoration:none;border:2px solid transparent;transition:background .2s,color .2s,border-color .2s,transform .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-y{background:var(--yellow);color:#0B0B0B}.btn-y:hover{background:var(--yellow2)}
+.btn-w{border-color:#fff;color:#fff}.btn-w:hover{background:#fff;color:#0B0B0B}
+.btn-k{background:#0B0B0B;color:#fff}.btn-k:hover{background:#2a2a2a}
 
 /* header */
-.top{position:sticky;top:0;z-index:20;background:rgba(36,7,15,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;background:rgba(11,11,11,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .top .shell{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:68px}
-.mark{font-family:var(--serif);font-size:27px;color:var(--ivory);text-decoration:none;font-variation-settings:'opsz' 60}
-.mark i{color:var(--zari);font-style:normal}
+.mark{display:inline-flex;align-items:center;gap:10px;font:800 24px/1 var(--head);letter-spacing:-.03em;color:#fff;text-decoration:none}
+.mark i{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--yellow);color:#0B0B0B;font:800 15px/1 var(--head);font-style:normal;letter-spacing:-.04em}
+.mark img{height:40px;width:auto;display:block}
+.mark span{font:800 19px/1 var(--sans);letter-spacing:.04em}.mark b{color:var(--yellow);font-weight:800}
 .top nav{display:flex;align-items:center;gap:clamp(14px,2.4vw,34px)}
-.top nav a{color:var(--soft);text-decoration:none;font-size:15px;font-weight:500}
-.top nav a:hover{color:var(--zari2)}
-.top nav a.btn{min-height:44px;padding:10px 20px;color:#24070F;font-weight:600}
+.top nav a{color:var(--soft);text-decoration:none;font-size:15px;font-weight:600}
+.top nav a:hover{color:var(--yellow)}
+.top nav a.btn{min-height:44px;padding:8px 20px;color:#0B0B0B}
 @media (max-width:860px){.top nav a.hide-s{display:none}}
 
-/* hero */
-.hero{position:relative;padding-top:clamp(48px,7vw,96px);padding-bottom:clamp(64px,8vw,112px)}
-.hero .shell{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(32px,5vw,72px);align-items:center}
-.hero h1 em{font-style:italic;font-weight:300}
-.hero .lead{margin-top:28px}
-.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
-.fine{margin-top:18px;font-size:14.5px;color:var(--mute)}
-@media (max-width:900px){.hero .shell{grid-template-columns:1fr}}
-
-/* the hero phone: Find me, drawn — the guest's selfie finds their photos in the wedding */
-.phone{position:relative;width:min(100%,340px);margin:0 auto;aspect-ratio:9/18.6;border-radius:44px;background:#150409;border:1px solid var(--line);padding:12px;box-shadow:0 40px 80px -30px rgba(0,0,0,.8),0 0 0 6px rgba(210,168,76,.07)}
-.screen{position:relative;height:100%;border-radius:33px;overflow:hidden;background:linear-gradient(180deg,#3A0F1C,#24070F 60%);display:flex;flex-direction:column;padding:22px 16px 16px}
-.screen .names{font-family:var(--serif);font-size:22px;line-height:1.1}
-.screen .sub{font-size:11.5px;color:var(--mute);margin-top:3px}
-.selfie{display:flex;align-items:center;gap:12px;margin:18px 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:18px;background:rgba(0,0,0,.18)}
-.face{flex:none;width:46px;height:46px;border-radius:50%;border:2px solid var(--zari);background:radial-gradient(circle at 50% 38%,#E9C9A5 0 26%,transparent 27%),radial-gradient(circle at 50% 108%,#C98A6B 0 46%,transparent 47%),#5B1E2D}
-.selfie b{display:block;font-size:13.5px;font-weight:600}.selfie span{font-size:11.5px;color:var(--mute)}
-.tiles{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:6px;min-height:0}
-.tiles i{border-radius:9px;background:var(--t,#5A2030);position:relative;opacity:.42}
-.tiles i:nth-child(3n+1){--t:#6B2A2F}.tiles i:nth-child(3n+2){--t:#7A4A2A}.tiles i:nth-child(4n){--t:#3F4A3A}.tiles i:nth-child(5n){--t:#8A5A3A}.tiles i:nth-child(7n){--t:#4A2A4A}
-.tiles i.me{opacity:1;box-shadow:0 0 0 2px var(--zari2),0 0 22px rgba(235,203,126,.45)}
-.tiles i.me::after{content:"";position:absolute;left:50%;top:44%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 50% 40%,#E9C9A5 0 40%,transparent 41%),radial-gradient(circle at 50% 120%,#C98A6B 0 60%,transparent 61%)}
-.found{margin-top:12px;text-align:center;font-size:12.5px;color:var(--zari2);font-weight:600}
+/* hero: words on the left, wedding photos drifting on the right */
+.hero{position:relative;overflow:hidden}
+.hero .shell{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(24px,4vw,64px);align-items:center;min-height:min(820px,calc(100vh - 69px))}
+.hero .words{padding:48px 0}
+.hero p.lead{margin-top:24px;font-size:clamp(18px,1.6vw,22px);color:var(--soft);max-width:26em}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.fine{margin-top:16px;font-size:14.5px;color:var(--mute)}
+.wall{display:flex;gap:14px;height:min(820px,calc(100vh - 69px));overflow:hidden;-webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent)}
+.col{flex:1;display:flex;flex-direction:column;gap:14px;min-width:0}
+.tile{flex:none;aspect-ratio:3/4;border-radius:22px;background:linear-gradient(160deg,#2A2A2A,#141414) center/cover no-repeat;position:relative;overflow:hidden}
+.tile.tall{aspect-ratio:3/5}
+.tile.word{background:var(--yellow);color:#0B0B0B;display:flex;align-items:flex-end;padding:18px;font:800 clamp(17px,1.7vw,25px)/.95 var(--head);letter-spacing:-.03em;aspect-ratio:1}
+.tile.word.w{background:#fff}
+.tile:not(.word):not(.has)::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(250,233,0,.14),transparent 55%)}
 @media (prefers-reduced-motion:no-preference){
-  .tiles i.me{animation:find 1s cubic-bezier(.2,.7,.2,1) both}
-  .tiles i.me:nth-of-type(2){animation-delay:.9s}.tiles i.me:nth-of-type(6){animation-delay:1.25s}.tiles i.me:nth-of-type(7){animation-delay:1.6s}.tiles i.me:nth-of-type(11){animation-delay:1.95s}
-  .found{animation:rise .7s 2.5s both}
-  @keyframes find{from{opacity:.42;box-shadow:none;transform:scale(.94)}to{opacity:1;transform:none}}
-  @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .col{animation:driftY 46s linear infinite}
+  .col:nth-child(2){animation-duration:58s;animation-direction:reverse}
+  .col:nth-child(3){animation-duration:52s}
+  @keyframes driftY{to{transform:translateY(calc(-50% - 7px))}}
+  @keyframes driftX{to{transform:translateX(calc(-50% - 6px))}}
+}
+@media (max-width:900px){
+  .hero .shell{grid-template-columns:1fr;min-height:0;padding-left:0;padding-right:0;gap:0}
+  .hero .words{padding:40px var(--pad) 32px}
+  .wall{flex-direction:column;height:auto;gap:12px;padding-bottom:40px;-webkit-mask-image:none;mask-image:none}
+  .col{flex-direction:row;gap:12px;width:max-content}
+  .col:nth-child(3){display:none}
+  .tile,.tile.tall,.tile.word{width:38vw;aspect-ratio:3/4}
+  @media (prefers-reduced-motion:no-preference){.col{animation-name:driftX;animation-duration:40s}.col:nth-child(2){animation-duration:50s}}
 }
 
 /* doorway: couple or photographer */
-.door{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.door a{display:flex;flex-direction:column;gap:14px;padding:clamp(36px,5vw,72px) var(--pad);text-decoration:none;color:var(--ivory);background:var(--wine2);transition:background .25s}
-.door a+a{border-left:1px solid var(--line);background:var(--wine)}
-.door a:hover{background:var(--wine3)}
-.door h2{font-size:clamp(30px,4vw,50px)}
-.door p{color:var(--soft);max-width:28em}
-.door .go{margin-top:auto;padding-top:14px;color:var(--zari2);font-weight:600}
-@media (max-width:760px){.door{grid-template-columns:1fr}.door a+a{border-left:0;border-top:1px solid var(--line)}}
+.door{display:grid;grid-template-columns:1fr 1fr}
+.door a{position:relative;display:flex;flex-direction:column;gap:10px;min-height:clamp(260px,34vw,420px);padding:clamp(28px,4vw,56px) var(--pad);text-decoration:none;color:#0B0B0B;overflow:hidden}
+.door a.c{background:var(--yellow)}.door a.p{background:#fff}
+.door h2{font-size:clamp(40px,6vw,84px);font-weight:800}
+.door p{font-size:18px;font-weight:600;max-width:22em}
+.door .go{display:inline-flex;align-items:center;gap:10px;margin-top:10px;font-weight:700}
+.door .go::after{content:"";width:44px;height:44px;border-radius:50%;background:#0B0B0B url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center/20px no-repeat;transition:transform .25s}
+.door a:hover .go::after{transform:translateX(8px)}
+.door svg{width:clamp(64px,8vw,112px);height:auto;margin-bottom:auto}
+@media (max-width:760px){.door{grid-template-columns:1fr}}
 
-/* what the wedding app does */
-.split{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(28px,6vw,96px);align-items:start}
-.split .head{position:sticky;top:104px}
-.split .head .lead{margin-top:22px}
-.list{border-top:1px solid var(--line)}
-.list div{display:grid;grid-template-columns:minmax(0,13em) minmax(0,1fr);gap:8px 28px;padding:24px 0;border-bottom:1px solid var(--line)}
-.list p{color:var(--soft)}
-@media (max-width:900px){.split{grid-template-columns:1fr}.split .head{position:static}}
-@media (max-width:560px){.list div{grid-template-columns:1fr}}
+/* what the wedding app does: a bento of small pictures */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:clamp(32px,5vw,56px)}
+.cell{position:relative;border-radius:var(--r);background:var(--ink);border:1px solid var(--line);padding:26px;display:flex;flex-direction:column;gap:8px;min-height:340px;overflow:hidden}
+.cell p{color:var(--soft);font-size:16px;max-width:24em}
+.cell .art{flex:1;min-height:150px;margin-bottom:14px;position:relative}
+.cell.s3{grid-column:span 3}.cell.s2{grid-column:span 2}.cell.s4{grid-column:span 4}
+.cell.yel{background:var(--yellow);border-color:var(--yellow);color:#0B0B0B}.cell.yel p{color:#0B0B0B;font-weight:600}
+@media (max-width:900px){.bento{grid-template-columns:1fr 1fr}.cell.s3,.cell.s2,.cell.s4{grid-column:span 2}}
+/* Find me */
+.fm{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;height:100%}
+.fm .me{width:96px;height:96px;border-radius:50%;border:4px solid var(--yellow);background:radial-gradient(circle at 50% 38%,#F2D2B0 0 24%,transparent 25%),radial-gradient(circle at 50% 108%,#D9A07E 0 46%,transparent 47%),#333}
+.fm .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.fm .grid i{aspect-ratio:1;border-radius:10px;background:#2B2B2B center/cover}
+.fm .grid i.hit{outline:3px solid var(--yellow);outline-offset:-3px;background-color:#4A4020}
+/* Root Moment: a stack of tall cards */
+.stack{display:flex;justify-content:center;align-items:flex-end;height:100%;gap:0}
+.stack i{width:34%;aspect-ratio:9/15;border-radius:18px;background:#2B2B2B center/cover;border:3px solid var(--ink);margin:0 -5%}
+.stack i:nth-child(1){transform:rotate(-8deg) translateY(8px)}.stack i:nth-child(2){z-index:1;width:38%;background-color:#3A3A3A}.stack i:nth-child(3){transform:rotate(8deg) translateY(8px)}
+/* Reel Edits: a timeline */
+.reel{display:flex;flex-direction:column;justify-content:center;gap:8px;height:100%}
+.reel .clips{display:flex;gap:5px}.reel .clips i{flex:1;height:54px;border-radius:9px;background:#2B2B2B center/cover}
+.reel .wave{height:30px;border-radius:9px;background:repeating-linear-gradient(90deg,var(--yellow) 0 3px,transparent 3px 7px);-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 30%,#000 70%,transparent);opacity:.9}
+.reel .head{position:absolute;left:38%;top:8%;bottom:8%;width:3px;background:#fff;border-radius:2px}
+/* Post Edits: a frame */
+.post{display:grid;place-items:center;height:100%}
+.post i{width:min(62%,170px);aspect-ratio:4/5;background:#fff;border-radius:6px;padding:9px 9px 30px;box-shadow:0 18px 40px -18px #000;transform:rotate(-4deg)}
+.post i b{display:block;height:100%;border-radius:120px 120px 4px 4px;background:#2B2B2B center/cover}
+/* address */
+.addr{display:grid;place-items:center;height:100%}
+.addr>span{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:16px 22px;border-radius:999px;background:#0B0B0B;color:#fff;font:700 clamp(16px,2vw,24px)/1 var(--head);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.addr>span::before{content:"";flex:none;width:12px;height:12px;border-radius:50%;background:var(--yellow)}
+/* privacy */
+.lock{display:grid;place-items:center;height:100%}
+.lock svg{width:96px;height:96px}
 
-/* how it works */
-.tint{background:var(--wine2)}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,4vw,56px);margin-top:clamp(36px,5vw,64px);counter-reset:s;list-style:none;padding:0}
-.steps li{counter-increment:s;border-top:1px solid var(--zari);padding-top:22px}
-.steps li::before{content:counter(s);display:block;font:300 64px/1 var(--serif);color:var(--zari);margin-bottom:14px;font-variation-settings:'opsz' 144}
-.steps p{color:var(--soft);margin-top:8px}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:clamp(32px,5vw,56px);list-style:none;padding:0;counter-reset:s}
+.steps li{counter-increment:s;border-radius:var(--r);padding:26px;background:var(--ink);border:1px solid var(--line)}
+.steps li::before{content:counter(s);display:block;font:800 clamp(72px,9vw,120px)/.8 var(--head);color:var(--yellow);margin-bottom:22px;letter-spacing:-.05em}
+.steps p{color:var(--soft);margin-top:8px;font-size:16px}
 @media (max-width:760px){.steps{grid-template-columns:1fr}}
 
-/* post production: a rate card */
-.rates{margin-top:clamp(36px,5vw,64px);border-top:1px solid var(--zari)}
-.rate{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.6fr) minmax(0,.6fr);gap:10px 28px;align-items:baseline;padding:26px 0;border-bottom:1px solid var(--line)}
-.rate p{color:var(--soft);font-size:16px;margin-top:6px;max-width:34em}
-.rate .price{font:400 clamp(26px,3vw,36px)/1 var(--serif);color:var(--zari2);white-space:nowrap}
-.rate .price small{font:500 14px/1 var(--sans);color:var(--mute);margin-left:4px}
-.rate .when{color:var(--soft);font-weight:500}
-.rate .tag{display:inline-block;margin-left:10px;padding:3px 10px;border:1px solid var(--zari);border-radius:999px;font:600 12px/1.5 var(--sans);color:var(--zari2);vertical-align:middle}
-.ratehead{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.6fr) minmax(0,.6fr);gap:28px;padding:14px 0;color:var(--mute);font-size:14px;font-weight:600}
-.forpros{margin-top:clamp(48px,6vw,80px)}
-.forpros>h3{font-size:clamp(26px,3vw,36px)}
-.forpros .lead{margin-top:10px}
-.forpros .rates{margin-top:28px;border-top-color:var(--line)}
-@media (max-width:700px){.ratehead{display:none}.rate{grid-template-columns:1fr auto}.rate>div:first-child{grid-column:1/-1}.rate .when{text-align:right}}
-.free{margin-top:36px;padding:26px clamp(20px,3vw,36px);border:1px solid var(--zari);border-radius:20px;display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;justify-content:space-between;background:rgba(210,168,76,.06)}
-.free p{max-width:38em;color:var(--soft)}.free b{color:var(--ivory)}
+/* photo editing: price cards */
+.paper{background:#fff;color:#0B0B0B}
+.paper .sub{margin-top:18px;font-size:clamp(18px,1.6vw,21px);font-weight:500;max-width:30em;color:#3A3A3A}
+.prices{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:clamp(32px,5vw,56px)}
+.pc{border-radius:var(--r);padding:26px;background:#F3F3F3;display:flex;flex-direction:column;gap:6px;min-height:290px}
+.pc .n{font:800 clamp(56px,6vw,84px)/.9 var(--head);letter-spacing:-.05em;margin-top:auto;white-space:nowrap}
+.pc .n small{font:700 15px/1 var(--sans);letter-spacing:0;margin-left:6px;color:#555}
+.pc .t{display:inline-block;align-self:flex-start;padding:6px 12px;border-radius:999px;background:#0B0B0B;color:#fff;font:700 13px/1.2 var(--sans)}
+.pc p{font-size:15.5px;color:#3A3A3A;font-weight:500}
+.pc.star{background:#0B0B0B;color:#fff}.pc.star p{color:var(--soft)}.pc.star .n{color:var(--yellow)}.pc.star .n small{color:var(--soft)}.pc.star .t{background:var(--yellow);color:#0B0B0B}
+.prices.three{grid-template-columns:repeat(3,1fr)}
+.prices.three .pc{min-height:230px}.prices.three .pc .n{font-size:clamp(44px,4.6vw,64px)}
+@media (max-width:1000px){.prices{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.prices,.prices.three{grid-template-columns:1fr}.pc{min-height:0}.pc .n{margin-top:18px}}
+@media (min-width:561px) and (max-width:1000px){.prices.three{grid-template-columns:1fr 1fr}}
+.free{margin-top:16px;padding:24px clamp(20px,3vw,36px);border-radius:var(--r);background:var(--yellow);display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justify-content:space-between}
+.free p{font:700 clamp(20px,2.4vw,30px)/1.1 var(--head);letter-spacing:-.02em}
+.free small{display:block;font:600 15px/1.4 var(--sans);letter-spacing:0;margin-top:6px}
+.pros{margin-top:clamp(48px,6vw,80px)}
 
 /* handloom */
-.loom{text-align:center}
-.loom blockquote{margin:0 auto;max-width:17em;font:300 clamp(34px,5.6vw,72px)/1.08 var(--serif);font-variation-settings:'opsz' 144;text-wrap:balance}
-.loom p{margin:28px auto 0;color:var(--soft);max-width:36em}
+.loom{background:var(--yellow);color:#0B0B0B;text-align:center}
+.loom blockquote{margin:0 auto;max-width:12em;font:800 clamp(44px,8vw,116px)/.9 var(--head);letter-spacing:-.045em;text-wrap:balance}
+.loom p{margin:26px auto 0;max-width:32em;font-weight:600;font-size:18px}
 
-/* the offer */
-.offer{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:clamp(36px,5vw,56px);border:1px solid var(--line);border-radius:24px;overflow:hidden}
-.offer div{padding:clamp(24px,3vw,40px);background:var(--wine2)}
-.offer div+div{border-left:1px solid var(--line)}
-.offer b{display:block;font:400 clamp(30px,3.6vw,46px)/1.05 var(--serif);color:var(--zari2);margin-bottom:10px}
-.offer p{color:var(--soft)}
-@media (max-width:760px){.offer{grid-template-columns:1fr}.offer div+div{border-left:0;border-top:1px solid var(--line)}}
-.end{text-align:center}.end h2{max-width:14em;margin:0 auto}.end .cta{justify-content:center}
+/* start */
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:clamp(32px,5vw,56px)}
+.facts div{border-radius:var(--r);padding:26px;background:var(--ink);border:1px solid var(--line)}
+.facts b{display:block;font:800 clamp(30px,3.4vw,44px)/1 var(--head);letter-spacing:-.03em;color:var(--yellow);margin-bottom:10px}
+.facts p{color:var(--soft);font-size:16px}
+@media (max-width:760px){.facts{grid-template-columns:1fr}}
+.end{text-align:center}.end .cta{justify-content:center;margin-top:36px}
 
-footer{border-top:1px solid var(--line);padding:44px 0 calc(44px + env(safe-area-inset-bottom));color:var(--mute);font-size:15px}
-footer .shell{display:flex;flex-wrap:wrap;gap:18px 40px;justify-content:space-between;align-items:baseline}
-footer a{color:var(--soft);text-decoration:none}footer a:hover{color:var(--zari2)}
+footer{border-top:1px solid var(--line);padding:40px 0 calc(40px + env(safe-area-inset-bottom));color:var(--mute);font-size:15px}
+footer .shell{display:flex;flex-wrap:wrap;gap:18px 40px;justify-content:space-between;align-items:center}
+footer a{color:var(--soft);text-decoration:none}footer a:hover{color:var(--yellow)}
 footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
 </style>
 </head>
@@ -158,13 +183,13 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
 
 <header class="top">
   <div class="shell">
-    <a class="mark" href="/" aria-label="PicGrades home">Pic<i>Grades</i></a>
+    <a class="mark" href="/" aria-label="PicGrades home"><img src="/app/hub/logo-mark.png" alt="" width="53" height="40"><span>PIC <b>GRADES</b></span></a>
     <nav aria-label="Main">
       <a class="hide-s" href="#wedding-app">Wedding app</a>
       <a class="hide-s" href="#editing">Photo editing</a>
       <a class="hide-s" href="#photographers">Photographers</a>
       <a href="/app/">Log in</a>
-      <a class="btn btn-gold" href="#start">Start free</a>
+      <a class="btn btn-y" href="#start">Start free</a>
     </nav>
   </div>
 </header>
@@ -172,119 +197,125 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
 <main>
 <section class="hero">
   <div class="shell">
-    <div>
-      <h1>Your wedding photos, in a home of <em>their own.</em></h1>
-      <p class="lead">PicGrades turns your Google Drive folder into your own wedding app. Guests find their photos with a selfie. Your photos never leave your Drive.</p>
+    <div class="words">
+      <h1>Your wedding.<br><span class="y">Your own app.</span></h1>
+      <p class="lead">Guests find their photos with one selfie. Your photos never leave your Google Drive.</p>
       <div class="cta">
-        <a class="btn btn-gold" href="#start">Make your wedding app</a>
-        <a class="btn btn-line" href="/p/picgrades">See a wedding</a>
+        <a class="btn btn-y" href="#start">Make your wedding app</a>
+        <a class="btn btn-w" href="/p/picgrades">See a wedding</a>
       </div>
-      <p class="fine">Free for <span data-v="trialDays">30</span> days, up to <span data-v="trialPhotos">500</span> photos. No card needed.</p>
+      <p class="fine">Free for <span data-v="trialDays">30</span> days. No card needed.</p>
     </div>
-    <div class="phone" role="img" aria-label="A guest takes a selfie and the wedding app lights up the photos they are in">
-      <div class="screen">
-        <p class="names">Anika &amp; Rohan</p>
-        <p class="sub">anika-rohan.<span data-v="galleryDomain">picgrades.in</span></p>
-        <div class="selfie"><i class="face"></i><div><b>Find me</b><span>One selfie. Only your photos.</span></div></div>
-        <div class="tiles"><i></i><i class="me"></i><i></i><i></i><i></i><i class="me"></i><i class="me"></i><i></i><i></i><i></i><i class="me"></i><i></i><i></i><i></i><i></i></div>
-        <p class="found">4 photos of you</p>
-      </div>
-    </div>
+    <div class="wall" id="wall" aria-hidden="true"></div>
   </div>
 </section>
 
-<div class="zari" aria-hidden="true"></div>
-
 <section id="start" class="door" aria-label="Start">
-  <a href="/app/?signup&amp;kind=couple">
+  <a class="c" href="/app/?signup&amp;kind=couple">
+    <svg viewBox="0 0 120 120" fill="none" stroke="#0B0B0B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="45" cy="64" r="30"/><circle cx="75" cy="64" r="30"/><path d="M60 14l7 9-7 9-7-9z" fill="#0B0B0B"/></svg>
     <h2>We are the couple</h2>
-    <p>One link for all your wedding photos, on an address with your names. You choose what guests see, and when.</p>
+    <p>One link for all your wedding photos, on an address with your names.</p>
     <span class="go">Make our wedding app</span>
   </a>
-  <a href="/app/?signup&amp;kind=photographer">
+  <a class="p" href="/app/?signup&amp;kind=photographer">
+    <svg viewBox="0 0 120 120" fill="none" stroke="#0B0B0B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="36" width="96" height="66" rx="12"/><path d="M42 36l7-14h22l7 14"/><circle cx="60" cy="69" r="20"/><circle cx="60" cy="69" r="7" fill="#FAE900" stroke="none"/></svg>
     <h2>I am a photographer</h2>
-    <p>Give every couple an app, not a Drive link. Your name stays on it, and all your weddings sit on one page.</p>
+    <p>Give every couple an app, not a Drive link. Your name stays on it.</p>
     <span class="go">Make one for my couples</span>
   </a>
 </section>
 
 <section id="wedding-app" class="band">
-  <div class="shell split">
-    <div class="head">
-      <h2>More than a gallery. The wedding, kept alive.</h2>
-      <p class="lead">Guests open one link and they are back in the celebration. It works on any phone, and it can be added to the home screen like an app.</p>
-    </div>
-    <div class="list">
-      <div><h3>Find me</h3><p>A guest takes one selfie and sees only the photos they are in. The selfie is never kept.</p></div>
-      <div><h3>Root Moment</h3><p>Your best moments, full screen, one swipe at a time. Guests can add their own photos and videos, and you approve them first.</p></div>
-      <div><h3>Reel Edits</h3><p>Anyone can make a short reel from the wedding photos, with music, right on their phone.</p></div>
-      <div><h3>Post Edits</h3><p>Instagram posts and albums in wedding styles, ready to share.</p></div>
-      <div><h3>Your look</h3><p>Choose a layout and a theme, pick the highlights, and write your own words. Nothing is public until you publish.</p></div>
-      <div><h3>Your address</h3><p>Every wedding gets its own address with your names first. Later you can use your own domain, registered in your name.</p></div>
-      <div><h3>Your privacy</h3><p>Guests see only highlights until they use Find me. For more, they ask you. The photos stay on your own Google Drive.</p></div>
-    </div>
-  </div>
-</section>
-
-<section class="band tint">
   <div class="shell">
-    <h2>Ready in three steps</h2>
-    <ol class="steps">
-      <li><h3>Share your Drive folder</h3><p>Put each event in its own folder, like Haldi, Sangeet and Wedding. Paste the folder link.</p></li>
-      <li><h3>The app builds itself</h3><p>It reads your collections and the faces. You pick highlights and a look. Guests see nothing yet.</p></li>
-      <li><h3>Publish and share</h3><p>Send one link to your family and friends. They find themselves, make reels and leave wishes.</p></li>
-    </ol>
-  </div>
-</section>
-
-<section id="editing" class="band">
-  <div class="shell">
-    <h2>Photo editing, with the human touch</h2>
-    <p class="lead" style="margin-top:22px">The feeling in a photo is read by people. So a person on our team looks at your photos, whichever way you choose.</p>
-    <div class="rates">
-      <div class="ratehead" aria-hidden="true"><span>How we edit</span><span>A photo</span><span>Ready in</span></div>
-      <div class="rate"><div><h3>Human touch <span class="tag">Our signature</span></h3><p>Every photo edited by a person, to the look you show us.</p></div><span class="price" data-price="human">₹8</span><span class="when" data-when="human">4 days</span></div>
-      <div class="rate"><div><h3>AI + Human</h3><p>AI does the first pass. Then a person sets the tone you ask for.</p></div><span class="price" data-price="aihuman">₹7</span><span class="when" data-when="aihuman">48 hours</span></div>
-      <div class="rate"><div><h3>After AI</h3><p>Already edited by an AI and not happy? A person corrects and checks every photo. We can also help you train your own profile in that AI.</p></div><span class="price" data-price="afterai">₹3</span><span class="when" data-when="afterai">48 hours</span></div>
-      <div class="rate"><div><h3>AI</h3><p>Our AI with a style profile you choose. For when you need it fast.</p></div><span class="price" data-price="ai">₹3</span><span class="when" data-when="ai">24 hours</span></div>
-    </div>
-    <div class="free">
-      <p><b>Your first <span data-v="freeSample">150</span> photos are free.</b> For AI or AI + Human, once per account, for couples and photographers.</p>
-      <a class="btn btn-gold" href="/app/?signup">Try it free</a>
-    </div>
-
-    <div id="photographers" class="forpros">
-      <h3>For photographers</h3>
-      <p class="lead">Send the whole catalog. We pick the best, edit them, and retouch the ones that matter.</p>
-      <div class="rates">
-        <div class="rate"><div><h3>Culling</h3><p>A person picks the best photos of your catalog.</p></div><span class="price" data-price="cull">₹0.80</span><span class="when" data-when="cull">72 hours</span></div>
-        <div class="rate"><div><h3>Culling + Colour Correction</h3><p>Send both together and culling costs less. Add the editing you choose for the photos we keep.</p></div><span class="price" data-price="cullcc">₹0.70</span><span class="when">With your editing</span></div>
-        <div class="rate"><div><h3>Retouching</h3><p>Proper retouching by hand. The price covers any <span data-v="retouchIncluded">3</span> fixes, like spots, blemishes or acne. Each extra fix is <span data-v="retouchExtra">₹40</span>.</p></div><span class="price" data-price="retouch" data-from="1">from ₹120</span><span class="when" data-when="retouch">72 hours</span></div>
+    <h2>More than a gallery.<br><span class="y">The wedding, kept alive.</span></h2>
+    <div class="bento">
+      <div class="cell s3">
+        <div class="art"><div class="fm"><i class="me"></i><div class="grid"><i></i><i class="hit"></i><i></i><i></i><i class="hit"></i><i></i><i></i><i class="hit"></i><i></i><i></i><i class="hit"></i><i></i><i></i><i></i><i class="hit"></i></div></div></div>
+        <h3>Find me</h3><p>One selfie, and a guest sees only their own photos.</p>
+      </div>
+      <div class="cell s3">
+        <div class="art"><div class="stack"><i data-ph></i><i data-ph></i><i data-ph></i></div></div>
+        <h3>Root Moment</h3><p>Your best moments, full screen. Guests add theirs too.</p>
+      </div>
+      <div class="cell s2">
+        <div class="art"><div class="reel"><div class="clips"><i data-ph></i><i data-ph></i><i data-ph></i><i data-ph></i></div><div class="wave"></div><span class="head"></span></div></div>
+        <h3>Reel Edits</h3><p>Anyone makes a reel with music, on their phone.</p>
+      </div>
+      <div class="cell s2">
+        <div class="art"><div class="post"><i><b data-ph></b></i></div></div>
+        <h3>Post Edits</h3><p>Instagram posts and albums in wedding styles.</p>
+      </div>
+      <div class="cell s2">
+        <div class="art"><div class="lock"><svg viewBox="0 0 96 96" fill="none" stroke="#FAE900" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="42" width="60" height="42" rx="10"/><path d="M30 42V30a18 18 0 0 1 36 0v12"/><circle cx="48" cy="63" r="5" fill="#FAE900"/></svg></div></div>
+        <h3>Your privacy</h3><p>Guests see highlights only. The rest, they ask you.</p>
+      </div>
+      <div class="cell s4 yel">
+        <div class="art"><div class="addr"><span>anika-rohan.<span data-v="galleryDomain" style="display:contents">picgrades.in</span></span></div></div>
+        <h3>Your own address</h3><p>Your names first. Later, your own domain, in your name.</p>
+      </div>
+      <div class="cell s2">
+        <div class="art"><div class="stack" style="align-items:center"><i data-ph style="aspect-ratio:1;width:44%;transform:none;margin:0 3%"></i><i data-ph style="aspect-ratio:3/4;width:40%;transform:none;margin:0 3%"></i></div></div>
+        <h3>Your look</h3><p>Pick a layout, a theme and your highlights.</p>
       </div>
     </div>
   </div>
 </section>
 
-<div class="zari" aria-hidden="true"></div>
+<section class="band" style="padding-top:0">
+  <div class="shell">
+    <h2>Ready in three steps</h2>
+    <ol class="steps">
+      <li><h3>Share your Drive folder</h3><p>One folder for each event. Paste the link.</p></li>
+      <li><h3>The app builds itself</h3><p>It reads your collections and the faces.</p></li>
+      <li><h3>Publish and share</h3><p>Send one link to family and friends.</p></li>
+    </ol>
+  </div>
+</section>
 
-<section class="band loom tint">
+<section id="editing" class="band paper">
+  <div class="shell">
+    <h2>Photo editing,<br>with the human touch.</h2>
+    <p class="sub">The feeling in a photo is read by people. A person on our team looks at your photos, whichever way you choose.</p>
+    <div class="prices">
+      <div class="pc star"><span class="t">Our signature</span><h3>Human touch</h3><p>Every photo edited by a person.</p><span class="n"><span data-price="human">₹8</span><small>a photo</small></span><p data-when="human" data-pre="Ready in ">Ready in 4 days</p></div>
+      <div class="pc"><h3>AI + Human</h3><p>AI first, then a person sets your tone.</p><span class="n"><span data-price="aihuman">₹7</span><small>a photo</small></span><p data-when="aihuman" data-pre="Ready in ">Ready in 48 hours</p></div>
+      <div class="pc"><h3>After AI</h3><p>Not happy with another AI's edit? A person fixes it.</p><span class="n"><span data-price="afterai">₹3</span><small>a photo</small></span><p data-when="afterai" data-pre="Ready in ">Ready in 48 hours</p></div>
+      <div class="pc"><h3>AI</h3><p>Our AI with a style you choose. Fast.</p><span class="n"><span data-price="ai">₹3</span><small>a photo</small></span><p data-when="ai" data-pre="Ready in ">Ready in 24 hours</p></div>
+    </div>
+    <div class="free">
+      <p>Your first <span data-v="freeSample">150</span> photos are free.<small>AI or AI + Human, once per account.</small></p>
+      <a class="btn btn-k" href="/app/?signup">Try it free</a>
+    </div>
+
+    <div id="photographers" class="pros">
+      <h2 style="font-size:clamp(30px,4vw,52px)">For photographers</h2>
+      <div class="prices three" style="margin-top:28px">
+        <div class="pc"><h3>Culling</h3><p>A person picks your best photos.</p><span class="n"><span data-price="cull">₹0.80</span><small>a photo</small></span></div>
+        <div class="pc"><h3>Culling + Colour Correction</h3><p>Send both together and culling costs less.</p><span class="n"><span data-price="cullcc">₹0.70</span><small>+ editing</small></span></div>
+        <div class="pc"><h3>Retouching</h3><p>Any <span data-v="retouchIncluded">3</span> fixes by hand. Each extra is <span data-v="retouchExtra">₹40</span>.</p><span class="n"><span data-price="retouch" data-from="1">from ₹120</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band loom">
   <div class="shell">
     <blockquote>We are not an AI tool. We are handloom.</blockquote>
-    <p>A machine can weave cloth fast. But the hand knows which thread matters. We use AI for speed, and people for the feeling, because a wedding is not edited twice.</p>
+    <p>AI for speed. People for the feeling. Because a wedding is not edited twice.</p>
   </div>
 </section>
 
 <section class="band end">
   <div class="shell">
     <h2>Start with your own wedding</h2>
-    <div class="offer" style="text-align:left">
-      <div><b><span data-v="trialDays">30</span> days free</b><p>Everything is open: Find me, reels, posts and guest moments. Up to <span data-v="trialPhotos">500</span> photos.</p></div>
-      <div><b>Then a free year</b><p>After the trial, your basic gallery stays free for a year, with your photos, layouts, highlights and wishes.</p></div>
-      <div><b>Always yours</b><p>Your photos stay on your Drive. Your domain is in your name. We never store your photos.</p></div>
+    <div class="facts" style="text-align:left">
+      <div><b><span data-v="trialDays">30</span> days free</b><p>Everything open, up to <span data-v="trialPhotos">500</span> photos.</p></div>
+      <div><b>Then a free year</b><p>Your basic gallery stays online.</p></div>
+      <div><b>Always yours</b><p>Your Drive, your domain. We never store your photos.</p></div>
     </div>
-    <div class="cta" style="margin-top:40px">
-      <a class="btn btn-gold" href="/app/?signup&amp;kind=couple">Make our wedding app</a>
-      <a class="btn btn-line" href="/app/?signup&amp;kind=photographer">I am a photographer</a>
+    <div class="cta">
+      <a class="btn btn-y" href="/app/?signup&amp;kind=couple">Make our wedding app</a>
+      <a class="btn btn-w" href="/app/?signup&amp;kind=photographer">I am a photographer</a>
     </div>
   </div>
 </section>
@@ -292,7 +323,7 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
 
 <footer>
   <div class="shell">
-    <a class="mark" href="/">Pic<i>Grades</i></a>
+    <a class="mark" href="/"><img src="/app/hub/logo-mark.png" alt="" width="53" height="40"><span>PIC <b>GRADES</b></span></a>
     <nav aria-label="Footer">
       <a href="#wedding-app">Wedding app</a>
       <a href="#editing">Photo editing</a>
@@ -303,6 +334,22 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
   </div>
 </footer>
 
+<script>
+// The photo wall. Until real photos arrive it shows plain tiles and the event names; then it fills with photos from the
+// weddings on the PicGrades page (the same public photos as /p/picgrades — nothing new is made public here).
+(function () {
+  var WORDS = ['Haldi', 'Sangeet', 'Wedding', 'Reception', 'Mehendi', 'Find me'], wall = document.getElementById('wall'), w = 0;
+  for (var c = 0; c < 3; c++) {
+    var col = document.createElement('div'), html = ''; col.className = 'col';
+    for (var i = 0; i < 6; i++) {
+      var word = (i + c * 2) % 3 === 1;
+      html += word ? '<div class="tile word' + (w % 2 ? ' w' : '') + '">' + WORDS[w++ % WORDS.length] + '</div>' : '<div class="tile' + ((i + c) % 2 ? ' tall' : '') + '" data-ph></div>';
+    }
+    col.innerHTML = html + html;   // twice, so the drift loops without a jump
+    wall.appendChild(col);
+  }
+})();
+</script>
 <script src="/app/config.js"></script>
 <script src="/app/w.js"></script>
 <script>
@@ -318,10 +365,26 @@ footer nav{display:flex;flex-wrap:wrap;gap:10px 26px}
     .then(function (o) {
       if (!o || !o.ok) return;
       document.querySelectorAll('[data-price]').forEach(function (e) { var x = o[e.dataset.price]; if (x && x.price > 0) e.textContent = (e.dataset.from ? 'from ' : '') + money(x.price); });
-      document.querySelectorAll('[data-when]').forEach(function (e) { var x = o[e.dataset.when]; if (x && x.hours > 0) e.textContent = e.dataset.when === 'human' ? when(x.hours) : x.hours + ' hours'; });
+      document.querySelectorAll('[data-when]').forEach(function (e) { var x = o[e.dataset.when]; if (x && x.hours > 0) e.textContent = (e.dataset.pre || '') + (e.dataset.when === 'human' ? when(x.hours) : x.hours + ' hours'); });
       ['trialDays', 'trialPhotos', 'freeSample', 'galleryDomain'].forEach(function (k) { if (o[k]) set(k, o[k]); });
       if (o.retouch) { set('retouchIncluded', o.retouch.included); set('retouchExtra', money(o.retouch.extraFix)); }
       if (o.contact && /^[^@\s]+@[^@\s]+$/.test(o.contact)) { var c = document.getElementById('contact'); c.href = 'mailto:' + o.contact; c.textContent = o.contact; }
+    }).catch(function () {});
+  // real wedding photos for the wall and the small pictures
+  fetch(api, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'getStudio', slug: 'picgrades' }) })
+    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      var ids = []; ((r && r.gallery && r.gallery.events) || []).forEach(function (e) { (e.photos || []).forEach(function (p) { if (p && p.id && ids.indexOf(p.id) < 0) ids.push(p.id); }); });
+      if (ids.length < 4) return;
+      for (var i = ids.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
+      var slots = document.querySelectorAll('[data-ph]'), half = document.querySelectorAll('#wall .col:first-child [data-ph]').length / 2;
+      slots.forEach(function (el, k) {
+        var wallTile = el.closest('#wall'), col = wallTile && el.parentNode, n = k;
+        if (col) { var list = col.querySelectorAll('[data-ph]'), idx = Array.prototype.indexOf.call(list, el); n = Array.prototype.indexOf.call(col.parentNode.children, col) * half + (idx % half); }   // the two copies show the same photo
+        var id = ids[n % ids.length], img = new Image();
+        img.onload = function () { el.style.backgroundImage = 'url("' + img.src + '")'; el.classList.add('has'); };
+        img.src = 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w' + (wallTile ? 700 : 500);
+      });
     }).catch(function () {});
 })();
 </script>
