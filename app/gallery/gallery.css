@@ -2882,3 +2882,11 @@ html.pgcp-open #globalNav{visibility:hidden}
 .pgl-act-center .pgl-actin{align-items:center;justify-content:center;text-align:center;gap:10px}
 .pgl-act-center .pgl-actin i{position:static!important}
 .pgl-act-center .pgl-actin em{display:none}
+
+/* step 72: the Reel Edits card shows a small phone playing the wedding like a reel */
+.pgl-reelcard{display:flex!important;flex-direction:row;align-items:stretch;gap:10px;padding:10px;box-sizing:border-box}
+.pgl-reelcard .pgl-rm{flex:0 0 auto;height:100%;min-height:0;display:flex}
+.pgl-reelcard .pgl-actin{flex:1;min-width:0;height:auto;padding:4px 2px}
+.pgl-reelcard.pgl-sL,.pgl-reelcard.pgl-sXL,.pgl-reelcard.pgl-sXXL{flex-direction:column}
+.pgl-reelcard.pgl-sL .pgl-rm,.pgl-reelcard.pgl-sXL .pgl-rm,.pgl-reelcard.pgl-sXXL .pgl-rm{flex:1 1 0;height:auto}
+.pgl-reelcard.pgl-sL .pgl-actin,.pgl-reelcard.pgl-sXL .pgl-actin,.pgl-reelcard.pgl-sXXL .pgl-actin{flex:0 0 auto}

@@ -178,7 +178,7 @@ function health_() {
   return {
     ok: missing.length === 0,
     service: 'picgrades-os',
-    version: 'step70-try-editors',
+    version: 'step72-reel-demo',
     time: new Date().toISOString(),
     rows: counts,
     missingTabs: missing
@@ -2159,14 +2159,14 @@ function saveLook_(g, p) {
 // Story photos (step 56): the couple or the photographer chooses which photos the story shows: cover photos (up to 15),
 // the bride's and the groom's portraits (the varmala moment) and 10–15 highlights for each event. Nothing is guessed:
 // until something is chosen, the story leaves that part out. Couple link or staff login (the wedding's photographer / PicGrades).
-var STORY_MAX = 15;
+var STORY_MAX = 15, HL_MAX = 40;   // HL_MAX (step 72): event highlights, up to 40 on a demo wedding (others choose 10–15 in the app)
 function picksOf_(v) {
   var o = v; if (typeof o === 'string') { try { o = JSON.parse(o || '{}'); } catch (e) { o = {}; } }
   o = o || {};
   var id = function (x) { x = String(x || ''); return /^[A-Za-z0-9_-]{3,120}$/.test(x) ? x : ''; };
-  var list = function (a) { var out = []; (Array.isArray(a) ? a : []).forEach(function (x) { x = id(x); if (x && out.indexOf(x) < 0 && out.length < STORY_MAX) out.push(x); }); return out; };
+  var list = function (a, max) { var out = []; (Array.isArray(a) ? a : []).forEach(function (x) { x = id(x); if (x && out.indexOf(x) < 0 && out.length < (max || STORY_MAX)) out.push(x); }); return out; };
   var hl = {}, n = 0;
-  Object.keys(o.hl || {}).forEach(function (k) { var ids = list(o.hl[k]), name = String(k).slice(0, 80); if (ids.length && n < 40) { hl[name] = ids; n++; } });
+  Object.keys(o.hl || {}).forEach(function (k) { var ids = list(o.hl[k], HL_MAX), name = String(k).slice(0, 80); if (ids.length && n < 40) { hl[name] = ids; n++; } });
   return { cover: list(o.cover), bride: id(o.bride), groom: id(o.groom), hl: hl, wh: list(o.wh), welcome: id(o.welcome) };   // welcome (step 63c): the full-length couple photo of the guest welcome   // wh: Wedding Highlights (step 63a) — 10–15 photos of the whole wedding, the public ones
 }
 /** Couple link or staff login: save the story photos (the whole choice at once; only photos of this wedding are kept). */
@@ -2803,15 +2803,18 @@ function demoTry_(fallbackGid) {
   if (!g && fallbackGid) g = findGallery_(fallbackGid);
   if (!g || (!chosen && g.status !== 'Published')) return null;
   var m; try { m = loadManifest_(g); } catch (e) { return null; }
-  var events = [], n = 0;
+  var events = [], n = 0, hl = picksOf_(g.storyPicks).hl;   // step 72: the event's highlights first, if chosen
   (m.events || []).forEach(function (e) {
     if (e.isHighlights || n >= TRY_MAX) return;
-    var ph = (e.photos || []).filter(function (x, i, a) { return i % Math.max(1, Math.floor(a.length / TRY_PER_EVENT)) === 0; }).slice(0, Math.min(TRY_PER_EVENT, TRY_MAX - n))
-      .map(function (x) { return { id: x.id }; });
+    var mine = {}; (e.photos || []).forEach(function (x) { mine[x.id] = true; });
+    var chosen = (hl[e.name] || []).filter(function (id) { return mine[id]; }).map(function (id) { return { id: id }; });
+    var pool = chosen.length >= 4 ? chosen : (e.photos || []);
+    var ph = pgShuffle_(pool).slice(0, Math.min(TRY_PER_EVENT, TRY_MAX - n)).map(function (x) { return { id: x.id }; });
     if (ph.length) { events.push({ name: e.name, photos: ph }); n += ph.length; }
   });
   return events.length ? { galleryId: g.galleryId, title: g.title || m.title || 'Wedding', date: g.eventDate || '', events: events, chosen: chosen } : null;
 }
+function pgShuffle_(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 function demoTryIds_(gid) {
   var d = demoTry_(); if (!d || d.galleryId !== gid) return null;
   var ids = {}; d.events.forEach(function (e) { e.photos.forEach(function (x) { ids[x.id] = true; }); }); return ids;

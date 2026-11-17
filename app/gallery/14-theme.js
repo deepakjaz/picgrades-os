@@ -54,7 +54,7 @@
   function choose() {
     const q = new URLSearchParams(location.search).get('theme');
     if (q === 'original') return null;   // preview of the original look
-    const id = q || (galleryKnown() ? GALLERY.theme || '' : '');
+    const id = q || (galleryKnown() ? (window.pgDemoRotates && pgDemoRotates('theme') ? pgDemoPick('theme', THEMES.map(t => t.id)) : GALLERY.theme || '') : '');   // step 72: demo rotates
     return THEMES.find(t => t.id === id) || null;
   }
   function clear() { store('pg_theme_cache', null); const s = document.getElementById('pgThemeVars'); if (s) s.remove(); delete document.documentElement.dataset.pgTheme; }
