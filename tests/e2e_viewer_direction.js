@@ -57,8 +57,9 @@ const srv = http.createServer((req, res) => {
   // layout: filmstrip along the bottom, above the buttons, no overlap; the photo above the filmstrip
   const rail = await box(pg, '#view-root .mk-filmstrip-rail'), bar = await pg.evaluate(() => Math.min(...[...document.querySelectorAll('#pgvBar .pgv-ic')].filter(b => b.offsetParent).map(b => b.getBoundingClientRect().top)));
   check(rail.w > 380 && rail.h < 100 && rail.b <= bar + 1, 'filmstrip lies along the bottom, just above the buttons (no overlap)');
-  const img = await pg.evaluate(() => { const i = document.querySelectorAll('.pgv-item img')[activeIdx].getBoundingClientRect(); return { b: i.bottom }; });
-  check(img.b <= rail.t + 1, 'the photo sits above the filmstrip');
+  const img = await pg.evaluate(() => { const i = document.querySelectorAll('.pgv-item img')[activeIdx], r = i.getBoundingClientRect(), k = Math.min(r.width / i.naturalWidth, r.height / i.naturalHeight); return { t: r.top, b: r.bottom, h: r.height, ph: i.naturalHeight * k }; });
+  check(img.b <= rail.t + 1 && img.h > 500, 'the photo box fills the space above the filmstrip (' + Math.round(img.t) + '–' + Math.round(img.b) + ')');
+  check(img.ph < img.h - 20, 'a wide photo is centred in that space, not stuck to the top');
   const topBtns = await pg.evaluate(() => [...document.querySelectorAll('#pgvTop .pgv-ic')].filter(b => b.offsetParent).map(b => { const r = b.getBoundingClientRect(); return [r.left, r.right]; }));
   check(topBtns.every(([l, r]) => l >= 0 && r <= 390), 'top buttons stay on screen');
   await shot(pg, 'dir-2-swipe');
@@ -92,6 +93,8 @@ const srv = http.createServer((req, res) => {
   await pg2.addInitScript(() => { localStorage.setItem('pg_viewer_dir', 'h'); });
   await pg2.goto(B + '/g/' + gid); await pg2.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg2.waitForTimeout(900);
   await pg2.evaluate(() => openCollection(GALLERY.events[0].name, 0)); await pg2.waitForTimeout(900);
+  const d = await pg2.evaluate(() => { const i = document.querySelectorAll('.pgv-item img')[activeIdx].getBoundingClientRect(), r = document.querySelector('#view-root .mk-filmstrip-rail').getBoundingClientRect(); return { b: i.bottom, h: i.height, rt: r.top, vh: innerHeight }; });
+  check(d.b <= d.rt + 1 && d.h <= d.vh, 'computer: the photo fits the screen above the filmstrip (no overflow)');
   await pg2.keyboard.press('ArrowRight'); await pg2.waitForTimeout(900);
   check(await pg2.evaluate(() => activeIdx) === 1 && await pg2.evaluate(() => { const f = document.getElementById('pgvFeed'); return Math.round(f.scrollLeft / f.clientWidth); }) === 1, 'computer: the right arrow key slides to the next photo');
   await shot(pg2, 'dir-4-computer');
