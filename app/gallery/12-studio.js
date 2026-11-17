@@ -46,6 +46,13 @@
     '.pgs-try{margin:6px 16px 4px;padding:18px;border-radius:22px;background:#111;color:#f4eee6}',
     '.pgs-try b{display:block;font:500 22px/1.15 var(--font-serif)}.pgs-try p{margin:6px 0 14px;font:400 13.5px/1.5 var(--font-sans);letter-spacing:0;color:rgba(244,238,230,.75)}',
     '.pgs-try-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}',
+    // step 74: how a reel is made — a short video that plays silently on a loop, like a GIF; "Watch with sound" plays it once with the voice
+    '.pgs-howto{margin:6px 16px 10px;padding:16px;border-radius:22px;background:#000;color:#fff;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;justify-items:center}',
+    '.pgs-howto b{justify-self:start;font:500 22px/1.15 var(--font-serif)}',
+    '.pgs-howto .vid{position:relative;width:min(100%,340px);aspect-ratio:9/16;border-radius:18px;overflow:hidden;background:#000}',
+    '.pgs-howto video{width:100%;height:100%;display:block;object-fit:cover}',
+    '.pgs-howto button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 20px;border-radius:999px;border:0;background:#FAE900;color:#111;font:800 15px/1.2 var(--font-sans);cursor:pointer}',
+    '.pgs-howto button svg{width:18px;height:18px}',
     '.pgs-try-row button,.pgs-sec .pgs-trybtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:12px 16px;border-radius:999px;border:0;background:#FAE900;color:#111;font:800 15px/1.2 var(--font-sans);cursor:pointer}',
     '.pgs-try-row button+button{background:#fff}',
     '.pgs-try-row svg,.pgs-trybtn svg{width:20px;height:20px}',
@@ -91,6 +98,33 @@
     if (REEL_LIKE[f.k] && window.pgReelMock) { const ids = demoIds(); if (ids.length) { box.classList.add('pgs-art-reel'); pgReelMock(box, ids, { label: (GALLERY.tryDemo && GALLERY.tryDemo.title) || '', sub: REEL_LIKE[f.k] }); return; } }
     box.classList.add('pgs-art-ic'); box.style.setProperty('--glow', f.glow || '#FAC646');
     box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (FEAT_IC[f.k] || FEAT_IC.app) + '</svg>';
+  }
+
+  // step 74: the how-to video. Plays silently on a loop while on screen; "Watch with sound" plays it once from the start
+  // with the voice and music, then it goes back to the silent loop.
+  function howto() {
+    const box = document.createElement('div'); box.className = 'pgs-howto'; box.id = 'pgsHowto';
+    box.innerHTML = '<b>How a reel is made</b><div class="vid"><video muted loop playsinline preload="metadata" poster="/app/demo/reel-howto.jpg" aria-label="How to make a reel with Reel Edits"><source src="/app/demo/reel-howto.mp4" type="video/mp4"></video></div><button type="button"></button>';
+    const v = box.querySelector('video'), btn = box.querySelector('button');
+    const IC_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+    const IC_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>';
+    let loud = false, seen = false;
+    const paint = () => { btn.innerHTML = (loud ? IC_OFF + '<span>Mute</span>' : IC_ON + '<span>Watch with sound</span>'); };
+    const silent = () => { loud = false; v.muted = true; v.loop = true; paint(); if (seen) v.play().catch(() => {}); };
+    btn.onclick = () => {
+      if (loud) { silent(); return; }
+      loud = true; v.loop = false; v.muted = false; v.currentTime = 0; paint(); v.play().catch(() => silent());
+    };
+    v.addEventListener('ended', silent);
+    v.addEventListener('click', () => btn.click());
+    paint();
+    // play only while it is on screen (saves battery and data)
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(e => {
+      seen = e.isIntersecting;
+      if (seen) v.play().catch(() => {}); else { v.pause(); if (loud) silent(); }
+    }), { threshold: 0.35 }).observe(box);
+    else { seen = true; v.autoplay = true; }
+    return box;
   }
 
   function story(startKey) {
@@ -204,6 +238,7 @@
         featArt(card.querySelector('.pgs-art'), f); card.querySelector('em').textContent = f.eb;   // step 72 card.querySelector('b').textContent = f.t; card.querySelector('span').textContent = 'See how it works →';
         card.onclick = () => story(f.k); row.appendChild(card);
       });
+      sec.appendChild(howto());   // step 74
       if (GALLERY.tryDemo) {   // step 70
         const box = document.createElement('div'); box.className = 'pgs-try'; box.id = 'pgsTry';
         box.innerHTML = '<b>Try the editors yourself</b><p>Make a reel or an Instagram post from a real wedding. This is a demo: nothing is saved or downloaded. With your own wedding app, everything is yours to keep and share.</p><div class="pgs-try-row"></div>';
