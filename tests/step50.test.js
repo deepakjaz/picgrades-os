@@ -16,6 +16,10 @@ const j = call('guestJoin', { g: gid, name: 'Riya', phone: '9811122233', device:
 const gb = { guestId: j.guestId, guestKey: j.guestKey };
 const fileIdOf = pid => { const r = DB.GuestPosts.slice(1).find(x => x.includes(pid)); return String(r[DB.GuestPosts[0].indexOf('fileId')]); };
 const sharing = id => (DRIVE.files[id] || {}).sharing || '';
+const relayPreview = id => {
+  const gallery = call('getGallery', { g: gid, coupleKey: ck }).gallery;
+  return !!(gallery.relayPhotos && gallery.relayPhotos[id] && /^https:\/\/lh3\.googleusercontent\.com\/d\//.test(gallery.relayPhotos[id].preview));
+};
 const b64 = Buffer.from('photo').toString('base64');
 // one photo upload
 const up = call('uploadMoment', Object.assign({ g: gid, mime: 'image/jpeg', base64: b64 }, gb));
@@ -26,7 +30,7 @@ assert(q.waiting[0].thumb && q.waiting[0].thumb.startsWith('data:image/png;base6
 assert(call('myPosts', Object.assign({ g: gid }, gb)).posts[0].thumb, 'the guest sees their own waiting upload too');
 call('couplePost', { g: gid, coupleKey: ck, postId: up.postId, decision: 'approve' });
 assert(!call('myPosts', Object.assign({ g: gid }, gb)).posts[0].thumb, 'once approved: no extra preview (the normal link works)');
-assert(sharing(fileIdOf(up.postId)) === 'ANYONE_WITH_LINK:VIEW', 'approved → opened so the gallery can show it');
+assert(/^PRIVATE/.test(sharing(fileIdOf(up.postId))) && relayPreview(fileIdOf(up.postId)), 'approved → remains private and is shown through the signed relay');
 call('couplePost', { g: gid, coupleKey: ck, postId: up.postId, decision: 'hide' });
 assert(sharing(fileIdOf(up.postId)) === 'PRIVATE:NONE', 'hidden later → closed again');
 // a guest album and the couple's own album
@@ -34,9 +38,9 @@ const slide = 'data:image/jpeg;base64,' + b64;
 const alb = call('savePost', Object.assign({ g: gid, slides: [slide, slide], caption: 'us' }, gb));
 assert(alb.ok && alb.status === 'review' && fileIdOf(alb.postId).split(',').every(id => /^PRIVATE/.test(sharing(id))), 'a guest album waits, every slide private');
 call('couplePost', { g: gid, coupleKey: ck, postId: alb.postId, decision: 'approve' });
-assert(fileIdOf(alb.postId).split(',').every(id => sharing(id) === 'ANYONE_WITH_LINK:VIEW'), 'approved album → every slide opened');
+assert(fileIdOf(alb.postId).split(',').every(id => /^PRIVATE/.test(sharing(id)) && relayPreview(id)), 'approved album → every private slide has a signed relay preview');
 const own = call('savePost', { g: gid, coupleKey: ck, slides: [slide] });
-assert(own.ok && own.status === 'approved' && sharing(fileIdOf(own.postId)) === 'ANYONE_WITH_LINK:VIEW', "the couple's own album is shown straight away");
+assert(own.ok && own.status === 'approved' && /^PRIVATE/.test(sharing(fileIdOf(own.postId))) && relayPreview(fileIdOf(own.postId)), "the couple's own album is shown straight away through the private relay");
 // Find me record + a download request, then 6 months later
 call('findFaces', Object.assign({ g: gid, d: face(500), device: 'devsec0001' }, gb));
 call('askDownload', Object.assign({ g: gid, ids: ['S2'], email: 'riya@example.com' }, gb));
