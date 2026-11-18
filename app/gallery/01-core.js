@@ -77,6 +77,7 @@ function pgApi(action, body) {
 }
 function pgPhotoRecord(id) {
   if (GALLERY && GALLERY.relayPhotos && GALLERY.relayPhotos[id]) return { id, relay: GALLERY.relayPhotos[id] };
+  const find = list => (list || []).find(p => p && p.id === id);
   let p = find(GALLERY && GALLERY.root) || find(GALLERY && GALLERY.pool) || find(GALLERY && GALLERY.portfolio);
   if (!p && GALLERY) (GALLERY.events || []).some(e => { p = find(e.photos); return !!p; });
   if (!p && GALLERY) (GALLERY.personal || []).some(e => { p = find(e.photos); return !!p; });
@@ -679,7 +680,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
   // The gallery opens at once from the copy kept on this phone, then the fresh copy is fetched in the background.
   // If the phone had to reload the page, the guest comes back to the same collection and photo.
   const CK = pgCopyKey();
-  let kept = null; try { const k = JSON.parse(localStorage.getItem(CK) || 'null'); if (k && k.at > Date.now() - 7 * 864e5 && k.gallery) kept = k; } catch (e) {}
+  let kept = null; try { const k = JSON.parse(localStorage.getItem(CK) || 'null'); if (k && k.at > Date.now() - 5 * 3600 * 1000 && k.gallery) kept = k; } catch (e) {}
   const fresh = pgApi(PG_STUDIO_SLUG ? 'getStudio' : 'getGallery').then(res => { try { localStorage.setItem(CK, JSON.stringify({ at: Date.now(), gallery: res.gallery })); } catch (e) {} return res; });
   let started = false;
   // wait until every part of the page is set up (later scripts add features to the gallery)
