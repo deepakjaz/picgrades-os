@@ -60,5 +60,4 @@ global.fetch = async (url, options = {}) => {
   console.log('PASS HMAC authorization and expiry');
   console.log('PASS service-account RS256 OAuth exchange');
   console.log('PASS private Drive fetch and cache headers');
-})().catch(e => { console.error(String(e.stack).replace(/\n/g, ' | ')); process.exit(1); });
 })().catch(e => { console.error(String(e.stack).replace(/\n/g, ' | ')); process.exitCode = 1; });
