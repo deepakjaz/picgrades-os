@@ -2952,7 +2952,7 @@ function getStudio_(p) {
     if (g.status !== 'Published' || String(g.portfolio || '').toLowerCase() === 'off') return false;
     return listed.indexOf(g.galleryId) > -1 || (st.companyName && String(g.companyName) === String(st.companyName));
   }).sort(function (a, b) { return String(b.eventDate || b.createdAt).localeCompare(String(a.eventDate || a.createdAt)); });
-  var events = [], posts = [], reviews = [];
+  var events = [], posts = [], reviews = [], relayPhotos = {};
   gals.forEach(function (g) {
     var m; try { m = loadManifest_(g); } catch (e) { return; }
     var picks = (m.portfolio && m.portfolio.length) ? m.portfolio : [];
@@ -2971,7 +2971,14 @@ function getStudio_(p) {
     if (String(g.thanksNote || '').trim()) reviews.push({ photoId: picks[0].id, name: title, text: String(g.thanksNote).slice(0, 400), at: g.eventDate || g.createdAt });
   });
   var tryIt = demoTry_(events.length ? events[0].folder : '');
-  var out = { isStudio: true, title: st.name, studio: st.name, eventDate: '', events: events, personal: [], root: [], guestPosts: posts, tryDemo: tryIt,
+  if (tryIt && tryIt.galleryId) {
+    var demoGallery = findGallery_(tryIt.galleryId);
+    if (demoGallery) (tryIt.events || []).forEach(function (event) { (event.photos || []).forEach(function (photo) {
+      photo.relay = { thumb: relayToken_(demoGallery, photo.id, 200), preview: relayToken_(demoGallery, photo.id, 1280), full: relayToken_(demoGallery, photo.id, 2048) };
+      relayPhotos[photo.id] = photo.relay;
+    }); });
+  }
+  var out = { isStudio: true, title: st.name, studio: st.name, eventDate: '', events: events, relayPhotos: relayPhotos, personal: [], root: [], guestPosts: posts, tryDemo: tryIt,
     likes: {}, notes: {}, recentNotes: reviews, mine: {}, faceSearch: false, isCouple: false, guestGate: 'open',
     studioInfo: { slug: st.slug, name: st.name, tagline: st.tagline || '', about: st.about || '', city: st.city || '', phone: st.phone || '', email: st.email || '', instagram: st.instagram || '', website: st.website || '' } };
   cachePutBig_(key, JSON.stringify(out), 300);
