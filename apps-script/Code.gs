@@ -1317,25 +1317,43 @@ function listImages_(folder) {
 }
 
 /** Read a wedding folder: subfolders = events, 00_Root_Moment = Root Moment. */
+function relaySettings_() {
+  var props = PropertiesService.getScriptProperties();
+  var origin = String(props.getProperty('PHOTO_RELAY_ORIGIN') || '').replace(/\\/+$/, '');
+  var secret = String(props.getProperty('HMAC_SECRET') || '');
+  var serviceEmail = String(props.getProperty('RELAY_SERVICE_ACCOUNT_EMAIL') || '').trim();
+  if (!origin || !/^https:\\/\\//i.test(origin) || !secret || secret.length < 32 || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(serviceEmail)) {
+    throw new Error('Photo relay is not configured. Set PHOTO_RELAY_ORIGIN, HMAC_SECRET (32+ characters), and RELAY_SERVICE_ACCOUNT_EMAIL in Apps Script Script Properties.');
+  }
+  return { origin: origin, secret: secret, serviceEmail: serviceEmail };
+}
+function restrictDriveItem_(item, email) {
+  var access = String(item.getSharingAccess ? item.getSharingAccess() : '');
+  if (access !== 'PRIVATE') item.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+  try { item.addViewer(email); } catch (e) {
+    try { if (String(item.getAccess(email)) !== 'VIEW') throw e; } catch (ignored) { throw new Error('PicGrades relay service account needs Viewer access to the wedding folder and its photos.'); }
+  }
+}
 function scanWeddingFolder_(folderId) {
-  var folder;
+  var folder, relay;
   try { folder = DriveApp.getFolderById(folderId); } catch (err) {
-    throw new Error('Cannot open this Drive folder. Share it as "Anyone with the link – Viewer" and try again.');
+    throw new Error('PicGrades cannot open this Drive folder. Give the relay service account Viewer access.');
   }
-  var access = String(folder.getSharingAccess());
-  if (access !== 'ANYONE_WITH_LINK' && access !== 'ANYONE') {
-    throw new Error('The folder is not shared publicly yet. In Drive: Share → General access → "Anyone with the link" → Viewer.');
-  }
+  relay = relaySettings_();
+  restrictDriveItem_(folder, relay.serviceEmail);
   var events = [], root = [], portfolio = [], subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
     if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME || sf.getName() === POSTS_FOLDER_NAME) continue; // guest uploads are shown only after approval
+    restrictDriveItem_(sf, relay.serviceEmail);
     var photos = listImages_(sf);
+    photos.forEach(function (photo) { restrictDriveItem_(DriveApp.getFileById(photo.id), relay.serviceEmail); });
     if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
     if (PORTFOLIO_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { portfolio = photos; continue; }   // the photographer's picks for their portfolio
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
   }
   var loose = listImages_(folder);
+  loose.forEach(function (photo) { restrictDriveItem_(DriveApp.getFileById(photo.id), relay.serviceEmail); });
   if (loose.length) events.push({ name: 'Highlights', folder: '', photos: loose });
   var rank = function (e) { return e.folder ? eventRank_(e.folder) : 1000; };
   events.sort(function (a, b) { return rank(a) - rank(b) || a.folder.localeCompare(b.folder, 'en', { numeric: true }); });
@@ -1434,6 +1452,25 @@ function loadManifest_(g) {
 }
 
 /** Public: everything the gallery page needs. */
+function relayToken_(g, photoId, width) {
+  var cfg = relaySettings_(), payload = { gid: String(g.galleryId), pid: String(photoId), w: Number(width), exp: Math.floor(Date.now() / 1000) + 900 };
+  var payload64 = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
+  var signature = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload64, cfg.secret)).replace(/=+$/, '');
+  return cfg.origin + '/photo?g=' + encodeURIComponent(payload.gid) + '&id=' + encodeURIComponent(payload.pid) + '&w=' + payload.w + '&token=' + encodeURIComponent(payload64 + '.' + signature);
+}
+function relayPhotoRecords_(g, m) {
+  var seen = {};
+  function add(photo) {
+    if (!photo || !photo.id || seen[photo.id]) return;
+    seen[photo.id] = true;
+    photo.relay = { thumb: relayToken_(g, photo.id, 200), preview: relayToken_(g, photo.id, 1280), full: relayToken_(g, photo.id, 2048) };
+  }
+  (m.root || []).forEach(add);
+  (m.events || []).forEach(function (event) { (event.photos || []).forEach(add); (event.teaser || []).forEach(add); });
+  (m.portfolio || []).forEach(add); (m.highlights || []).forEach(add); (m.pool || []).forEach(add);
+  (m.personal || []).forEach(function (event) { (event.photos || []).forEach(add); });
+  return m;
+}
 function getGallery_(p) {
   var g = findGallery_(p.g);
   if (g && g.status === 'Draft' && !privileged_(g, p)) return { ok: false, draft: true, title: g.title, error: 'This wedding is being prepared. Please come back soon.' };
@@ -1454,6 +1491,7 @@ function getGallery_(p) {
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   m.guestPhotos = guestPhotosOf_(g);
   if (gatedFor_(g, p)) gateManifest_(g, m, p);
+  relayPhotoRecords_(g, m);
   if (g.plan && privileged_(g, p)) { m.plan = planOf_(g); m.plan.upgrade = upgradeLink_(); }   // step 65d: only the couple / photographer see the plan
   m.address = shareAddress_(g);   // step 67: the link guests share — their own domain, or anika-rohan.picgrades.in once that is switched on
   return { gallery: m };
@@ -2354,12 +2392,7 @@ function photoData_(p) {
   if (!limitOk_('pdg:' + g.galleryId, 1500, 3600)) return { ok: false, error: 'This gallery is very busy. Please try again in a little while.' };   // ≈6,000 photos an hour for the whole wedding
   cache.put(key, String(used + want.length), 3600);
   var out = {};
-  want.forEach(function (id) {
-    try {
-      var r = UrlFetchApp.fetch('https://lh3.googleusercontent.com/d/' + id + '=w1080', { muteHttpExceptions: true, followRedirects: true });
-      if (r.getResponseCode() === 200) out[id] = 'data:' + (r.getBlob().getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(r.getBlob().getBytes());
-    } catch (e) {}
-  });
+  want.forEach(function (id) { out[id] = relayToken_(g, id, 1280); });
   return { images: out };
 }
 
