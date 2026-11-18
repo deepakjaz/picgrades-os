@@ -27,9 +27,9 @@ const srv = http.createServer((req, res) => {
       pg.on('pageerror', e => errors.push(scr + ' ' + id + ': ' + e.message));
       await pg.route('https://lh3.googleusercontent.com/**', r => { const pid = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1] || ''; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(pid) }); });
       await require('./fonts_local').install(pg);
+      const tag = scr.padEnd(6) + ' ' + id.padEnd(16); console.log('START STORY CASE', tag);
       console.log('NAVIGATE STORY CASE', tag); await pg.goto('http://localhost:8831/g/' + pub.galleryId + '?layout=' + id); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); console.log('BOOTED STORY CASE', tag);
       await pg.waitForSelector('#pgStory', { timeout: 15000 }); await pg.evaluate(() => { GALLERY.faceSearch = true; PGLayout.reset(); PGLayout.refresh(); }); await pg.waitForTimeout(1200);   // Find me shows once face search is ready
-      const tag = scr.padEnd(6) + ' ' + id.padEnd(16); console.log('START STORY CASE', tag);
       // first visit: the question shows once, Skip closes it
       const q = await pg.locator('.psh-question, .pse-question, [class*="-qveil"]').count();
       check(q > 0, tag + ' first-visit question shows');
