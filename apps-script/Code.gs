@@ -1482,6 +1482,14 @@ function guestSees_(g, m, p) {
   }
   return { found: !!row, sure: row ? String(row.sure || '').split(',').filter(String) : [], ids: ids, full: full, story: st };
 }
+function guestVisiblePhotoIds_(g, m, p) {
+  var map = photoMap_(m);
+  if (!gatedFor_(g, p)) return map;
+  return guestSees_(g, m, p).ids;
+}
+function guestCanSeePhoto_(g, m, p, photoId) {
+  return !!photoId && !!guestVisiblePhotoIds_(g, m, p)[photoId];
+}
 function gateManifest_(g, m, p) {
   var map = photoMap_(m), see = guestSees_(g, m, p), st = see.story;
   var pick = function (l) { return (l || []).map(function (id) { return map[id]; }).filter(Boolean); };
@@ -1584,6 +1592,7 @@ function likePhoto_(p) {
   if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
   var device = String(p.device || '').slice(0, 40), photo = String(p.photoId || '');
   if (device.length < 8 || !photo) return { ok: false, error: 'Missing details.' };
+  if (!guestCanSeePhoto_(g, loadManifest_(g), p, photo)) return { ok: false, error: 'This photo is not available.' };
   var want = p.liked === undefined ? true : !!p.liked;   // the phone says heart on or off
   if (!limitOk_('lk:' + g.galleryId, 6000, 3600) || !limitOk_('lkd:' + device, 400, 3600)) return { ok: false, error: 'Too many hearts for now. Please try again later.' };
   var sum = gallerySummary_(g);
@@ -1600,7 +1609,9 @@ function likePhoto_(p) {
 function getNotes_(p) {
   var g = findGallery_(p.g);
   if (!openTo_(g, p)) return { ok: false, error: 'This gallery is not available.' };
-  var list = (gallerySummary_(g).notes[String(p.photoId || '')] || []).map(function (n) { return { at: n.at, name: n.name, text: n.text }; });
+  var photo = String(p.photoId || '');
+  if (!guestCanSeePhoto_(g, loadManifest_(g), p, photo)) return { ok: false, error: 'This photo is not available.' };
+  var list = (gallerySummary_(g).notes[photo] || []).map(function (n) { return { at: n.at, name: n.name, text: n.text }; });
   return { notes: list };
 }
 
@@ -1612,6 +1623,7 @@ function addNote_(p) {
   if (!name) return { ok: false, error: 'Add your name.' };
   if (!text) return { ok: false, error: 'Write a note first.' };
   if (device.length < 8 || !photo) return { ok: false, error: 'Missing details.' };
+  if (!guestCanSeePhoto_(g, loadManifest_(g), p, photo)) return { ok: false, error: 'This photo is not available.' };
   if (!limitOk_('nt:' + device, 20, 3600) || !limitOk_('ntg:' + g.galleryId, 500, 3600)) return { ok: false, error: 'Too many notes in a short time. Please try again later.' };
   ensureTab_('MomentNotes', NOTE_COLUMNS);
   appendRow_('MomentNotes', { at: fmt_(new Date()), galleryId: g.galleryId, photoId: photo, type: 'note', device: device, name: name, text: text, status: 'ok' });
@@ -1844,8 +1856,8 @@ function saveSet_(p) {
   var g = publishedGallery_(p.g), name = String(p.name || '').trim().slice(0, 50);
   if (!name) return { ok: false, error: 'Give this collection a name.' };
   if (!limitOk_('ss:' + String(p.device || '').slice(0, 40), 20, 3600) || !limitOk_('ssg:' + g.galleryId, 400, 3600)) return { ok: false, error: 'Too many saved collections for now. Please try again later.' };
-  var m = loadManifest_(g), ids = {}; allPhotoIds_(m).forEach(function (id) { ids[id] = true; });
-  var list = (p.ids || []).filter(function (id) { return ids[id]; }).slice(0, 600);
+  var m = loadManifest_(g), ids = guestVisiblePhotoIds_(g, m, p);
+  var list = (p.ids || []).map(String).filter(function (id, i, all) { return ids[id] && all.indexOf(id) === i; }).slice(0, 600);
   if (!list.length) return { ok: false, error: 'No photos to save.' };
   ensureTab_('SavedSets', SET_COLUMNS);
   var code = randomId_(8);
@@ -1858,7 +1870,9 @@ function getSet_(p) {
   ensureTab_('SavedSets', SET_COLUMNS);
   var row = readTable_('SavedSets').filter(function (x) { return x.galleryId === g.galleryId && x.code === String(p.code || ''); })[0];
   if (!row) return { ok: false, error: 'This saved collection was not found.' };
-  return { name: row.name, ids: String(row.ids || '').split(',').filter(String) };
+  var m = loadManifest_(g), visible = guestVisiblePhotoIds_(g, m, p);
+  var ids = String(row.ids || '').split(',').filter(function (id) { return !!visible[id]; });
+  return { name: row.name, ids: ids };
 }
 
 function guestFolder_(g) {
