@@ -29,6 +29,8 @@ jobs:
         run: node tests/step10.test.js
       - name: Verify approved album privacy regression
         run: node tests/step50.test.js
+      - name: Verify restored guest photo privacy regression
+        run: node tests/step52.test.js
       - name: Tools used by the tests (ffmpeg, Python imaging)
         run: |
           mkdir -p ~/.cache/apt/archives/partial ~/.cache/apt/lists/partial
