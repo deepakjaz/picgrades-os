@@ -16,7 +16,7 @@ const DRIVE = { folders: {}, files: {}, n: 0 };
 function iter(a) { let i = 0; return { hasNext: () => i < a.length, next: () => a[i++] }; }
 function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed, setTrashed: t => { f.trashed = !!t; },
   setContent: c => { f.content = c; }, getThumbnail: () => ({ getContentType: () => 'image/png', getBytes: () => [137, 80, 78, 71] }), getBlob: () => ({ getDataAsString: () => f.content, getBytes: () => f.bytes || [] }),
-  setSharing: (a, b) => { f.sharing = a + ':' + b; } }; }
+  getSharingAccess: () => f.access || 'PRIVATE', addViewer: email => { f.viewers = f.viewers || {}; f.viewers[email] = 'VIEW'; }, getAccess: email => (f.viewers || {})[email] || null, setSharing: (a, b) => { f.access = a; f.sharing = a + ':' + b; } }; }
 function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('No item with the given ID could be found'); return {
   getId: () => id, getName: () => f.name, isTrashed: () => !!f.trashed, getSharingAccess: () => f.access || 'PRIVATE',
   getFolders: () => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id).map(folderObj)),
@@ -50,7 +50,7 @@ global.Utilities = {
   newBlob: (bytes, mime, name) => ({ bytes, mime, name })
 };
 global.UrlFetchApp = { fetch: (url) => { const id = (/\/d\/([^=]+)/.exec(url) || [])[1]; if (global.__fetchFail) throw new Error('blocked'); return { getResponseCode: () => 200, getBlob: () => ({ getContentType: () => 'image/jpeg', getBytes: () => Array.from(global.__fetchBytes ? global.__fetchBytes(id) : Buffer.from('img:' + id)) }) }; } };
-const props = {}; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
+const props = { PHOTO_RELAY_ORIGIN: 'https://lh3.googleusercontent.com', HMAC_SECRET: 'test-secret-key-that-is-at-least-thirty-two-characters', RELAY_SERVICE_ACCOUNT_EMAIL: 'relay@picgrades-test.iam.gserviceaccount.com' }; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
 global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
 global.MailApp = { sendEmail: m => mail.push(m) };
 global.ScriptApp = { __t: [], getProjectTriggers() { return this.__t; }, deleteTrigger(t) { this.__t = this.__t.filter(x => x !== t); },
