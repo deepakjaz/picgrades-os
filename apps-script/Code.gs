@@ -1473,15 +1473,13 @@ function relayPhotoRecords_(g, m) {
     if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
     else String(post.fileId || '').split(',').filter(String).forEach(function (id) { add({ id: id }); });
   });
-  });
   return m;
-}
 function relayPostList_(g, list) {
   return (list || []).map(function (post) {
     if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
     else {
       var id = String(post.fileId || '').split(',')[0];
-      if (id) post.photoUrl = relayToken_(g, id, 300);
+      if (id) post.photoUrl = relayToken_(g, id, 200);
     }
     return post;
   });
@@ -2476,7 +2474,6 @@ function guestFind_(g, f, scale, me, guest) {
       var x = faceBytes_(fc[1]); if (!x) return;
       var t = faceDist_(me, x, scan); if (t <= scan) near.push({ pid: pid, d: t, x: x, k: k });
     });
-  });
   near.sort(function (a, b) { return a.d - b.d; });
   var out = { sure: [], maybe: [], photos: Object.keys(f.photos || {}).length };
   // step 60d: every miss is written down; after 2 the guest may ask the couple or the photographer for help
