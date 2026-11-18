@@ -1327,12 +1327,21 @@ function relaySettings_() {
   }
   return { origin: origin, secret: secret, serviceEmail: serviceEmail };
 }
-function restrictDriveItem_(item, email) {
+function restrictDriveItem_(item, email, grantViewer) {
   var access = String(item.getSharingAccess ? item.getSharingAccess() : '');
   if (access !== 'PRIVATE') item.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
-  try { item.addViewer(email); } catch (e) {
-    try { if (String(item.getAccess(email)) !== 'VIEW') throw e; } catch (ignored) { throw new Error('PicGrades relay service account needs Viewer access to the wedding folder and its photos.'); }
+  if (grantViewer) {
+    try { item.addViewer(email); } catch (e) {
+      try { if (String(item.getAccess(email)) !== 'VIEW') throw e; } catch (ignored) { throw new Error('PicGrades relay service account needs Viewer access to the wedding folder.'); }
+    }
   }
+}
+function restrictDriveTree_(folder, email, root) {
+  restrictDriveItem_(folder, email, !!root);
+  var files = folder.getFiles();
+  while (files.hasNext()) { var file = files.next(); if (!file.isTrashed()) restrictDriveItem_(file, email, false); }
+  var folders = folder.getFolders();
+  while (folders.hasNext()) { var child = folders.next(); if (!child.isTrashed()) restrictDriveTree_(child, email, false); }
 }
 function scanWeddingFolder_(folderId) {
   var folder, relay;
@@ -1340,20 +1349,20 @@ function scanWeddingFolder_(folderId) {
     throw new Error('PicGrades cannot open this Drive folder. Give the relay service account Viewer access.');
   }
   relay = relaySettings_();
-  restrictDriveItem_(folder, relay.serviceEmail);
+  restrictDriveTree_(folder, relay.serviceEmail, true);
   var events = [], root = [], portfolio = [], subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
     if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME || sf.getName() === POSTS_FOLDER_NAME) continue; // guest uploads are shown only after approval
-    restrictDriveItem_(sf, relay.serviceEmail);
+
     var photos = listImages_(sf);
-    photos.forEach(function (photo) { restrictDriveItem_(DriveApp.getFileById(photo.id), relay.serviceEmail); });
+
     if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
     if (PORTFOLIO_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { portfolio = photos; continue; }   // the photographer's picks for their portfolio
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
   }
   var loose = listImages_(folder);
-  loose.forEach(function (photo) { restrictDriveItem_(DriveApp.getFileById(photo.id), relay.serviceEmail); });
+
   if (loose.length) events.push({ name: 'Highlights', folder: '', photos: loose });
   var rank = function (e) { return e.folder ? eventRank_(e.folder) : 1000; };
   events.sort(function (a, b) { return rank(a) - rank(b) || a.folder.localeCompare(b.folder, 'en', { numeric: true }); });
