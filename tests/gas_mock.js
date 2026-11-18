@@ -38,6 +38,8 @@ global.Logger = { log: () => {} };
 global.Session = { getScriptTimeZone: () => 'Asia/Kolkata' };
 // Treat sheet times as UTC+5:30
 global.Utilities = {
+  base64EncodeWebSafe: b => Buffer.from(b).toString('base64url'),
+  computeHmacSha256Signature: (v, k) => Array.from(crypto.createHmac('sha256', k).update(v).digest()).map(b => b > 127 ? b - 256 : b),
   getUuid: () => crypto.randomUUID(), DigestAlgorithm: { SHA_256: 'sha256' },
   computeDigest: (a, s) => Array.from(crypto.createHash('sha256').update(s).digest()).map(b => b > 127 ? b - 256 : b),
   formatDate: (d, tz, f) => { const x = new Date(d.getTime() + 330 * 60000);
