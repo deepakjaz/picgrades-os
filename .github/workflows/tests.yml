@@ -21,6 +21,8 @@ jobs:
           key: ${{ runner.os }}-ubuntu-apt-${{ hashFiles('.github/workflows/tests.yml') }}
           restore-keys: |
             ${{ runner.os }}-ubuntu-apt-
+      - name: Verify private Drive folder regression
+        run: node tests/step4.test.js
       - name: Tools used by the tests (ffmpeg, Python imaging)
         run: |
           mkdir -p ~/.cache/apt/archives/partial ~/.cache/apt/lists/partial
