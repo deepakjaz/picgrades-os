@@ -16,7 +16,7 @@ const DRIVE = { folders: {}, files: {}, n: 0 };
 function iter(a) { let i = 0; return { hasNext: () => i < a.length, next: () => a[i++] }; }
 function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed, setTrashed: t => { f.trashed = !!t; },
   setContent: c => { f.content = c; }, getThumbnail: () => ({ getContentType: () => 'image/png', getBytes: () => [137, 80, 78, 71] }), getBlob: () => ({ getDataAsString: () => f.content, getBytes: () => f.bytes || [] }),
-  getSharingAccess: () => f.access || 'PRIVATE', addViewer: email => { f.viewers = f.viewers || {}; f.viewers[email] = 'VIEW'; }, getAccess: email => (f.viewers || {})[email] || null, setSharing: (a, b) => { f.access = a; f.sharing = a + ':' + b; } }; }
+  getSharingAccess: () => f.access || 'PRIVATE', addViewer: email => { f.viewers = f.viewers || {}; f.viewers[email] = 'VIEW'; }, getAccess: email => (f.viewers || {})[email] || null, setSharing: (a, b) => { f.access = a; f.sharing = a + ':' + b; }, addViewer: email => { f.viewers = f.viewers || {}; f.viewers[email] = 'VIEW'; }, getAccess: email => (f.viewers || {})[email] || null, setSharing: (a, b) => { f.access = a; f.sharing = a + ':' + b; } }; }
 function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('No item with the given ID could be found'); return {
   getId: () => id, getName: () => f.name, isTrashed: () => !!f.trashed, getSharingAccess: () => f.access || 'PRIVATE',
   getFolders: () => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id).map(folderObj)),
