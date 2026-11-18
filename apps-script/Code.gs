@@ -1471,6 +1471,14 @@ function relayPhotoRecords_(g, m) {
   (m.events || []).forEach(function (event) { (event.photos || []).forEach(add); (event.teaser || []).forEach(add); });
   (m.portfolio || []).forEach(add); (m.highlights || []).forEach(add); (m.pool || []).forEach(add);
   (m.personal || []).forEach(function (event) { (event.photos || []).forEach(add); });
+  if (m.tryDemo && m.tryDemo.galleryId) {
+    var demoGallery = findGallery_(m.tryDemo.galleryId);
+    if (demoGallery) (m.tryDemo.events || []).forEach(function (event) { (event.photos || []).forEach(function (photo) {
+      if (!photo || !photo.id) return;
+      photo.relay = { thumb: relayToken_(demoGallery, photo.id, 200), preview: relayToken_(demoGallery, photo.id, 1280), full: relayToken_(demoGallery, photo.id, 2048) };
+      m.relayPhotos[photo.id] = photo.relay;
+    }); });
+  }
   (m.guestPosts || []).forEach(function (post) {
     if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
     else String(post.fileId || '').split(',').filter(String).forEach(function (id) { add({ id: id }); });
