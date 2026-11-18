@@ -2451,7 +2451,7 @@ function guestMisses_(g, phone) {
 function withItems_(g, out) {
   if (guestPhotosOf_(g) !== 'findme' || !out || !(out.sure || []).length) return out;
   var map = photoMap_(loadManifest_(g));
-  out.items = out.sure.map(function (id) { return map[id]; }).filter(Boolean);
+  out.items = out.sure.map(function (id) { return map[id]; }).filter(Boolean);\n  relayPhotoRecords_(g, { pool: out.items });
   return out;
 }
 function guestFind_(g, f, scale, me, guest) {
