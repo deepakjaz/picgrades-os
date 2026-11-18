@@ -6,7 +6,7 @@ const W = 'WEDDINGFOLDER1234567890';
 DRIVE.folders[W] = { name: 'Aarav_Kavya_2026', access: 'ANYONE_WITH_LINK' };
 const sub = (id, name) => { DRIVE.folders[id] = { name, parent: W }; };
 sub('fR', '00_Root_Moment'); sub('fW', 'Wedding'); sub('fH', 'Haldi'); sub('fX', 'Baraat'); sub('fE', 'Empty');
-const img = (id, parent, name, mime) => { DRIVE.files[id] = { name, parent, mime: mime || 'image/jpeg' }; };
+const img = (id, parent, name, mime) => { DRIVE.files[id] = { name, parent, mime: mime || 'image/jpeg', access: 'PRIVATE' }; };
 ['r2.jpg', 'r10.jpg', 'r1.jpg'].forEach((n, i) => img('R' + i, 'fR', n));
 img('W1', 'fW', 'w1.jpg'); img('W2', 'fW', 'notes.txt', 'text/plain'); img('H1', 'fH', 'h1.jpg'); img('X1', 'fX', 'x1.jpg'); img('L1', W, 'loose.jpg');
 
