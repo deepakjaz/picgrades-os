@@ -75,8 +75,8 @@ function pgApi(action, body) {
     .then(res => { if (!res.ok) { const err = new Error(res.error || 'Something went wrong.'); err.draft = !!res.draft; err.res = res; throw err; } return res; })
     .finally(() => { if (timer) clearTimeout(timer); });
 }
-function pgPhotoRecord(id) {\n  if (GALLERY && GALLERY.relayPhotos && GALLERY.relayPhotos[id]) return { id, relay: GALLERY.relayPhotos[id] };
-  const find = list => (list || []).find(p => p && p.id === id);
+function pgPhotoRecord(id) {
+  if (GALLERY && GALLERY.relayPhotos && GALLERY.relayPhotos[id]) return { id, relay: GALLERY.relayPhotos[id] };
   let p = find(GALLERY && GALLERY.root) || find(GALLERY && GALLERY.pool) || find(GALLERY && GALLERY.portfolio);
   if (!p && GALLERY) (GALLERY.events || []).some(e => { p = find(e.photos); return !!p; });
   if (!p && GALLERY) (GALLERY.personal || []).some(e => { p = find(e.photos); return !!p; });
