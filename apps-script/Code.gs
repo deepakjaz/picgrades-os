@@ -2965,6 +2965,7 @@ function getStudio_(p) {
     var title = g.title || m.title || 'Wedding';
     picks.slice(0, 60).forEach(function (photo) {
       photo.relay = { thumb: relayToken_(g, photo.id, 200), preview: relayToken_(g, photo.id, 1280), full: relayToken_(g, photo.id, 2048) };
+      relayPhotos[photo.id] = photo.relay;
     });
     events.push({ name: title, folder: g.galleryId, date: g.eventDate || '', photos: picks.slice(0, 60) });
     posts.push({ postId: 'w-' + g.galleryId, fileId: picks.slice(0, 10).map(function (x) { return x.id; }).join(','), type: 'album', name: st.name, caption: title, at: g.eventDate || g.createdAt });
