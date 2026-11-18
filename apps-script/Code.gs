@@ -1319,10 +1319,10 @@ function listImages_(folder) {
 /** Read a wedding folder: subfolders = events, 00_Root_Moment = Root Moment. */
 function relaySettings_() {
   var props = PropertiesService.getScriptProperties();
-  var origin = String(props.getProperty('PHOTO_RELAY_ORIGIN') || '').replace(/\\/+$/, '');
+  var origin = String(props.getProperty('PHOTO_RELAY_ORIGIN') || ''); while (origin.charAt(origin.length - 1) === '/') origin = origin.slice(0, -1);
   var secret = String(props.getProperty('HMAC_SECRET') || '');
   var serviceEmail = String(props.getProperty('RELAY_SERVICE_ACCOUNT_EMAIL') || '').trim();
-  if (!origin || !/^https:\\/\\//i.test(origin) || !secret || secret.length < 32 || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(serviceEmail)) {
+  if (origin.indexOf('https://') !== 0 || !secret || secret.length < 32 || serviceEmail.indexOf('@') < 1 || serviceEmail.indexOf('.') < 0) {
     throw new Error('Photo relay is not configured. Set PHOTO_RELAY_ORIGIN, HMAC_SECRET (32+ characters), and RELAY_SERVICE_ACCOUNT_EMAIL in Apps Script Script Properties.');
   }
   return { origin: origin, secret: secret, serviceEmail: serviceEmail };
@@ -1459,11 +1459,11 @@ function relayToken_(g, photoId, width, kind) {
   return cfg.origin + (kind === 'stream' ? '/stream' : '/photo') + '?g=' + encodeURIComponent(payload.gid) + '&id=' + encodeURIComponent(payload.pid) + (kind === 'stream' ? '' : '&w=' + payload.w) + '&token=' + encodeURIComponent(payload64 + '.' + signature);
 }
 function relayPhotoRecords_(g, m) {
-  var seen = {};
+  var seen = {}; m.relayPhotos = {};
   function add(photo) {
     if (!photo || !photo.id || seen[photo.id]) return;
-    seen[photo.id] = true;
-    photo.relay = { thumb: relayToken_(g, photo.id, 200), preview: relayToken_(g, photo.id, 1280), full: relayToken_(g, photo.id, 2048) };\n    m.relayPhotos[photo.id] = photo.relay;
+    photo.relay = { thumb: relayToken_(g, photo.id, 200), preview: relayToken_(g, photo.id, 1280), full: relayToken_(g, photo.id, 2048) };
+    m.relayPhotos[photo.id] = photo.relay;
   }
   (m.root || []).forEach(add);
   (m.events || []).forEach(function (event) { (event.photos || []).forEach(add); (event.teaser || []).forEach(add); });
@@ -1471,8 +1471,8 @@ function relayPhotoRecords_(g, m) {
   (m.personal || []).forEach(function (event) { (event.photos || []).forEach(add); });
   (m.guestPosts || []).forEach(function (post) {
     if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
-    else String(post.fileId || '').split(',').filter(String).forEach(function (id) { add({ id: id, relay: post.relay }); });
-    if (post.type !== 'video' && post.relay) post.photoRelay = post.relay;
+    else String(post.fileId || '').split(',').filter(String).forEach(function (id) { add({ id: id }); });
+  });
   });
   return m;
 }
