@@ -2478,6 +2478,7 @@ function guestFind_(g, f, scale, me, guest) {
       var x = faceBytes_(fc[1]); if (!x) return;
       var t = faceDist_(me, x, scan); if (t <= scan) near.push({ pid: pid, d: t, x: x, k: k });
     });
+  });
   near.sort(function (a, b) { return a.d - b.d; });
   var out = { sure: [], maybe: [], photos: Object.keys(f.photos || {}).length };
   // step 60d: every miss is written down; after 2 the guest may ask the couple or the photographer for help
