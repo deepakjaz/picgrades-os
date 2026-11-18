@@ -25,6 +25,8 @@ jobs:
         run: node tests/step4.test.js
       - name: Verify face proxy regression
         run: node tests/step5.test.js
+      - name: Verify guest photo approval regression
+        run: node tests/step10.test.js
       - name: Tools used by the tests (ffmpeg, Python imaging)
         run: |
           mkdir -p ~/.cache/apt/archives/partial ~/.cache/apt/lists/partial
