@@ -2925,7 +2925,7 @@ function demoTryIds_(gid) {
 function getStudio_(p) {
   var st = studioRow_(p.slug);
   if (!st) return { ok: false, error: 'This photographer page is not available.' };
-  var key = 'studio:' + st.slug, hit = cacheGetBig_(key);
+  var key = 'studio-relay:' + st.slug, hit = cacheGetBig_(key);
   if (hit) return { gallery: JSON.parse(hit) };
   var listed = String(st.galleries || '').split(/[\s,]+/).filter(String);
   ensureTab_('Galleries', GALLERY_COLUMNS);
