@@ -139,7 +139,6 @@ export default {
       if (!supportedType) {
         return new Response('Unsupported Drive file type', { status: 415, headers: cors });
       }
-      }
       const responseHeaders = new Headers(cors);
       responseHeaders.set('Content-Type', contentType);
       responseHeaders.set('Accept-Ranges', 'bytes');
