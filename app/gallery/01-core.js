@@ -75,12 +75,23 @@ function pgApi(action, body) {
     .then(res => { if (!res.ok) { const err = new Error(res.error || 'Something went wrong.'); err.draft = !!res.draft; err.res = res; throw err; } return res; })
     .finally(() => { if (timer) clearTimeout(timer); });
 }
-function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+function pgPhotoRecord(id) {
+  const find = list => (list || []).find(p => p && p.id === id);
+  let p = find(GALLERY && GALLERY.root) || find(GALLERY && GALLERY.pool) || find(GALLERY && GALLERY.portfolio);
+  if (!p && GALLERY) (GALLERY.events || []).some(e => { p = find(e.photos); return !!p; });
+  if (!p && GALLERY) (GALLERY.personal || []).some(e => { p = find(e.photos); return !!p; });
+  return p;
+}
+function pgImg(id, w) {
+  const p = pgPhotoRecord(id), relay = p && p.relay;
+  if (!relay) return '/photo-unavailable';
+  return Number(w) <= 300 ? relay.thumb : Number(w) <= 1280 ? relay.preview : relay.full;
+}
 // Phones get photos sized for their screen (an iPhone shows ~1200 px across; 2048 px photos use 3× the memory and make Safari reload the page).
 // Downloads still use the full 2048 px photo.
 const PG_PHONE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)) || Math.min(screen.width, screen.height) < 820;
 const PG_FULL_W = PG_PHONE ? 1280 : 2048, PG_THUMB_W = 200;
-function pgImgFallback(id, w) { return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w; }
+function pgImgFallback(id, w) { return pgImg(id, w); }
 function pgEsc(t) { const d = document.createElement('div'); d.textContent = String(t == null ? '' : t); return d.innerHTML; }
 function pgDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; }
 function pgMoment(photo, ceremony, n, total) {
