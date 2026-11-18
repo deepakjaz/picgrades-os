@@ -1456,7 +1456,8 @@ function relayToken_(g, photoId, width, kind) {
   var cfg = relaySettings_(), payload = { gid: String(g.galleryId), pid: String(photoId), w: Number(width), exp: Math.floor(Date.now() / 1000) + 21600 };
   var payload64 = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
   var signature = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload64, cfg.secret)).replace(/=+$/, '');
-  return cfg.origin + (kind === 'stream' ? '/stream?id=' + encodeURIComponent(payload.pid) : '/d/' + encodeURIComponent(payload.pid)) + '?g=' + encodeURIComponent(payload.gid) + (kind === 'stream' ? '' : '&w=' + payload.w) + '&token=' + encodeURIComponent(payload64 + '.' + signature);
+  var path = kind === 'stream' ? '/stream?g=' + encodeURIComponent(payload.gid) + '&id=' + encodeURIComponent(payload.pid) : '/d/' + encodeURIComponent(payload.pid) + '?g=' + encodeURIComponent(payload.gid) + '&w=' + payload.w;
+  return cfg.origin + path + '&token=' + encodeURIComponent(payload64 + '.' + signature);
 }
 function relayPhotoRecords_(g, m) {
   var seen = {}; m.relayPhotos = {};
