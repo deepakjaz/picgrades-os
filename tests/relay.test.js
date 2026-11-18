@@ -24,7 +24,6 @@ global.fetch = async (url, options = {}) => {
   return new Response(Buffer.from('private-drive-image'), { status: 200, headers: { 'Content-Type': 'image/jpeg', 'Content-Length': '19' } });
 };
 
-const worker = require('../worker.mjs').then ? null : null;
 (async () => {
   const relay = (await import('../worker.mjs')).default;
   const env = { HMAC_SECRET: secret, GOOGLE_SERVICE_ACCOUNT_JSON: JSON.stringify(service) };
