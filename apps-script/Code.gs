@@ -1453,7 +1453,7 @@ function loadManifest_(g) {
 
 /** Public: everything the gallery page needs. */
 function relayToken_(g, photoId, width, kind) {
-  var cfg = relaySettings_(), payload = { gid: String(g.galleryId), pid: String(photoId), w: Number(width), exp: Math.floor(Date.now() / 1000) + 900 };
+  var cfg = relaySettings_(), payload = { gid: String(g.galleryId), pid: String(photoId), w: Number(width), exp: Math.floor(Date.now() / 1000) + 21600 };
   var payload64 = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
   var signature = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload64, cfg.secret)).replace(/=+$/, '');
   return cfg.origin + (kind === 'stream' ? '/stream' : '/photo') + '?g=' + encodeURIComponent(payload.gid) + '&id=' + encodeURIComponent(payload.pid) + (kind === 'stream' ? '' : '&w=' + payload.w) + '&token=' + encodeURIComponent(payload64 + '.' + signature);
@@ -2466,7 +2466,8 @@ function guestMisses_(g, phone) {
 function withItems_(g, out) {
   if (guestPhotosOf_(g) !== 'findme' || !out || !(out.sure || []).length) return out;
   var map = photoMap_(loadManifest_(g));
-  out.items = out.sure.map(function (id) { return map[id]; }).filter(Boolean);\n  relayPhotoRecords_(g, { pool: out.items });
+  out.items = out.sure.map(function (id) { return map[id]; }).filter(Boolean);
+  relayPhotoRecords_(g, { pool: out.items });
   return out;
 }
 function guestFind_(g, f, scale, me, guest) {
