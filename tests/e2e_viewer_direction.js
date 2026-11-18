@@ -66,6 +66,17 @@ const srv = http.createServer((req, res) => {
   const topBtns = await pg.evaluate(() => [...document.querySelectorAll('#pgvTop .pgv-ic')].filter(b => b.offsetParent).map(b => { const r = b.getBoundingClientRect(); return [r.left, r.right]; }));
   check(topBtns.every(([l, r]) => l >= 0 && r <= 390), 'top buttons stay on screen');
   await shot(pg, 'dir-2-swipe');
+  // step 73c fix: the filmstrip now sits over the photo (full width, same band as the photo). A gap between
+  // thumbnails must let a swipe through to the photo underneath, never swallow it; a thumbnail itself still
+  // catches a tap, so the filmstrip can still be scrolled and tapped
+  const hit = (x, y) => pg.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return { tag: e && e.tagName, onThumb: !!(e && e.closest && e.closest('.mk-thumb-item')) }; }, [x, y]);
+  const railMid = Math.round((rail.t + rail.b) / 2);
+  check((await hit(20, railMid)).tag === 'IMG', 'a gap in the filmstrip band lets a swipe reach the photo underneath');
+  const activeThumb = await pg.evaluate(() => { const r = document.querySelectorAll('.mk-thumb-item')[activeIdx].getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; });
+  check((await hit(...activeThumb)).onThumb, 'a thumbnail itself still catches a tap');
+  const t3 = await pg.evaluate(() => { const r = document.querySelectorAll('.mk-thumb-item')[3].getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+  await pg.mouse.click(...t3); await pg.waitForTimeout(1200);
+  check(await at(pg) === 3, 'tapping a thumbnail in swipe mode still jumps to that photo');
   // swipe sideways (real scroll), then the filmstrip follows
   await pg.evaluate(() => { const f = document.getElementById('pgvFeed'); f.scrollTo({ left: f.clientWidth * 2, behavior: 'auto' }); });
   await pg.waitForTimeout(1200);
