@@ -22,7 +22,7 @@ const cors = {
 function b64urlBytes(value) {
   let binary = '';
   for (const byte of value) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/=/g, '').replace(/\\+/g, '-').replace(/\\//g, '_');
+  return btoa(binary).replace(/=/g, '').split('+').join('-').split('/').join('_');
 }
 function fromB64url(value) {
   const base = value.replace(/-/g, '+').replace(/_/g, '/');
@@ -49,10 +49,10 @@ async function verifyToken(token, galleryId, photoId, width, secret) {
   }
 }
 function pemBytes(pem) {
-  const body = String(pem || '').replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\\s/g, '');
+  const body = String(pem || '').replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----/g, '').split(/\s+/).join('');
   if (!body) throw new Error('Service account private key is missing');
-  return fromB64url(btoa(atob(body)).replace(/=/g, '').replace(/\\+/g, '-').replace(/\\//g, '_'));
-}
+  const binary = atob(body);
+  return Uint8Array.from(binary, c => c.charCodeAt(0));
 async function googleAccessToken(env) {
   if (googleToken && googleTokenUntil > Date.now() + 60000) return googleToken;
   if (!env.GOOGLE_SERVICE_ACCOUNT_JSON) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is not configured');
