@@ -128,7 +128,7 @@
   function loadPhotos(ids, onProgress) {
     var out = {}, done = 0, viaServer = false;
     function direct(id) {
-      return fetch('https://lh3.googleusercontent.com/d/' + id + '=w1080').then(function (r) { if (!r.ok) throw new Error('x'); return r.blob(); }).then(bitmapFromBlob);
+      return fetch(pgImg(id, 1280)).then(function (r) { if (!r.ok) throw new Error('x'); return r.blob(); }).then(bitmapFromBlob);
     }
     function server(batch) {
       return S.opt.api('photoData', { ids: batch }).then(function (r) {
@@ -151,7 +151,7 @@
   var PHONE_MAX = 40, VIDEO_MAX = 10, CLIP_MAX = 8;   // files per reel · videos per reel · seconds a video clip starts with
   function isPhone(id) { return String(id).indexOf('ph:') === 0; }
   function isVideo(id) { return !!(S && S.vids && S.vids[id]); }
-  function thumbUrl(id, w) { return isPhone(id) ? (S.thumbs[id] || '') : 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+  function thumbUrl(id, w) { return isPhone(id) ? (S.thumbs[id] || '') : pgImg(id, w); }
   function smallThumb(src, w, h) { var c = document.createElement('canvas'), r = Math.min(1, 240 / Math.max(w, h)); c.width = Math.max(1, Math.round(w * r)); c.height = Math.max(1, Math.round(h * r)); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.7); }
   function vidHolder() { if (!S.vidBox) { S.vidBox = el('div', { 'aria-hidden': 'true', style: 'position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none' }); S.wrap.appendChild(S.vidBox); } return S.vidBox; }
   function loadPhoneFile(f) {
