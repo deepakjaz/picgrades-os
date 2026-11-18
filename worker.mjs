@@ -95,7 +95,8 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/health') return json({ ok: true, service: 'picgrades-photo-relay' });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
-    const pathPhoto = url.pathname.match(/^\\/d\\/([A-Za-z0-9_-]{10,200})$/);\n    if (url.pathname !== '/photo' && url.pathname !== '/stream' && !pathPhoto) return new Response('Not Found', { status: 404, headers: cors });
+    const pathPhoto = url.pathname.match(/^\/d\/([A-Za-z0-9_-]{10,200})$/);
+    if (url.pathname !== '/photo' && url.pathname !== '/stream' && !pathPhoto) return new Response('Not Found', { status: 404, headers: cors });
     if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { ...cors, Allow: 'GET, HEAD, OPTIONS' } });
 
     const galleryId = url.searchParams.get('g') || '';
