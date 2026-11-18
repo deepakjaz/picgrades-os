@@ -59,7 +59,7 @@ global.ScriptApp = { __t: [], getProjectTriggers() { return this.__t; }, deleteT
   newTrigger(fn) { const self = this, t = { fn, getHandlerFunction: () => fn }; const b = { timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { self.__t.push(t); return t; } }; return b; } };
 global.Logger = { log: () => {} };
 global.console = console;
-new (require('vm').Script)(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8'), { filename: 'apps-script/Code.gs' });
+try { new (require('vm').Script)(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8'), { filename: 'apps-script/Code.gs' }); } catch (e) { throw new Error(String(e.stack).replace(/\\n/g, ' | ')); }
 eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;global.__nightly=nightlyCleanup;global.__setupNightly=setupNightly;');
 global.__clock = 0; const RealDate = Date;
 global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(RealDate.now() + global.__clock); } static now() { return RealDate.now() + global.__clock; } };
