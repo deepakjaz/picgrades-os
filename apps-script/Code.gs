@@ -1462,6 +1462,7 @@ function relayPhotoRecords_(g, m) {
   var seen = {}; m.relayPhotos = {};
   function add(photo) {
     if (!photo || !photo.id || seen[photo.id]) return;
+    seen[photo.id] = true;
     photo.relay = { thumb: relayToken_(g, photo.id, 200), preview: relayToken_(g, photo.id, 1280), full: relayToken_(g, photo.id, 2048) };
     m.relayPhotos[photo.id] = photo.relay;
   }
@@ -1474,6 +1475,7 @@ function relayPhotoRecords_(g, m) {
     else String(post.fileId || '').split(',').filter(String).forEach(function (id) { add({ id: id }); });
   });
   return m;
+}
 function relayPostList_(g, list) {
   return (list || []).map(function (post) {
     if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
