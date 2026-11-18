@@ -53,6 +53,7 @@ function pemBytes(pem) {
   if (!body) throw new Error('Service account private key is missing');
   const binary = atob(body);
   return Uint8Array.from(binary, c => c.charCodeAt(0));
+}
 async function googleAccessToken(env) {
   if (googleToken && googleTokenUntil > Date.now() + 60000) return googleToken;
   if (!env.GOOGLE_SERVICE_ACCOUNT_JSON) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is not configured');
