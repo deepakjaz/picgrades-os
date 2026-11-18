@@ -14,8 +14,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Cache apt package downloads and indexes
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/apt
+          key: ${{ runner.os }}-ubuntu-apt-${{ hashFiles('.github/workflows/tests.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-ubuntu-apt-
       - name: Tools used by the tests (ffmpeg, Python imaging)
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg python3-pil
+        run: |
+          mkdir -p ~/.cache/apt/archives/partial ~/.cache/apt/lists/partial
+          sudo apt-get -o Dir::Cache::archives="$HOME/.cache/apt/archives" -o Dir::State::lists="$HOME/.cache/apt/lists" update
+          sudo apt-get -o Dir::Cache::archives="$HOME/.cache/apt/archives" -o Dir::State::lists="$HOME/.cache/apt/lists" install -y ffmpeg python3-pil
       - name: Install test browser
         run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
       - name: Run all tests
