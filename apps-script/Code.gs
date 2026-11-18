@@ -1836,11 +1836,7 @@ function facesProxy_(p, user) {
   want.forEach(function (id) {
     if (!ids[id]) return;
     var blob = null;
-    try {
-      var r = UrlFetchApp.fetch('https://lh3.googleusercontent.com/d/' + id + '=w1600', { muteHttpExceptions: true, followRedirects: true });
-      if (r.getResponseCode() === 200) blob = r.getBlob();
-    } catch (e) {}
-    if (!blob) { try { blob = DriveApp.getFileById(id).getBlob(); } catch (e) {} }
+    try { blob = DriveApp.getFileById(id).getBlob(); } catch (e) {}
     if (blob) out[id] = 'data:' + (blob.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(blob.getBytes());
   });
   return { images: out };
