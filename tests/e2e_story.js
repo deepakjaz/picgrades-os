@@ -43,6 +43,8 @@ const srv = http.createServer((req, res) => {
       check(r.orig === 'none' && !r.grid, tag + ' the story replaces the Hub cards');
       check(r.header, tag + ' our header buttons (menu, light/dark) are not covered');
       check(!r.counts.length, tag + ' no photo counts ' + JSON.stringify(r.counts));
+      // step 73d: the Living Story hero photo keeps faces in view — biased up, not a dead-centre crop
+      if (id === 'story-living') check(await pg.evaluate(() => getComputedStyle(document.querySelector('.psh-hero-img')).objectPosition) === '50% 30%', tag + ' hero photo is cropped with an upward bias, not dead-centre');
       // step 54: no second icon bar; one floating Find me that stays while scrolling; no drawn garland
       const bars = await pg.evaluate(() => [...document.querySelectorAll('.psh-rail, .pse-quickbar')].filter(x => x.offsetParent || getComputedStyle(x).position === 'fixed' && getComputedStyle(x).display !== 'none').length);
       check(bars === 0, tag + ' the story’s own icon bar is off');
