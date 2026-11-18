@@ -688,6 +688,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
   Promise.all([fresh, ready]).then(([res]) => {
     if (!started) { started = true; return start(res, false); }
     // already showing the kept copy: bring in new hearts, notes and approved posts without moving the guest
+    GALLERY.relayPhotos = res.gallery.relayPhotos || {};
     GALLERY.likes = res.gallery.likes || {}; GALLERY.notes = res.gallery.notes || {}; GALLERY.recentNotes = res.gallery.recentNotes; GALLERY.isCouple = res.gallery.isCouple;
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate; GALLERY.status = res.gallery.status;   // step 62b: Draft / Published
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
