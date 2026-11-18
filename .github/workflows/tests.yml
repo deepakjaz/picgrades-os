@@ -28,5 +28,7 @@ jobs:
           sudo apt-get -o Dir::Cache::archives="$HOME/.cache/apt/archives" -o Dir::State::lists="$HOME/.cache/apt/lists" install -y ffmpeg python3-pil
       - name: Install test browser
         run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
+      - name: Run story browser test in isolation
+        run: node tests/e2e_story.js
       - name: Run all tests
         run: npm test
