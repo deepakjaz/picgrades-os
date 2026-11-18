@@ -1452,11 +1452,11 @@ function loadManifest_(g) {
 }
 
 /** Public: everything the gallery page needs. */
-function relayToken_(g, photoId, width) {
+function relayToken_(g, photoId, width, kind) {
   var cfg = relaySettings_(), payload = { gid: String(g.galleryId), pid: String(photoId), w: Number(width), exp: Math.floor(Date.now() / 1000) + 900 };
   var payload64 = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
   var signature = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload64, cfg.secret)).replace(/=+$/, '');
-  return cfg.origin + '/photo?g=' + encodeURIComponent(payload.gid) + '&id=' + encodeURIComponent(payload.pid) + '&w=' + payload.w + '&token=' + encodeURIComponent(payload64 + '.' + signature);
+  return cfg.origin + (kind === 'stream' ? '/stream' : '/photo') + '?g=' + encodeURIComponent(payload.gid) + '&id=' + encodeURIComponent(payload.pid) + (kind === 'stream' ? '' : '&w=' + payload.w) + '&token=' + encodeURIComponent(payload64 + '.' + signature);
 }
 function relayPhotoRecords_(g, m) {
   var seen = {};
@@ -1469,7 +1469,22 @@ function relayPhotoRecords_(g, m) {
   (m.events || []).forEach(function (event) { (event.photos || []).forEach(add); (event.teaser || []).forEach(add); });
   (m.portfolio || []).forEach(add); (m.highlights || []).forEach(add); (m.pool || []).forEach(add);
   (m.personal || []).forEach(function (event) { (event.photos || []).forEach(add); });
+  (m.guestPosts || []).forEach(function (post) {
+    if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
+    else String(post.fileId || '').split(',').filter(String).forEach(function (id) { add({ id: id, relay: post.relay }); });
+    if (post.type !== 'video' && post.relay) post.photoRelay = post.relay;
+  });
   return m;
+}
+function relayPostList_(g, list) {
+  return (list || []).map(function (post) {
+    if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
+    else {
+      var id = String(post.fileId || '').split(',')[0];
+      if (id) post.photoUrl = relayToken_(g, id, 300);
+    }
+    return post;
+  });
 }
 function getGallery_(p) {
   var g = findGallery_(p.g);
@@ -1964,7 +1979,7 @@ function savePost_(p) {
     var data = String(d).replace(/^data:[^,]*,/, '');
     var f = folder.createFile(Utilities.newBlob(Utilities.base64Decode(data), 'image/jpeg', postId + '_' + (i + 1) + '.jpg'));
     // step 50: open to "anyone with the link" only once approved (the couple's own albums are approved straight away)
-    try { f.setSharing(status === 'approved' ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, status === 'approved' ? DriveApp.Permission.VIEW : DriveApp.Permission.NONE); } catch (e) {}
+    try { f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); } catch (e) {}
     ids.push(f.getId());
   });
   ensureTab_('GuestPosts', POST_COLUMNS);
@@ -1980,7 +1995,7 @@ function myPosts_(p) {
   ensureTab_('GuestPosts', POST_COLUMNS);
   var posts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.guestId === guest.guestId; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, caption: x.caption, status: x.status, at: x.at, reviewedAt: x.reviewedAt }; });
-  return { posts: withThumbs_(posts), thanks: g.thanksNote || defaultThanks_(g) };
+  return { posts: relayPostList_(g, withThumbs_(posts)), thanks: g.thanksNote || defaultThanks_(g) };
 }
 /** Step 50: a small preview of a post that is still private (waiting for the couple) — made by Drive for the file's owner, so no public link is needed. */
 function reviewThumb_(fileId) {
@@ -2003,7 +2018,7 @@ function coupleQueue_(p) {
   var all = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, status: x.status, at: x.at }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
-  return { waiting: withThumbs_(all.filter(function (x) { return x.status === 'review'; })), decided: withThumbs_(all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40)), thanks: g.thanksNote || defaultThanks_(g) };
+  return { waiting: relayPostList_(g, withThumbs_(all.filter(function (x) { return x.status === 'review'; }))), decided: relayPostList_(g, withThumbs_(all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40))), thanks: g.thanksNote || defaultThanks_(g) };
 }
 /** Couple link: approve or hide a guest post. */
 function couplePost_(p) {
@@ -2020,7 +2035,7 @@ function couplePost_(p) {
   String(row.fileId || '').split(',').filter(String).forEach(function (id) {
     try {
       var f = DriveApp.getFileById(id);
-      if (decision === 'approved') { try { f.setTrashed(false); } catch (e) {} f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); }
+      if (decision === 'approved') { try { f.setTrashed(false); } catch (e) {} f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); }
       else { f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); if (!keep) f.setTrashed(true); }
     } catch (e) {}
   });
