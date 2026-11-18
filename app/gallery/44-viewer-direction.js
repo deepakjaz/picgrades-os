@@ -21,9 +21,13 @@
     // filmstrip and the buttons move to lie along the bottom, as a see-through strip on top of the photo (never the
     // other way round: we never shrink or shift the photo to make room for them)
     'body.pgv-swipe{--pgd-strip:84px;--pgd-bar:78px;--thumb-inactive-w:40px;--thumb-inactive-h:52px;--thumb-near-w:46px;--thumb-near-h:60px;--thumb-active-w:58px;--thumb-active-h:74px}',
-    // the filmstrip along the bottom, just above the buttons
-    'body.pgv-swipe #view-root .mk-filmstrip-rail{top:auto;left:0;right:0;width:auto;height:var(--pgd-strip);bottom:calc(var(--pgd-bar) + env(safe-area-inset-bottom,0px));flex-direction:row;align-items:center;touch-action:pan-x}',
-    'body.pgv-swipe .mk-filmstrip-scroller{flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;padding:0 calc(50% - var(--thumb-active-w) / 2)}',
+    // the filmstrip along the bottom, just above the buttons. It now sits over the photo (step 73c), so its own
+    // band would otherwise swallow every swipe that starts low on the screen, before it ever reaches the photo
+    // underneath — the strip and the photo would stop agreeing on which way a swipe should go. Only the thumbnails
+    // themselves stay touchable; the empty gaps and edges around them let the swipe straight through to the photo.
+    'body.pgv-swipe #view-root .mk-filmstrip-rail{top:auto;left:0;right:0;width:auto;height:var(--pgd-strip);bottom:calc(var(--pgd-bar) + env(safe-area-inset-bottom,0px));flex-direction:row;align-items:center;touch-action:pan-x;pointer-events:none}',
+    'body.pgv-swipe .mk-filmstrip-scroller{flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;padding:0 calc(50% - var(--thumb-active-w) / 2);pointer-events:none}',
+    'body.pgv-swipe .mk-thumb-item{pointer-events:auto}',
     'body.pgv-swipe .pgv-top-r{padding-right:0}',
     'body.pgv-swipe .pgv-bar{padding-top:calc(var(--pgd-strip) + 30px);background:linear-gradient(to top,rgba(0,0,0,.72) 40%,transparent)}',
     // the switch in the top bar
