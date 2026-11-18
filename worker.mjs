@@ -135,8 +135,10 @@ export default {
         return new Response(driveResponse.status === 404 ? 'Photo not found' : 'Drive could not serve this file', { status: driveResponse.status, headers: cors });
       }
       const contentType = driveResponse.headers.get('Content-Type') || 'application/octet-stream';
-      if (isStream ? !(/^(video|audio)\\//i.test(contentType) || /octet-stream/i.test(contentType)) : !/^image\\//i.test(contentType)) {
+      const supportedType = isStream ? (contentType.indexOf('video/') === 0 || contentType.indexOf('audio/') === 0 || contentType.indexOf('application/octet-stream') === 0) : contentType.toLowerCase().indexOf('image/') === 0;
+      if (!supportedType) {
         return new Response('Unsupported Drive file type', { status: 415, headers: cors });
+      }
       }
       const responseHeaders = new Headers(cors);
       responseHeaders.set('Content-Type', contentType);
