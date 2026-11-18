@@ -1463,7 +1463,7 @@ function relayPhotoRecords_(g, m) {
   function add(photo) {
     if (!photo || !photo.id || seen[photo.id]) return;
     seen[photo.id] = true;
-    photo.relay = { thumb: relayToken_(g, photo.id, 200), preview: relayToken_(g, photo.id, 1280), full: relayToken_(g, photo.id, 2048) };
+    photo.relay = { thumb: relayToken_(g, photo.id, 200), preview: relayToken_(g, photo.id, 1280), full: relayToken_(g, photo.id, 2048) };\n    m.relayPhotos[photo.id] = photo.relay;
   }
   (m.root || []).forEach(add);
   (m.events || []).forEach(function (event) { (event.photos || []).forEach(add); (event.teaser || []).forEach(add); });
