@@ -40,5 +40,7 @@ jobs:
         run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
       - name: Run story browser test in isolation
         run: timeout 180s node tests/e2e_story.js
+      - name: Diagnose step 19 browser failure
+        run: timeout 180s node tests/e2e_step19.js
       - name: Run all tests
         run: npm test
