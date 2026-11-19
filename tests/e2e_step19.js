@@ -51,7 +51,9 @@ const srv = http.createServer((req, res) => {
     throw e;
   }
   console.log('album templates:', await pg.evaluate(() => PGPost.templates.length));
-  const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => b.textContent));
+  const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => ({ text: b.textContent, group: b.dataset.g, visible: !!(b.offsetWidth || b.offsetHeight || b.getClientRects().length) })));
+  console.log('STEP19 TEMPLATE GROUPS:', JSON.stringify(groups));
+  console.log('STEP19 POST MODE:', await pg.evaluate(() => ({ format: PGPost.state ? PGPost.state().format : null, count: PGPost.templates.length })));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click(); await pg.waitForTimeout(200);
   console.log('Haldi templates:', (await pg.$$eval('.pe-sheet .pe-tpl span', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
