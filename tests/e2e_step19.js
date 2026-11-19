@@ -36,7 +36,19 @@ const srv = http.createServer((req, res) => {
   pg.on('pageerror', e => errors.push(e.message));
   await pg.goto('http://localhost:8782/g/' + pub.galleryId + '?couple=' + ck + '&packinfo'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(500);
   // album maker
-  await PE.toEdit(pg, 'album'); await PE.tool(pg, 'template');
+  try { await PE.toEdit(pg, 'album'); } catch (e) {
+    const state = await pg.evaluate(() => ({
+      views: [...document.querySelectorAll('.pe-wrap')].map(x => ({ view: x.dataset.view, visible: !!(x.offsetWidth || x.offsetHeight || x.getClientRects().length) })),
+      next: [...document.querySelectorAll('.pe-v-pick .pe-next')].map(x => ({ disabled: x.disabled, text: x.textContent, cls: x.className })),
+      tabs: [...document.querySelectorAll('.pe-tab')].map(x => ({ mode: x.dataset.mode, active: x.classList.contains('on'), text: x.textContent })),
+      dialogs: [...document.querySelectorAll('[role=dialog], .pe-sheet, .pe-pop')].filter(x => x.offsetWidth || x.offsetHeight).map(x => ({ cls: x.className, text: (x.innerText || '').slice(0, 500) })),
+      body: (document.body.innerText || '').slice(-1800),
+      images: [...document.querySelectorAll('.pe-v-pick img')].slice(0, 8).map(x => ({ src: x.currentSrc || x.src, complete: x.complete, naturalWidth: x.naturalWidth }))
+    }));
+    console.log('STEP19 ALBUM EDITOR DIAGNOSTIC:', JSON.stringify(state));
+    console.log('STEP19 PAGE ERRORS:', JSON.stringify(errors));
+    throw e;
+  }
   console.log('album templates:', await pg.evaluate(() => PGPost.templates.length));
   const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => b.textContent));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click(); await pg.waitForTimeout(200);
