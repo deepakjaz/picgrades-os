@@ -37,28 +37,11 @@ const srv = http.createServer((req, res) => {
   await pg.route('https://lh3.googleusercontent.com/**', r => { const url = new URL(r.request().url()); const raw = url.pathname.startsWith('/d/') ? url.pathname.slice(3) : ''; const id = raw.split('=')[0]; return id ? r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }) : r.abort(); });
   await pg.goto('http://localhost:8782/g/' + pub.galleryId + '?couple=' + ck + '&packinfo'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(500);
   // album maker
-  try { await PE.toEdit(pg, 'album'); } catch (e) {
-    const state = await pg.evaluate(() => ({
-      views: [...document.querySelectorAll('.pe-wrap')].map(x => ({ view: x.dataset.view, visible: !!(x.offsetWidth || x.offsetHeight || x.getClientRects().length) })),
-      next: [...document.querySelectorAll('.pe-v-pick .pe-next')].map(x => ({ disabled: x.disabled, text: x.textContent, cls: x.className })),
-      tabs: [...document.querySelectorAll('.pe-tab')].map(x => ({ mode: x.dataset.mode, active: x.classList.contains('on'), text: x.textContent })),
-      dialogs: [...document.querySelectorAll('[role=dialog], .pe-sheet, .pe-pop')].filter(x => x.offsetWidth || x.offsetHeight).map(x => ({ cls: x.className, text: (x.innerText || '').slice(0, 500) })),
-      body: (document.body.innerText || '').slice(-1800),
-      images: [...document.querySelectorAll('.pe-v-pick img')].slice(0, 8).map(x => ({ src: x.currentSrc || x.src, complete: x.complete, naturalWidth: x.naturalWidth }))
-    }));
-    console.log('STEP19 ALBUM EDITOR DIAGNOSTIC:', JSON.stringify(state));
-    console.log('STEP19 PAGE ERRORS:', JSON.stringify(errors));
-    throw e;
-  }
+  await PE.toEdit(pg, 'album'); await PE.tool(pg, 'template');
+  await pg.waitForSelector('.pe-sheet[aria-label="Template"]');
   console.log('album templates:', await pg.evaluate(() => PGPost.templates.length));
-  const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => ({ text: b.textContent, group: b.dataset.g, visible: !!(b.offsetWidth || b.offsetHeight || b.getClientRects().length) })));
-  console.log('STEP19 TEMPLATE GROUPS:', JSON.stringify(groups));
-  console.log('STEP19 POST MODE:', await pg.evaluate(() => ({ format: PGPost.state ? PGPost.state().format : null, count: PGPost.templates.length })));
-  try { await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click({ timeout: 5000 }); } catch (e) {
-    const state = await pg.evaluate(() => ({ sheet: document.querySelector('.pe-sheet') ? document.querySelector('.pe-sheet').outerHTML.slice(0, 7000) : null, chips: [...document.querySelectorAll('.pe-sheet .ps-chip')].map(x => ({ text: x.textContent, cls: x.className, group: x.dataset.g })), tools: [...document.querySelectorAll('.pe-tool')].map(x => ({ name: x.dataset.tool, text: x.textContent })) }));
-    console.log('STEP19 TEMPLATE SHEET DIAGNOSTIC:', JSON.stringify(state));
-    throw e;
-  }
+  const groups = await pg.$$eval('.pe-sheet .pe-cats .ps-chip', l => l.map(b => ({ text: b.textContent, group: b.dataset.g })));
+  console.log('template groups:', JSON.stringify(groups));
   console.log('Haldi templates:', (await pg.$$eval('.pe-sheet .pe-tpl span', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
   await pg.locator('.pe-sheet .pe-tpl', { hasText: 'Royal · Palace Arch' }).click(); await pg.waitForTimeout(600); await PE.done(pg);
