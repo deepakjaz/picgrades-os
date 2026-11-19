@@ -34,6 +34,7 @@ const srv = http.createServer((req, res) => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = [];
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, acceptDownloads: true }); const pg = await ctx.newPage();
   pg.on('pageerror', e => errors.push(e.message));
+  await pg.route('https://lh3.googleusercontent.com/**', r => { const url = new URL(r.request().url()); const raw = url.pathname.startsWith('/d/') ? url.pathname.slice(3) : ''; const id = raw.split('=')[0]; return id ? r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }) : r.abort(); });
   await pg.goto('http://localhost:8782/g/' + pub.galleryId + '?couple=' + ck + '&packinfo'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(500);
   // album maker
   try { await PE.toEdit(pg, 'album'); } catch (e) {
