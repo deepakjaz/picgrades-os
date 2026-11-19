@@ -54,7 +54,11 @@ const srv = http.createServer((req, res) => {
   const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => ({ text: b.textContent, group: b.dataset.g, visible: !!(b.offsetWidth || b.offsetHeight || b.getClientRects().length) })));
   console.log('STEP19 TEMPLATE GROUPS:', JSON.stringify(groups));
   console.log('STEP19 POST MODE:', await pg.evaluate(() => ({ format: PGPost.state ? PGPost.state().format : null, count: PGPost.templates.length })));
-  await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click(); await pg.waitForTimeout(200);
+  try { await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click({ timeout: 5000 }); } catch (e) {
+    const state = await pg.evaluate(() => ({ sheet: document.querySelector('.pe-sheet') ? document.querySelector('.pe-sheet').outerHTML.slice(0, 7000) : null, chips: [...document.querySelectorAll('.pe-sheet .ps-chip')].map(x => ({ text: x.textContent, cls: x.className, group: x.dataset.g })), tools: [...document.querySelectorAll('.pe-tool')].map(x => ({ name: x.dataset.tool, text: x.textContent })) }));
+    console.log('STEP19 TEMPLATE SHEET DIAGNOSTIC:', JSON.stringify(state));
+    throw e;
+  }
   console.log('Haldi templates:', (await pg.$$eval('.pe-sheet .pe-tpl span', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
   await pg.locator('.pe-sheet .pe-tpl', { hasText: 'Royal · Palace Arch' }).click(); await pg.waitForTimeout(600); await PE.done(pg);
