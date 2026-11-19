@@ -75,12 +75,24 @@ function pgApi(action, body) {
     .then(res => { if (!res.ok) { const err = new Error(res.error || 'Something went wrong.'); err.draft = !!res.draft; err.res = res; throw err; } return res; })
     .finally(() => { if (timer) clearTimeout(timer); });
 }
-function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+function pgPhotoRecord(id) {
+  if (GALLERY && GALLERY.relayPhotos && GALLERY.relayPhotos[id]) return { id, relay: GALLERY.relayPhotos[id] };
+  const find = list => (list || []).find(p => p && p.id === id);
+  let p = find(GALLERY && GALLERY.root) || find(GALLERY && GALLERY.pool) || find(GALLERY && GALLERY.portfolio);
+  if (!p && GALLERY) (GALLERY.events || []).some(e => { p = find(e.photos); return !!p; });
+  if (!p && GALLERY) (GALLERY.personal || []).some(e => { p = find(e.photos); return !!p; });
+  return p;
+}
+function pgImg(id, w) {
+  const p = pgPhotoRecord(id), relay = p && p.relay;
+  if (!relay) return '/photo-unavailable';
+  return Number(w) <= 300 ? relay.thumb : Number(w) <= 1280 ? relay.preview : relay.full;
+}
 // Phones get photos sized for their screen (an iPhone shows ~1200 px across; 2048 px photos use 3× the memory and make Safari reload the page).
 // Downloads still use the full 2048 px photo.
 const PG_PHONE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)) || Math.min(screen.width, screen.height) < 820;
 const PG_FULL_W = PG_PHONE ? 1280 : 2048, PG_THUMB_W = 200;
-function pgImgFallback(id, w) { return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w; }
+function pgImgFallback(id, w) { return pgImg(id, w); }
 function pgEsc(t) { const d = document.createElement('div'); d.textContent = String(t == null ? '' : t); return d.innerHTML; }
 function pgDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; }
 function pgMoment(photo, ceremony, n, total) {
@@ -668,7 +680,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
   // The gallery opens at once from the copy kept on this phone, then the fresh copy is fetched in the background.
   // If the phone had to reload the page, the guest comes back to the same collection and photo.
   const CK = pgCopyKey();
-  let kept = null; try { const k = JSON.parse(localStorage.getItem(CK) || 'null'); if (k && k.at > Date.now() - 7 * 864e5 && k.gallery) kept = k; } catch (e) {}
+  let kept = null; try { const k = JSON.parse(localStorage.getItem(CK) || 'null'); if (k && k.at > Date.now() - 5 * 3600 * 1000 && k.gallery) kept = k; } catch (e) {}
   const fresh = pgApi(PG_STUDIO_SLUG ? 'getStudio' : 'getGallery').then(res => { try { localStorage.setItem(CK, JSON.stringify({ at: Date.now(), gallery: res.gallery })); } catch (e) {} return res; });
   let started = false;
   // wait until every part of the page is set up (later scripts add features to the gallery)
@@ -677,6 +689,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
   Promise.all([fresh, ready]).then(([res]) => {
     if (!started) { started = true; return start(res, false); }
     // already showing the kept copy: bring in new hearts, notes and approved posts without moving the guest
+    GALLERY.relayPhotos = res.gallery.relayPhotos || {};
     GALLERY.likes = res.gallery.likes || {}; GALLERY.notes = res.gallery.notes || {}; GALLERY.recentNotes = res.gallery.recentNotes; GALLERY.isCouple = res.gallery.isCouple;
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate; GALLERY.status = res.gallery.status;   // step 62b: Draft / Published
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept

@@ -15,10 +15,10 @@ global.SpreadsheetApp = { getActiveSpreadsheet: () => ({ getSheetByName: n => DB
 const DRIVE = { folders: {}, files: {}, n: 0 };
 function iter(a) { let i = 0; return { hasNext: () => i < a.length, next: () => a[i++] }; }
 function fileObj(id) { const f = DRIVE.files[id]; return { getId: () => id, getName: () => f.name, getMimeType: () => f.mime, isTrashed: () => !!f.trashed, setTrashed: t => { f.trashed = !!t; },
-  setContent: c => { f.content = c; }, getThumbnail: () => ({ getContentType: () => 'image/png', getBytes: () => [137, 80, 78, 71] }), getBlob: () => ({ getDataAsString: () => f.content, getBytes: () => f.bytes || [] }),
-  setSharing: (a, b) => { f.sharing = a + ':' + b; } }; }
+  setContent: c => { f.content = c; }, getThumbnail: () => ({ getContentType: () => 'image/png', getBytes: () => [137, 80, 78, 71] }), getBlob: () => ({ getDataAsString: () => f.content, getContentType: () => f.mime || 'image/jpeg', getBytes: () => f.bytes || Array.from(Buffer.from('img:' + id)) }),
+  getSharingAccess: () => f.access || 'PRIVATE', addViewer: email => { f.viewers = f.viewers || {}; f.viewers[email] = 'VIEW'; }, getAccess: email => (f.viewers || {})[email] || null, setSharing: (a, b) => { f.access = a; f.sharing = a + ':' + b; } }; }
 function folderObj(id) { const f = DRIVE.folders[id]; if (!f) throw new Error('No item with the given ID could be found'); return {
-  getId: () => id, getName: () => f.name, isTrashed: () => !!f.trashed, getSharingAccess: () => f.access || 'PRIVATE',
+  getId: () => id, getName: () => f.name, isTrashed: () => !!f.trashed, getSharingAccess: () => f.access || 'PRIVATE', addViewer: email => { f.viewers = f.viewers || {}; f.viewers[email] = 'VIEW'; }, getAccess: email => (f.viewers || {})[email] || null, setSharing: (a, b) => { f.access = a; f.sharing = a + ':' + b; },
   getFolders: () => iter(Object.keys(DRIVE.folders).filter(k => DRIVE.folders[k].parent === id).map(folderObj)),
   getFiles: () => iter(Object.keys(DRIVE.files).filter(k => DRIVE.files[k].parent === id).map(fileObj)),
   createFile: (name, content, mime) => { if (f.readOnly) throw new Error('Access denied'); const fid = 'file' + (++DRIVE.n);
@@ -38,6 +38,8 @@ global.Logger = { log: () => {} };
 global.Session = { getScriptTimeZone: () => 'Asia/Kolkata' };
 // Treat sheet times as UTC+5:30
 global.Utilities = {
+  base64EncodeWebSafe: b => Buffer.from(b).toString('base64url'),
+  computeHmacSha256Signature: (v, k) => Array.from(crypto.createHmac('sha256', k).update(v).digest()).map(b => b > 127 ? b - 256 : b),
   getUuid: () => crypto.randomUUID(), DigestAlgorithm: { SHA_256: 'sha256' },
   computeDigest: (a, s) => Array.from(crypto.createHash('sha256').update(s).digest()).map(b => b > 127 ? b - 256 : b),
   formatDate: (d, tz, f) => { const x = new Date(d.getTime() + 330 * 60000);
@@ -50,13 +52,14 @@ global.Utilities = {
   newBlob: (bytes, mime, name) => ({ bytes, mime, name })
 };
 global.UrlFetchApp = { fetch: (url) => { const id = (/\/d\/([^=]+)/.exec(url) || [])[1]; if (global.__fetchFail) throw new Error('blocked'); return { getResponseCode: () => 200, getBlob: () => ({ getContentType: () => 'image/jpeg', getBytes: () => Array.from(global.__fetchBytes ? global.__fetchBytes(id) : Buffer.from('img:' + id)) }) }; } };
-const props = {}; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
+const props = { PHOTO_RELAY_ORIGIN: 'https://lh3.googleusercontent.com', HMAC_SECRET: 'test-secret-key-that-is-at-least-thirty-two-characters', RELAY_SERVICE_ACCOUNT_EMAIL: 'relay@picgrades-test.iam.gserviceaccount.com' }; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
 global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
 global.MailApp = { sendEmail: m => mail.push(m) };
 global.ScriptApp = { __t: [], getProjectTriggers() { return this.__t; }, deleteTrigger(t) { this.__t = this.__t.filter(x => x !== t); },
   newTrigger(fn) { const self = this, t = { fn, getHandlerFunction: () => fn }; const b = { timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { self.__t.push(t); return t; } }; return b; } };
 global.Logger = { log: () => {} };
 global.console = console;
+try { new (require('vm').Script)(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8'), { filename: 'apps-script/Code.gs' }); } catch (e) { throw new Error(String(e.stack).replace(/\\n/g, ' | ')); }
 eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;global.__nightly=nightlyCleanup;global.__setupNightly=setupNightly;');
 global.__clock = 0; const RealDate = Date;
 global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(RealDate.now() + global.__clock); } static now() { return RealDate.now() + global.__clock; } };

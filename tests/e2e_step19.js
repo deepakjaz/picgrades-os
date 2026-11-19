@@ -34,12 +34,14 @@ const srv = http.createServer((req, res) => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = [];
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, acceptDownloads: true }); const pg = await ctx.newPage();
   pg.on('pageerror', e => errors.push(e.message));
+  await pg.route('https://lh3.googleusercontent.com/**', r => { const url = new URL(r.request().url()); const raw = url.pathname.startsWith('/d/') ? url.pathname.slice(3) : ''; const id = raw.split('=')[0]; return id ? r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }) : r.abort(); });
   await pg.goto('http://localhost:8782/g/' + pub.galleryId + '?couple=' + ck + '&packinfo'); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(500);
   // album maker
   await PE.toEdit(pg, 'album'); await PE.tool(pg, 'template');
+  await pg.waitForSelector('.pe-sheet[aria-label="Template"]');
   console.log('album templates:', await pg.evaluate(() => PGPost.templates.length));
-  const groups = await pg.$$eval('.pe-sheet .ps-row:nth-of-type(1) .ps-chip', l => l.map(b => b.textContent));
-  await pg.locator('.pe-sheet .ps-chip', { hasText: /^Haldi$/ }).click(); await pg.waitForTimeout(200);
+  const groups = await pg.$$eval('.pe-sheet .pe-cats .ps-chip', l => l.map(b => ({ text: b.textContent, group: b.dataset.g })));
+  console.log('template groups:', JSON.stringify(groups));
   console.log('Haldi templates:', (await pg.$$eval('.pe-sheet .pe-tpl span', l => l.map(b => b.textContent).filter(t => / · [GC]$/.test(t)))).join(' | '));
   await pg.locator('.pe-sheet .ps-chip', { hasText: /^Wedding$/ }).click(); await pg.waitForTimeout(200);
   await pg.locator('.pe-sheet .pe-tpl', { hasText: 'Royal · Palace Arch' }).click(); await pg.waitForTimeout(600); await PE.done(pg);

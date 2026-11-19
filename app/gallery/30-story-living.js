@@ -59,13 +59,17 @@
   };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+  function relayImgUrl(id, w) {
+    var records = window.GALLERY && window.GALLERY.relayPhotos, relay = records && records[id];
+    return relay ? (Number(w) <= 300 ? relay.thumb : Number(w) <= 1280 ? relay.preview : relay.full) : BLANK_GIF;
+  }
   function imgUrl(id, w) {
     if (!id) return BLANK_GIF;
-    return window.pgImg ? pgImg(id, w) : ('https://lh3.googleusercontent.com/d/' + id + '=w' + w);
+    return typeof window.pgImg === 'function' ? pgImg(id, w) : relayImgUrl(id, w);
   }
   function imgFallback(id, w) {
     if (!id) return BLANK_GIF;
-    return window.pgImgFallback ? pgImgFallback(id, w) : ('https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w);
+    return typeof window.pgImgFallback === 'function' ? pgImgFallback(id, w) : relayImgUrl(id, w);
   }
 
   // Pick evenly spaced photos if featured array is missing

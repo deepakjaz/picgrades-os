@@ -129,7 +129,7 @@ const srv = http.createServer((req, res) => {
 
   // ---- 4. the try-it photos prefer the event highlights ----
   call('storyPicks', { g: demoW.galleryId, coupleKey: call('facesStatus', { token: admin, g: demoW.galleryId }).gallery.coupleKey, picks: { hl: { Haldi: ['DT000', 'DT001', 'DT002', 'DT003', 'DT004'] } } });
-  Object.keys(global.__CACHE).forEach(k => { if (/^studio:/.test(k)) delete global.__CACHE[k]; });   // the photographer page is cached for 5 minutes
+  Object.keys(global.__CACHE).forEach(k => { if (/^studio(?:-relay)?:/.test(k)) delete global.__CACHE[k]; });   // clear the active studio cache namespace (legacy and relay-backed)
   const td = call('getStudio', { slug: 'alpha' }).gallery.tryDemo, haldi = td.events.find(e => e.name === 'Haldi');
   check(haldi && haldi.photos.every(x => ['DT000', 'DT001', 'DT002', 'DT003', 'DT004'].includes(x.id)), 'the try-it photos come from the event\'s highlights');
   const big = { Haldi: Array.from({ length: 12 }, (_, i) => 'DT0' + String(i).padStart(2, '0')) };
