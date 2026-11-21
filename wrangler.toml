@@ -1,8 +1,0 @@
-name = "picgrades-photo-relay"
-main = "worker.mjs"
-compatibility_date = "2026-11-19"
-
-[vars]
-# Set PHOTO_RELAY_ORIGIN in Apps Script Script Properties to this Worker URL.
-# Secrets are configured with: wrangler secret put HMAC_SECRET
-# and: wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON

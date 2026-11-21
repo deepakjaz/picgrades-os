@@ -13,10 +13,6 @@ const j = call('guestJoin', { g: gid, name: 'Kabir', phone: '9822233344', device
 const b64 = Buffer.from('photo').toString('base64');
 const up = n => call('uploadMoment', { g: gid, guestId: j.guestId, guestKey: j.guestKey, mime: 'image/jpeg', base64: b64, caption: 'm' + n });
 const fileOf = pid => { const r = DB.GuestPosts.slice(1).find(x => x.includes(pid)); return String(r[DB.GuestPosts[0].indexOf('fileId')]); };
-const relayPreview = id => {
-  const gallery = call('getGallery', { g: gid, coupleKey: ck }).gallery;
-  return !!(gallery.relayPhotos && gallery.relayPhotos[id] && /^https:\/\/lh3\.googleusercontent\.com\/d\//.test(gallery.relayPhotos[id].preview));
-};
 const a = up(1), b = up(2);
 let r = call('couplePost', { g: gid, coupleKey: ck, postId: a.postId, decision: 'hide' });
 assert(r.ok && DRIVE.files[fileOf(a.postId)].trashed === true, 'Hide (default) → the file is in the bin at once, its link stops working');
@@ -25,7 +21,7 @@ assert(r.ok && !DRIVE.files[fileOf(b.postId)].trashed && /^PRIVATE/.test(DRIVE.f
 const q = call('coupleQueue', { g: gid, coupleKey: ck });
 assert(q.decided.filter(x => x.status === 'hidden').length === 2 && q.decided.every(x => x.thumb), 'the couple sees both hidden moments with a preview');
 r = call('couplePost', { g: gid, coupleKey: ck, postId: a.postId, decision: 'approve' });
-assert(r.ok && !DRIVE.files[fileOf(a.postId)].trashed && /^PRIVATE/.test(DRIVE.files[fileOf(a.postId)].sharing) && relayPreview(fileOf(a.postId)), 'Show again → restored from the bin, kept private and shown through the relay');
+assert(r.ok && !DRIVE.files[fileOf(a.postId)].trashed && DRIVE.files[fileOf(a.postId)].sharing === 'ANYONE_WITH_LINK:VIEW', 'Show again → back out of the bin and shown');
 assert(call('getGallery', { g: gid }).gallery.guestPosts.some(p => p.fileId === fileOf(a.postId)), 'and it is in Root Moment again');
 assert(+(call('health', {}).version.match(/^step(\d+)/) || [0, 0])[1] >= 52, 'backend version is step52 or later');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all step 52 checks passed');

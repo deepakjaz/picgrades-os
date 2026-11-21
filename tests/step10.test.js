@@ -49,9 +49,7 @@ assert(call('couplePost', { g: gid, coupleKey: ck, postId: u2.postId, decision: 
   assert(/^PRIVATE/.test(DRIVE.files[fid].sharing), 'hidden video is no longer open to anyone with its Drive link');
   assert(!call('videoOk', { g: gid, id: fid }).allowed, 'hidden video cannot be streamed'); }
 { const row = DB.GuestPosts.slice(1).find(r => r.includes(u.postId)), fid = row.find(v => /^file\d+$/.test(String(v)));
-  assert(/^PRIVATE/.test(DRIVE.files[fid].sharing), 'approved photo remains private in Drive');
-  const gallery = call('getGallery', { g: gid, coupleKey: ck }).gallery;
-  assert(gallery.relayPhotos[fid] && /^https:\/\/lh3\.googleusercontent\.com\/d\//.test(gallery.relayPhotos[fid].preview), 'approved photo is available through its signed relay preview'); }
+  assert(/^ANYONE_WITH_LINK/.test(DRIVE.files[fid].sharing), 'approved photo stays viewable'); }
 assert(!call('videoOk', { g: gid, id: 'SOMEOTHERDRIVEFILE000' }).allowed, 'videoOk refuses files from outside the gallery');
 assert(call('coupleThanks', { g: gid, coupleKey: ck, text: 'Thank you Meera Bhua! — Diya & Kabir' }).ok, 'thank-you note saved');
 g = call('getGallery', { g: gid, coupleKey: ck }).gallery;

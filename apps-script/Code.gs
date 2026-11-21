@@ -1276,7 +1276,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'delivery'];   // delivery: '' = private photo relay (default) · 'drive' = the folder is already shared "anyone with the link", photos load straight from Google   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug'];   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1317,52 +1317,25 @@ function listImages_(folder) {
 }
 
 /** Read a wedding folder: subfolders = events, 00_Root_Moment = Root Moment. */
-function relaySettings_() {
-  var props = PropertiesService.getScriptProperties();
-  var origin = String(props.getProperty('PHOTO_RELAY_ORIGIN') || ''); while (origin.charAt(origin.length - 1) === '/') origin = origin.slice(0, -1);
-  var secret = String(props.getProperty('HMAC_SECRET') || '');
-  var serviceEmail = String(props.getProperty('RELAY_SERVICE_ACCOUNT_EMAIL') || '').trim();
-  if (origin.indexOf('https://') !== 0 || !secret || secret.length < 32 || serviceEmail.indexOf('@') < 1 || serviceEmail.indexOf('.') < 0) {
-    throw new Error('Photo relay is not configured. Set PHOTO_RELAY_ORIGIN, HMAC_SECRET (32+ characters), and RELAY_SERVICE_ACCOUNT_EMAIL in Apps Script Script Properties.');
-  }
-  return { origin: origin, secret: secret, serviceEmail: serviceEmail };
-}
-function restrictDriveItem_(item, email, grantViewer) {
-  var access = String(item.getSharingAccess ? item.getSharingAccess() : '');
-  if (access !== 'PRIVATE') item.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
-  if (grantViewer) {
-    try { item.addViewer(email); } catch (e) {
-      try { if (String(item.getAccess(email)) !== 'VIEW') throw e; } catch (ignored) { throw new Error('PicGrades relay service account needs Viewer access to the wedding folder.'); }
-    }
-  }
-}
-function restrictDriveTree_(folder, email, root) {
-  restrictDriveItem_(folder, email, !!root);
-  var files = folder.getFiles();
-  while (files.hasNext()) { var file = files.next(); if (!file.isTrashed()) restrictDriveItem_(file, email, false); }
-  var folders = folder.getFolders();
-  while (folders.hasNext()) { var child = folders.next(); if (!child.isTrashed()) restrictDriveTree_(child, email, false); }
-}
-function scanWeddingFolder_(folderId, keepSharing) {
-  var folder, relay;
+function scanWeddingFolder_(folderId) {
+  var folder;
   try { folder = DriveApp.getFolderById(folderId); } catch (err) {
-    throw new Error('PicGrades cannot open this Drive folder. Give the relay service account Viewer access.');
+    throw new Error('Cannot open this Drive folder. Share it as "Anyone with the link – Viewer" and try again.');
   }
-  // keepSharing: a 'drive' delivery gallery — its folder's sharing is left exactly as it is (never made private, never made public)
-  if (!keepSharing) { relay = relaySettings_(); restrictDriveTree_(folder, relay.serviceEmail, true); }
+  var access = String(folder.getSharingAccess());
+  if (access !== 'ANYONE_WITH_LINK' && access !== 'ANYONE') {
+    throw new Error('The folder is not shared publicly yet. In Drive: Share → General access → "Anyone with the link" → Viewer.');
+  }
   var events = [], root = [], portfolio = [], subs = folder.getFolders();
   while (subs.hasNext()) {
     var sf = subs.next();
     if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME || sf.getName() === POSTS_FOLDER_NAME) continue; // guest uploads are shown only after approval
-
     var photos = listImages_(sf);
-
     if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
     if (PORTFOLIO_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { portfolio = photos; continue; }   // the photographer's picks for their portfolio
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
   }
   var loose = listImages_(folder);
-
   if (loose.length) events.push({ name: 'Highlights', folder: '', photos: loose });
   var rank = function (e) { return e.folder ? eventRank_(e.folder) : 1000; };
   events.sort(function (a, b) { return rank(a) - rank(b) || a.folder.localeCompare(b.folder, 'en', { numeric: true }); });
@@ -1403,7 +1376,7 @@ function makeGallery_(p, user, opts) {
     var existing = readTable_('Galleries').filter(function (g) { return String(g.orderId) === String(o.orderId); })[0];
     var folderId = folderIdFromUrl_(p.folderUrl) || (existing && existing.folderId);
     if (!folderId) return { ok: false, error: 'Paste the Google Drive folder link (it contains /folders/).' };
-    var scan = scanWeddingFolder_(folderId, !!(existing && driveDelivery_(existing)));
+    var scan = scanWeddingFolder_(folderId);
     var lim = opts.limit || (existing && existing.plan === 'trial' && !isStaff_(user) ? TRIAL_PHOTOS : 0);   // trial weddings stay within 500 photos, also when refreshed
     if (lim && scan.photoCount > lim) return { ok: false, tooMany: true, photoCount: scan.photoCount,
       error: 'The free trial is for weddings up to ' + lim + ' photos. This folder has ' + scan.photoCount + '. Please share a folder with your best ' + lim + ' photos, or contact PicGrades for more.' };
@@ -1461,55 +1434,6 @@ function loadManifest_(g) {
 }
 
 /** Public: everything the gallery page needs. */
-function relayToken_(g, photoId, width, kind) {
-  var cfg = relaySettings_(), payload = { gid: String(g.galleryId), pid: String(photoId), w: Number(width), exp: Math.floor(Date.now() / 1000) + 21600 };
-  var payload64 = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
-  var signature = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(payload64, cfg.secret)).replace(/=+$/, '');
-  var path = kind === 'stream' ? '/stream?g=' + encodeURIComponent(payload.gid) + '&id=' + encodeURIComponent(payload.pid) : '/d/' + encodeURIComponent(payload.pid) + '?g=' + encodeURIComponent(payload.gid) + '&w=' + payload.w;
-  return cfg.origin + path + '&token=' + encodeURIComponent(payload64 + '.' + signature);
-}
-/** Per-gallery delivery: Galleries › delivery = 'drive' for a folder already shared "anyone with the link" — its photos load
- *  straight from Google ({direct:true}); every other gallery keeps the signed private relay. Guest posts and videos (Moments) always use the relay. */
-function driveDelivery_(g) { return String(g && g.delivery || '').trim().toLowerCase() === 'drive'; }
-function relayLinks_(g, id) { return { thumb: relayToken_(g, id, 200), preview: relayToken_(g, id, 1280), full: relayToken_(g, id, 2048) }; }
-function photoLinks_(g, id) { return driveDelivery_(g) ? { direct: true } : relayLinks_(g, id); }
-function relayPhotoRecords_(g, m) {
-  var seen = {}; m.relayPhotos = {};
-  function put(photo, links) {
-    if (!photo || !photo.id || seen[photo.id]) return;
-    seen[photo.id] = true;
-    photo.relay = links;
-    m.relayPhotos[photo.id] = photo.relay;
-  }
-  function add(photo) { if (photo && photo.id && !seen[photo.id]) put(photo, photoLinks_(g, photo.id)); }
-  (m.root || []).forEach(add);
-  (m.events || []).forEach(function (event) { (event.photos || []).forEach(add); (event.teaser || []).forEach(add); });
-  (m.portfolio || []).forEach(add); (m.highlights || []).forEach(add); (m.pool || []).forEach(add);
-  (m.personal || []).forEach(function (event) { (event.photos || []).forEach(add); });
-  if (m.tryDemo && m.tryDemo.galleryId) {
-    var demoGallery = findGallery_(m.tryDemo.galleryId);
-    if (demoGallery) (m.tryDemo.events || []).forEach(function (event) { (event.photos || []).forEach(function (photo) {
-      if (!photo || !photo.id) return;
-      photo.relay = photoLinks_(demoGallery, photo.id);
-      m.relayPhotos[photo.id] = photo.relay;
-    }); });
-  }
-  (m.guestPosts || []).forEach(function (post) {
-    if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
-    else String(post.fileId || '').split(',').filter(String).forEach(function (id) { if (!seen[id]) put({ id: id }, relayLinks_(g, id)); });   // guest posts stay private: always the relay
-  });
-  return m;
-}
-function relayPostList_(g, list) {
-  return (list || []).map(function (post) {
-    if (post.type === 'video') post.streamUrl = relayToken_(g, post.fileId, 0, 'stream');
-    else {
-      var id = String(post.fileId || '').split(',')[0];
-      if (id) post.photoUrl = relayToken_(g, id, 200);
-    }
-    return post;
-  });
-}
 function getGallery_(p) {
   var g = findGallery_(p.g);
   if (g && g.status === 'Draft' && !privileged_(g, p)) return { ok: false, draft: true, title: g.title, error: 'This wedding is being prepared. Please come back soon.' };
@@ -1530,8 +1454,6 @@ function getGallery_(p) {
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   m.guestPhotos = guestPhotosOf_(g);
   if (gatedFor_(g, p)) gateManifest_(g, m, p);
-  m.delivery = driveDelivery_(g) ? 'drive' : 'relay';
-  relayPhotoRecords_(g, m);
   if (g.plan && privileged_(g, p)) { m.plan = planOf_(g); m.plan.upgrade = upgradeLink_(); }   // step 65d: only the couple / photographer see the plan
   m.address = shareAddress_(g);   // step 67: the link guests share — their own domain, or anika-rohan.picgrades.in once that is switched on
   return { gallery: m };
@@ -1843,7 +1765,11 @@ function facesProxy_(p, user) {
   want.forEach(function (id) {
     if (!ids[id]) return;
     var blob = null;
-    try { blob = DriveApp.getFileById(id).getBlob(); } catch (e) {}
+    try {
+      var r = UrlFetchApp.fetch('https://lh3.googleusercontent.com/d/' + id + '=w1600', { muteHttpExceptions: true, followRedirects: true });
+      if (r.getResponseCode() === 200) blob = r.getBlob();
+    } catch (e) {}
+    if (!blob) { try { blob = DriveApp.getFileById(id).getBlob(); } catch (e) {} }
     if (blob) out[id] = 'data:' + (blob.getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(blob.getBytes());
   });
   return { images: out };
@@ -2000,7 +1926,7 @@ function savePost_(p) {
     var data = String(d).replace(/^data:[^,]*,/, '');
     var f = folder.createFile(Utilities.newBlob(Utilities.base64Decode(data), 'image/jpeg', postId + '_' + (i + 1) + '.jpg'));
     // step 50: open to "anyone with the link" only once approved (the couple's own albums are approved straight away)
-    try { f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); } catch (e) {}
+    try { f.setSharing(status === 'approved' ? DriveApp.Access.ANYONE_WITH_LINK : DriveApp.Access.PRIVATE, status === 'approved' ? DriveApp.Permission.VIEW : DriveApp.Permission.NONE); } catch (e) {}
     ids.push(f.getId());
   });
   ensureTab_('GuestPosts', POST_COLUMNS);
@@ -2016,7 +1942,7 @@ function myPosts_(p) {
   ensureTab_('GuestPosts', POST_COLUMNS);
   var posts = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId && x.guestId === guest.guestId; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, caption: x.caption, status: x.status, at: x.at, reviewedAt: x.reviewedAt }; });
-  return { posts: relayPostList_(g, withThumbs_(posts)), thanks: g.thanksNote || defaultThanks_(g) };
+  return { posts: withThumbs_(posts), thanks: g.thanksNote || defaultThanks_(g) };
 }
 /** Step 50: a small preview of a post that is still private (waiting for the couple) — made by Drive for the file's owner, so no public link is needed. */
 function reviewThumb_(fileId) {
@@ -2039,7 +1965,7 @@ function coupleQueue_(p) {
   var all = readTable_('GuestPosts').filter(function (x) { return x.galleryId === g.galleryId; })
     .map(function (x) { return { postId: x.postId, fileId: x.fileId, type: x.type, name: x.name, caption: x.caption, status: x.status, at: x.at }; })
     .sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
-  return { waiting: relayPostList_(g, withThumbs_(all.filter(function (x) { return x.status === 'review'; }))), decided: relayPostList_(g, withThumbs_(all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40))), thanks: g.thanksNote || defaultThanks_(g) };
+  return { waiting: withThumbs_(all.filter(function (x) { return x.status === 'review'; })), decided: withThumbs_(all.filter(function (x) { return x.status !== 'review'; }).slice(0, 40)), thanks: g.thanksNote || defaultThanks_(g) };
 }
 /** Couple link: approve or hide a guest post. */
 function couplePost_(p) {
@@ -2056,7 +1982,7 @@ function couplePost_(p) {
   String(row.fileId || '').split(',').filter(String).forEach(function (id) {
     try {
       var f = DriveApp.getFileById(id);
-      if (decision === 'approved') { try { f.setTrashed(false); } catch (e) {} f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); }
+      if (decision === 'approved') { try { f.setTrashed(false); } catch (e) {} f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); }
       else { f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); if (!keep) f.setTrashed(true); }
     } catch (e) {}
   });
@@ -2429,10 +2355,8 @@ function photoData_(p) {
   cache.put(key, String(used + want.length), 3600);
   var out = {};
   want.forEach(function (id) {
-    if (!driveDelivery_(g) || (tryIds && tryIds[id])) { out[id] = relayToken_(g, id, 1280); return; }
-    // 'drive' gallery: the photo is shared by link, so the server reads it from Google as before the relay (the phone cannot read it across sites)
     try {
-      var r = UrlFetchApp.fetch('https://lh3.googleusercontent.com/d/' + id + '=w1280', { muteHttpExceptions: true, followRedirects: true });
+      var r = UrlFetchApp.fetch('https://lh3.googleusercontent.com/d/' + id + '=w1080', { muteHttpExceptions: true, followRedirects: true });
       if (r.getResponseCode() === 200) out[id] = 'data:' + (r.getBlob().getContentType() || 'image/jpeg') + ';base64,' + Utilities.base64Encode(r.getBlob().getBytes());
     } catch (e) {}
   });
@@ -2495,7 +2419,6 @@ function withItems_(g, out) {
   if (guestPhotosOf_(g) !== 'findme' || !out || !(out.sure || []).length) return out;
   var map = photoMap_(loadManifest_(g));
   out.items = out.sure.map(function (id) { return map[id]; }).filter(Boolean);
-  relayPhotoRecords_(g, { pool: out.items });
   return out;
 }
 function guestFind_(g, f, scale, me, guest) {
@@ -2954,7 +2877,7 @@ function demoTryIds_(gid) {
 function getStudio_(p) {
   var st = studioRow_(p.slug);
   if (!st) return { ok: false, error: 'This photographer page is not available.' };
-  var key = 'studio-relay:' + st.slug, hit = cacheGetBig_(key);
+  var key = 'studio:' + st.slug, hit = cacheGetBig_(key);
   if (hit) return { gallery: JSON.parse(hit) };
   var listed = String(st.galleries || '').split(/[\s,]+/).filter(String);
   ensureTab_('Galleries', GALLERY_COLUMNS);
@@ -2962,7 +2885,7 @@ function getStudio_(p) {
     if (g.status !== 'Published' || String(g.portfolio || '').toLowerCase() === 'off') return false;
     return listed.indexOf(g.galleryId) > -1 || (st.companyName && String(g.companyName) === String(st.companyName));
   }).sort(function (a, b) { return String(b.eventDate || b.createdAt).localeCompare(String(a.eventDate || a.createdAt)); });
-  var events = [], posts = [], reviews = [], relayPhotos = {};
+  var events = [], posts = [], reviews = [];
   gals.forEach(function (g) {
     var m; try { m = loadManifest_(g); } catch (e) { return; }
     var picks = (m.portfolio && m.portfolio.length) ? m.portfolio : [];
@@ -2973,23 +2896,12 @@ function getStudio_(p) {
     }
     if (!picks.length) return;
     var title = g.title || m.title || 'Wedding';
-    picks.slice(0, 60).forEach(function (photo) {
-      photo.relay = photoLinks_(g, photo.id);
-      relayPhotos[photo.id] = photo.relay;
-    });
     events.push({ name: title, folder: g.galleryId, date: g.eventDate || '', photos: picks.slice(0, 60) });
     posts.push({ postId: 'w-' + g.galleryId, fileId: picks.slice(0, 10).map(function (x) { return x.id; }).join(','), type: 'album', name: st.name, caption: title, at: g.eventDate || g.createdAt });
     if (String(g.thanksNote || '').trim()) reviews.push({ photoId: picks[0].id, name: title, text: String(g.thanksNote).slice(0, 400), at: g.eventDate || g.createdAt });
   });
   var tryIt = demoTry_(events.length ? events[0].folder : '');
-  if (tryIt && tryIt.galleryId) {
-    var demoGallery = findGallery_(tryIt.galleryId);
-    if (demoGallery) (tryIt.events || []).forEach(function (event) { (event.photos || []).forEach(function (photo) {
-      photo.relay = photoLinks_(demoGallery, photo.id);
-      relayPhotos[photo.id] = photo.relay;
-    }); });
-  }
-  var out = { isStudio: true, title: st.name, studio: st.name, eventDate: '', events: events, relayPhotos: relayPhotos, personal: [], root: [], guestPosts: posts, tryDemo: tryIt,
+  var out = { isStudio: true, title: st.name, studio: st.name, eventDate: '', events: events, personal: [], root: [], guestPosts: posts, tryDemo: tryIt,
     likes: {}, notes: {}, recentNotes: reviews, mine: {}, faceSearch: false, isCouple: false, guestGate: 'open',
     studioInfo: { slug: st.slug, name: st.name, tagline: st.tagline || '', about: st.about || '', city: st.city || '', phone: st.phone || '', email: st.email || '', instagram: st.instagram || '', website: st.website || '' } };
   cachePutBig_(key, JSON.stringify(out), 300);

@@ -84,7 +84,7 @@ async function pgDownload(m) {
     catch (e) { if (e && e.name === 'AbortError') return; if (e && e.name === 'NotAllowedError') { showToast('Photo ready — tap download again to save'); return; } throw e; }
   } catch (e) {
     if (e && e.name === 'AbortError') return;
-    showToast('Could not get the photo. Please try again.');
+    window.open('https://drive.google.com/uc?export=download&id=' + encodeURIComponent(m.id), '_blank', 'noopener');
   }
 }
 
