@@ -164,7 +164,7 @@ function pgCheckMyPosts() {
   function media(p) {
     // step 50: a post waiting for review is private on Drive — show the preview the server made (videos play once approved)
     if (p.status === 'review' && p.thumb) return '<img alt="" src="' + p.thumb + '">' + (p.type === 'video' ? '<span class="cp-vnote">Video · plays once approved (you can hide it again any time)</span>' : '');
-    if (p.type === 'album' || p.type === 'post') return '<img alt="" src="' + pgEsc(p.photoUrl || pgImg(String(p.fileId).split(',')[0], 300)) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="' + pgEsc(p.streamUrl || '') + '#t=0.5"></video>' : '<img alt="" src="' + pgEsc(p.photoUrl || pgImg(p.fileId, 300)) + '">'; }
+    if (p.type === 'album' || p.type === 'post') return '<img alt="" src="' + pgImg(String(p.fileId).split(',')[0], 300) + '">'; return p.type === 'video' ? '<video muted playsinline preload="metadata" src="/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId) + '#t=0.5"></video>' : '<img alt="" src="' + pgImg(p.fileId, 300) + '">'; }
   function load() {
     return pgApi('coupleQueue').then(r => {
       $('cpThanks').value = r.thanks || '';
@@ -226,7 +226,7 @@ function pgReloadPosts() { return pgApi('getGallery').then(r => { GALLERY.guestP
       } else if (p.type === 'video') {
         media = document.createElement('video'); media.className = 'pgm-img';
         media.setAttribute('playsinline', ''); media.setAttribute('webkit-playsinline', ''); media.setAttribute('muted', ''); media.playsInline = true; media.muted = true; media.loop = true; media.preload = 'metadata';
-        media.src = p.streamUrl || '';
+        media.src = '/api/stream?g=' + encodeURIComponent(GALLERY_ID) + '&id=' + encodeURIComponent(p.fileId);
         pgVidObs.observe(media);
         const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'pgm-mute'; mb.textContent = '🔇'; mb.setAttribute('aria-label', 'Sound on or off');
         mb.addEventListener('click', (e) => { e.stopPropagation(); muted = !muted; document.querySelectorAll('.pgm-guest video').forEach(v => { v.muted = muted; }); document.querySelectorAll('.pgm-mute').forEach(x => { x.textContent = muted ? '🔇' : '🔊'; }); });

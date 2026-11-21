@@ -6,7 +6,7 @@ const W = 'WEDDINGFOLDER1234567890';
 DRIVE.folders[W] = { name: 'Aarav_Kavya_2026', access: 'ANYONE_WITH_LINK' };
 const sub = (id, name) => { DRIVE.folders[id] = { name, parent: W }; };
 sub('fR', '00_Root_Moment'); sub('fW', 'Wedding'); sub('fH', 'Haldi'); sub('fX', 'Baraat'); sub('fE', 'Empty');
-const img = (id, parent, name, mime) => { DRIVE.files[id] = { name, parent, mime: mime || 'image/jpeg', access: 'PRIVATE' }; };
+const img = (id, parent, name, mime) => { DRIVE.files[id] = { name, parent, mime: mime || 'image/jpeg' }; };
 ['r2.jpg', 'r10.jpg', 'r1.jpg'].forEach((n, i) => img('R' + i, 'fR', n));
 img('W1', 'fW', 'w1.jpg'); img('W2', 'fW', 'notes.txt', 'text/plain'); img('H1', 'fH', 'h1.jpg'); img('X1', 'fX', 'x1.jpg'); img('L1', W, 'loose.jpg');
 
@@ -14,15 +14,14 @@ const client = login('alpha@example.com'), admin = login('adcmediaa@gmail.com'),
 const ord = call('me', { token: client }).orders.find(o => /completed/i.test(o.status));
 assert(!call('setGallery', { token: client, orderId: ord.orderId, folderUrl: 'https://example.com/nothing' }).ok, 'bad link rejected');
 DRIVE.folders[W].access = 'PRIVATE';
-let r = call('setGallery', { token: client, orderId: ord.orderId, folderUrl: 'https://drive.google.com/drive/folders/' + W + '?usp=sharing', title: 'Aarav & Kavya', eventDate: '2026-11-20' });
-assert(r.ok && r.photoCount === 7 && r.rootCount === 3, 'private folder can be scanned with relay service-account access');
-assert(DRIVE.folders[W].access === 'PRIVATE' && DRIVE.folders[W].viewers['relay@picgrades-test.iam.gserviceaccount.com'] === 'VIEW', 'wedding folder stays private and grants relay Viewer access');
-assert(DRIVE.files.W1.access === 'PRIVATE' && DRIVE.files.R0.access === 'PRIVATE', 'wedding photos are private after relay setup');
-const gid = r.galleryId;
+let r = call('setGallery', { token: client, orderId: ord.orderId, folderUrl: 'https://drive.google.com/drive/folders/' + W + '?usp=sharing' });
+assert(!r.ok && /not shared publicly/.test(r.error), 'private folder gives a clear sharing message');
+DRIVE.folders[W].access = 'ANYONE_WITH_LINK';
 assert(!call('setGallery', { token: other, orderId: ord.orderId, folderUrl: W }).ok, 'other studio cannot publish on this order');
 r = call('setGallery', { token: client, orderId: ord.orderId, folderUrl: 'https://drive.google.com/drive/folders/' + W + '?usp=sharing', title: 'Aarav & Kavya', eventDate: '2026-11-20' });
-assert(r.ok && r.galleryId === gid && r.photoCount === 7 && r.rootCount === 3, 'refresh scans the private folder and keeps the gallery id');
+assert(r.ok && r.photoCount === 7 && r.rootCount === 3, 'scan: 7 photos, 3 Root Moments (txt ignored)');
 assert(r.events.map(e => e.name).join(',') === 'Haldi,Wedding,Baraat,Highlights', 'events ordered Haldi, Wedding, then others, loose photos as Highlights; empty folder skipped');
+const gid = r.galleryId;
 assert(/^[a-z0-9]{12}$/.test(gid), 'gallery id is a 12-char token');
 assert(call('me', { token: client }).orders.find(o => o.orderId === ord.orderId).galleryId === gid, 'order shows gallery id');
 // public view

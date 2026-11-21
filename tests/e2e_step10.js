@@ -22,7 +22,7 @@ const srv = http.createServer((req, res) => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const errors = [];
   const phone = async (opts) => { const ctx = await b.newContext(Object.assign({ viewport: { width: 390, height: 844 }, hasTouch: true }, opts || {})); const pg = await ctx.newPage();
     pg.on('pageerror', e => errors.push(e.message)); await pg.route('**fonts.g**', r => r.abort());
-    await pg.route('https://lh3.googleusercontent.com/**', r => { const url = new URL(r.request().url()); if (url.pathname === '/stream') { const id = url.searchParams.get('id'); return r.fulfill({ contentType: 'video/mp4', body: bytesOf(id) }); } const id = url.pathname.startsWith('/d/') ? url.pathname.slice(3) : ''; if (!id || id.includes('/')) return r.abort(); return r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
+    await pg.route('https://lh3.googleusercontent.com/**', r => { const id = r.request().url().match(/\/d\/([^=]+)/)[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
     await pg.route('https://drive.google.com/**', r => { const id = new URL(r.request().url()).searchParams.get('id'); r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
     return { ctx, pg }; };
   // ---- guest ----

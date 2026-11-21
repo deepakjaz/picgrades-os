@@ -70,7 +70,7 @@
   function imgFromSrc(src) { return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; }); }
   function loadPhotos(ids, onProgress) {
     var out = {}, done = 0, viaServer = false, queue = ids.slice();
-    function direct(id) { var src = thumbUrl(id, 1600); if (!src) return Promise.reject(new Error('Private photo relay URL unavailable')); return fetch(src).then(function (r) { if (!r.ok) throw new Error('x'); return r.blob(); }).then(bitmapFromBlob); }
+    function direct(id) { return fetch('https://lh3.googleusercontent.com/d/' + id + '=w1600').then(function (r) { if (!r.ok) throw new Error('x'); return r.blob(); }).then(bitmapFromBlob); }
     function server(batch) { return S.opt.api('photoData', { ids: batch }).then(function (r) { return Promise.all(batch.map(function (id) { return r.images[id] ? imgFromSrc(r.images[id]).then(function (im) { out[id] = im; }) : null; })); }); }
     function next() {
       if (!queue.length) return Promise.resolve();
@@ -564,12 +564,7 @@
   };
   function ic(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON[k] || '') + '</svg>'; }
   function isPhone(id) { return String(id).indexOf('ph:') === 0; }
-  function thumbUrl(id, w) {
-    if (isPhone(id)) return (S.thumbs || {})[id] || '';
-    if (typeof window.pgImg === 'function') return window.pgImg(id, w);
-    var records = window.GALLERY && window.GALLERY.relayPhotos, relay = records && records[id];
-    return relay ? (Number(w) <= 300 ? relay.thumb : Number(w) <= 1280 ? relay.preview : relay.full) : '';
-  }
+  function thumbUrl(id, w) { return isPhone(id) ? ((S.thumbs || {})[id] || '') : 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
   // photos from the phone: read here only, made smaller first, nothing uploaded unless the post itself is posted
   function loadPhoneFile(f) {
     var id = 'ph:' + (S.phoneN = (S.phoneN || 0) + 1), u = URL.createObjectURL(f); URLS.push(u);
@@ -895,7 +890,7 @@
     var g = S.profile; g.innerHTML = '';
     var first = strip.firstChild ? strip.firstChild.toDataURL('image/jpeg', 0.8) : '';
     g.appendChild(el('div', { class: 'pe-tile new' }, [el('img', { src: first, alt: 'Your new post' }), el('b', { text: 'New' })].concat(L.n > 1 ? [el('i', { html: ic('slides') })] : [])));
-    (S.opt.recent || []).slice(0, 8).forEach(function (id) { g.appendChild(el('div', { class: 'pe-tile' }, [el('img', { src: thumbUrl(id, 300), alt: '', loading: 'lazy' })])); });
+    (S.opt.recent || []).slice(0, 8).forEach(function (id) { g.appendChild(el('div', { class: 'pe-tile' }, [el('img', { src: 'https://lh3.googleusercontent.com/d/' + id + '=w300', alt: '', loading: 'lazy' })])); });
     while (g.children.length < 9) g.appendChild(el('div', { class: 'pe-tile empty' }));
     S.postBtn.disabled = false; S.postBtn.textContent = 'Post to Root Moment';
   }
