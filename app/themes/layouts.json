@@ -3109,7 +3109,7 @@
    "group": "progress"
   },
   {
-   "id": "cv-sample-quiet",
+   "id": "canvas-quiet",
    "name": "Quiet Portrait",
    "group": "canvas",
    "blocks": [],
@@ -3523,7 +3523,7 @@
    }
   },
   {
-   "id": "cv-sample-night",
+   "id": "canvas-night",
    "name": "Night Gallery",
    "group": "canvas",
    "blocks": [],

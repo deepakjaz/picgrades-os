@@ -27,7 +27,7 @@ const srv = http.createServer((req, res) => {
     pg.on('pageerror', e => errors.push(e.message));
     await pg.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
     await require('./fonts_local').install(pg);
-    for (const id of ['cv-sample-quiet', 'cv-sample-night']) {
+    for (const id of ['canvas-quiet', 'canvas-night']) {
       await pg.goto(URL + '?layout=' + id); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForSelector('#pgStory .pgc', { timeout: 10000 });
       const H = await pg.evaluate(() => document.documentElement.scrollHeight);
       for (let y = 0; y < H; y += 300) { await pg.evaluate(y => scrollTo(0, y), y); await pg.waitForTimeout(120); }
@@ -38,14 +38,14 @@ const srv = http.createServer((req, res) => {
       if (process.env.SHOTS) for (let y = 0, n = 0; y < H && n < 8; y += vh - 60, n++) { await pg.evaluate(y => scrollTo(0, y), y); await pg.waitForTimeout(500); await pg.screenshot({ path: '/tmp/cv_' + tag + '_' + id + '_' + n + '.png' }); }
     }
     if (tag === 'phone') {   // event cards and buttons do what they say
-      await pg.goto(URL + '?layout=cv-sample-quiet'); await pg.waitForSelector('#pgStory .pgc');
+      await pg.goto(URL + '?layout=canvas-quiet'); await pg.waitForSelector('#pgStory .pgc');
       await pg.evaluate(() => document.querySelector('.pgc [data-ev="1"]').click()); await pg.waitForTimeout(700);
       ok(await pg.evaluate(() => document.body.dataset.view !== 'hub' || !!document.querySelector('.pg-collection, #view-collection.active, .collection-view')), 'an event card opens that event');
     }
     await ctx.close();
   }
   { // a layout from a collection (the Canvas tab), applied to the wedding, reaches guests with the wedding
-    const LJ = JSON.parse(fs.readFileSync(path.join(root, 'app/themes/layouts.json'))), doc = LJ.layouts.find(l => l.id === 'cv-sample-night').canvas;
+    const LJ = JSON.parse(fs.readFileSync(path.join(root, 'app/themes/layouts.json'))), doc = LJ.layouts.find(l => l.id === 'canvas-night').canvas;
     const coll = call('canvasSave', { token: admin, item: { kind: 'collection', name: 'Night', scope: 'all' } });
     const lay = call('canvasSave', { token: admin, item: { kind: 'layout', name: 'Night Gallery (saved)', collection: coll.id, scope: 'all', doc } });
     ok(call('coupleLook', { g: pub.galleryId, coupleKey: ck, layout: lay.id }).layout === lay.id, 'the couple applies a layout from a collection');
