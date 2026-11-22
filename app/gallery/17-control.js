@@ -169,6 +169,7 @@
       const of = g => layouts.filter(l => (l.group || 'progress') === g);
       group('Story', 'One long page that tells the wedding as a story while guests scroll.', of('story').map(l => layoutCard(l, inUse(l))));
       group('Minimal', 'Calm, simple pages with the photos first.', [layoutCard(null, !GALLERY.layout)].concat(of('minimal').map(l => layoutCard(l, inUse(l)))));
+      if (ROLE === 'picgrades') group('Free canvas · samples · PicGrades only', 'Step 77: the new layout format — each element placed by hand, separately for phone and laptop.', of('canvas').map(l => layoutCard(l, inUse(l))));
       if (ROLE === 'picgrades') group('In progress · PicGrades only', 'Being reworked. Couples and photographers don’t see these yet.', of('progress').map(l => layoutCard(l, inUse(l))));
     }
     box.querySelectorAll('.pgcp-pagestyles').forEach(ps => { const key = ps.dataset.pagekey; ps.innerHTML = ''; Object.keys(PAGE_DEFS[key].styles).forEach(k => ps.appendChild(styleCard(key, k, curStyle(key) === k))); });
@@ -179,7 +180,7 @@
   function designLayout(id) {
     if (!id) return false;
     if (id === 'custom') { closeSheet(); PGHubEditor.open(); return true; }
-    const l = window.PGLayout && PGLayout.find(id); if (!l) return false;
+    const l = window.PGLayout && PGLayout.find(id); if (!l || l.canvas) return false;   // step 77: free-canvas layouts get their editor in phase 2 (preview for now)
     if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) { closeSheet(); PGTemplateEditor.open(id); return true; }
     if (window.PGHubEditor) { closeSheet(); PGHubEditor.open({ from: id }); return true; }
     return false;

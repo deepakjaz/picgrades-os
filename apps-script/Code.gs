@@ -74,6 +74,10 @@ var PUBLIC_ROUTES = {
   coupleThanks: coupleThanks_,
   coupleFeatures: coupleFeatures_,
   coupleLook: coupleLook_,
+  canvasList: canvasList_,     // step 77: collections and free-canvas layouts (couple link, or logged in)
+  canvasGet: canvasGet_,
+  canvasSave: canvasSave_,
+  canvasDelete: canvasDelete_,
   myFind: myFind_,
   askDownload: askDownload_,
   askAccess: askAccess_,
@@ -1448,6 +1452,7 @@ function getGallery_(p) {
   m.features = featuresOf_(g);
   m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
   m.custom = customOf_(g.custom);
+  if (/^cv-/.test(m.layout)) { var cvx = canvasFor_(g, m.layout); if (cvx) m.canvas = { id: cvx.id, name: cvx.name, doc: cvx.doc }; else m.layout = ''; }   // step 77: a free-canvas layout from a collection
   m.story = picksOf_(g.storyPicks);
   m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
@@ -2201,6 +2206,7 @@ function saveLook_(g, p) {
   if ('theme' in p) out.theme = lookId_(p.theme);
   if ('layout' in p) out.layout = lookId_(p.layout);
   if ('pages' in p) { var cur = pagesOf_(g.pages), want = pagesOf_(p.pages); Object.keys(want).forEach(function (k) { cur[k] = want[k]; }); out.pages = JSON.stringify(cur); }
+  if (/^cv-/.test(out.layout || '') && !canvasFor_(g, out.layout)) return { ok: false, error: 'That layout is not available for this wedding.' };   // step 77
   if ('custom' in p) { var c = customOf_(p.custom); if (!c.blocks.length && !c.story) return { ok: false, error: 'Your Hub has no cards yet.' }; out.custom = JSON.stringify(c); }
   if ('version' in p) {   // step 76: keep (or forget) the couple's version of one layout
     var v = typeof p.version === 'string' ? jsonObj_(p.version) : (p.version || {}), vid = lookId_(v.id);
@@ -2331,9 +2337,10 @@ function customOf_(v) {
 }
 // Step 76: the Template Studio's Story (c1–c5) and Minimal (g1–g3) templates. What the couple changed in the Template editor:
 // photos (slot → one of the wedding's photo ids), colours (light / dark), hidden parts, motion, the names and the date line.
-var STORY_KINDS = ['living', 'editorial', 'c1', 'c2', 'c3', 'c4', 'c5', 'g1', 'g2', 'g3'];
+var STORY_KINDS = ['living', 'editorial', 'c1', 'c2', 'c3', 'c4', 'c5', 'g1', 'g2', 'g3', 'canvas'];
 var TPL_COLOURS = ['bg', 'ink', 'acc', 'acc2', 'card', 'sea'];
 function tplTune_(st, out) {
+  if (out.kind === 'canvas') { out.doc = canvasDoc_(st.doc); return out; }   // step 77
   if (!/^[cg]\d$/.test(out.kind)) return out;
   var photos = {}, n = 0;
   Object.keys(st.photos || {}).forEach(function (k) { var id = String(st.photos[k] || ''); if (/^[se]\d{1,3}$/.test(k) && /^[A-Za-z0-9_-]{2,120}$/.test(id) && n < 80) { photos[k] = id; n++; } });
@@ -2355,7 +2362,13 @@ function versionsOf_(v) {
   return out;
 }
 // the photos chosen for the Hub's template are part of its look: guests see them (like the cover photos)
-function hubPhotos_(g) { var c = customOf_(g.custom), ph = (lookId_(g.layout) === 'custom' && c.story && c.story.photos) || {}; return Object.keys(ph).map(function (k) { return ph[k]; }); }
+function hubPhotos_(g) {
+  var lay = lookId_(g.layout);
+  if (/^cv-/.test(lay)) { var cv = canvasFor_(g, lay); return cv ? canvasPhotoIds_(cv.doc) : []; }   // step 77: photos picked one by one in a free-canvas layout
+  var c = customOf_(g.custom), ph = (lay === 'custom' && c.story && c.story.photos) || {};
+  if (lay === 'custom' && c.story && c.story.doc) return canvasPhotoIds_(c.story.doc);
+  return Object.keys(ph).map(function (k) { return ph[k]; });
+}
 // Page styles (step 36): which style each page uses. Only known pages and styles are kept.
 var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'], viewer: ['live', 'classic'], header: ['right', 'left'], comments: ['below', 'typing', 'off'], watermark: ['off', 'on'], modeside: ['right', 'left'] };   // header: where the couple's logo sits (step 44)   // events: the list of all events (step 37)
 function pagesOf_(v) {
@@ -2944,4 +2957,172 @@ function getStudio_(p) {
     studioInfo: { slug: st.slug, name: st.name, tagline: st.tagline || '', about: st.about || '', city: st.city || '', phone: st.phone || '', email: st.email || '', instagram: st.instagram || '', website: st.website || '' } };
   cachePutBig_(key, JSON.stringify(out), 300);
   return { gallery: out };
+}
+
+
+// ===================== Step 77: collections and free-canvas layouts =====================
+// One tab, "Canvas": a row is a collection (kind 'collection') or a layout (kind 'layout', its design in doc).
+// Anyone can make them — PicGrades staff, photographers, couples — and each decides who sees it (scope):
+//   me (only who made it) · wedding (this wedding) · studio (all of a photographer's weddings) · all (every wedding: PicGrades only).
+// The layout format is drawn by app/gallery/34-canvas.js; canvasDoc_() keeps only what it knows.
+var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status'];
+var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape'];
+var CANVAS_ACTS = ['findme', 'reel', 'post', 'memory', 'moments', 'notes'];
+var CANVAS_FONTS = ['Cormorant Garamond', 'Pinyon Script', 'Marcellus', 'Jost', 'Instrument Serif', 'Parisienne', 'Bodoni Moda', 'Playfair Display', 'Great Vibes', 'Montserrat'];
+var CANVAS_MAX_DOC = 45000, CANVAS_MAX_PER_OWNER = 200;
+
+function cvNum_(v, lo, hi, d) { var n = Number(v); if (!isFinite(n)) return d; return Math.max(lo, Math.min(hi, Math.round(n * 100) / 100)); }
+function cvCol_(v) { v = String(v || ''); return /^#[0-9a-fA-F]{3,8}$/.test(v) ? v : ''; }
+function cvTxt_(v, n) { return String(v == null ? '' : v).replace(/[<>\u0000-\u0009\u000b-\u001f]/g, '').slice(0, n); }
+function cvId_(v) { v = String(v || ''); return /^[A-Za-z0-9_-]{1,80}$/.test(v) ? v : ''; }
+function cvSpot_(o, W) {
+  if (!o || typeof o !== 'object') return null;
+  var out = { x: cvNum_(o.x, -W, W * 2, 0), y: cvNum_(o.y, -2000, 6000, 0), w: cvNum_(o.w, 2, W * 3, 100), h: cvNum_(o.h, 2, 6000, 40), z: cvNum_(o.z, 0, 99, 1) };
+  if (o.r) out.r = cvNum_(o.r, -180, 180, 0);
+  if (o.hide) out.hide = true;
+  return out;
+}
+function cvStyle_(o) {
+  if (!o || typeof o !== 'object') return null;
+  var out = {};
+  if (CANVAS_FONTS.indexOf(o.font) > -1) out.font = o.font;
+  ['size', 'weight', 'ls', 'lh', 'radius', 'border', 'shadow', 'opacity', 'fx', 'fy', 'pad'].forEach(function (k) { if (o[k] != null && o[k] !== '') out[k] = cvNum_(o[k], -10, 1000, 0); });
+  ['color', 'bg', 'bcolor'].forEach(function (k) { var c = cvCol_(o[k]); if (c) out[k] = c; });
+  if (['left', 'center', 'right'].indexOf(o.align) > -1) out.align = o.align;
+  if (['arch', 'circle'].indexOf(o.shape) > -1) out.shape = o.shape;
+  if (o.italic) out.italic = true; if (o.upper) out.upper = true;
+  return Object.keys(out).length ? out : null;
+}
+function cvSrc_(o) {
+  if (!o || typeof o !== 'object') return null;
+  var k = ['cover', 'hl', 'ev', 'id', 'auto'].indexOf(o.k) > -1 ? o.k : 'auto', out = { k: k };
+  if (o.n != null) out.n = cvNum_(o.n, 0, 999, 0);
+  if (o.i != null) out.i = cvNum_(o.i, 0, 99, 0);
+  if (k === 'id') { out.id = cvId_(o.id); if (!out.id) return null; }
+  return out;
+}
+/** The layout document, cleaned: only the parts 34-canvas.js draws, inside sensible limits. */
+function canvasDoc_(d) {
+  d = typeof d === 'string' ? jsonObj_(d) : (d || {});
+  var out = { v: 1, name: cvTxt_(d.name, 60), colors: {}, fonts: {}, sections: [] };
+  ['bg', 'ink', 'acc', 'acc2', 'card'].forEach(function (k) { var c = cvCol_((d.colors || {})[k]); if (c) out.colors[k] = c; });
+  ['head', 'body'].forEach(function (k) { var f = (d.fonts || {})[k]; if (CANVAS_FONTS.indexOf(f) > -1) out.fonts[k] = f; });
+  (Array.isArray(d.sections) ? d.sections : []).slice(0, 24).forEach(function (sec, si) {
+    if (!sec || typeof sec !== 'object') return;
+    var o = { id: cvId_(sec.id) || ('s' + si), h: { p: cvNum_((sec.h || {}).p, 40, 4000, 600) }, els: [] };
+    if ((sec.h || {}).l != null) o.h.l = cvNum_(sec.h.l, 40, 4000, 600);
+    var bg = sec.bg || {}, ob = {};
+    if (cvCol_(bg.c)) ob.c = cvCol_(bg.c);
+    var bs = cvSrc_(bg.src); if (bs) ob.src = bs;
+    if (bg.dim) ob.dim = cvNum_(bg.dim, 0, 0.8, 0);
+    ['fx', 'fy'].forEach(function (k) { if (bg[k] != null) ob[k] = cvNum_(bg[k], 0, 100, 50); });
+    if (Object.keys(ob).length) o.bg = ob;
+    (Array.isArray(sec.els) ? sec.els : []).slice(0, 60).forEach(function (el, ei) {
+      if (!el || CANVAS_EL_TYPES.indexOf(el.t) < 0) return;
+      var e = { id: cvId_(el.id) || ('e' + si + '-' + ei), t: el.t, p: cvSpot_(el.p, 390) || { x: 0, y: 0, w: 100, h: 40, z: 1 } };
+      var l = cvSpot_(el.l, 1200); if (l) e.l = l;
+      var st = cvStyle_(el.s); if (st) e.s = st;
+      var sl = cvStyle_(el.sl); if (sl) e.sl = sl;
+      if (['fade', 'rise', 'zoom', 'float'].indexOf(el.m) > -1) e.m = el.m;
+      if (el.text != null && el.text !== '') e.text = cvTxt_(el.text, 400);
+      var src = cvSrc_(el.src); if (src) e.src = src;
+      if (CANVAS_ACTS.indexOf(el.act) > -1) e.act = el.act;
+      if (['row', 'circles', 'list', 'pill', 'circle', 'text', 'line'].indexOf(el.v) > -1) e.v = el.v;
+      if (el.per != null) e.per = typeof el.per === 'object' ? { p: cvNum_(el.per.p, 1, 8, 2.2), l: cvNum_(el.per.l, 1, 8, 3.5) } : cvNum_(el.per, 1, 8, 2.2);
+      if (el.n != null) e.n = cvNum_(el.n, 0, 50, 0);
+      o.els.push(e);
+    });
+    out.sections.push(o);
+  });
+  return out;
+}
+/** The photos a layout picked one by one (guests of a "Find me first" wedding may see these, like the cover photos). */
+function canvasPhotoIds_(doc) {
+  var ids = [];
+  ((doc || {}).sections || []).forEach(function (sec) {
+    if (sec.bg && sec.bg.src && sec.bg.src.k === 'id') ids.push(sec.bg.src.id);
+    (sec.els || []).forEach(function (e) { if (e.src && e.src.k === 'id' && e.src.id) ids.push(e.src.id); });
+  });
+  return ids;
+}
+/** Who is asking: PicGrades staff, a photographer (their studio), or a couple (their wedding). */
+function canvasWho_(p) {
+  if (p.token) {
+    var u = authUser_(p.token); if (!u) throw new Error('Please log in again.');
+    var g = null; if (p.g) g = staffGallery_(p.g, u).g;
+    if (isStaff_(u)) return { role: 'staff', owner: 'staff:' + String(u.email).toLowerCase(), g: g, companyName: g ? g.companyName : '' };
+    return { role: 'studio', owner: 'studio:' + String(u.companyName || '').trim().toLowerCase(), g: g, companyName: String(u.companyName || '') };
+  }
+  var cg = coupleGallery_(p);
+  return { role: 'couple', owner: 'couple:' + cg.galleryId, g: cg, companyName: cg.companyName };
+}
+function canvasSees_(row, who) {
+  if (String(row.status) === 'deleted') return false;
+  if (who.role === 'staff') return true;
+  if (row.owner === who.owner) return true;
+  if (row.scope === 'all') return true;
+  if (row.scope === 'studio' && String(row.companyName).trim().toLowerCase() === String(who.companyName || '').trim().toLowerCase() && who.companyName) return true;
+  if (row.scope === 'wedding' && who.g && String(row.galleryId) === String(who.g.galleryId)) return true;
+  return false;
+}
+function canvasRows_() { ensureTab_('Canvas', CANVAS_COLUMNS); return readTable_('Canvas'); }
+function canvasMeta_(r) { return { id: r.id, kind: r.kind, collection: r.collection || '', name: r.name, note: r.note || '', scope: r.scope, mine: false, order: Number(r.order) || 0, updatedAt: r.updatedAt }; }
+/** The free-canvas layout a wedding uses (or null when it can't see it any more). */
+function canvasFor_(g, id) {
+  var r = canvasRows_().filter(function (x) { return x.id === id && x.kind === 'layout'; })[0];
+  if (!r || String(r.status) === 'deleted') return null;
+  var ok = r.scope === 'all' || (r.scope === 'wedding' && String(r.galleryId) === String(g.galleryId)) || (r.scope === 'studio' && String(r.companyName).trim().toLowerCase() === String(g.companyName).trim().toLowerCase()) || (r.owner === 'couple:' + g.galleryId);
+  return ok ? { id: r.id, name: r.name, doc: canvasDoc_(r.doc) } : null;
+}
+function canvasList_(p) {
+  var who = canvasWho_(p), out = { collections: [], layouts: [] };
+  canvasRows_().forEach(function (r) {
+    if (!canvasSees_(r, who)) return;
+    var m = canvasMeta_(r); m.mine = r.owner === who.owner || who.role === 'staff';
+    (r.kind === 'collection' ? out.collections : out.layouts).push(m);
+  });
+  var by = function (a, b) { return a.order - b.order || String(a.name).localeCompare(String(b.name)); };
+  out.collections.sort(by); out.layouts.sort(by);
+  out.role = who.role;
+  return out;
+}
+function canvasGet_(p) {
+  var who = canvasWho_(p), r = canvasRows_().filter(function (x) { return x.id === p.id; })[0];
+  if (!r || !canvasSees_(r, who)) return { ok: false, error: 'Layout not found.' };
+  var m = canvasMeta_(r); m.mine = r.owner === who.owner || who.role === 'staff';
+  if (r.kind === 'layout') m.doc = canvasDoc_(r.doc);
+  return m;
+}
+function canvasSave_(p) {
+  var who = canvasWho_(p), it = typeof p.item === 'string' ? jsonObj_(p.item) : (p.item || {});
+  var kind = it.kind === 'collection' ? 'collection' : 'layout';
+  var scopes = who.role === 'staff' ? ['me', 'wedding', 'studio', 'all'] : who.role === 'studio' ? ['me', 'wedding', 'studio'] : ['me', 'wedding'];
+  var scope = scopes.indexOf(it.scope) > -1 ? it.scope : 'me';
+  if (scope === 'wedding' && !who.g) return { ok: false, error: 'Choose the wedding first.' };
+  var name = cvTxt_(it.name, 60).trim(); if (!name) return { ok: false, error: 'Give it a name.' };
+  var rows = canvasRows_(), old = it.id ? rows.filter(function (x) { return x.id === it.id; })[0] : null;
+  if (old && !(old.owner === who.owner || who.role === 'staff')) return { ok: false, error: 'Only the person who made it can change it. Save a copy instead.' };
+  var coll = '';
+  if (kind === 'layout' && it.collection) {
+    var c = rows.filter(function (x) { return x.id === it.collection && x.kind === 'collection'; })[0];
+    if (!c || !canvasSees_(c, who)) return { ok: false, error: 'That collection is not available.' };
+    coll = c.id;
+  }
+  var doc = '';
+  if (kind === 'layout') { doc = JSON.stringify(canvasDoc_(it.doc)); if (doc.length > CANVAS_MAX_DOC) return { ok: false, error: 'This layout is too big to save. Remove a few parts.' }; }
+  var row = { kind: kind, collection: coll, name: name, note: cvTxt_(it.note, 200), scope: scope, galleryId: scope === 'wedding' || who.role === 'couple' ? (who.g ? who.g.galleryId : '') : '',
+    companyName: who.companyName || '', doc: doc, order: cvNum_(it.order, -999, 999, 0), updatedAt: fmt_(new Date()), status: 'live' };
+  if (old) { updateRowByNumber_('Canvas', old._row, row); row.id = old.id; }
+  else {
+    if (rows.filter(function (x) { return x.owner === who.owner && String(x.status) !== 'deleted'; }).length >= CANVAS_MAX_PER_OWNER) return { ok: false, error: 'You have too many saved layouts. Delete a few first.' };
+    row.id = (kind === 'collection' ? 'cc-' : 'cv-') + Utilities.getUuid().replace(/-/g, '').slice(0, 10).toLowerCase(); row.owner = who.owner; appendRow_('Canvas', row);
+  }
+  return canvasGet_(Object.assign({}, p, { id: row.id }));
+}
+function canvasDelete_(p) {
+  var who = canvasWho_(p), r = canvasRows_().filter(function (x) { return x.id === p.id; })[0];
+  if (!r || String(r.status) === 'deleted') return { ok: false, error: 'Not found.' };
+  if (!(r.owner === who.owner || who.role === 'staff')) return { ok: false, error: 'Only the person who made it can delete it.' };
+  updateRowByNumber_('Canvas', r._row, { status: 'deleted', updatedAt: fmt_(new Date()) });
+  return { ok: true, id: r.id };
 }

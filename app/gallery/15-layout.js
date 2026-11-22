@@ -259,8 +259,9 @@
   // "living" = Living Story (Gemini), "editorial" = Editorial Album (ChatGPT). They get the wedding's data and call back here to open things.
   const STORY = { living: () => window.PGStoryLiving, editorial: () => window.PGStoryEditorial };
   // step 76: the Template Studio's Story (c1–c5) and Minimal (g1–g3) templates (32-story-studio.js)
-  const storyMod = k => (STORY[k] ? STORY[k]() : window.PGStoryStudio && PGStoryStudio.mods[k]) || null;
-  const storyKnown = k => !!STORY[k] || !!(window.PGStoryStudio && PGStoryStudio.mods[k]);
+  // step 77: 'canvas' = a free-canvas layout (34-canvas.js), its layout document travels as the tune
+  const storyMod = k => (STORY[k] ? STORY[k]() : k === 'canvas' ? window.PGCanvas && PGCanvas.mod : window.PGStoryStudio && PGStoryStudio.mods[k]) || null;
+  const storyKnown = k => !!STORY[k] || k === 'canvas' || !!(window.PGStoryStudio && PGStoryStudio.mods[k]);
   const storyKinds = () => Object.keys(STORY).concat(window.PGStoryStudio ? PGStoryStudio.kinds : []);
   let storyOn = null;   // { kind, mod } while a story is on screen
   // Story settings (step 54, changed in the Hub editor): sections shown / hidden / moved, the floating Find me button, the icon bar, the headings.
@@ -350,15 +351,16 @@
     if (q === 'original') return null;   // preview of the original Hub
     const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {};
     if (window.PGHubDraft && PGHubDraft()) return customOf(PGHubDraft());   // the Hub editor's draft, previewed on this phone only
-    const id = q || (window.pgDemoRotates && pgDemoRotates('layout') ? pgDemoPick('layout', LAYOUTS.filter(l => l.group !== 'progress').map(l => l.id)) : G.layout || '');   // step 72: demo rotates
+    const id = q || (window.pgDemoRotates && pgDemoRotates('layout') ? pgDemoPick('layout', LAYOUTS.filter(l => l.group !== 'progress' && l.group !== 'canvas').map(l => l.id)) : G.layout || '');   // step 72: demo rotates
     if (id === 'custom') return G.custom && G.custom.blocks ? customOf(G.custom) : null;
+    if (/^cv-/.test(id) && G.canvas && G.canvas.id === id && G.canvas.doc) return { id, name: G.canvas.name || 'Hub', story: 'canvas', tune: { doc: G.canvas.doc }, blocks: [] };   // step 77: a layout from a collection
     // (a ready layout can bring its own palette: "palette": { "id": "royal" })   // the wedding's own Hub (made in the Hub editor)
     return LAYOUTS.find(l => l.id === id) || null;
   }
   const customOf = c => (c.story && storyKnown(c.story.kind) ? { id: 'custom', name: 'Our own Hub', theme: '', base: c.base || '', story: c.story.kind, tune: c.story, blocks: [] }
     : { id: 'custom', name: 'Our own Hub', theme: '', palette: c.palette || null, blocks: (c.blocks || []).map(b => Object.assign({}, b)) });
   try { localStorage.removeItem('pg_layout_pick'); } catch (e) {}   // old test-menu choice no longer overrides the wedding
-  const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
+  const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); LAYOUTS.forEach(l => { if (l.canvas) { l.story = 'canvas'; l.tune = { doc: l.canvas }; } }); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
   pgAfter('pgRenderHub', () => { if (LAYOUTS.length) { cur = choose(); render(); } });
   // apply(id) shows a layout straight away (the Control Panel saves it for the wedding); '' = the original Hub
   window.PGLayout = { ready, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render, build, plan: (l, scr) => { SCR_FOR = scr; try { return plan(l, scr, data()); } finally { SCR_FOR = null; } },
