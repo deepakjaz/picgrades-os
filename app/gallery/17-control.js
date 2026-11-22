@@ -171,16 +171,40 @@
       group('Minimal', 'Calm, simple pages with the photos first.', [layoutCard(null, !GALLERY.layout)].concat(of('minimal').map(l => layoutCard(l, inUse(l)))));
       if (ROLE === 'picgrades') group('Free canvas · samples · PicGrades only', 'Step 77: the new layout format — each element placed by hand, separately for phone and laptop.', of('canvas').map(l => layoutCard(l, inUse(l))));
       if (ROLE === 'picgrades') group('In progress · PicGrades only', 'Being reworked. Couples and photographers don’t see these yet.', of('progress').map(l => layoutCard(l, inUse(l))));
+      collectionGroups(la, group);
     }
     box.querySelectorAll('.pgcp-pagestyles').forEach(ps => { const key = ps.dataset.pagekey; ps.innerHTML = ''; Object.keys(PAGE_DEFS[key].styles).forEach(k => ps.appendChild(styleCard(key, k, curStyle(key) === k))); });
   }
   // step 76: tapping a layout opens it straight in an editor (no preview page first): the Template editor for a story template,
   // the Hub editor for a card layout. Original Hub has nothing to design, so it keeps the preview.
   function closeSheet() { const s = document.querySelector('.pgcp-sheet'); if (s) { s.remove(); document.documentElement.classList.remove('pgcp-open'); document.querySelectorAll('.overlay-backdrop.show').forEach(x => x.remove()); } }
+  // step 77: layouts from collections (the Canvas tab): yours first, then each collection, then the ones shared with this wedding
+  let cvList = null;
+  function collectionGroups(la, group) {
+    if (ROLE === 'demo' || ROLE === 'guest') { if (GALLERY.canvas && GALLERY.canvas.id === 'cv-demo') group('Your layouts', 'Made on this phone (demo).', [cvCard({ id: 'cv-demo', name: GALLERY.canvas.name })]); return; }
+    const paint = r => {
+      if (!la.isConnected) return;
+      la.querySelectorAll('.pgcp-lgroup.cv').forEach(x => x.remove());
+      const L = r.layouts || [], used = {}, add = (t, n, cards) => { const before = la.children.length; group(t, n, cards); if (la.children.length > before) la.lastElementChild.classList.add('cv'); };
+      (r.collections || []).forEach(c => { const ls = L.filter(l => l.collection === c.id); ls.forEach(l => { used[l.id] = 1; }); add(c.name, c.note || (c.mine ? 'Your collection.' : 'A collection shared with you.'), ls.map(cvCard)); });
+      const mine = L.filter(l => !used[l.id] && l.mine), other = L.filter(l => !used[l.id] && !l.mine);
+      add('Your layouts', 'Made with the layout editor.', mine.map(cvCard));
+      add('Shared with you', 'Layouts others shared with this wedding.', other.map(cvCard));
+    };
+    if (cvList) paint(cvList);
+    pgApi('canvasList', {}).then(r => { cvList = r; paint(r); }).catch(() => {});
+  }
+  function cvCard(l) {
+    const b = h('button', 'pgcp-layout' + (GALLERY.layout === l.id ? ' on' : '')); b.type = 'button'; b.dataset.layout = l.id;
+    b.append(h('span', 'pgcp-mini cvl', esc(l.name)), h('b', '', esc(l.name)), h('small', '', GALLERY.layout === l.id ? 'In use' : 'Tap to design'));
+    return b;
+  }
   function designLayout(id) {
     if (!id) return false;
     if (id === 'custom') { closeSheet(); PGHubEditor.open(); return true; }
-    const l = window.PGLayout && PGLayout.find(id); if (!l || l.canvas) return false;   // step 77: free-canvas layouts get their editor in phase 2 (preview for now)
+    if (/^cv-/.test(id) && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }   // step 77: a layout from a collection
+    const l = window.PGLayout && PGLayout.find(id); if (!l) return false;
+    if (l.canvas && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }
     if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) { closeSheet(); PGTemplateEditor.open(id); return true; }
     if (window.PGHubEditor) { closeSheet(); PGHubEditor.open({ from: id }); return true; }
     return false;
@@ -190,10 +214,11 @@
     const p = h('div', 'pgcp-pane',
       (part === 'all' || part === 'theme' ? (part === 'all' ? '<h4>Theme</h4>' : '') + '<p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' : '') +
       (part === 'all' || part === 'layout' ? (part === 'all' ? '<h4>Hub layout</h4>' : '') + '<p class="pgcp-note">How the Hub is arranged. Tap one to design it: change its colours, photos and parts, then apply it. Each layout keeps your version, so you can come back to it later.</p>' +
-      '<button type="button" class="pgcp-design">✎ Design your own Hub</button><div class="pgcp-layouts"></div>' : '') +
+      '<div class="pgcp-designs"><button type="button" class="pgcp-design">✎ Design your own Hub</button><button type="button" class="pgcp-design pgcp-canvas">＋ New free layout (drag and drop)</button></div><div class="pgcp-layouts"></div>' : '') +
       (part === 'all' || part === 'pages' ? Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join('') : ''));
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }
+      if (e.target.closest('.pgcp-canvas')) { closeSheet(); PGCanvasEditor.open(); return; }   // step 77
       if (e.target.closest('.pgcp-design')) { closeSheet(); PGHubEditor.open(); return; }
       const st = e.target.closest('.pgcp-style'); if (st) { preview({ pages: { [st.dataset.pagekey]: st.dataset.style } }, p.parentNode); return; }
       const l = e.target.closest('.pgcp-layout'); if (l) { if (!designLayout(l.dataset.layout)) preview({ layout: l.dataset.layout }, p.parentNode); }
