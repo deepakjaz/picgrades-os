@@ -3107,6 +3107,788 @@
    ],
    "by": "B",
    "group": "progress"
+  },
+  {
+   "id": "cv-sample-quiet",
+   "name": "Quiet Portrait",
+   "group": "canvas",
+   "blocks": [],
+   "canvas": {
+    "v": 1,
+    "name": "Quiet Portrait",
+    "colors": {
+     "bg": "#f4efe7",
+     "ink": "#2b2521",
+     "acc": "#9a7b4f",
+     "acc2": "#c9a56a",
+     "card": "#ffffff"
+    },
+    "fonts": {
+     "head": "Cormorant Garamond",
+     "body": "Jost"
+    },
+    "sections": [
+     {
+      "id": "hero",
+      "h": {
+       "p": 844,
+       "l": 780
+      },
+      "bg": {
+       "c": "#f4efe7"
+      },
+      "els": [
+       {
+        "id": "cover",
+        "t": "photo",
+        "p": {
+         "x": 24,
+         "y": 96,
+         "w": 342,
+         "h": 520,
+         "z": 1
+        },
+        "l": {
+         "x": 110,
+         "y": 100,
+         "w": 440,
+         "h": 620,
+         "z": 1
+        },
+        "s": {
+         "shape": "arch",
+         "radius": 6,
+         "shadow": 1,
+         "fy": 28
+        },
+        "src": {
+         "k": "cover",
+         "n": 0
+        },
+        "m": "fade"
+       },
+       {
+        "id": "names",
+        "t": "names",
+        "p": {
+         "x": 20,
+         "y": 636,
+         "w": 350,
+         "h": 70,
+         "z": 1
+        },
+        "l": {
+         "x": 640,
+         "y": 300,
+         "w": 480,
+         "h": 160,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 40,
+         "italic": true,
+         "align": "center",
+         "lh": 1.05
+        },
+        "m": "rise",
+        "sl": {
+         "size": 66,
+         "align": "left"
+        }
+       },
+       {
+        "id": "date",
+        "t": "date",
+        "p": {
+         "x": 20,
+         "y": 712,
+         "w": 350,
+         "h": 26,
+         "z": 1
+        },
+        "l": {
+         "x": 640,
+         "y": 470,
+         "w": 480,
+         "h": 30,
+         "z": 1
+        },
+        "s": {
+         "size": 12,
+         "ls": 0.28,
+         "upper": true,
+         "color": "#9a7b4f",
+         "align": "center"
+        },
+        "m": "rise",
+        "sl": {
+         "size": 14,
+         "align": "left"
+        }
+       },
+       {
+        "id": "welcome",
+        "t": "text",
+        "p": {
+         "x": 40,
+         "y": 750,
+         "w": 310,
+         "h": 44,
+         "z": 1
+        },
+        "l": {
+         "x": 640,
+         "y": 520,
+         "w": 420,
+         "h": 70,
+         "z": 1
+        },
+        "s": {
+         "size": 13,
+         "align": "center",
+         "opacity": 0.75,
+         "lh": 1.5
+        },
+        "m": "rise",
+        "text": "Welcome to our wedding.\nFind yourself, and stay a while.",
+        "sl": {
+         "size": 16,
+         "align": "left"
+        }
+       }
+      ]
+     },
+     {
+      "id": "days",
+      "h": {
+       "p": 440,
+       "l": 560
+      },
+      "els": [
+       {
+        "id": "t1",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 36,
+         "w": 342,
+         "h": 44,
+         "z": 1
+        },
+        "l": {
+         "x": 110,
+         "y": 60,
+         "w": 700,
+         "h": 60,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 30,
+         "italic": true
+        },
+        "text": "The celebrations",
+        "sl": {
+         "size": 40
+        }
+       },
+       {
+        "id": "ev",
+        "t": "events",
+        "p": {
+         "x": 24,
+         "y": 96,
+         "w": 366,
+         "h": 300,
+         "z": 1
+        },
+        "l": {
+         "x": 110,
+         "y": 150,
+         "w": 980,
+         "h": 360,
+         "z": 1
+        },
+        "s": {
+         "radius": 14,
+         "size": 14,
+         "weight": 500
+        },
+        "v": "row",
+        "per": {
+         "p": 2.2,
+         "l": 3.4
+        }
+       }
+      ]
+     },
+     {
+      "id": "frames",
+      "h": {
+       "p": 360,
+       "l": 460
+      },
+      "els": [
+       {
+        "id": "strip",
+        "t": "strip",
+        "p": {
+         "x": 0,
+         "y": 30,
+         "w": 390,
+         "h": 250,
+         "z": 1
+        },
+        "l": {
+         "x": 0,
+         "y": 40,
+         "w": 1200,
+         "h": 330,
+         "z": 1
+        },
+        "s": {
+         "radius": 8
+        }
+       },
+       {
+        "id": "t2",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 296,
+         "w": 342,
+         "h": 30,
+         "z": 1
+        },
+        "l": {
+         "x": 110,
+         "y": 395,
+         "w": 700,
+         "h": 40,
+         "z": 1
+        },
+        "s": {
+         "size": 12,
+         "ls": 0.24,
+         "upper": true,
+         "color": "#9a7b4f"
+        },
+        "text": "A few of our favourite frames"
+       }
+      ]
+     },
+     {
+      "id": "make",
+      "h": {
+       "p": 560,
+       "l": 440
+      },
+      "bg": {
+       "c": "#ece4d8"
+      },
+      "els": [
+       {
+        "id": "bless",
+        "t": "blessings",
+        "p": {
+         "x": 36,
+         "y": 40,
+         "w": 318,
+         "h": 170,
+         "z": 1
+        },
+        "l": {
+         "x": 110,
+         "y": 70,
+         "w": 560,
+         "h": 230,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 23,
+         "italic": true,
+         "align": "center",
+         "lh": 1.3
+        },
+        "m": "fade"
+       },
+       {
+        "id": "reel",
+        "t": "action",
+        "p": {
+         "x": 24,
+         "y": 250,
+         "w": 342,
+         "h": 54,
+         "z": 1
+        },
+        "l": {
+         "x": 760,
+         "y": 80,
+         "w": 330,
+         "h": 58,
+         "z": 1
+        },
+        "s": {
+         "bg": "#2b2521",
+         "color": "#f4efe7",
+         "radius": 27,
+         "size": 15,
+         "weight": 500
+        },
+        "act": "reel"
+       },
+       {
+        "id": "post",
+        "t": "action",
+        "p": {
+         "x": 24,
+         "y": 316,
+         "w": 342,
+         "h": 54,
+         "z": 1
+        },
+        "l": {
+         "x": 760,
+         "y": 152,
+         "w": 330,
+         "h": 58,
+         "z": 1
+        },
+        "s": {
+         "bg": "#2b2521",
+         "color": "#f4efe7",
+         "radius": 27,
+         "size": 15,
+         "weight": 500
+        },
+        "act": "post"
+       },
+       {
+        "id": "moment",
+        "t": "action",
+        "p": {
+         "x": 24,
+         "y": 382,
+         "w": 342,
+         "h": 54,
+         "z": 1
+        },
+        "l": {
+         "x": 760,
+         "y": 224,
+         "w": 330,
+         "h": 58,
+         "z": 1
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#2b2521",
+         "radius": 27,
+         "size": 15,
+         "weight": 500
+        },
+        "act": "memory"
+       },
+       {
+        "id": "credit",
+        "t": "credit",
+        "p": {
+         "x": 24,
+         "y": 470,
+         "w": 342,
+         "h": 30,
+         "z": 1
+        },
+        "l": {
+         "x": 110,
+         "y": 350,
+         "w": 560,
+         "h": 30,
+         "z": 1
+        },
+        "s": {
+         "size": 11,
+         "ls": 0.2,
+         "upper": true,
+         "align": "center",
+         "opacity": 0.7
+        }
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "cv-sample-night",
+   "name": "Night Gallery",
+   "group": "canvas",
+   "blocks": [],
+   "canvas": {
+    "v": 1,
+    "name": "Night Gallery",
+    "colors": {
+     "bg": "#14110f",
+     "ink": "#f3ead9",
+     "acc": "#e3c48a",
+     "acc2": "#e3c48a",
+     "card": "#221c18"
+    },
+    "fonts": {
+     "head": "Great Vibes",
+     "body": "Jost"
+    },
+    "sections": [
+     {
+      "id": "hero",
+      "h": {
+       "p": 844,
+       "l": 780
+      },
+      "bg": {
+       "c": "#14110f"
+      },
+      "els": [
+       {
+        "id": "a",
+        "t": "photo",
+        "p": {
+         "x": 34,
+         "y": 110,
+         "w": 230,
+         "h": 310,
+         "z": 1,
+         "r": -6
+        },
+        "l": {
+         "x": 90,
+         "y": 110,
+         "w": 360,
+         "h": 500,
+         "z": 1,
+         "r": -5
+        },
+        "s": {
+         "shadow": 3,
+         "border": 6,
+         "bcolor": "#f3ead9",
+         "fy": 25
+        },
+        "src": {
+         "k": "cover",
+         "n": 0
+        },
+        "m": "fade"
+       },
+       {
+        "id": "b",
+        "t": "photo",
+        "p": {
+         "x": 150,
+         "y": 280,
+         "w": 210,
+         "h": 280,
+         "z": 2,
+         "r": 5
+        },
+        "l": {
+         "x": 360,
+         "y": 230,
+         "w": 320,
+         "h": 430,
+         "z": 2,
+         "r": 4
+        },
+        "s": {
+         "shadow": 3,
+         "border": 6,
+         "bcolor": "#f3ead9",
+         "fy": 25
+        },
+        "src": {
+         "k": "cover",
+         "n": 1
+        },
+        "m": "fade"
+       },
+       {
+        "id": "c",
+        "t": "photo",
+        "p": {
+         "x": 40,
+         "y": 470,
+         "w": 160,
+         "h": 190,
+         "z": 3,
+         "r": 3
+        },
+        "l": {
+         "x": 0,
+         "y": 0,
+         "w": 10,
+         "h": 10,
+         "z": 1,
+         "hide": true
+        },
+        "s": {
+         "shadow": 3,
+         "border": 6,
+         "bcolor": "#f3ead9",
+         "fy": 25
+        },
+        "src": {
+         "k": "hl",
+         "n": 0
+        },
+        "m": "float"
+       },
+       {
+        "id": "names",
+        "t": "names",
+        "p": {
+         "x": 16,
+         "y": 664,
+         "w": 358,
+         "h": 80,
+         "z": 1
+        },
+        "l": {
+         "x": 740,
+         "y": 290,
+         "w": 420,
+         "h": 170,
+         "z": 1
+        },
+        "s": {
+         "font": "Great Vibes",
+         "size": 52,
+         "color": "#e3c48a",
+         "align": "center",
+         "lh": 1
+        },
+        "m": "rise",
+        "sl": {
+         "size": 92
+        }
+       },
+       {
+        "id": "date",
+        "t": "date",
+        "p": {
+         "x": 16,
+         "y": 744,
+         "w": 358,
+         "h": 26,
+         "z": 1
+        },
+        "l": {
+         "x": 740,
+         "y": 470,
+         "w": 420,
+         "h": 30,
+         "z": 1
+        },
+        "s": {
+         "size": 12,
+         "ls": 0.3,
+         "upper": true,
+         "align": "center",
+         "opacity": 0.8
+        },
+        "m": "rise",
+        "sl": {
+         "size": 14
+        }
+       }
+      ]
+     },
+     {
+      "id": "days",
+      "h": {
+       "p": 320,
+       "l": 420
+      },
+      "els": [
+       {
+        "id": "t1",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 30,
+         "w": 342,
+         "h": 30,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 60,
+         "w": 700,
+         "h": 40,
+         "z": 1
+        },
+        "s": {
+         "font": "Marcellus",
+         "size": 14,
+         "ls": 0.3,
+         "upper": true,
+         "color": "#e3c48a"
+        },
+        "text": "Our days"
+       },
+       {
+        "id": "ev",
+        "t": "events",
+        "p": {
+         "x": 20,
+         "y": 80,
+         "w": 370,
+         "h": 200,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 120,
+         "w": 1020,
+         "h": 260,
+         "z": 1
+        },
+        "s": {
+         "size": 13,
+         "align": "center"
+        },
+        "v": "circles",
+        "per": {
+         "p": 3.3,
+         "l": 5
+        }
+       }
+      ]
+     },
+     {
+      "id": "still",
+      "h": {
+       "p": 560,
+       "l": 680
+      },
+      "els": [
+       {
+        "id": "big",
+        "t": "photo",
+        "p": {
+         "x": 0,
+         "y": 0,
+         "w": 390,
+         "h": 560,
+         "z": 1
+        },
+        "l": {
+         "x": 0,
+         "y": 0,
+         "w": 1200,
+         "h": 680,
+         "z": 1
+        },
+        "s": {
+         "fy": 30
+        },
+        "src": {
+         "k": "hl",
+         "n": 1
+        },
+        "m": "zoom"
+       }
+      ]
+     },
+     {
+      "id": "words",
+      "h": {
+       "p": 400,
+       "l": 380
+      },
+      "els": [
+       {
+        "id": "bless",
+        "t": "blessings",
+        "p": {
+         "x": 32,
+         "y": 40,
+         "w": 326,
+         "h": 170,
+         "z": 1
+        },
+        "l": {
+         "x": 200,
+         "y": 60,
+         "w": 800,
+         "h": 160,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 23,
+         "italic": true,
+         "align": "center"
+        },
+        "m": "fade"
+       },
+       {
+        "id": "rm",
+        "t": "action",
+        "p": {
+         "x": 95,
+         "y": 240,
+         "w": 200,
+         "h": 50,
+         "z": 1
+        },
+        "l": {
+         "x": 500,
+         "y": 250,
+         "w": 200,
+         "h": 54,
+         "z": 1
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#e3c48a",
+         "color": "#e3c48a",
+         "radius": 25,
+         "size": 14
+        },
+        "act": "moments"
+       },
+       {
+        "id": "credit",
+        "t": "credit",
+        "p": {
+         "x": 24,
+         "y": 330,
+         "w": 342,
+         "h": 30,
+         "z": 1
+        },
+        "l": {
+         "x": 300,
+         "y": 330,
+         "w": 600,
+         "h": 30,
+         "z": 1
+        },
+        "s": {
+         "size": 11,
+         "ls": 0.2,
+         "upper": true,
+         "align": "center",
+         "opacity": 0.6
+        }
+       }
+      ]
+     }
+    ]
+   }
   }
  ]
 }
