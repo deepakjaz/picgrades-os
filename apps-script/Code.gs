@@ -1276,7 +1276,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug'];   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions'];   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1454,7 +1454,8 @@ function getGallery_(p) {
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   m.guestPhotos = guestPhotosOf_(g);
   if (gatedFor_(g, p)) gateManifest_(g, m, p);
-  if (g.plan && privileged_(g, p)) { m.plan = planOf_(g); m.plan.upgrade = upgradeLink_(); }   // step 65d: only the couple / photographer see the plan
+  if (g.plan && privileged_(g, p)) { m.plan = planOf_(g); m.plan.upgrade = upgradeLink_(); }
+  if (g.hubVersions && privileged_(g, p)) m.versions = versionsOf_(g.hubVersions);   // step 76: the couple's saved version of each layout   // step 65d: only the couple / photographer see the plan
   m.address = shareAddress_(g);   // step 67: the link guests share — their own domain, or anika-rohan.picgrades.in once that is switched on
   return { gallery: m };
 }
@@ -1469,7 +1470,7 @@ function photoMap_(m) { var o = {}; (m.root || []).forEach(function (x) { o[x.id
 /** What this guest may see: { found, ids (set), events (event name → true for events opened in full) }. */
 function guestSees_(g, m, p) {
   var st = picksOf_(g.storyPicks), ids = {}, add = function (l) { (l || []).forEach(function (id) { if (id) ids[id] = true; }); };
-  add(st.wh); add(st.cover); add([st.bride, st.groom, st.welcome]);
+  add(st.wh); add(st.cover); add([st.bride, st.groom, st.welcome]); add(hubPhotos_(g));   // step 76: the photos chosen for the Hub's template
   var guest = null, row = null, full = {};
   try { guest = guestFor_(g, p); row = foundRow_(g, guest.phone); } catch (e) {}
   if (row) {
@@ -2201,11 +2202,20 @@ function saveLook_(g, p) {
   if ('layout' in p) out.layout = lookId_(p.layout);
   if ('pages' in p) { var cur = pagesOf_(g.pages), want = pagesOf_(p.pages); Object.keys(want).forEach(function (k) { cur[k] = want[k]; }); out.pages = JSON.stringify(cur); }
   if ('custom' in p) { var c = customOf_(p.custom); if (!c.blocks.length && !c.story) return { ok: false, error: 'Your Hub has no cards yet.' }; out.custom = JSON.stringify(c); }
-  if (!('theme' in out) && !('layout' in out) && !('pages' in out) && !('custom' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
+  if ('version' in p) {   // step 76: keep (or forget) the couple's version of one layout
+    var v = typeof p.version === 'string' ? jsonObj_(p.version) : (p.version || {}), vid = lookId_(v.id);
+    if (!vid || vid === 'custom') return { ok: false, error: 'Choose a layout first.' };
+    var all = versionsOf_(g.hubVersions);
+    if (v.custom) { var vc = customOf_(v.custom); if (!vc.blocks.length && !vc.story) return { ok: false, error: 'Your Hub has no cards yet.' }; vc.base = vid; all[vid] = vc; } else delete all[vid];
+    if (Object.keys(all).length > VERSIONS_MAX) return { ok: false, error: 'Too many saved layouts. Start one again to make room.' };
+    out.hubVersions = JSON.stringify(all);
+  }
+  if (!('theme' in out) && !('layout' in out) && !('pages' in out) && !('custom' in out) && !('hubVersions' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
   out.updatedAt = fmt_(new Date());
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, out);
-  return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages), custom: customOf_('custom' in out ? out.custom : g.custom) };
+  return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages), custom: customOf_('custom' in out ? out.custom : g.custom),
+    versions: versionsOf_('hubVersions' in out ? out.hubVersions : g.hubVersions) };
 }
 // Story photos (step 56): the couple or the photographer chooses which photos the story shows: cover photos (up to 15),
 // the bride's and the groom's portraits (the varmala moment) and 10–15 highlights for each event. Nothing is guessed:
@@ -2309,15 +2319,43 @@ function customOf_(v) {
   var pal = paletteOf_(o.palette); if (pal) out.palette = pal;
   // a Story Hub (step 54): which story, its sections (shown / hidden, order), the floating Find me, the icon bar and reworded headings
   var st = o.story;
-  if (st && (st.kind === 'living' || st.kind === 'editorial')) {
+  if (st && STORY_KINDS.indexOf(st.kind) > -1) {
     var key = /^[a-z0-9-]{1,32}(:\d{1,3})?$/, texts = {}, n = 0;
     Object.keys(st.texts || {}).forEach(function (k) { var v = String(st.texts[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 120); if (key.test(k) && k.indexOf(':') > 0 && v && n < 60) { texts[k] = v; n++; } });
     out.story = { kind: st.kind, findme: ['left', 'right', 'off'].indexOf(st.findme) > -1 ? st.findme : 'right', bar: st.bar === 'on' ? 'on' : 'off', texts: texts,
       sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 20).filter(function (q) { return q && key.test(String(q.k)) && String(q.k).indexOf(':') < 0; }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
+    tplTune_(st, out.story);
     out.blocks = [];
   }
   return out;
 }
+// Step 76: the Template Studio's Story (c1–c5) and Minimal (g1–g3) templates. What the couple changed in the Template editor:
+// photos (slot → one of the wedding's photo ids), colours (light / dark), hidden parts, motion, the names and the date line.
+var STORY_KINDS = ['living', 'editorial', 'c1', 'c2', 'c3', 'c4', 'c5', 'g1', 'g2', 'g3'];
+var TPL_COLOURS = ['bg', 'ink', 'acc', 'acc2', 'card', 'sea'];
+function tplTune_(st, out) {
+  if (!/^[cg]\d$/.test(out.kind)) return out;
+  var photos = {}, n = 0;
+  Object.keys(st.photos || {}).forEach(function (k) { var id = String(st.photos[k] || ''); if (/^[se]\d{1,3}$/.test(k) && /^[A-Za-z0-9_-]{2,120}$/.test(id) && n < 80) { photos[k] = id; n++; } });
+  if (n) out.photos = photos;
+  var colors = {};
+  ['light', 'dark'].forEach(function (m) { var c = (st.colors || {})[m] || {}, o = {}; TPL_COLOURS.forEach(function (k) { if (/^#[0-9a-fA-F]{3,8}$/.test(String(c[k] || ''))) o[k] = String(c[k]); }); if (Object.keys(o).length) colors[m] = o; });
+  if (Object.keys(colors).length) out.colors = colors;
+  var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return /^[a-z0-9-]{1,40}$/.test(k); }).slice(0, 80);
+  if (hide.length) out.hide = hide;
+  if (st.motion === 'off') out.motion = 'off';
+  ['names', 'date'].forEach(function (k) { var v = String(st[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, k === 'names' ? 60 : 80); if (v) out[k] = v; });
+  return out;
+}
+// every layout's saved version (only the couple / photographer / PicGrades see these)
+var VERSIONS_MAX = 40;
+function versionsOf_(v) {
+  var o = typeof v === 'string' ? jsonObj_(v) : (v || {}), out = {};
+  Object.keys(o).slice(0, VERSIONS_MAX).forEach(function (id) { if (lookId_(id) !== id || id === 'custom') return; var c = customOf_(o[id]); if (c.story || c.blocks.length) { c.base = id; out[id] = c; } });
+  return out;
+}
+// the photos chosen for the Hub's template are part of its look: guests see them (like the cover photos)
+function hubPhotos_(g) { var c = customOf_(g.custom), ph = (lookId_(g.layout) === 'custom' && c.story && c.story.photos) || {}; return Object.keys(ph).map(function (k) { return ph[k]; }); }
 // Page styles (step 36): which style each page uses. Only known pages and styles are kept.
 var PAGE_STYLES = { event: ['collage', 'mosaic', 'grid'], events: ['cards', 'shapes', 'carousel', 'mosaic'], viewer: ['live', 'classic'], header: ['right', 'left'], comments: ['below', 'typing', 'off'], watermark: ['off', 'on'], modeside: ['right', 'left'] };   // header: where the couple's logo sits (step 44)   // events: the list of all events (step 37)
 function pagesOf_(v) {

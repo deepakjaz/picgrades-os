@@ -101,8 +101,9 @@ const srv = http.createServer((req, res) => {
   await lp.screenshot({ path: '/tmp/s44_guest_laptop.png' });
   await c2.close(); await c3.close();
   // the panel offers it as a layout and can go back to a ready layout
-  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-layout[data-layout=custom]');
-  console.log('panel: "Our own Hub" card in use:', await pg.evaluate(() => document.querySelector('.pgcp-layout[data-layout=custom]').classList.contains('on')));
+  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-lgroup');
+  // step 76: a Hub designed from a layout is that layout's version — its card is "in use" (and remembers it); "Our own Hub" is only a Hub started from nothing
+  console.log('panel: the layout it came from is in use:', await pg.evaluate(() => { const b = PGHubEditor.draft() && PGHubEditor.draft().base || GALLERY.custom.base; const c = document.querySelector('.pgcp-layout[data-layout="' + b + '"]'); return !!c && c.classList.contains('on') && !!(GALLERY.versions || {})[b]; }));
   call('coupleLook', { g: pub.galleryId, coupleKey: ck, layout: '', pages: JSON.stringify({ header: 'right' }) });
   console.log('page errors:', errors); await b.close(); srv.close(); process.exit(0);
 });

@@ -86,7 +86,7 @@ const srv = http.createServer((req, res) => {
   ctx = await ctxOf(); const seenT = [], seenL = [];
   for (let v = 0; v < T.length; v++) {
     const p = await go(ctx, '/g/' + pub.galleryId);
-    const r = await p.evaluate(() => ({ t: document.documentElement.dataset.pgTheme || '', l: (document.getElementById('pgLay') || {}).dataset ? document.getElementById('pgLay').dataset.layout : (document.getElementById('pgStory') ? 'story' : '') }));
+    const r = await p.evaluate(() => ({ t: document.documentElement.dataset.pgTheme || '', l: (document.getElementById('pgLay') || {}).dataset ? document.getElementById('pgLay').dataset.layout : (document.getElementById('pgStory') ? 'story:' + PGLayout.current() : '') }));   // step 76: one story kind is not every story kind
     seenT.push(r.t); seenL.push(r.l);
     if (v === 0) {   // within one visit it stays the same
       await p.reload(); await p.waitForSelector('#pgBoot.hide', { state: 'attached' }); await p.waitForTimeout(1500);

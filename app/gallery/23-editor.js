@@ -81,6 +81,15 @@
   // even after the Hub went back to a card layout, so the editor showed the story panel and no cards to drag.
   function liveIsStory() { const l = PGLayout.find(GALLERY.layout); return !!(l && l.story) || !!(GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.story); }
   function startDraft() { const d = freshOrSaved(); d.from = GALLERY.layout || ''; return d; }
+  // step 76: open straight on a chosen layout (Control Panel › Hub layout). The couple's own version of it comes back if they saved one.
+  function draftFor(id) {
+    const l = PGLayout.find(id); if (!l) return null;
+    const pg = { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' };
+    const v = (GALLERY.versions || {})[id] || (GALLERY.layout === 'custom' && GALLERY.custom && GALLERY.custom.base === id ? GALLERY.custom : null);
+    if (v && v.story) return Object.assign({ base: id, blocks: [], story: clone(v.story) }, pg);
+    if (v && v.blocks && v.blocks.length) return Object.assign(clone(v), { base: id }, pg);
+    return l.story ? storyDraft(l.story, l.id) : fromLayout(l);
+  }
   function freshOrSaved() {
     const saved = loadDraft();
     if (saved && ((saved.blocks && saved.blocks.length) || saved.story) && (saved.from != null ? saved.from === (GALLERY.layout || '') : !!saved.story === liveIsStory())) return saved;
@@ -104,10 +113,11 @@
     Object.keys(PGX.types).forEach(k => { const t = PGX.types[k]; CARDS[k] = [t.name, t.variants.slice()]; Object.assign(VNAME, t.vnames || {}); DEF[k] = t.size; });
   }
 
-  function open() {
+  function open(opt) {
     if (E) return;
     addExperienceCards();
-    E = { d: startDraft(), scr: window.innerWidth < 600 ? 'phone' : window.innerWidth >= 1100 ? 'wide' : 'tall', sel: -1, undo: [], redo: [] };
+    const want = opt && opt.from ? draftFor(opt.from) : null; if (want) want.from = GALLERY.layout || '';
+    E = { d: want || startDraft(), scr: window.innerWidth < 600 ? 'phone' : window.innerWidth >= 1100 ? 'wide' : 'tall', sel: -1, undo: [], redo: [] };
     const el = h('div', 'pged'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Hub editor'); E.el = el;
     el.innerHTML = '<div class="pged-top"><button type="button" class="pged-x" aria-label="Close the editor">✕</button><b class="pged-title">Edit Hub</b>' +
       '<button type="button" class="pged-ic pged-undo" aria-label="Undo">↶</button><button type="button" class="pged-ic pged-redo" aria-label="Redo">↷</button>' +
@@ -119,8 +129,11 @@
       '<div class="pged-story" hidden></div>' +
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
       '<div class="pged-tools" hidden></div>';
+    const bl = E.d.base && PGLayout.find(E.d.base); if (bl) el.querySelector('.pged-title').textContent = bl.name;   // step 76: the layout being designed
     const from = el.querySelector('.pged-from');
-    from.innerHTML = '<option value="">Start again from a layout…</option>' + PGLayout.list().map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + (l.story ? ' · story' : '') + '</option>').join('');
+    // step 76: the Template Studio templates have their own editor, and the layouts being reworked are for PicGrades only
+    const startList = PGLayout.list().filter(l => !(l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) && (l.group !== 'progress' || PGControl.role() === 'picgrades'));
+    from.innerHTML = '<option value="">Start again from a layout…</option>' + startList.map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + (l.story ? ' · story' : '') + '</option>').join('');
     from.addEventListener('change', () => { const l = PGLayout.find(from.value); from.value = ''; if (!l) return; if (!confirmBox('Start again from “' + l.name + '”? Your changes so far are replaced (Undo brings them back).')) return; snapshot();
       E.d = Object.assign(l.story ? storyDraft(l.story, l.id) : fromLayout(l), { header: E.d.header, modeside: E.d.modeside }); E.sel = -1; E.info = null; commit(); });
     el.querySelector('.pged-x').addEventListener('click', close);
@@ -362,9 +375,10 @@
     const d = E ? E.d : loadDraft(); if (!d || (!d.story && !d.blocks.length)) { showToast('Add at least one card first'); return; }
     const custom = d.story ? { base: d.base || '', story: d.story, blocks: [] } : { base: d.base || '', palette: d.palette || null, blocks: d.blocks.map(b => ({ block: b.block, variant: b.variant, pos: b.pos, hide: b.hide, set: b.set })) };
     const body = { layout: 'custom', custom: JSON.stringify(custom), pages: JSON.stringify({ header: d.header || 'right', modeside: d.modeside || 'right' }) };
+    if (d.base) body.version = JSON.stringify({ id: d.base, custom });   // step 76: this layout remembers the couple's version
     const btn = E ? E.el.querySelector('.pged-pub') : null; if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
     PGControl.save(body).then(r => {
-      GALLERY.layout = r.layout; GALLERY.custom = r.custom; GALLERY.pages = r.pages || GALLERY.pages; if (r.theme != null) GALLERY.theme = r.theme;
+      GALLERY.layout = r.layout; GALLERY.custom = r.custom; GALLERY.pages = r.pages || GALLERY.pages; if (r.theme != null) GALLERY.theme = r.theme; if (r.versions) GALLERY.versions = r.versions;
       store(null); close(); endPreview(true); previewing = false; PGLayout.refresh(); applyHeader(); switchViewFromNav('hub');
       showToast(PGControl.role() === 'demo' ? 'Published on this phone (demo)' : 'Published — every guest sees your Hub now');
     }).catch(err => { showToast(err.message); if (btn) { btn.disabled = false; btn.textContent = 'Publish'; } });

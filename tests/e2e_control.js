@@ -53,16 +53,17 @@ const srv = http.createServer((req, res) => {
   await pg.click('.pgcp-tcard[data-theme="jaipur-rose"]'); await pvReady();
   await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
   console.log('Apply: saved', call('getGallery', { g: pub.galleryId }).gallery.theme, '| shown now:', await pg.evaluate(() => PGTheme.current()), '| preview closed:', !(await pg.locator('.pgcp-pv').count()), '| card says In use:', await pg.textContent('.pgcp-tcard.on small'));
-  // a layout: preview with its own theme, or keep mine
-  await pg.locator('.pgcp-layout[data-layout="bento-concierge"]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-layout[data-layout="bento-concierge"]'); await pvReady();
-  console.log('layout preview:', await pg.textContent('.pgcp-pv-name'), '| keep-my-theme offered:', await pg.isVisible('.pgcp-pv-keep'), '| preview layout', await inFrame(() => PGLayout.current()));
-  await pg.screenshot({ path: '/tmp/s34b_pv_layout.png' });
+  // a layout (step 76): tapping it opens its editor straight away — no preview page. The preview window stays for the Original Hub.
+  await pg.locator('.pgcp-layout[data-layout="magazine-cover"]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.waitForSelector('.pged .pged-card');
+  console.log('layout opens its editor:', await pg.textContent('.pged-title'), '| no preview page:', !(await pg.locator('.pgcp-pv').count()));
+  await pg.click('.pged-x'); await pg.waitForTimeout(300);
+  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-sheet .pgcp-layout');
+  await pg.locator('.pgcp-layout[data-layout=""]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-layout[data-layout=""]'); await pvReady();
+  console.log('Original Hub preview:', await pg.textContent('.pgcp-pv-name'), '| preview layout', await inFrame(() => PGLayout.current() || 'original'));
   await pg.click('.pgcp-pv-size'); await pg.waitForTimeout(900);
-  console.log('preview on a laptop:', await pg.evaluate(() => { const f = document.querySelector('.pgcp-pv iframe'); return f.style.width + ' × ' + f.style.height; }), '| layout drawn for', await inFrame(() => document.getElementById('pgLay') && document.getElementById('pgLay').dataset.screen));
-  await pg.screenshot({ path: '/tmp/s40_pv_laptop.png' }); await pg.click('.pgcp-pv-size'); await pg.waitForTimeout(600);
-  await pg.click('.pgcp-pv-keep input'); await pvReady();
-  console.log('keep my theme → preview theme', await inFrame(() => document.documentElement.dataset.pgTheme), '|', await pg.textContent('.pgcp-pv-name'));
-  await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
+  console.log('preview on a laptop:', await pg.evaluate(() => { const f = document.querySelector('.pgcp-pv iframe'); return f.style.width + ' × ' + f.style.height; }));
+  await pg.click('.pgcp-pv-size'); await pg.waitForTimeout(600); await pg.click('.pgcp-pv-back'); await pg.waitForTimeout(300);
+  await pg.evaluate(() => PGControl.save({ layout: 'bento-concierge' }).then(r => { GALLERY.layout = r.layout; PGLayout.apply(r.layout); })); await pg.waitForTimeout(700);
   let G = call('getGallery', { g: pub.galleryId }).gallery;
   console.log('layout saved:', G.layout, '+ kept theme:', G.theme, '| Hub shows it:', await pg.evaluate(() => PGLayout.current()));
   await pg.screenshot({ path: '/tmp/s34_panel_look2.png' });
