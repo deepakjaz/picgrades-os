@@ -113,7 +113,8 @@ const srv = http.createServer((req, res) => {
     check(off.length === 0, 'in all ' + L.length + ' layouts the demo Hub shows only highlights' + (off.length ? ' (' + off.slice(0, 4).join(' | ') + ')' : ''));
   }
   check(new Set(seenT).size === T.length, 'every visit a different theme: all ' + T.length + ' shown before any repeats (' + new Set(seenT).size + ')');
-  check(new Set(seenL).size >= 12, 'the layout changes too (' + new Set(seenL).size + ' different in ' + T.length + ' visits)');
+  const shown = (LJ.layouts || LJ).filter(x => x.group !== 'progress').length;   // step 76: layouts being reworked are not shown to visitors
+  check(new Set(seenL).size >= Math.min(12, shown), 'the layout changes too (' + new Set(seenL).size + ' different in ' + T.length + ' visits, ' + shown + ' layouts to show)');
   // a choice made in the Control Panel wins
   const p2 = await ctx.newPage(); await p2.goto('http://localhost:8872/g/' + pub.galleryId); await p2.evaluate(g => localStorage.setItem('pg_demo_' + g, JSON.stringify({ theme: 'sandalwood' })), pub.galleryId); await p2.close();
   const p3 = await go(ctx, '/g/' + pub.galleryId);
