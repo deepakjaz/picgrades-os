@@ -6,7 +6,8 @@
    "story": "living",
    "idea": "A cinematic scroll: full-screen cover with Next moment that shrinks away, photos glancing in, events one by one, the varmala moment, live Reel and Post preview.",
    "by": "G",
-   "blocks": []
+   "blocks": [],
+   "group": "story"
   },
   {
    "id": "story-editorial",
@@ -14,7 +15,438 @@
    "story": "editorial",
    "idea": "A calm, premium magazine: big names, numbered event chapters, small icons, notes and a closing invitation to add a moment.",
    "by": "C",
-   "blocks": []
+   "blocks": [],
+   "group": "story"
+  },
+  {
+   "id": "tpl-c1",
+   "name": "Darbar Invitation",
+   "story": "c1",
+   "group": "story",
+   "blocks": [],
+   "idea": "Palace, haveli or fort",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c2",
+   "name": "Tide Journey",
+   "story": "c2",
+   "group": "story",
+   "blocks": [],
+   "idea": "Beach wedding",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c3",
+   "name": "Cloud Pages",
+   "story": "c3",
+   "group": "story",
+   "blocks": [],
+   "idea": "Mountain wedding",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c4",
+   "name": "Haldi Splash",
+   "story": "c4",
+   "group": "story",
+   "blocks": [],
+   "idea": "Farmhouse or garden, by day",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c5",
+   "name": "Cinema Chapters",
+   "story": "c5",
+   "group": "story",
+   "blocks": [],
+   "idea": "Ballroom, party plot or reception",
+   "by": "C"
+  },
+  {
+   "id": "magazine-cover",
+   "name": "Magazine Cover",
+   "idea": "Full-screen editorial portrait cover with an asymmetric glass Bento studio tray.",
+   "theme": "ivory-glass",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XXL",
+     "variant": "full-bleed"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "reel",
+     "size": "S",
+     "variant": "glass"
+    },
+    {
+     "block": "post",
+     "size": "S",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass",
+     "stack": true
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "carousel"
+    },
+    {
+     "block": "loved",
+     "size": "L",
+     "variant": "strip"
+    },
+    {
+     "block": "notes",
+     "size": "L",
+     "variant": "cards"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "banner"
+    }
+   ],
+   "by": "G",
+   "group": "minimal"
+  },
+  {
+   "id": "ios-widget-home",
+   "name": "Widget Home",
+   "idea": "A calm widget rhythm makes the home screen immediately useful without feeling like a dashboard.",
+   "theme": "rose-editorial",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "L",
+     "variant": "split"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "glass"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "glass"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "list"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "card"
+    },
+    {
+     "block": "install",
+     "size": "W",
+     "variant": "pill"
+    },
+    {
+     "block": "review",
+     "size": "W",
+     "variant": "card"
+    }
+   ],
+   "by": "C",
+   "group": "minimal"
+  },
+  {
+   "id": "editorial-timeline",
+   "name": "Editorial Timeline",
+   "idea": "The home page reads like a visual sequence from the couple's portrait to event chapters and family notes.",
+   "theme": "sandalwood",
+   "blocks": [
+    {
+     "block": "hero",
+     "size": "XL",
+     "variant": "slideshow"
+    },
+    {
+     "block": "events",
+     "size": "XL",
+     "variant": "stack"
+    },
+    {
+     "block": "findme",
+     "size": "M",
+     "variant": "photo"
+    },
+    {
+     "block": "reel",
+     "size": "M",
+     "variant": "icon"
+    },
+    {
+     "block": "post",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "upload",
+     "size": "W",
+     "variant": "glass"
+    },
+    {
+     "block": "notes",
+     "size": "L",
+     "variant": "bubbles"
+    },
+    {
+     "block": "studio",
+     "size": "L",
+     "variant": "banner"
+    }
+   ],
+   "by": "C",
+   "group": "minimal"
+  },
+  {
+   "id": "portrait-atlas",
+   "name": "Portrait Atlas",
+   "idea": "A portrait-led archive with deliberate stacked chapters",
+   "theme": "pearl-atelier",
+   "blocks": [
+    {
+     "block": "hero",
+     "variant": "collage-3",
+     "phone": [
+      4,
+      5
+     ],
+     "tall": [
+      8,
+      7
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "findme",
+     "variant": "slideshow",
+     "phone": [
+      2,
+      3
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "reel",
+     "variant": "photo",
+     "phone": [
+      2,
+      3
+     ],
+     "tall": [
+      4,
+      4
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "post",
+     "variant": "photo",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "upload",
+     "variant": "glass",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "events",
+     "variant": "mosaic-slideshow",
+     "phone": [
+      4,
+      4
+     ],
+     "tall": [
+      8,
+      5
+     ],
+     "wide": [
+      12,
+      4
+     ],
+     "hide": []
+    },
+    {
+     "block": "loved",
+     "variant": "strip",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "notes",
+     "variant": "bubbles",
+     "phone": [
+      2,
+      2
+     ],
+     "tall": [
+      4,
+      3
+     ],
+     "wide": [
+      6,
+      3
+     ],
+     "hide": []
+    },
+    {
+     "block": "studio",
+     "variant": "card",
+     "phone": [
+      4,
+      2
+     ],
+     "tall": [
+      8,
+      2
+     ],
+     "wide": [
+      12,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "install",
+     "variant": "card",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    },
+    {
+     "block": "review",
+     "variant": "pill",
+     "phone": [
+      2,
+      1
+     ],
+     "tall": [
+      4,
+      2
+     ],
+     "wide": [
+      6,
+      2
+     ],
+     "hide": []
+    }
+   ],
+   "by": "B",
+   "group": "minimal"
+  },
+  {
+   "id": "tpl-g1",
+   "name": "Heritage Courtyard",
+   "story": "g1",
+   "group": "minimal",
+   "blocks": [],
+   "idea": "Haveli courtyard at dusk",
+   "by": "G"
+  },
+  {
+   "id": "tpl-g2",
+   "name": "Misty Tea Estate",
+   "story": "g2",
+   "group": "minimal",
+   "blocks": [],
+   "idea": "Hills and estates, morning",
+   "by": "G"
+  },
+  {
+   "id": "tpl-g3",
+   "name": "Alabaster Gallery",
+   "story": "g3",
+   "group": "minimal",
+   "blocks": [],
+   "idea": "Modern hall, quiet luxury",
+   "by": "G"
   },
   {
    "id": "x-royal-journey",
@@ -248,7 +680,8 @@
       3
      ]
     }
-   ]
+   ],
+   "group": "progress"
   },
   {
    "id": "x-palace-window",
@@ -485,7 +918,8 @@
       3
      ]
     }
-   ]
+   ],
+   "group": "progress"
   },
   {
    "id": "x-horizon",
@@ -706,62 +1140,8 @@
       3
      ]
     }
-   ]
-  },
-  {
-   "id": "magazine-cover",
-   "name": "Magazine Cover",
-   "idea": "Full-screen editorial portrait cover with an asymmetric glass Bento studio tray.",
-   "theme": "ivory-glass",
-   "blocks": [
-    {
-     "block": "hero",
-     "size": "XXL",
-     "variant": "full-bleed"
-    },
-    {
-     "block": "findme",
-     "size": "M",
-     "variant": "photo"
-    },
-    {
-     "block": "reel",
-     "size": "S",
-     "variant": "glass"
-    },
-    {
-     "block": "post",
-     "size": "S",
-     "variant": "glass"
-    },
-    {
-     "block": "upload",
-     "size": "W",
-     "variant": "glass",
-     "stack": true
-    },
-    {
-     "block": "events",
-     "size": "XL",
-     "variant": "carousel"
-    },
-    {
-     "block": "loved",
-     "size": "L",
-     "variant": "strip"
-    },
-    {
-     "block": "notes",
-     "size": "L",
-     "variant": "cards"
-    },
-    {
-     "block": "studio",
-     "size": "L",
-     "variant": "banner"
-    }
    ],
-   "by": "G"
+   "group": "progress"
   },
   {
    "id": "bento-concierge",
@@ -816,7 +1196,8 @@
      "variant": "card"
     }
    ],
-   "by": "G"
+   "by": "G",
+   "group": "progress"
   },
   {
    "id": "archive-monograph",
@@ -865,7 +1246,8 @@
      "variant": "card"
     }
    ],
-   "by": "G"
+   "by": "G",
+   "group": "progress"
   },
   {
    "id": "atelier-scrapbook",
@@ -919,7 +1301,8 @@
      "variant": "card"
     }
    ],
-   "by": "G"
+   "by": "G",
+   "group": "progress"
   },
   {
    "id": "cinema-panorama",
@@ -973,7 +1356,8 @@
      "variant": "banner"
     }
    ],
-   "by": "G"
+   "by": "G",
+   "group": "progress"
   },
   {
    "id": "magazine-cover-c",
@@ -1022,7 +1406,8 @@
      "variant": "strip"
     }
    ],
-   "by": "C"
+   "by": "C",
+   "group": "progress"
   },
   {
    "id": "photo-collage-wall",
@@ -1071,110 +1456,8 @@
      "variant": "cards"
     }
    ],
-   "by": "C"
-  },
-  {
-   "id": "ios-widget-home",
-   "name": "Widget Home",
-   "idea": "A calm widget rhythm makes the home screen immediately useful without feeling like a dashboard.",
-   "theme": "rose-editorial",
-   "blocks": [
-    {
-     "block": "hero",
-     "size": "L",
-     "variant": "split"
-    },
-    {
-     "block": "findme",
-     "size": "M",
-     "variant": "glass"
-    },
-    {
-     "block": "reel",
-     "size": "M",
-     "variant": "glass"
-    },
-    {
-     "block": "post",
-     "size": "W",
-     "variant": "glass"
-    },
-    {
-     "block": "upload",
-     "size": "W",
-     "variant": "glass"
-    },
-    {
-     "block": "events",
-     "size": "XL",
-     "variant": "list"
-    },
-    {
-     "block": "studio",
-     "size": "L",
-     "variant": "card"
-    },
-    {
-     "block": "install",
-     "size": "W",
-     "variant": "pill"
-    },
-    {
-     "block": "review",
-     "size": "W",
-     "variant": "card"
-    }
-   ],
-   "by": "C"
-  },
-  {
-   "id": "editorial-timeline",
-   "name": "Editorial Timeline",
-   "idea": "The home page reads like a visual sequence from the couple's portrait to event chapters and family notes.",
-   "theme": "sandalwood",
-   "blocks": [
-    {
-     "block": "hero",
-     "size": "XL",
-     "variant": "slideshow"
-    },
-    {
-     "block": "events",
-     "size": "XL",
-     "variant": "stack"
-    },
-    {
-     "block": "findme",
-     "size": "M",
-     "variant": "photo"
-    },
-    {
-     "block": "reel",
-     "size": "M",
-     "variant": "icon"
-    },
-    {
-     "block": "post",
-     "size": "W",
-     "variant": "glass"
-    },
-    {
-     "block": "upload",
-     "size": "W",
-     "variant": "glass"
-    },
-    {
-     "block": "notes",
-     "size": "L",
-     "variant": "bubbles"
-    },
-    {
-     "block": "studio",
-     "size": "L",
-     "variant": "banner"
-    }
-   ],
-   "by": "C"
+   "by": "C",
+   "group": "progress"
   },
   {
    "id": "cinematic-one-photo",
@@ -1223,7 +1506,8 @@
      "variant": "mosaic"
     }
    ],
-   "by": "C"
+   "by": "C",
+   "group": "progress"
   },
   {
    "id": "mosaic-salon",
@@ -1395,7 +1679,8 @@
      ]
     }
    ],
-   "by": "A"
+   "by": "A",
+   "group": "progress"
   },
   {
    "id": "grand-palace-frieze",
@@ -1564,7 +1849,8 @@
      ]
     }
    ],
-   "by": "A"
+   "by": "A",
+   "group": "progress"
   },
   {
    "id": "editorial-triptych",
@@ -1720,7 +2006,8 @@
      ]
     }
    ],
-   "by": "A"
+   "by": "A",
+   "group": "progress"
   },
   {
    "id": "bento-atelier",
@@ -1857,7 +2144,8 @@
      ]
     }
    ],
-   "by": "A"
+   "by": "A",
+   "group": "progress"
   },
   {
    "id": "nocturne-cinema",
@@ -2029,7 +2317,8 @@
      ]
     }
    ],
-   "by": "A"
+   "by": "A",
+   "group": "progress"
   },
   {
    "id": "mosaic-salon-b",
@@ -2225,7 +2514,8 @@
      "hide": []
     }
    ],
-   "by": "B"
+   "by": "B",
+   "group": "progress"
   },
   {
    "id": "editorial-columns",
@@ -2421,7 +2711,8 @@
      "hide": []
     }
    ],
-   "by": "B"
+   "by": "B",
+   "group": "progress"
   },
   {
    "id": "cinema-gallery",
@@ -2617,203 +2908,8 @@
      "hide": []
     }
    ],
-   "by": "B"
-  },
-  {
-   "id": "portrait-atlas",
-   "name": "Portrait Atlas",
-   "idea": "A portrait-led archive with deliberate stacked chapters",
-   "theme": "pearl-atelier",
-   "blocks": [
-    {
-     "block": "hero",
-     "variant": "collage-3",
-     "phone": [
-      4,
-      5
-     ],
-     "tall": [
-      8,
-      7
-     ],
-     "wide": [
-      12,
-      4
-     ],
-     "hide": []
-    },
-    {
-     "block": "findme",
-     "variant": "slideshow",
-     "phone": [
-      2,
-      3
-     ],
-     "tall": [
-      4,
-      4
-     ],
-     "wide": [
-      6,
-      3
-     ],
-     "hide": []
-    },
-    {
-     "block": "reel",
-     "variant": "photo",
-     "phone": [
-      2,
-      3
-     ],
-     "tall": [
-      4,
-      4
-     ],
-     "wide": [
-      6,
-      3
-     ],
-     "hide": []
-    },
-    {
-     "block": "post",
-     "variant": "photo",
-     "phone": [
-      2,
-      2
-     ],
-     "tall": [
-      4,
-      3
-     ],
-     "wide": [
-      6,
-      2
-     ],
-     "hide": []
-    },
-    {
-     "block": "upload",
-     "variant": "glass",
-     "phone": [
-      2,
-      2
-     ],
-     "tall": [
-      4,
-      3
-     ],
-     "wide": [
-      6,
-      2
-     ],
-     "hide": []
-    },
-    {
-     "block": "events",
-     "variant": "mosaic-slideshow",
-     "phone": [
-      4,
-      4
-     ],
-     "tall": [
-      8,
-      5
-     ],
-     "wide": [
-      12,
-      4
-     ],
-     "hide": []
-    },
-    {
-     "block": "loved",
-     "variant": "strip",
-     "phone": [
-      2,
-      2
-     ],
-     "tall": [
-      4,
-      3
-     ],
-     "wide": [
-      6,
-      3
-     ],
-     "hide": []
-    },
-    {
-     "block": "notes",
-     "variant": "bubbles",
-     "phone": [
-      2,
-      2
-     ],
-     "tall": [
-      4,
-      3
-     ],
-     "wide": [
-      6,
-      3
-     ],
-     "hide": []
-    },
-    {
-     "block": "studio",
-     "variant": "card",
-     "phone": [
-      4,
-      2
-     ],
-     "tall": [
-      8,
-      2
-     ],
-     "wide": [
-      12,
-      2
-     ],
-     "hide": []
-    },
-    {
-     "block": "install",
-     "variant": "card",
-     "phone": [
-      2,
-      1
-     ],
-     "tall": [
-      4,
-      2
-     ],
-     "wide": [
-      6,
-      2
-     ],
-     "hide": []
-    },
-    {
-     "block": "review",
-     "variant": "pill",
-     "phone": [
-      2,
-      1
-     ],
-     "tall": [
-      4,
-      2
-     ],
-     "wide": [
-      6,
-      2
-     ],
-     "hide": []
-    }
-   ],
-   "by": "B"
+   "by": "B",
+   "group": "progress"
   },
   {
    "id": "modern-pavilion",
@@ -3009,7 +3105,8 @@
      "hide": []
     }
    ],
-   "by": "B"
+   "by": "B",
+   "group": "progress"
   }
  ]
 }

@@ -258,6 +258,10 @@
   // ---------- Story Hubs (step 53): a whole scrolling page instead of cards ----------
   // "living" = Living Story (Gemini), "editorial" = Editorial Album (ChatGPT). They get the wedding's data and call back here to open things.
   const STORY = { living: () => window.PGStoryLiving, editorial: () => window.PGStoryEditorial };
+  // step 76: the Template Studio's Story (c1–c5) and Minimal (g1–g3) templates (32-story-studio.js)
+  const storyMod = k => (STORY[k] ? STORY[k]() : window.PGStoryStudio && PGStoryStudio.mods[k]) || null;
+  const storyKnown = k => !!STORY[k] || !!(window.PGStoryStudio && PGStoryStudio.mods[k]);
+  const storyKinds = () => Object.keys(STORY).concat(window.PGStoryStudio ? PGStoryStudio.kinds : []);
   let storyOn = null;   // { kind, mod } while a story is on screen
   // Story settings (step 54, changed in the Hub editor): sections shown / hidden / moved, the floating Find me button, the icon bar, the headings.
   // The extra icon bar is OFF unless chosen: our header and bottom bar are already there.
@@ -298,15 +302,17 @@
   function storyData() {
     // step 56: the photos come from the couple's / photographer's choice (Control Panel › Story); nothing is guessed
     const P = GALLERY.story || {}, hl = P.hl || {};
-    const D0 = data(), evs = (GALLERY.events || []).map(e => ({ name: e.name, photos: (e.photos || []).map(p => ({ id: p.id })), featured: hl[e.name] && hl[e.name].length ? hl[e.name].slice() : undefined }));
+    const D0 = data(), evs = (GALLERY.events || []).map(e => ({ name: e.name, photos: (e.photos || []).map(p => ({ id: p.id })), teaser: (e.teaser || []).map(p => ({ id: p.id || p })), featured: hl[e.name] && hl[e.name].length ? hl[e.name].slice() : undefined }));
     const couple = P.bride && P.groom ? { bride: P.bride, groom: P.groom } : undefined;   // both chosen, or the varmala part is left out
-    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, cover: (P.cover || []).length ? P.cover.slice() : undefined, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
+    const pool = [].concat(P.wh || [], (GALLERY.highlights || []).map(x => x.id || x), (GALLERY.pool || []).map(x => x.id || x));   // step 76: what a gated phone may show
+    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, pool, demo: !!GALLERY.demo, cover: (P.cover || []).length ? P.cover.slice() : undefined, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
   }
   function storyAct(a, x) {
     const run = k => { if (!visible(k)) return; const t = (window.PGRules && PGRules.act(k)) || ACT[k]; if (t) t[2](); };
     if (['findme', 'reel', 'post', 'upload', 'install'].indexOf(a) > -1) return run(a);
     if (a === 'memory') return run('upload');
     if (a === 'notes') return switchViewFromNav('rooms');
+    if (a === 'moments') return switchViewFromNav('moments');
     if (a === 'loved') return pgStatTap('hearts');
     if (a === 'share') return pgShare();
     if (a === 'studio') return switchViewFromNav('studio');
@@ -314,13 +320,13 @@
     if (a === 'photo' && x && x.id) return pgOpenPhoto(x.id);
   }
   function storyRender(view, kind) {
-    const mod = STORY[kind] && STORY[kind](); if (!mod) return false;
+    const mod = storyMod(kind); if (!mod) return false;
     const old = $('pgLay'); if (old) old.remove(); document.body.classList.remove('pg-lay-on');
     if (storyOn && storyOn.kind === kind && $('pgStory')) { if (JSON.stringify(cur.tune || null) !== storyOn.tune || JSON.stringify(GALLERY.story || null) !== storyOn.picks) { storyStop(); } else return true; }   // new settings or new story photos: draw again   // already showing: keep the guest's place
     storyStop();
     const box = h('div', 'pgl-story'); box.id = 'pgStory'; view.prepend(box); document.body.classList.add('pg-story-on');
     let asked = false; try { asked = localStorage.getItem('pg_storyq_' + GALLERY_ID) === '1'; } catch (e) {}
-    try { mod.render(box, storyData(), storyAct, { first: !asked && !/pgpreview=1/.test(location.search), galleryId: GALLERY_ID }); storyOn = { kind, mod, tune: JSON.stringify(cur.tune || null), picks: JSON.stringify(GALLERY.story || null) }; storyTune(box, cur.tune); }
+    try { mod.render(box, storyData(), storyAct, { first: !asked && !/pgpreview=1/.test(location.search), galleryId: GALLERY_ID, tune: cur.tune || null }); storyOn = { kind, mod, tune: JSON.stringify(cur.tune || null), picks: JSON.stringify(GALLERY.story || null) }; storyTune(box, cur.tune); }
     catch (e) { console.warn('Story Hub', e); storyStop(); return false; }
     return true;
   }
@@ -344,12 +350,12 @@
     if (q === 'original') return null;   // preview of the original Hub
     const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {};
     if (window.PGHubDraft && PGHubDraft()) return customOf(PGHubDraft());   // the Hub editor's draft, previewed on this phone only
-    const id = q || (window.pgDemoRotates && pgDemoRotates('layout') ? pgDemoPick('layout', LAYOUTS.map(l => l.id)) : G.layout || '');   // step 72: demo rotates
+    const id = q || (window.pgDemoRotates && pgDemoRotates('layout') ? pgDemoPick('layout', LAYOUTS.filter(l => l.group !== 'progress').map(l => l.id)) : G.layout || '');   // step 72: demo rotates
     if (id === 'custom') return G.custom && G.custom.blocks ? customOf(G.custom) : null;
     // (a ready layout can bring its own palette: "palette": { "id": "royal" })   // the wedding's own Hub (made in the Hub editor)
     return LAYOUTS.find(l => l.id === id) || null;
   }
-  const customOf = c => (c.story && STORY[c.story.kind] ? { id: 'custom', name: 'Our own Hub', theme: '', story: c.story.kind, tune: c.story, blocks: [] }
+  const customOf = c => (c.story && storyKnown(c.story.kind) ? { id: 'custom', name: 'Our own Hub', theme: '', base: c.base || '', story: c.story.kind, tune: c.story, blocks: [] }
     : { id: 'custom', name: 'Our own Hub', theme: '', palette: c.palette || null, blocks: (c.blocks || []).map(b => Object.assign({}, b)) });
   try { localStorage.removeItem('pg_layout_pick'); } catch (e) {}   // old test-menu choice no longer overrides the wedding
   const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
@@ -358,10 +364,10 @@
   window.PGLayout = { ready, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render, build, plan: (l, scr) => { SCR_FOR = scr; try { return plan(l, scr, data()); } finally { SCR_FOR = null; } },
     SCREEN, sizeOf, act: (a, x) => storyAct(a, x), data: () => data(), find: id => LAYOUTS.find(l => l.id === id) || null, refresh: () => { cur = choose(); render(); },
     apply: id => { const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {}; const l = id === 'custom' ? (G.custom && (G.custom.story || (G.custom.blocks && G.custom.blocks.length)) ? customOf(G.custom) : null) : LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
-    reset: () => { cur = null; render(); },
+    reset: () => { cur = null; render(); }, stop: () => storyStop(),
     // for the Hub editor (step 54): the story's parts and headings, read from a hidden copy of the story
     storyInfo: kind => {
-      const mod = STORY[kind] && STORY[kind](); if (!mod) return null;
+      const mod = storyMod(kind); if (!mod) return null;
       storyStop();
       const box = h('div', 'pgl-story pgs-probe'); document.body.appendChild(box);
       try { mod.render(box, storyData(), () => {}, { first: false, galleryId: GALLERY_ID });
@@ -369,5 +375,6 @@
       } catch (e) { console.warn('Story Hub', e); return null; }
       finally { try { mod.destroy(); } catch (e) {} box.remove(); }
     },
-    stories: () => Object.keys(STORY).map(k => ({ kind: k, layout: LAYOUTS.find(l => l.story === k) })).filter(x => x.layout) };
+    stories: () => storyKinds().map(k => ({ kind: k, layout: LAYOUTS.find(l => l.story === k) })).filter(x => x.layout),
+    storyData: () => storyData(), storyMod, storyKnown };
 })();

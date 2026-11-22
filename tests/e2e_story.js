@@ -95,7 +95,7 @@ const srv = http.createServer((req, res) => {
     await pg.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: bytesOf('1') }));
     await pg.goto('http://localhost:8831/g/' + pub.galleryId + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForFunction(() => window.PGLayout && PGLayout.list().length);
     const names = await pg.evaluate(() => PGLayout.list().filter(l => l.story).map(l => l.name));
-    check(names.join() === 'Living Story,Editorial Album', 'Look offers both story styles: ' + names.join(', '));
+    check(/^Living Story,Editorial Album,/.test(names.join()), 'Look offers both story styles (step 76: with the Template Studio ones after them): ' + names.join(', '));
     check(await pg.evaluate(() => PGLayout.apply('story-editorial') && !!document.getElementById('pgStory')), 'choosing one shows it straight away');
     check(await pg.evaluate(() => { PGLayout.apply('magazine-cover'); return !document.getElementById('pgStory') && !!document.getElementById('pgLay') && !document.body.classList.contains('pg-story-on'); }), 'choosing a card layout again removes the story');
     await ctx.close(); }
