@@ -50,10 +50,10 @@ const srv = http.createServer((req, res) => {
   const groups = await pg.$$eval('.pgcp-lgroup h5', x => x.map(e => e.textContent));
   ok(JSON.stringify(groups) === '["Story","Minimal"]', 'the couple sees two groups: ' + groups.join(' / '));
   const inGroup = await pg.evaluate(() => [...document.querySelectorAll('.pgcp-lgroup')].map(g => [...g.querySelectorAll('.pgcp-layout b')].map(b => b.textContent).join(',')));
-  ok(/Living Story,Editorial Album,Darbar Invitation,Tide Journey,Cloud Pages,Haldi Splash,Cinema Chapters/.test(inGroup[0]) && /^Original Hub,Magazine Cover,Widget Home,Editorial Timeline,Portrait Atlas,Heritage Courtyard,Misty Tea Estate,Alabaster Gallery$/.test(inGroup[1]), 'Story = 7, Minimal = 8: ' + inGroup.join(' | '));
-  ok(!/Royal Journey|Bento/.test(inGroup.join()), 'the layouts being reworked are hidden from the couple');
+  ok(inGroup[0] === 'Living Story,Editorial Album' && inGroup[1] === 'Original Hub,Magazine Cover,Widget Home,Editorial Timeline,Portrait Atlas', 'Story = 2, Minimal = 5: ' + inGroup.join(' | '));
+  ok(!/Royal Journey|Bento|Darbar|Heritage/.test(inGroup.join()), 'the layouts being reworked (and the 8 new templates, for now) are hidden from the couple');
   await pg.evaluate(() => document.querySelector('.pgcp-lgroup').scrollIntoView()); await pg.screenshot({ path: '/tmp/tpl_panel.png' });
-  await pg.click('.pgcp-layout[data-layout="tpl-c1"]');
+  await pg.evaluate(() => PGControl.designLayout('tpl-c1'));   // staff-only for now: opened directly
   await pg.waitForSelector('.pgte .pss-c1', { timeout: 8000 });
   ok(!(await pg.$('.pgcp-pv')) && !(await pg.$('.pgcp-sheet')), 'tapping a template opens its editor straight away (no preview page)');
   await pg.waitForTimeout(600); await pg.screenshot({ path: '/tmp/tpl_ed_photos.png' });
@@ -86,9 +86,7 @@ const srv = http.createServer((req, res) => {
   ok(call('getGallery', { g: pub.galleryId, coupleKey: ck }).gallery.versions['tpl-c1'].story.names === 'Ani & Ro', 'Save keeps the version on the server');
   ok(call('getGallery', { g: pub.galleryId, coupleKey: ck }).gallery.layout === '', '…without changing the Hub for guests');
   await pg.click('.pgte-x'); await pg.waitForTimeout(400);
-  await openLook();
-  ok(/Your version/.test(await pg.textContent('.pgcp-layout[data-layout="tpl-c1"] small')), 'the card says it has your version');
-  await pg.click('.pgcp-layout[data-layout="tpl-c1"]'); await pg.waitForSelector('.pgte .pss-c1');
+  await pg.evaluate(() => PGControl.designLayout('tpl-c1')); await pg.waitForSelector('.pgte .pss-c1');
   const back = await pg.evaluate(() => PGTemplateEditor.state().tune);
   ok(back.names === 'Ani & Ro' && (back.hide || []).includes('wax-seal') && back.colors.light.bg === '#203040' && back.photos[slotK] === want, 'opening it again brings back everything that was kept, hidden or changed');
   // apply
@@ -97,7 +95,7 @@ const srv = http.createServer((req, res) => {
   ok(await pg.evaluate(() => GALLERY.layout === 'custom' && GALLERY.custom.base === 'tpl-c1'), '…saved as the wedding\'s Hub');
   await pg.screenshot({ path: '/tmp/tpl_applied.png' });
   await openLook();
-  ok(await pg.evaluate(() => document.querySelector('.pgcp-layout[data-layout="tpl-c1"]').classList.contains('on') && !document.querySelector('.pgcp-layout[data-layout="custom"]')), 'the template shows "In use" (not "Our own Hub")');
+  ok(await pg.evaluate(() => !document.querySelector('.pgcp-layout[data-layout="custom"]')), 'a designed template is not shown as "Our own Hub"');
   // a card layout opens the Hub editor on that layout
   await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.waitForSelector('.pged .pged-card'); await pg.waitForTimeout(300);
   ok((await pg.textContent('.pged-title')) === 'Magazine Cover' && (await pg.evaluate(() => PGHubEditor.draft().base)) === 'magazine-cover', 'a card layout opens the Hub editor on that layout');

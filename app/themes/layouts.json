@@ -19,51 +19,6 @@
    "group": "story"
   },
   {
-   "id": "tpl-c1",
-   "name": "Darbar Invitation",
-   "story": "c1",
-   "group": "story",
-   "blocks": [],
-   "idea": "Palace, haveli or fort",
-   "by": "C"
-  },
-  {
-   "id": "tpl-c2",
-   "name": "Tide Journey",
-   "story": "c2",
-   "group": "story",
-   "blocks": [],
-   "idea": "Beach wedding",
-   "by": "C"
-  },
-  {
-   "id": "tpl-c3",
-   "name": "Cloud Pages",
-   "story": "c3",
-   "group": "story",
-   "blocks": [],
-   "idea": "Mountain wedding",
-   "by": "C"
-  },
-  {
-   "id": "tpl-c4",
-   "name": "Haldi Splash",
-   "story": "c4",
-   "group": "story",
-   "blocks": [],
-   "idea": "Farmhouse or garden, by day",
-   "by": "C"
-  },
-  {
-   "id": "tpl-c5",
-   "name": "Cinema Chapters",
-   "story": "c5",
-   "group": "story",
-   "blocks": [],
-   "idea": "Ballroom, party plot or reception",
-   "by": "C"
-  },
-  {
    "id": "magazine-cover",
    "name": "Magazine Cover",
    "idea": "Full-screen editorial portrait cover with an asymmetric glass Bento studio tray.",
@@ -422,10 +377,55 @@
    "group": "minimal"
   },
   {
+   "id": "tpl-c1",
+   "name": "Darbar Invitation",
+   "story": "c1",
+   "group": "progress",
+   "blocks": [],
+   "idea": "Palace, haveli or fort",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c2",
+   "name": "Tide Journey",
+   "story": "c2",
+   "group": "progress",
+   "blocks": [],
+   "idea": "Beach wedding",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c3",
+   "name": "Cloud Pages",
+   "story": "c3",
+   "group": "progress",
+   "blocks": [],
+   "idea": "Mountain wedding",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c4",
+   "name": "Haldi Splash",
+   "story": "c4",
+   "group": "progress",
+   "blocks": [],
+   "idea": "Farmhouse or garden, by day",
+   "by": "C"
+  },
+  {
+   "id": "tpl-c5",
+   "name": "Cinema Chapters",
+   "story": "c5",
+   "group": "progress",
+   "blocks": [],
+   "idea": "Ballroom, party plot or reception",
+   "by": "C"
+  },
+  {
    "id": "tpl-g1",
    "name": "Heritage Courtyard",
    "story": "g1",
-   "group": "minimal",
+   "group": "progress",
    "blocks": [],
    "idea": "Haveli courtyard at dusk",
    "by": "G"
@@ -434,7 +434,7 @@
    "id": "tpl-g2",
    "name": "Misty Tea Estate",
    "story": "g2",
-   "group": "minimal",
+   "group": "progress",
    "blocks": [],
    "idea": "Hills and estates, morning",
    "by": "G"
@@ -443,7 +443,7 @@
    "id": "tpl-g3",
    "name": "Alabaster Gallery",
    "story": "g3",
-   "group": "minimal",
+   "group": "progress",
    "blocks": [],
    "idea": "Modern hall, quiet luxury",
    "by": "G"
