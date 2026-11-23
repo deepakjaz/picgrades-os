@@ -2147,7 +2147,7 @@ function dlGrant_(p) {
 // Each function of a wedding app can be switched on or off. Root Moment itself is always on.
 // Three levels: PicGrades' master switches ('allowed', by plan — set later from the admin side) → the photographer and the couple ('features').
 // A function PicGrades has not allowed is 'locked': nobody else can switch it on.
-var FEATURE_KEYS = ['findme', 'reel', 'post', 'upload', 'notes', 'hearts', 'download', 'share', 'install'];
+var FEATURE_KEYS = ['findme', 'reel', 'post', 'upload', 'notes', 'hearts', 'download', 'share', 'install', 'sameTime'];
 function jsonObj_(s) { try { var o = JSON.parse(String(s || '') || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch (e) { return {}; } }
 /** on / off / locked for every function of this wedding. */
 function featuresOf_(g) {
