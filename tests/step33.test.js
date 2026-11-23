@@ -11,7 +11,7 @@ for (let i = 0; i < 6; i++) DRIVE.files[W + 'H' + i] = { name: 'h' + i + '.jpg',
 const pub = call('setGallery', { token: admin, orderId: orders[0].orderId, folderUrl: W, title: 'Neha & Rohan', eventDate: '2026-02-14' });
 const gid = pub.galleryId, ck = call('facesStatus', { token: admin, g: gid }).gallery.coupleKey;
 let f = call('getGallery', { g: gid }).gallery.features;
-assert(f && Object.keys(f).length === 9 && Object.values(f).every(v => v === 'on'), 'every function starts on (' + JSON.stringify(f) + ')');
+assert(f && Object.keys(f).length === 10 && Object.values(f).every(v => v === 'on'), 'every function starts on (' + JSON.stringify(f) + ')');
 assert(!call('coupleFeatures', { g: gid, coupleKey: 'nope', features: { reel: 'off' } }).ok, 'wrong couple key cannot change switches');
 let r = call('coupleFeatures', { g: gid, coupleKey: ck, features: JSON.stringify({ reel: 'off', games: 'off', hacker: 'x' }) });
 assert(r.features && r.features.reel === 'off' && !('games' in r.features) && !('hacker' in r.features), 'couple switches Reel Edits off; unknown names are ignored');

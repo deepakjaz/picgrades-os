@@ -3,7 +3,7 @@
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
-const W = 'SAMETIMEWEDDING8902';
+const W = 'SAMETIMEWEDDING89020';
 DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' };
 [['tH', 'Ceremony'], ['tR', 'Reception']].forEach(([id, name], k) => {
   DRIVE.folders[id] = { name, parent: W };
@@ -54,7 +54,7 @@ const srv = http.createServer((req, res) => {
     await require('./fonts_local').install(pg);
     await pg.goto('http://localhost:8902/g/' + pub.galleryId);
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
-    await pg.waitForFunction(() => window.PGSameTime && window.GALLERY && Array.isArray(GALLERY.events));
+    await pg.waitForFunction(() => window.PGSameTime && typeof GALLERY !== 'undefined' && GALLERY && Array.isArray(GALLERY.events));
     await pg.evaluate(() => {
       const photos = GALLERY.events.flatMap(e => e.photos || []);
       if (photos.length < 3) throw new Error('The test wedding needs at least three made-up photos');
