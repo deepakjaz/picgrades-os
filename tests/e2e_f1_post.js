@@ -101,13 +101,26 @@ const server = http.createServer((req, res) => {
       if (tool === 'text') {
         const field = page.locator('.pe-panel input.ps-in').first();
         await field.focus();
+        const originalSize = page.viewportSize();
+        if (originalSize.width < 700) {
+          await page.setViewportSize({ width: originalSize.width, height: Math.max(320, Math.round(originalSize.height * 0.58)) });
+          await page.waitForTimeout(120);
+        }
         const viewport = await page.evaluate(() => {
           const r = document.querySelector('.pe-panel input.ps-in').getBoundingClientRect();
+          const wrap = document.querySelector('.pe-wrap').getBoundingClientRect();
           return { height: window.visualViewport ? window.visualViewport.height : innerHeight,
             offsetTop: window.visualViewport ? window.visualViewport.offsetTop : 0,
-            field: { top: r.top, bottom: r.bottom } };
+            field: { top: r.top, bottom: r.bottom }, wrapBottom: wrap.bottom };
         });
         check(viewport.field.bottom <= viewport.offsetTop + viewport.height + 1, sizeLabel + ' ' + mode + ' Text field stays inside visualViewport');
+        if (originalSize.width < 700) {
+          check(viewport.wrapBottom <= viewport.offsetTop + viewport.height + 1, sizeLabel + ' ' + mode + ' Text editor follows the keyboard viewport');
+          const keyboardScore = await designScore(page);
+          check(keyboardScore.score >= 0.85, sizeLabel + ' ' + mode + ' Text keeps design visible with keyboard-sized viewport (' + Math.round(keyboardScore.score * 100) + '%)');
+          await page.setViewportSize(originalSize);
+          await page.waitForTimeout(120);
+        }
       }
       const score = await designScore(page);
       check(score.score >= 0.85, sizeLabel + ' ' + mode + ' ' + tool + ' design visible ' + Math.round(score.score * 100) + '% (' + score.hits + '/' + score.points + ')');
