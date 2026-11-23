@@ -3098,13 +3098,13 @@ body.rl-on #globalNav,body.rl-on #pgRoleBadge,body.rl-on #pgLinkBar{display:none
 .pgfr-acts button{min-width:76px;min-height:48px}
 @media (max-width:600px){
   .pce-top{flex-wrap:nowrap;gap:2px;padding-left:8px;padding-right:8px;overflow:hidden}
-  .pce-title{flex:1 1 1px;min-width:1px}
+  .pce-title{display:none!important}
   .pce-title b{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
   .pce-title small{display:none}
   .pce-x,.pce-ic{width:44px;height:44px;flex:0 0 44px}
   .pce-mode{flex:0 0 88px;gap:0;padding:0}
-  .pce-mode button{width:44px;min-width:44px;height:44px;padding:0;font-size:10px}
-  .pce-play,.pce-save,.pce-apply{flex:0 0 44px;width:44px;height:44px;padding:0;font-size:10px;white-space:nowrap;overflow:hidden}
+  .pce-mode button{width:44px;min-width:44px;height:44px;padding:0;font-size:11px}
+  .pce-play,.pce-save,.pce-apply{flex:0 0 44px;width:44px;height:44px;padding:0;font-size:11px;white-space:nowrap;overflow:hidden}
   .pged-top,.pgte-top{gap:3px;padding-left:8px;padding-right:8px}
   .pged-x,.pged-ic,.pgte-x,.pgte-ic{width:44px;height:44px;flex:0 0 44px}
   .pged-btn,.pgte-btn{height:44px;padding:0 8px;font-size:11px;white-space:nowrap}
