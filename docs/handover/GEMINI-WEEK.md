@@ -32,7 +32,10 @@ Keep each one's idea, colours and feel (see `PicGrades-audit-screens.pdf`, pages
 ### Batch C — new ideas (only after A and B)
 - **Wedding timeline layout:** the events one after another (vertical on phone, horizontal feel on laptop), using the `events` part, never fixed event names.
 - Your own idea: 1 new layout that looks like nothing in the app yet.
-- (The venue layouts stay paused until Deepak finds free elements.)
+### Batch D — the 10 venue templates (unpaused 24 Nov)
+- Deepak is generating real-looking backgrounds, elements, textures and loops with Gemini, ChatGPT and Canva AI (see `IMAGE-PROMPTS.md`).
+- When a venue's pictures are ready, rebuild that venue template as an editor layout (same format).
+- Leave the picture places marked with `"src":{"k":"asset","id":"v03-garba_bg"}`. Claude adds the `asset` source to the app (today, photos can only come from the wedding).
 
 ## The format (doc v1) — copy the shape of your Living Story exactly
 ```
