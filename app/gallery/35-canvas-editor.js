@@ -73,7 +73,8 @@
   function open(arg) {
     if (E) return;
     const role = window.PGControl ? PGControl.role() : 'guest';
-    E = { role, mode: window.innerWidth >= 900 ? 'l' : 'p', sel: null, undo: [], redo: [], tab: 'add', src: {}, inst: null };
+    E = { role, mode: window.innerWidth >= 900 ? 'l' : 'p', sel: null, undo: [], redo: [], tab: 'add', src: {}, inst: null, zoom: 1, play: false,
+      pages: { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' } };   // step 78: zoom, Play, the app header's places
     build();
     const start = (doc, src) => { E.doc = doc; E.src = src; E.saved = JSON.stringify(doc); draw(); panel(); };
     if (arg && typeof arg === 'object' && arg.doc) return start(clone(arg.doc), { id: arg.id || '', mine: !!arg.mine });
@@ -109,7 +110,7 @@
       '<button type="button" class="pce-title" aria-label="Rename"><b></b><small>Tap an element, then drag it</small></button>' +
       '<button type="button" class="pce-ic pce-undo" aria-label="Undo">↶</button><button type="button" class="pce-ic pce-redo" aria-label="Redo">↷</button>' +
       '<div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div>' +
-      '<button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
+      '<button type="button" class="pce-btn pce-play" aria-pressed="false">▶ Play</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
       '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '">' + n + '</button>').join('') + '</div><div class="pce-pane"></div></div></div>';
     el.querySelector('.pce-x').addEventListener('click', () => close());
     el.querySelector('.pce-undo').addEventListener('click', undo);
@@ -118,6 +119,8 @@
     el.querySelector('.pce-mode').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b && b.dataset.mode !== E.mode) { E.mode = b.dataset.mode; draw(); panel(); } });
     el.querySelector('.pce-save').addEventListener('click', () => saveDialog(false));
     el.querySelector('.pce-apply').addEventListener('click', apply);
+    el.querySelector('.pce-play').addEventListener('click', () => { E.play = !E.play; if (E.play) { E.sel = null; panel(); } draw(); if (E.play) { const st = el.querySelector('.pce-stage'); st.scrollTop = 0; } });   // watch the motion; any change stops it
+
     el.querySelector('.pce-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { E.tab = b.dataset.tab; panel(); } });
     document.body.appendChild(el); document.body.classList.add('pce-on');
     window.addEventListener('keydown', onKey); window.addEventListener('resize', onResize);
@@ -126,7 +129,7 @@
 
   // ---- history ----
   function change(fn, keepPanel) {
-    E.undo.push(JSON.stringify(E.doc)); if (E.undo.length > 80) E.undo.shift(); E.redo = [];
+    E.undo.push(JSON.stringify(E.doc)); if (E.undo.length > 80) E.undo.shift(); E.redo = []; E.play = false;
     fn(E.doc); draw(); if (!keepPanel) panel();
   }
   function undo() { if (!E.undo.length) return; E.redo.push(JSON.stringify(E.doc)); E.doc = JSON.parse(E.undo.pop()); fixSel(); draw(); panel(); }
@@ -154,9 +157,14 @@
     if (E.inst) { E.inst.destroy(); E.inst = null; }
     st.innerHTML = '';
     const page = h('div', 'pce-page'); st.appendChild(page);
-    E.pageW = E.mode === 'p' ? Math.min(390, st.clientWidth) : Math.max(600, st.clientWidth - 40);
+    E.pageW = Math.round((E.mode === 'p' ? 390 : Math.max(600, st.clientWidth - 40)) * E.zoom);   // zoom draws the page smaller or bigger (the spots stay the same)
     page.style.width = E.pageW + 'px';
-    E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: true, editing: true, onTap: () => true });
+    E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: !E.play, editing: !E.play, onTap: () => true });
+    page.insertAdjacentHTML('beforeend', '<div class="pce-hdr ' + (E.mode === 'p' ? 'p' : 'l') + '" style="--z:' + (E.pageW / (E.mode === 'p' ? 390 : 1200) * (E.mode === 'p' ? 1 : 1.6)) + '"><i class="lg ' + E.pages.header + '">A&amp;R</i><i class="md ' + E.pages.modeside + '">☾</i><i class="mn ' + E.pages.modeside + '">≡</i></div>');   // where the app header sits on top (Page › Header)
+    const zb = h('div', 'pce-zoom', '<button type="button" data-z="-">−</button><b>' + Math.round(E.zoom * 100) + '%</b><button type="button" data-z="+">+</button><button type="button" data-z="1">Fit</button>');
+    zb.addEventListener('click', ev => { const b = ev.target.closest('[data-z]'); if (!b) return; const z = b.dataset.z; E.zoom = z === '1' ? 1 : Math.max(0.3, Math.min(1.6, Math.round((E.zoom + (z === '+' ? 0.1 : -0.1)) * 10) / 10)); draw(); });
+    st.appendChild(zb);
+    page.classList.toggle('pce-playing', E.play); E.el.querySelector('.pce-play').classList.toggle('on', E.play); E.el.querySelector('.pce-play').textContent = E.play ? '■ Stop' : '▶ Play';
     st.scrollTop = y;
     page.querySelectorAll('.pgc-el').forEach(x => { if (x.dataset.el === E.sel) x.classList.add('pce-on-el'); });
     selBox();
@@ -182,19 +190,20 @@
   // ---- drag, resize, rotate ----
   let drag = null;
   function down(ev) {
-    if (ev.button > 0) return;
+    if (ev.button > 0 || E.play || ev.target.closest('[contenteditable]')) return;
     const hnd = ev.target.closest('[data-h]'), node = ev.target.closest('.pgc-el');
     if (hnd && E.sel) return start(ev, hnd.dataset.h);
     if (!node) { if (E.sel) { E.sel = null; draw(); panel(); } return; }
     const id = node.dataset.el, was = id === E.sel;
     if (!was) { E.sel = id; E.tab = E.tab === 'add' ? 'style' : E.tab; draw(); panel(); }
     if (!was && ev.pointerType === 'touch') return;   // touch: the first tap selects (so the page still scrolls), the next touch drags
-    start(ev, 'move');
+    start(ev, 'move', was);
   }
-  function start(ev, how) {
+  function start(ev, how, was) {
     const f = find(E.sel); if (!f) return;
     const page = E.el.querySelector('.pce-page'), node = page.querySelector('.pgc-el[data-el="' + CSS.escape(E.sel) + '"]');
-    drag = { how, x0: ev.clientX, y0: ev.clientY, sp: Object.assign({}, spot(f.e)), f, node, moved: false, k: kNow(), sec: node.closest('.pgc-sec') };
+    drag = { how, x0: ev.clientX, y0: ev.clientY, sp: Object.assign({}, spot(f.e)), f, node, moved: false, k: kNow(), sec: node.closest('.pgc-sec'), was: !!was };
+    page.classList.add('pce-drag');
     ev.preventDefault();
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up, { once: true }); window.addEventListener('pointercancel', cancel, { once: true });
   }
@@ -241,9 +250,37 @@
   function cancel() { window.removeEventListener('pointermove', move); drag = null; if (E) draw(); }
   function up() {
     window.removeEventListener('pointermove', move);
-    const d = drag; drag = null; if (!d || !d.moved || !d.now) return;
-    change(doc => { const f = find(d.f.e.id); if (f) setSpot(f.e, Object.assign({}, spot(f.e), d.now)); }, true);
+    const page = E.el.querySelector('.pce-page'); if (page) page.classList.remove('pce-drag');
+    const d = drag; drag = null; if (!d) return;
+    if (!d.moved) { if (d.how === 'move' && d.was && ['names', 'date', 'text', 'credit'].indexOf(d.f.e.t) > -1) editText(d.f.e.id); return; }   // a second tap on words: type straight on the page
+    if (!d.now) return;
+    // dropped over another section: it moves into that section (both screens keep their place on the page)
+    const secs = [...page.querySelectorAll('.pgc-sec')], k = d.k, cy = d.sec.offsetTop + (d.now.y + d.now.h / 2) * k;
+    const to = secs.find(x => cy >= x.offsetTop && cy < x.offsetTop + x.offsetHeight), from = d.sec;
+    change(doc => {
+      const f = find(d.f.e.id); if (!f) return;
+      setSpot(f.e, Object.assign({}, spot(f.e), d.now));
+      if (to && to !== from) {
+        const ts = doc.sections.find(x => x.id === to.dataset.sec), fs = f.s; if (!ts) return;
+        const fi = doc.sections.indexOf(fs), ti = doc.sections.indexOf(ts);
+        ['p', 'l'].forEach(m => { const top = i => doc.sections.slice(0, i).reduce((a, x) => a + PGCanvas.secH(x, m) + (+x.stay || 0), 0), sp = PGCanvas.spotOf(f.e, m);
+          if (m !== E.mode && !f.e[m] && m === 'l') return;   // laptop made from the phone follows by itself
+          const o = Object.assign({}, sp, { y: r1(sp.y + top(fi) - top(ti)) }); if (m === 'p') f.e.p = o; else f.e.l = o; });
+        fs.els = fs.els.filter(x => x.id !== f.e.id); ts.els = ts.els || []; ts.els.push(f.e);
+      }
+    }, true);
     panelSpot();
+  }
+  // type straight on the page (names, date, text, credit): Enter or tapping away keeps it, Esc leaves it
+  function editText(id) {
+    const n = E.el.querySelector('.pce-page .pgc-el[data-el="' + CSS.escape(id) + '"] .pgc-body'), f = find(id); if (!n || !f) return;
+    n.setAttribute('contenteditable', 'plaintext-only'); n.classList.add('pce-typing'); if (E.box) E.box.style.display = 'none';
+    n.focus(); const r = document.createRange(); r.selectNodeContents(n); const sl = getSelection(); sl.removeAllRanges(); sl.addRange(r);
+    let done = false;
+    const finish = keep => { if (done) return; done = true; n.removeAttribute('contenteditable'); const v = n.innerText.replace(/[<>]/g, '').trim();
+      if (keep && v !== String(f.e.text || '')) change(() => { const g = find(id); if (!g) return; const orig = g.e.t === 'names' ? PGLayout.storyData().names : ''; if (v && v !== orig) g.e.text = v.slice(0, 400); else delete g.e.text; }); else draw(); };
+    n.addEventListener('blur', () => finish(true), { once: true });
+    n.addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); finish(true); } if (ev.key === 'Escape') { ev.preventDefault(); finish(false); } });
   }
   function onKey(ev) {
     if (!E || /INPUT|TEXTAREA|SELECT/.test((ev.target || {}).tagName || '')) return;
@@ -327,7 +364,11 @@
     c += row('See-through', '<input type="range" min="0.05" max="1" step="0.05" data-s="opacity" value="' + num(s.opacity, 1) + '"><output>' + num(s.opacity, 1) + '</output>');
     if (t === 'photo' || t === 'strip') c += row('Focus left ↔ right', '<input type="range" min="0" max="100" data-s="fx" value="' + num(s.fx, 50) + '"><output>' + num(s.fx, 50) + '</output>') + row('Focus top ↕ bottom', '<input type="range" min="0" max="100" data-s="fy" value="' + num(s.fy, 30) + '"><output>' + num(s.fy, 30) + '</output>');
     if (textual) c += row('Inner space', '<input type="range" min="0" max="60" data-s="pad" value="' + num(s.pad, 0) + '"><output>' + num(s.pad, 0) + '</output>');
-    c += '<div class="pce-sub">Motion</div>' + seg('m', e.m || 'none', [['none', 'None'], ['fade', 'Fade in'], ['rise', 'Rise'], ['zoom', 'Slow zoom'], ['float', 'Float']]);
+    const mo = e.m ? e.mo || {} : {}, MOV = [['', 'None'], ['fade', 'Fade in'], ['rise', 'Rise up'], ['drop', 'Drop down'], ['left', 'Slide from left'], ['right', 'Slide from right'], ['grow', 'Grow'], ['blur', 'Blur to sharp'], ['wipe', 'Wipe in'], ['iris', 'Iris open'], ['unfold', 'Unfold'], ['shine', 'Shine once'], ['zoom', 'Slow zoom (keeps going)'], ['float', 'Float (keeps going)']];
+    c += '<div class="pce-sub">Motion</div><p class="pce-note">Plays once when it scrolls into view — or keeps going gently. Press ▶ Play to watch.' + (t === 'events' ? ' On event cards they come in one after another.' : '') + '</p>' +
+      row('Motion', '<select data-f="m">' + MOV.map(([v, n]) => opt(v, n, e.m || '')).join('') + '</select>') +
+      (e.m && ['zoom', 'float'].indexOf(e.m) < 0 ? row('Wait before (s)', '<input type="range" min="0" max="3" step="0.1" data-mo="d" value="' + (num(mo.d, 0) / 1000) + '"><output>' + (num(mo.d, 0) / 1000) + '</output>') + row('Speed (s)', '<input type="range" min="0.3" max="4" step="0.1" data-mo="t" value="' + (num(mo.t, 900) / 1000) + '"><output>' + (num(mo.t, 900) / 1000) + '</output>') : '') +
+      row('Scroll depth', '<input type="range" min="-0.5" max="0.5" step="0.05" data-mo="p" value="' + num((e.mo || {}).p, 0) + '"><output>' + num((e.mo || {}).p, 0) + '</output>') + '<p class="pce-note">Scroll depth: below 0 drifts slower than the page (far away), above 0 faster (close).</p>';
     c += '<div class="pce-sub">Exact spot · ' + (lap ? 'laptop' : 'phone') + '</div><div class="pce-spot">' + [['x', 'X'], ['y', 'Y'], ['w', 'W'], ['h', 'H'], ['r', '°']].map(([k, n]) => '<label><small>' + n + '</small><input type="number" data-sp="' + k + '" value="' + Math.round(num(sp[k], 0)) + '"></label>').join('') + '</div>';
     c += '<div class="pce-acts"><button type="button" data-do="dup">Duplicate</button><button type="button" data-do="front">To front</button><button type="button" data-do="back">To back</button><button type="button" data-do="hide">Hide on ' + (lap ? 'laptop' : 'phone') + '</button><button type="button" data-do="del" class="danger">Delete</button></div>';
     return c;
@@ -353,10 +394,13 @@
     if (s) {
       c += '<div class="pce-head"><b>Section ' + (si + 1) + ' of ' + E.doc.sections.length + '</b><span>' + (E.mode === 'l' ? 'Laptop' : 'Phone') + '</span></div>';
       c += row('Height', '<input type="range" min="80" max="2400" step="10" data-sec="h" value="' + Math.round(PGCanvas.secH(s, E.mode)) + '"><output>' + Math.round(PGCanvas.secH(s, E.mode)) + '</output>');
+      c += row('Stays while scrolling', '<input type="range" min="0" max="1600" step="20" data-sec="stay" value="' + num(+s.stay, 0) + '"><output>' + num(+s.stay, 0) + '</output>') + '<p class="pce-note">The section holds still on the screen for this much scrolling, so its motion can play (0 = scrolls normally).</p>';
       c += row('Background colour', '<span class="pce-col"><input type="color" data-sec="bgc" value="' + esc(String(bg.c || C.bg || '#ffffff').slice(0, 7)) + '">' + (bg.c ? '<button type="button" class="pce-mini" data-sec-unset="c">None</button>' : '<em>layout colour</em>') + '</span>');
       c += row('Background photo', '<select data-sec="bgsrc">' + opt('', 'None', bg.src ? 'x' : '') + srcSelect(bg.src || { k: 'none' }).replace(/^<select data-f="src">|<\/select>$/g, '') + '</select>') + (bg.src ? '<button type="button" class="pce-mini" data-pick="bg">Choose a photo…</button>' + row('Darken photo', '<input type="range" min="0" max="0.8" step="0.05" data-sec="dim" value="' + num(bg.dim, 0) + '"><output>' + num(bg.dim, 0) + '</output>') : '');
       c += '<div class="pce-acts"><button type="button" data-secdo="up">Move up</button><button type="button" data-secdo="down">Move down</button><button type="button" data-secdo="dup">Duplicate</button><button type="button" data-secdo="add">Add section below</button><button type="button" data-secdo="del" class="danger">Delete section</button></div>';
     }
+    c += '<div class="pce-sub">Header · the whole app</div><p class="pce-note">The app header sits on top of every page (the outline in the preview). It changes for the whole wedding when you apply.</p>' +
+      row('Logo', seg('hdr-header', E.pages.header, [['left', 'Left'], ['right', 'Right']])) + row('Light / dark and menu', seg('hdr-modeside', E.pages.modeside, [['left', 'Left'], ['right', 'Right']]));
     c += '<div class="pce-sub">Whole layout</div>';
     c += [['bg', 'Page'], ['ink', 'Text'], ['acc', 'Accent'], ['card', 'Cards']].map(([k, n]) => row(n + ' colour', '<input type="color" data-lc="' + k + '" value="' + esc(String(C[k] || '#000000').slice(0, 7)) + '">')).join('');
     c += row('Body font', '<select data-lf="body">' + PGCanvas.FONTS.map(fn => opt(fn, fn, F.body || 'Jost')).join('') + '</select>');
@@ -383,6 +427,7 @@
     on('[data-unset]', 'click', ev => change(() => { delete styleTarget(e)[ev.currentTarget.dataset.unset]; }));
     on('[data-tog]', 'click', ev => change(() => { const t = styleTarget(e), k = ev.currentTarget.dataset.tog; if (t[k]) delete t[k]; else t[k] = true; }));
     on('[data-k] button', 'click', ev => { const k = ev.currentTarget.closest('[data-k]').dataset.k, v = ev.currentTarget.dataset.v;
+      if (k.indexOf('hdr-') === 0) { E.pages[k.slice(4)] = v; draw(); panel(); return; }   // the header: kept with the editor, saved on Apply
       change(() => { if (k === 'align' || k === 'shape') { const t = styleTarget(e); if (v) t[k] = v; else delete t[k]; } else if (k === 'm') { if (v === 'none') delete e.m; else e.m = v; } else e[k] = v; }); });
     on('[data-f]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.f;
       if (k === 'ownstyle') return change(() => { if (x.checked) e.sl = {}; else delete e.sl; });
@@ -390,11 +435,15 @@
         if (k === 'text') { const v = x.value.replace(/[<>]/g, ''); if (v.trim()) e.text = v; else delete e.text; }
         else if (k === 'act') e.act = x.value;
         else if (k === 'variant') e.variant = x.value;
+        else if (k === 'm') { if (x.value) e.m = x.value; else delete e.m; }
         else if (k === 'n') e.n = +x.value;
         else if (k === 'per') { const p = e.per && typeof e.per === 'object' ? e.per : { p: num(e.per, 2.2), l: num(e.per, 3.5) }; p[E.mode] = Math.max(1, Math.min(8, parseFloat(x.value) || 2)); e.per = p; }
         else if (k === 'src') e.src = srcOf(x.value);
       });
     });
+    on('[data-mo]', 'input', ev => { const o = ev.currentTarget.nextElementSibling; if (o) o.textContent = ev.currentTarget.value; });
+    on('[data-mo]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.mo; change(() => { const mo = Object.assign({}, e.mo); const v = parseFloat(x.value) || 0;
+      if (k === 'p') { if (v) mo.p = v; else delete mo.p; } else mo[k] = Math.round(v * 1000); if (k === 'd' && !mo.d) delete mo.d; if (Object.keys(mo).length) e.mo = mo; else delete e.mo; }); });
     on('[data-sp]', 'change', ev => { const x = ev.currentTarget; change(() => { const sp = Object.assign({}, spot(e)); sp[x.dataset.sp] = parseFloat(x.value) || 0; setSpot(e, sp); }, true); });
     on('[data-do]', 'click', ev => { const d = ev.currentTarget.dataset.do;
       if (d === 'dup') duplicate(); if (d === 'del') remove(); if (d === 'front') order(1); if (d === 'back') order(-1); if (d === 'hide') toggleHide(E.sel);
@@ -404,12 +453,13 @@
     on('[data-pick]', 'click', ev => pickPhoto(ev.currentTarget.dataset.pick));
     // section
     const s = (E.sel && find(E.sel) || {}).s || sectionInView();
-    on('[data-sec]', 'input', ev => { const x = ev.currentTarget; if (x.dataset.sec === 'h' || x.dataset.sec === 'dim') { const o = x.nextElementSibling; if (o) o.textContent = x.value; } });
+    on('[data-sec]', 'input', ev => { const x = ev.currentTarget; if (x.dataset.sec === 'h' || x.dataset.sec === 'dim' || x.dataset.sec === 'stay') { const o = x.nextElementSibling; if (o) o.textContent = x.value; } });
     on('[data-sec]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.sec;
       change(() => { s.h = s.h || {}; s.bg = s.bg || {};
         if (k === 'h') s.h[E.mode] = Math.max(80, Math.min(2400, +x.value));
         if (k === 'bgc') s.bg.c = x.value;
         if (k === 'dim') s.bg.dim = +x.value;
+        if (k === 'stay') { if (+x.value) s.stay = +x.value; else delete s.stay; }
         if (k === 'bgsrc') { if (x.value) s.bg.src = srcOf(x.value); else delete s.bg.src; }
         if (!Object.keys(s.bg).length) delete s.bg; });
     });
@@ -490,7 +540,8 @@
   // ---- apply ----
   function apply() {
     const dirty = JSON.stringify(E.doc) !== E.saved;
-    if (E.src.builtin && !dirty) return applyId(E.src.builtin, null);   // a ready layout, unchanged (a Minimal layout stays the card layout it was)
+    if (E.src.builtin && !dirty) return applyId(E.src.builtin, null);
+    if (E.src.id && E.src.mine && !dirty && E.role !== 'demo') return applySaved();   // a ready layout, unchanged (a Minimal layout stays the card layout it was)
     if (E.role === 'demo') return demoKeep(true);
     if (!E.src.id || !E.src.mine || dirty) {
       if (E.src.id && E.src.mine && dirty) return pgApi('canvasSave', { item: { id: E.src.id, kind: 'layout', name: E.doc.name || 'My layout', collection: E.src.collection || undefined, scope: E.src.scope || 'wedding', doc: E.doc } }).then(() => { E.saved = JSON.stringify(E.doc); applySaved(); }).catch(err => showToast(err.message || 'Could not save'));
@@ -501,13 +552,15 @@
   function applySaved() { return applyId(E.src.id, { id: E.src.id, name: E.doc.name, doc: clone(E.doc) }); }
   function applyId(id, canvas) {
     const btn = E.el.querySelector('.pce-apply'); btn.disabled = true; btn.textContent = 'Applying…';
-    return PGControl.save({ layout: id }).then(r => {
+    const gp = GALLERY.pages || {}, body = { layout: id };
+    if ((gp.header || 'right') !== E.pages.header || (gp.modeside || 'right') !== E.pages.modeside) body.pages = JSON.stringify(E.pages);
+    return PGControl.save(body).then(r => { if (r.pages) GALLERY.pages = r.pages;
       GALLERY.layout = r.layout; if (canvas) GALLERY.canvas = canvas; if (r.custom) GALLERY.custom = r.custom;
       E.saved = JSON.stringify(E.doc); close(true); if (window.switchViewFromNav) switchViewFromNav('hub'); window.scrollTo(0, 0);
       showToast('Applied — every guest sees this Hub now');
     }).catch(err => { showToast(err.message || 'Could not apply'); btn.disabled = false; btn.textContent = 'Apply'; });
   }
 
-  window.PGCanvasEditor = { open, close, state: () => (E ? { mode: E.mode, sel: E.sel, tab: E.tab, doc: E.doc && clone(E.doc), src: Object.assign({}, E.src), dirty: E.doc && JSON.stringify(E.doc) !== E.saved } : null),
+  window.PGCanvasEditor = { open, close, state: () => (E ? { zoom: E.zoom, play: E.play, pages: Object.assign({}, E.pages), mode: E.mode, sel: E.sel, tab: E.tab, doc: E.doc && clone(E.doc), src: Object.assign({}, E.src), dirty: E.doc && JSON.stringify(E.doc) !== E.saved } : null),
     select: id => { if (E) { E.sel = id; E.tab = 'style'; draw(); panel(); } }, tab: k => { if (E) { E.tab = k; panel(); } }, mode: m => { if (E) { E.mode = m; draw(); panel(); } } };
 })();

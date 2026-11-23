@@ -12,7 +12,8 @@
 //       p: { x, y, w, h, r, z, hide }, l: { … } | null,                       // phone / laptop spot (design units)
 //       s: { font, size, weight, italic, color, bg, align, ls, lh, radius, border, bcolor, shadow, opacity, fx, fy, upper, shape: 'arch'|'circle', pad },
 //       sl: { …the laptop's own style changes }, per: { p, l } (event cards showing at once),
-//       m: 'none'|'fade'|'rise'|'zoom'|'float',                                  // motion
+//       m: motion — comes in once: fade|rise|drop|left|right|grow|blur|wipe|iris|unfold|shine, keeps moving: zoom|float
+//       mo: { d: delay ms, t: speed ms, p: scroll depth -0.6…0.6 },   section.stay: how long it holds still while scrolling
 //       text, src: { k: 'cover'|'hl'|'ev'|'id'|'auto', n, i, id }, act: 'findme'|'reel'|'post'|'memory'|'moments'|'notes', v: variant } ] } ] }
 (function pgCanvas() {
   'use strict';
@@ -24,6 +25,8 @@
     post: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 16l-5-5-9 10"/></svg>', memory: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
     moments: '<svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>', notes: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>' };
   const LABEL = { findme: 'Find me', reel: 'Make a reel', post: 'Make a post', memory: 'Add a moment', moments: 'Root Moment', notes: 'Leave a blessing' };
+  // motion (step 78): one per element. Comes in once (when it scrolls into view) or keeps moving gently; plus a delay, a speed and a scroll depth
+  const ENTER = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine'], LOOP = ['zoom', 'float'];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);
   const col = (v, d) => (/^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? v : d);
@@ -35,9 +38,9 @@
   }
   const CSS = `
 .pgc{position:relative;width:100%;background:var(--c-bg);color:var(--c-ink);overflow-x:clip;-webkit-tap-highlight-color:transparent}
-.pgc-sec{position:relative;width:100%;overflow:hidden}
-.pgc-sec>.pgc-bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.pgc-sec>.pgc-dim{position:absolute;inset:0;pointer-events:none}
+.pgc-sec{position:relative;width:100%}
+.pgc-stick>.pgc-bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pgc-stick>.pgc-dim{position:absolute;inset:0;pointer-events:none}
 .pgc-in{position:absolute;top:0;bottom:0}
 .pgc-el{position:absolute;box-sizing:border-box;transform-origin:50% 50%}
 .pgc-el>.pgc-body{position:relative;width:100%;height:100%;overflow:hidden;box-sizing:border-box}
@@ -57,15 +60,24 @@
 .pgc-act svg{width:1.25em;height:1.25em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .pgc-act.circle span{display:none}
 .pgc-bl{display:flex;flex-direction:column;justify-content:center;gap:.6em}.pgc-bl q{quotes:'“' '”'}.pgc-bl small{opacity:.75;font-size:.72em;letter-spacing:.06em}
-.pgc-m-fade{opacity:0;transition:opacity 1s ease}.pgc-m-rise{opacity:0;translate:0 40px;transition:opacity .9s ease,translate 1s cubic-bezier(.2,.8,.2,1)}
-.pgc-m-fade.in,.pgc-m-rise.in{opacity:1;translate:0 0}
+.pgc-stick{position:relative;width:100%;overflow:hidden}
+.pgc-sec.stay>.pgc-stick{position:sticky;top:0}
+.pgc-e{transition-property:opacity,translate,scale,filter,clip-path;transition-duration:var(--t,900ms);transition-delay:var(--d,0ms);transition-timing-function:cubic-bezier(.2,.8,.2,1)}
+.pgc-m-fade{opacity:0}.pgc-m-rise{opacity:0;translate:0 40px}.pgc-m-drop{opacity:0;translate:0 -40px}.pgc-m-left{opacity:0;translate:-60px 0}.pgc-m-right{opacity:0;translate:60px 0}
+.pgc-m-grow{opacity:0;scale:.86}.pgc-m-blur{opacity:0;filter:blur(14px)}.pgc-m-wipe{clip-path:inset(0 100% 0 0)}.pgc-m-iris{clip-path:circle(0% at 50% 50%)}.pgc-m-unfold{clip-path:inset(50% 0 50% 0)}
+.pgc-e.in{opacity:1;translate:0 0;scale:1;filter:none;clip-path:inset(0 0 0 0)}.pgc-m-iris.in{clip-path:circle(150% at 50% 50%)}
+.pgc-m-shine>.pgc-body::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-130%)}
+.pgc-m-shine.in>.pgc-body::after{animation:pgc-shine var(--t,1400ms) var(--d,0ms) ease-out 1 forwards}@keyframes pgc-shine{to{transform:translateX(130%)}}
+.pgc-stg .pgc-ev>button{opacity:0;translate:0 24px;transition:opacity var(--t,700ms) ease,translate var(--t,700ms) cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--d,0ms) + var(--i,0) * 140ms)}
+.pgc-stg.in .pgc-ev>button{opacity:1;translate:0 0}
 .pgc-m-zoom img{animation:pgc-kb 14s ease-in-out infinite alternate}@keyframes pgc-kb{to{transform:scale(1.12)}}
 .pgc-m-float{animation:pgc-float 5s ease-in-out infinite}@keyframes pgc-float{50%{translate:0 -8px}}
 .pgc .pgc-cardhost.pgl-grid{display:block;padding:0;margin:0;max-width:none;grid-template-columns:none;gap:0;--u:86px;overflow:visible}
 .pgc .pgc-cardhost>.pgl-b{width:100%;height:100%}
+.pgc-staynote{display:grid;place-items:center;font:600 12px var(--font-sans,system-ui);color:#3d8bff;background:repeating-linear-gradient(45deg,rgba(61,139,255,.07) 0 10px,transparent 10px 20px);border-top:1px dashed rgba(61,139,255,.5)}
 .pgc-cardnone{width:100%;height:100%;display:grid;place-items:center;border:1.5px dashed rgba(127,127,127,.5);border-radius:14px;font:600 12px var(--font-sans,system-ui);opacity:.7;text-align:center;padding:6px}
-.pgc-still *,.pgc-still{animation:none!important;transition:none!important}.pgc-still .pgc-m-fade,.pgc-still .pgc-m-rise{opacity:1;translate:0 0}
-@media (prefers-reduced-motion:reduce){.pgc *{animation:none!important;transition:none!important}.pgc .pgc-m-fade,.pgc .pgc-m-rise{opacity:1;translate:0 0}}`;
+.pgc-still *,.pgc-still{animation:none!important;transition:none!important}.pgc-still .pgc-e,.pgc-still .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none}
+@media (prefers-reduced-motion:reduce){.pgc *{animation:none!important;transition:none!important}.pgc .pgc-e,.pgc .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none}}`;
 
   // ---- photos: the element's own choice, else cover → couple → highlights → event highlights → event photos ----
   function photos(data) {
@@ -162,7 +174,15 @@
     ensure(); opts = opts || {};
     const root = document.createElement('div'); root.className = 'pgc';
     box.appendChild(root);
-    let io = null, lastW = 0;
+    let io = null, lastW = 0, pars = [], sraf = 0;
+    // scroll depth (parallax): an element drifts a little slower or faster than the page
+    const sc = opts.scroller || window;
+    function onScroll() {
+      if (sraf || !pars.length || opts.still) return;
+      sraf = requestAnimationFrame(() => { sraf = 0; const vh = opts.scroller ? opts.scroller.clientHeight : window.innerHeight, top0 = opts.scroller ? opts.scroller.getBoundingClientRect().top : 0;
+        pars.forEach(x => { const r = x.getBoundingClientRect(), c = r.top - top0 + r.height / 2 - vh / 2, b = x.firstElementChild; if (b) b.style.translate = '0 ' + Math.max(-240, Math.min(240, -c * (+x.dataset.par || 0))).toFixed(1) + 'px'; }); });
+    }
+    sc.addEventListener('scroll', onScroll, { passive: true });
     const C = doc.colors || {};
     function draw() {
       const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth, mode = opts.mode || (W >= LAPTOP_AT ? 'l' : 'p');
@@ -181,10 +201,13 @@
         const els = (sec.els || []).map(el => {
           const sp = spotOf(el, mode); if (!sp || sp.hide) return '';
           const inner = body(el, k, doc, data, P, ctx, sp); if (inner == null) return '';
-          const m = ['fade', 'rise', 'zoom', 'float'].indexOf(el.m) > -1 ? ' pgc-m-' + el.m : '';
-          return '<div class="pgc-el pgc-t-' + el.t + m + '" data-el="' + esc(el.id || '') + '" style="left:' + (num(sp.x, 0) * k).toFixed(1) + 'px;top:' + (num(sp.y, 0) * k).toFixed(1) + 'px;width:' + (num(sp.w, 100) * k).toFixed(1) + 'px;height:' + (num(sp.h, 40) * k).toFixed(1) + 'px;z-index:' + num(sp.z, 1) + (sp.r ? ';rotate:' + num(sp.r, 0) + 'deg' : '') + '">' + inner + '</div>';
+          const mo = el.mo || {}, enter = ENTER.indexOf(el.m) > -1, stag = enter && el.t === 'events' && el.v !== 'list' && el.m !== 'shine';
+          const m = stag ? ' pgc-stg' : enter ? ' pgc-e pgc-m-' + el.m : LOOP.indexOf(el.m) > -1 ? ' pgc-m-' + el.m : '';
+          const tim = (mo.d ? ';--d:' + num(mo.d, 0) + 'ms' : '') + (mo.t ? ';--t:' + num(mo.t, 900) + 'ms' : '');
+          return '<div class="pgc-el pgc-t-' + el.t + m + '" data-el="' + esc(el.id || '') + '"' + (mo.p ? ' data-par="' + num(mo.p, 0) + '"' : '') + ' style="left:' + (num(sp.x, 0) * k).toFixed(1) + 'px;top:' + (num(sp.y, 0) * k).toFixed(1) + 'px;width:' + (num(sp.w, 100) * k).toFixed(1) + 'px;height:' + (num(sp.h, 40) * k).toFixed(1) + 'px;z-index:' + num(sp.z, 1) + (sp.r ? ';rotate:' + num(sp.r, 0) + 'deg' : '') + tim + '">' + inner + '</div>';
         }).join('');
-        return '<section class="pgc-sec" data-sec="' + esc(sec.id || '') + '" style="height:' + h.toFixed(1) + 'px;background:' + col(bg.c, 'transparent') + '">' + bgHtml + '<div class="pgc-in" style="left:' + off.toFixed(1) + 'px;width:' + inW.toFixed(1) + 'px">' + els + '</div></section>';
+        const stay = Math.max(0, num(sec.stay, 0)) * k;   // "stays while scrolling": the section holds still for this much scrolling
+        return '<section class="pgc-sec' + (stay && !opts.editing ? ' stay' : '') + '" data-sec="' + esc(sec.id || '') + '" style="height:' + (h + stay).toFixed(1) + 'px;background:' + col(bg.c, 'transparent') + '"><div class="pgc-stick" style="height:' + h.toFixed(1) + 'px">' + bgHtml + '<div class="pgc-in" style="left:' + off.toFixed(1) + 'px;width:' + inW.toFixed(1) + 'px">' + els + '</div></div>' + (stay && opts.editing ? '<div class="pgc-staynote" style="height:' + stay.toFixed(1) + 'px">stays here while guests scroll</div>' : '') + '</section>';
       }).join('');
       // the app's own cards draw themselves into their boxes (a card with nothing to show for this person leaves its box empty)
       root.querySelectorAll('[data-card]').forEach(host => { const c = ctx.cards[+host.dataset.card]; if (!c || !window.PGLayout || !PGLayout.card) return;
@@ -193,7 +216,9 @@
       if (opts.still) root.classList.add('pgc-still');
       if (io) io.disconnect();
       io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: opts.scroller || null, threshold: .15 }) : null;
-      root.querySelectorAll('.pgc-m-fade,.pgc-m-rise').forEach(x => (io ? io.observe(x) : x.classList.add('in')));
+      root.querySelectorAll('.pgc-stg .pgc-ev>button').forEach((b, i) => b.style.setProperty('--i', i % 12));
+      root.querySelectorAll('.pgc-e,.pgc-stg').forEach(x => (io ? io.observe(x) : x.classList.add('in')));
+      pars = [...root.querySelectorAll('[data-par]')]; onScroll();
       inst.used = ctx.used.filter(Boolean);
     }
     const onClick = e => {
@@ -204,7 +229,7 @@
     root.addEventListener('click', onClick);
     let rz = 0; const onResize = () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth; if (Math.abs(W - lastW) > 2) draw(); }); };
     window.addEventListener('resize', onResize);
-    const inst = { root, used: [], redraw: draw, destroy() { window.removeEventListener('resize', onResize); if (io) io.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
+    const inst = { root, used: [], redraw: draw, destroy() { window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
     draw();
     return inst;
   }

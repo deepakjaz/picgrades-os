@@ -121,6 +121,55 @@ const srv = http.createServer((req, res) => {
   await mp.tap('.pce-page .pgc-el[data-el="' + el0 + '"]'); await mp.waitForTimeout(300);
   ok(await mp.evaluate(() => PGCanvasEditor.state().mode === 'p' && !!PGCanvasEditor.state().sel), 'phone: tap selects (phone placement)');
   await mp.screenshot({ path: '/tmp/ce_phone_sel.png' });
+  // ---- phase 3: zoom-out, Play, motion, stay, header, typing on the page, drag between sections
+  await mp.tap('.pce-zoom [data-z="-"]'); await mp.tap('.pce-zoom [data-z="-"]'); await mp.waitForTimeout(200);
+  ok(await mp.evaluate(() => PGCanvasEditor.state().zoom < 1 && document.querySelector('.pce-page').getBoundingClientRect().width < 380), 'zoom out: the page draws smaller');
+  await mp.tap('.pce-zoom [data-z="1"]'); await mp.waitForTimeout(150);
+  // motion on the selected element
+  await mp.tap('[data-tab=item]').catch(() => {}); await mp.waitForTimeout(150);
+  const hasM = await mp.evaluate(() => !!document.querySelector('.pce [data-f="m"]'));
+  if (hasM) { await mp.selectOption('.pce [data-f="m"]', 'rise'); await mp.waitForTimeout(200); }
+  ok(hasM && await mp.evaluate(id => PGCanvasEditor.state().doc.sections[0].els.find(e => e.id === id).m === 'rise', el0), 'motion: pick "rise" for a part');
+  await mp.tap('.pce-play'); await mp.waitForTimeout(1600);
+  ok(await mp.evaluate(() => PGCanvasEditor.state().play && document.querySelectorAll('.pce-page .pgc-e.in').length > 0), 'Play: the motion plays in the editor');
+  await mp.screenshot({ path: '/tmp/ce_play.png' });
+  await mp.tap('.pce-play'); await mp.waitForTimeout(300);
+  ok(await mp.evaluate(() => !PGCanvasEditor.state().play), 'Stop: back to editing');
+  // section stay + header
+  await mp.tap('[data-tab=page]'); await mp.waitForTimeout(200);
+  const stay = await mp.evaluate(() => { const r = document.querySelector('.pce [data-sec="stay"]'); if (!r) return null; r.value = '400'; r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); return true; });
+  await mp.waitForTimeout(300);
+  ok(stay && await mp.evaluate(() => PGCanvasEditor.state().doc.sections.some(s => +s.stay === 400) && !!document.querySelector('.pce-page .pgc-staynote')), 'a section can stay on screen while scrolling');
+  const hdrB = await mp.$('[data-k="hdr-header"] [data-v="right"]') || await mp.$('[data-k="hdr-header"] button:last-child');
+  if (hdrB) { await hdrB.tap(); await mp.waitForTimeout(200); }
+  ok(!!hdrB && await mp.evaluate(() => PGCanvasEditor.state().pages.header === 'right'), 'header: logo moved right from the editor');
+  await mp.screenshot({ path: '/tmp/ce_page_hdr.png' });
+  // typing on the page: tap a names/text part twice
+  const tid = await mp.evaluate(() => { const s = PGCanvasEditor.state(); for (const sec of s.doc.sections) for (const e of sec.els) if (['names', 'text'].includes(e.t) && !(e.p && e.p.hide)) return e.id; return null; });
+  if (tid) { await mp.evaluate(id => document.querySelector('.pce-page .pgc-el[data-el="' + id + '"]').scrollIntoView({ block: 'center' }), tid); await mp.waitForTimeout(200);
+    await mp.tap('.pce-page .pgc-el[data-el="' + tid + '"]'); await mp.waitForTimeout(250); await mp.tap('.pce-page .pgc-el[data-el="' + tid + '"]'); await mp.waitForTimeout(300); }
+  const typing = await mp.evaluate(() => !!document.querySelector('.pce-page .pce-typing'));
+  ok(!!tid && typing, 'second tap on words: type straight on the page');
+  if (typing) { await mp.keyboard.press('End'); await mp.keyboard.type(' x'); await mp.screenshot({ path: '/tmp/ce_typing.png' });
+    await mp.evaluate(() => document.querySelector('.pce-page .pce-typing').blur()); await mp.waitForTimeout(300);
+    ok(await mp.evaluate(id => { for (const sec of PGCanvasEditor.state().doc.sections) for (const e of sec.els) if (e.id === id) return /x$/.test(e.text || ''); return false; }, tid), 'typed words are kept'); }
+  // drag between sections (mouse on a laptop-size page)
+  const lp = await (await b.newContext({ viewport: { width: 1280, height: 860 } })).newPage(); lp.on('pageerror', e => errors.push(e.message));
+  await lp.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: bytesOf('3') })); await require('./fonts_local').install(lp);
+  await lp.goto(URL + '?couple=' + ck); await lp.waitForSelector('#pgBoot.hide', { state: 'attached' }); await lp.waitForFunction(() => window.PGControl && PGControl.role() === 'couple');
+  await lp.evaluate(() => PGCanvasEditor.open('canvas-quiet')); await lp.waitForSelector('.pce .pgc-sec'); await lp.waitForTimeout(600);
+  const mv = await lp.evaluate(() => { const s = PGCanvasEditor.state(); if (s.doc.sections.length < 2) return null; const e = s.doc.sections[0].els.find(x => !(x.p && x.p.hide) && x.t !== 'photo') || s.doc.sections[0].els[0]; const n = document.querySelector('.pce-page .pgc-el[data-el="' + e.id + '"]'); n.scrollIntoView({ block: 'center' }); return e.id; });
+  await lp.waitForTimeout(300);
+  let moved = false;
+  if (mv) {
+    const r0 = await lp.evaluate(id => { const r = document.querySelector('.pce-page .pgc-el[data-el="' + id + '"]').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + Math.min(20, r.height / 2) }; }, mv);
+    const s1 = await lp.evaluate(() => document.querySelectorAll('.pce-page .pgc-sec')[1].getBoundingClientRect().top);
+    await lp.mouse.move(r0.x, r0.y); await lp.mouse.down(); await lp.mouse.move(r0.x, r0.y + 20, { steps: 3 });
+    const target = Math.min(s1 + 120, 820); await lp.mouse.move(r0.x, target, { steps: 12 }); await lp.waitForTimeout(150); await lp.mouse.up(); await lp.waitForTimeout(400);
+    moved = await lp.evaluate(id => PGCanvasEditor.state().doc.sections[1].els.some(e => e.id === id), mv);
+  }
+  ok(moved, 'drag a part into the next section');
+  await lp.screenshot({ path: '/tmp/ce_between.png' }); await lp.close();
   console.log('page errors: ' + JSON.stringify(errors));
   ok(!errors.length, 'no page errors');
   await b.close(); srv.close(); process.exit(fails ? 1 : 0);
