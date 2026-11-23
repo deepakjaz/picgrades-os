@@ -71,6 +71,20 @@ PicGrades OS = the PicGrades order system + the **wedding gallery app** (a PWA) 
   - Every screen works on phone (design width **390**) and laptop (**1200**). Screens 700 px and wider use the laptop design.
   - Tap targets are at least 44 px.
   - Light and dark mode both work.
+- **Editor layout rule** (every editor: Hub editors, template editor, Post Edits, Reel Edits, Control Panel previews, and any new editor). The design you edit is **never covered by a tool**.
+  - **Phone:**
+    - The design sits in a "stage" at the top. It shrinks to fit and stays fully visible.
+    - Tools live in a bottom drawer:
+      - closed = one row of tool icons (about 64 px);
+      - open = at most **40 %** of the screen height.
+    - Opening a tool makes the stage smaller; it never covers it.
+    - The selected item scrolls into view above the drawer.
+    - Option lists (templates, stickers, fonts, photos) are one row of small thumbnails, not a full-screen grid.
+  - **Laptop (≥ 700 px):** the stage on the left, the tools in a fixed right panel (about 360 px). Nothing floats over the stage.
+  - **Full-screen editors:** inside them, hide the app's bottom bar, role badges and floating buttons.
+  - **Top bar:** the same in every editor: ‹ back on the left, Undo/Redo, one main button on the right (Save / Apply / Next). Everything fits on one row.
+  - **Help text** shows once, then goes.
+  - **Check:** `node tools/audit/overlay-audit.js --only=<editor>` must show **design visible ≥ 85 %** for your editor on phone and laptop. Photo pickers are the only exception.
 - **Words on screen:**
   - Short, plain English, sentence case.
   - No photo/collection counts in the guest or couple interface (counts live only in the Control Panel).
@@ -118,6 +132,7 @@ Use this list when you review a PR (ChatGPT/Codex review, Gemini Code Assist and
 - A feature or test that was removed, or an existing test that was weakened.
 - Something outside the task card was changed.
 - A backend route that trusts input without cleaning it, or skips the role check.
+- An editor or sheet that covers the design (breaks the Editor layout rule; check with `tools/audit/overlay-audit.js`).
 - A screen that breaks at 390 px or 1200 px, has text that overflows or gets cut, or doesn't work in dark mode.
 - A browser test without `page errors: []`, or one that reuses another test's port.
 - A missing "Backend changed" line when `Code.gs` changed.

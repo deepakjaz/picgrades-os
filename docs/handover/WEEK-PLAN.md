@@ -1,7 +1,7 @@
 # Week plan — 24 to 28 Nov 2026 (ChatGPT + Gemini build, Claude guides)
 
-> **On hold (23 Nov):** first, three audits of the current app — see `AUDIT-BRIEF.md` (Claude's is `AUDIT-CLAUDE.md`).
-> After all three, Claude merges them into one fix list. Overlay and preview fixes come **before** the cards below; the card order may change.
+> **Updated 24 Nov — after the three audits:** do the fix cards **F0–F4 and F6** in `AUDIT-MERGED.md` first (F0 first: it is small and unblocks the framing sheet). F5 waits for Deepak's A/B/C choice.
+> Then T1–T6 below, in the same order. Every screen change must follow the Editor layout rule in `AGENTS.md`.
 
 Claude's weekly limit is low until about Sat 28 Nov. This week ChatGPT and Gemini do the building, using Claude's rules (`AGENTS.md`) and these task cards.
 Claude only reviews PR links and answers short questions.
@@ -106,7 +106,7 @@ Not in this card. Write it as one suggestion in the PR. Claude decides next week
    - In `gas_mock.js`, add a fake reply for the Drive files call.
    - Add one browser check (the couple renames a group and the Events page shows it).
 
-**Gemini gives:** the naming screen (phone + laptop), the exact words, and how a group looks (photo strip, time line).
+**Gemini gave:** `gemini/T1-T2-design.md`. Follow it with Claude's changes in `GEMINI-REVIEW.md`.
 
 **Done when:**
 - A wedding with only loose photos shows events grouped by time.
@@ -130,7 +130,7 @@ Not in this card. Write it as one suggestion in the PR. Claude decides next week
 5. A new file, `app/gallery/48-same-time.js`, with its own CSS at the end of `gallery.css`.
 6. Test: a browser test with a fixed clock (`page.clock` or an override `window.PG_NOW`) — the card shows on a match, shows nothing when there's no match, and the switch hides it.
 
-**Gemini gives:** the card and pop design (phone + laptop), the words in English (and Hindi as an option), and the motion (calm, plays once).
+**Gemini gave:** `gemini/T1-T2-design.md`. Decision: the **small pop** (not a Hub card). Follow `GEMINI-REVIEW.md`.
 
 **Done when:** the card shows only on a real match, opens the right photos, can be turned off, and the tests pass.
 

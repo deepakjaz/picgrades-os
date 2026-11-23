@@ -1,0 +1,534 @@
+{
+ "v": 1,
+ "name": "Living Story (editor)",
+ "colors": {
+  "bg": "#f7f3ec",
+  "ink": "#241f1c",
+  "acc": "#9a7b4f",
+  "acc2": "#c9a56a",
+  "card": "#ffffff"
+ },
+ "fonts": {
+  "head": "Cormorant Garamond",
+  "body": "Jost"
+ },
+ "sections": [
+  {
+   "id": "hero",
+   "h": {
+    "p": 844,
+    "l": 780
+   },
+   "bg": {
+    "c": "#1c1815",
+    "src": {
+     "k": "cover",
+     "n": 0
+    },
+    "dim": 0.38,
+    "fy": 30
+   },
+   "els": [
+    {
+     "id": "kicker",
+     "t": "text",
+     "p": {
+      "x": 24,
+      "y": 530,
+      "w": 342,
+      "h": 24,
+      "z": 2
+     },
+     "l": {
+      "x": 100,
+      "y": 460,
+      "w": 600,
+      "h": 28,
+      "z": 2
+     },
+     "s": {
+      "size": 11,
+      "ls": 0.28,
+      "upper": true,
+      "color": "#f7f3ec",
+      "align": "center",
+      "opacity": 0.85
+     },
+     "m": "fade",
+     "text": "THE WEDDING STORY",
+     "sl": {
+      "size": 13,
+      "align": "left"
+     }
+    },
+    {
+     "id": "names",
+     "t": "names",
+     "p": {
+      "x": 20,
+      "y": 560,
+      "w": 350,
+      "h": 84,
+      "z": 2
+     },
+     "l": {
+      "x": 100,
+      "y": 494,
+      "w": 760,
+      "h": 96,
+      "z": 2
+     },
+     "s": {
+      "font": "Cormorant Garamond",
+      "size": 44,
+      "italic": true,
+      "color": "#ffffff",
+      "align": "center",
+      "lh": 1.05
+     },
+     "m": "rise",
+     "sl": {
+      "size": 68,
+      "align": "left"
+     }
+    },
+    {
+     "id": "date",
+     "t": "date",
+     "p": {
+      "x": 24,
+      "y": 652,
+      "w": 342,
+      "h": 24,
+      "z": 2
+     },
+     "l": {
+      "x": 100,
+      "y": 600,
+      "w": 500,
+      "h": 28,
+      "z": 2
+     },
+     "s": {
+      "size": 12,
+      "ls": 0.26,
+      "upper": true,
+      "color": "#e5cfa8",
+      "align": "center"
+     },
+     "m": "rise",
+     "sl": {
+      "size": 14,
+      "align": "left"
+     }
+    },
+    {
+     "id": "findme",
+     "t": "action",
+     "act": "findme",
+     "p": {
+      "x": 115,
+      "y": 700,
+      "w": 160,
+      "h": 46,
+      "z": 3
+     },
+     "l": {
+      "x": 100,
+      "y": 652,
+      "w": 190,
+      "h": 50,
+      "z": 3
+     },
+     "s": {
+      "bg": "#f7f3ec",
+      "color": "#241f1c",
+      "radius": 25,
+      "size": 14,
+      "weight": 500
+     },
+     "m": "rise"
+    }
+   ]
+  },
+  {
+   "id": "glancing",
+   "h": {
+    "p": 390,
+    "l": 470
+   },
+   "els": [
+    {
+     "id": "g_head",
+     "t": "text",
+     "p": {
+      "x": 24,
+      "y": 32,
+      "w": 342,
+      "h": 40,
+      "z": 1
+     },
+     "l": {
+      "x": 100,
+      "y": 48,
+      "w": 680,
+      "h": 52,
+      "z": 1
+     },
+     "s": {
+      "font": "Cormorant Garamond",
+      "size": 30,
+      "italic": true
+     },
+     "m": "rise",
+     "text": "Glancing moments",
+     "sl": {
+      "size": 40
+     }
+    },
+    {
+     "id": "g_strip",
+     "t": "strip",
+     "p": {
+      "x": 0,
+      "y": 88,
+      "w": 390,
+      "h": 260,
+      "z": 1
+     },
+     "l": {
+      "x": 0,
+      "y": 116,
+      "w": 1200,
+      "h": 310,
+      "z": 1
+     },
+     "s": {
+      "radius": 10
+     }
+    }
+   ]
+  },
+  {
+   "id": "events",
+   "h": {
+    "p": 460,
+    "l": 560
+   },
+   "bg": {
+    "c": "#efe8dc"
+   },
+   "els": [
+    {
+     "id": "e_head",
+     "t": "text",
+     "p": {
+      "x": 24,
+      "y": 36,
+      "w": 342,
+      "h": 42,
+      "z": 1
+     },
+     "l": {
+      "x": 100,
+      "y": 54,
+      "w": 680,
+      "h": 54,
+      "z": 1
+     },
+     "s": {
+      "font": "Cormorant Garamond",
+      "size": 30,
+      "italic": true
+     },
+     "m": "rise",
+     "text": "The celebrations",
+     "sl": {
+      "size": 40
+     }
+    },
+    {
+     "id": "e_row",
+     "t": "events",
+     "p": {
+      "x": 24,
+      "y": 96,
+      "w": 366,
+      "h": 320,
+      "z": 1
+     },
+     "l": {
+      "x": 100,
+      "y": 130,
+      "w": 1000,
+      "h": 380,
+      "z": 1
+     },
+     "s": {
+      "radius": 14,
+      "size": 15,
+      "weight": 500
+     },
+     "v": "row",
+     "per": {
+      "p": 1.6,
+      "l": 3.2
+     }
+    }
+   ]
+  },
+  {
+   "id": "showcase",
+   "h": {
+    "p": 420,
+    "l": 360
+   },
+   "els": [
+    {
+     "id": "s_card",
+     "t": "shape",
+     "p": {
+      "x": 20,
+      "y": 28,
+      "w": 350,
+      "h": 364,
+      "z": 0
+     },
+     "l": {
+      "x": 100,
+      "y": 40,
+      "w": 1000,
+      "h": 280,
+      "z": 0
+     },
+     "s": {
+      "bg": "#ffffff",
+      "radius": 20,
+      "shadow": 1
+     }
+    },
+    {
+     "id": "s_head",
+     "t": "text",
+     "p": {
+      "x": 40,
+      "y": 54,
+      "w": 310,
+      "h": 38,
+      "z": 1
+     },
+     "l": {
+      "x": 140,
+      "y": 72,
+      "w": 460,
+      "h": 48,
+      "z": 1
+     },
+     "s": {
+      "font": "Cormorant Garamond",
+      "size": 28,
+      "italic": true
+     },
+     "text": "Create from our story",
+     "sl": {
+      "size": 36
+     }
+    },
+    {
+     "id": "s_sub",
+     "t": "text",
+     "p": {
+      "x": 40,
+      "y": 98,
+      "w": 310,
+      "h": 44,
+      "z": 1
+     },
+     "l": {
+      "x": 140,
+      "y": 130,
+      "w": 460,
+      "h": 54,
+      "z": 1
+     },
+     "s": {
+      "size": 14,
+      "opacity": 0.72,
+      "lh": 1.45
+     },
+     "text": "Turn your favourite photos into a beat-synced reel or keepsake post."
+    },
+    {
+     "id": "reel_btn",
+     "t": "action",
+     "act": "reel",
+     "p": {
+      "x": 40,
+      "y": 168,
+      "w": 310,
+      "h": 52,
+      "z": 2
+     },
+     "l": {
+      "x": 680,
+      "y": 82,
+      "w": 370,
+      "h": 56,
+      "z": 2
+     },
+     "s": {
+      "bg": "#241f1c",
+      "color": "#f7f3ec",
+      "radius": 26,
+      "size": 15,
+      "weight": 500
+     }
+    },
+    {
+     "id": "post_btn",
+     "t": "action",
+     "act": "post",
+     "p": {
+      "x": 40,
+      "y": 234,
+      "w": 310,
+      "h": 52,
+      "z": 2
+     },
+     "l": {
+      "x": 680,
+      "y": 154,
+      "w": 370,
+      "h": 56,
+      "z": 2
+     },
+     "s": {
+      "border": 1,
+      "bcolor": "#241f1c",
+      "color": "#241f1c",
+      "radius": 26,
+      "size": 15,
+      "weight": 500
+     }
+    },
+    {
+     "id": "moment_btn",
+     "t": "action",
+     "act": "memory",
+     "p": {
+      "x": 40,
+      "y": 300,
+      "w": 310,
+      "h": 52,
+      "z": 2
+     },
+     "l": {
+      "x": 680,
+      "y": 226,
+      "w": 370,
+      "h": 56,
+      "z": 2
+     },
+     "s": {
+      "border": 1,
+      "bcolor": "#9a7b4f",
+      "color": "#9a7b4f",
+      "radius": 26,
+      "size": 15,
+      "weight": 500
+     }
+    }
+   ]
+  },
+  {
+   "id": "closing",
+   "h": {
+    "p": 340,
+    "l": 320
+   },
+   "bg": {
+    "c": "#efe8dc"
+   },
+   "els": [
+    {
+     "id": "bless",
+     "t": "blessings",
+     "p": {
+      "x": 32,
+      "y": 36,
+      "w": 326,
+      "h": 170,
+      "z": 1
+     },
+     "l": {
+      "x": 260,
+      "y": 48,
+      "w": 680,
+      "h": 150,
+      "z": 1
+     },
+     "s": {
+      "font": "Cormorant Garamond",
+      "size": 24,
+      "italic": true,
+      "align": "center",
+      "lh": 1.35
+     },
+     "m": "fade"
+    },
+    {
+     "id": "notes_btn",
+     "t": "action",
+     "act": "notes",
+     "p": {
+      "x": 115,
+      "y": 220,
+      "w": 160,
+      "h": 44,
+      "z": 2
+     },
+     "l": {
+      "x": 510,
+      "y": 212,
+      "w": 180,
+      "h": 46,
+      "z": 2
+     },
+     "s": {
+      "border": 1,
+      "bcolor": "#9a7b4f",
+      "color": "#241f1c",
+      "radius": 23,
+      "size": 14,
+      "weight": 500
+     }
+    },
+    {
+     "id": "credit",
+     "t": "credit",
+     "p": {
+      "x": 24,
+      "y": 288,
+      "w": 342,
+      "h": 26,
+      "z": 1
+     },
+     "l": {
+      "x": 300,
+      "y": 276,
+      "w": 600,
+      "h": 26,
+      "z": 1
+     },
+     "s": {
+      "size": 11,
+      "ls": 0.22,
+      "upper": true,
+      "align": "center",
+      "opacity": 0.68
+     }
+    }
+   ]
+  }
+ ]
+}
