@@ -101,3 +101,15 @@ const srv=http.createServer((req,res)=>{
     ok(await hidden(pg),size.n+' Reel Edits hides navigation and badge');
     await bar(pg,'.re-v-edit .re-bar',size.n+' Reel Edits top bar');
     await pg.evaluate(()=>PGReel.close());
+
+    await pg.evaluate(()=>PGCanvasEditor.open('canvas-quiet'));
+    await pg.waitForSelector('.pce');
+    ok(await hidden(pg),size.n+' free editor hides navigation and badge');
+    await bar(pg,'.pce-top',size.n+' free editor top bar');
+    await pg.evaluate(()=>PGCanvasEditor.close(true));
+
+    await pg.evaluate(()=>PGHubEditor.open());
+    await pg.waitForSelector('.pged');
+    ok(await hidden(pg),size.n+' card editor hides navigation and badge');
+    await bar(pg,'.pged-top',size.n+' card editor top bar');
+    await pg.evaluate(()=>PGHubEditor.close());
