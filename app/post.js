@@ -301,6 +301,9 @@
     if (!S || !S.big) return;
     var L = build(); S.L = L; if (!L) return;
     var sw = S.stage.clientWidth || 360, sh = S.stage.clientHeight || 420, slideW = Math.max(120, Math.min(sw - 16, sh * SW / SH));
+    if (S.wholeAlbum && S.format === 'strip' && L.n > 1) slideW = Math.max(40, (sw - 16) / L.n);
+    if (S.wholeBtn) S.wholeBtn.style.display = S.format === 'strip' && L.n > 1 ? '' : 'none';
+    if (S.workspace) S.workspace.classList.toggle('pe-whole-album', !!S.wholeAlbum);
     var sc = S.pscale = Math.min(4000 / L.W, Math.max(0.3, Math.min(0.75, slideW * Math.min(2.5, window.devicePixelRatio || 1) / SW)));
     S.big.width = Math.round(L.W * sc); S.big.height = Math.round(SH * sc);
     var ctx = S.big.getContext('2d'); ctx.setTransform(sc, 0, 0, sc, 0, 0);
@@ -417,7 +420,18 @@
     '.pe-tcan{width:100%;height:auto;border-radius:6px;background:#222;border:2px solid transparent;display:block}.pe-tpl.on .pe-tcan{border-color:#FAC646}.pe-tpl span{font:600 11px/1.25 "Plus Jakarta Sans",system-ui,sans-serif;color:rgba(255,255,255,.85)}' +
     '.pe-artrow{margin:0 14px 6px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06);flex-wrap:wrap}.pe-artrow small{flex-basis:100%;font-size:11px;color:rgba(255,255,255,.55);margin-left:30px}' +
     '.pe-share{background:#fff;color:#111;border:0;font-weight:800}' +
-    '.pe-msg{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);z-index:9;margin:0;padding:10px 14px;border-radius:12px;background:rgba(20,17,14,.94);color:#fff;font-size:13px;display:none}.pe-msg.on{display:block}';
+    '.pe-msg{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);z-index:9;margin:0;padding:10px 14px;border-radius:12px;background:rgba(20,17,14,.94);color:#fff;font-size:13px;display:none}.pe-msg.on{display:block} +
+    /* step 87: keep the Post Edits design clear of its tools */
+    '.pe-v-edit{padding-top:0}.pe-workspace{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}.pe-stage-area{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}.pe-stage{flex:1 1 auto;min-height:0;width:100%;overscroll-behavior:contain}.pe-panel{flex:none;min-height:64px;max-height:36vh;display:flex;flex-direction:column;overflow:hidden;background:#17130f;border-top:1px solid rgba(255,255,255,.12);padding-bottom:env(safe-area-inset-bottom,0px)}' +
+    '.pe-tools{order:2;min-height:64px;max-height:64px;box-sizing:border-box;align-items:center;gap:2px;padding:6px 6px 8px;scrollbar-width:none}.pe-tool{width:66px;min-height:48px;gap:4px;font-size:11.5px;line-height:1.15;padding:2px 0}.pe-tool svg{width:22px;height:22px;flex:none}' +
+    '.pe-sheet,.pe-pop{position:relative;left:auto;right:auto;bottom:auto;z-index:1;max-height:none;min-height:0;flex:1 1 auto;border-radius:16px 16px 0 0;box-shadow:none;overflow:hidden}.pe-sheet{order:1}.pe-pop{order:1;padding:8px 12px;overflow-y:auto;gap:5px}.pe-sh-top{padding:8px 12px 4px;min-height:44px}.pe-sh-top b{font-size:14px}.pe-done{min-width:64px;min-height:44px;height:44px;font-size:11.5px}.pe-sh-body{min-height:0;overflow:auto;padding:4px 12px 10px}.pe-sheet.pe-tall{max-height:none}' +
+    '.pe-tgrid{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;padding:2px 0 8px;scrollbar-width:none}.pe-tpl{flex:0 0 64px;min-width:64px;gap:4px}.pe-tcan{width:64px;height:80px;object-fit:cover}.pe-tpl span{font-size:11.5px;line-height:1.2}' +
+    '.pe-cats{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:0 0 6px}.pe-cats .ps-chip{flex:none;min-height:44px;font-size:11.5px}.pe-frow,.pe-orow,.pe-grow{gap:8px;overflow-x:auto;overscroll-behavior-x:contain}.pe-filter{min-width:64px;min-height:44px;font-size:11.5px}.pe-filter img{width:56px;height:68px}.pe-ord button{width:44px;height:44px}.pe-gopt{width:72px;min-height:44px}.pe-gmini{height:56px}.pe-artrow{flex-wrap:nowrap;min-height:44px;margin:0 0 6px;padding:4px 8px}.pe-artrow small{display:none}.pe-artrow span{font-size:11.5px}' +
+    '.pe-dotrow{height:44px;min-height:44px}.pe-whole{position:absolute;left:8px;min-width:44px;min-height:44px;padding:0 10px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font:600 11.5px/1.1 "Plus Jakarta Sans",system-ui,sans-serif}.pe-tip{font-size:11.5px;min-height:0;padding:0 10px 4px}.pe-tip.pe-hint-gone{display:none}.pe-picker{position:relative;inset:auto;z-index:1;flex:1 1 auto;min-height:0;max-height:none;order:1;background:#17130f}.pe-wrap .ps-picker{position:relative;inset:auto;z-index:1;flex:1 1 auto;min-height:0;max-height:none;order:1;border-radius:16px 16px 0 0;overflow:hidden}.pe-wrap .ps-picker .ps-sgrid{display:flex;flex:1;min-height:0;gap:8px;overflow-x:auto;overflow-y:hidden;padding:8px 12px}.pe-wrap .ps-picker .ps-stk{flex:0 0 56px;width:56px;min-height:72px}.pe-wrap .ps-picker .ps-stk small{font-size:11px}.pe-wrap .ps-picker .ps-row{flex-wrap:nowrap;overflow-x:auto;gap:6px}.pe-wrap .ps-picker .ps-chip{flex:none;min-height:44px;font-size:11.5px}.pe-wrap .ps-picker .ps-top{min-height:44px;padding:4px 12px}.pe-wrap .ps-picker .ps-x{width:44px;height:44px}' +
+    '.pe-whole-album .pe-stage{overflow:hidden}.pe-wrap button,.pe-wrap input,.pe-wrap select{font-size:max(11px,1em)}.pe-wrap button{touch-action:manipulation}' +
+    '@media (min-width:700px){.pe-workspace{flex-direction:row}.pe-stage-area{flex:1 1 auto;width:calc(100% - 360px);min-width:0}.pe-panel{width:360px;max-width:360px;height:100%;max-height:none;min-height:0;box-sizing:border-box;border-top:0;border-left:1px solid rgba(255,255,255,.12);padding-bottom:0}.pe-tools{order:0;max-height:88px;min-height:88px;flex-wrap:wrap;overflow-y:auto;justify-content:flex-start;padding:8px}.pe-tool{flex:0 0 76px;width:76px}.pe-sheet,.pe-pop,.pe-wrap .ps-picker{order:1;max-height:none;flex:1 1 auto;border-radius:0}.pe-sh-body{padding:8px 12px 14px}.pe-tgrid{display:flex}.pe-dotrow{height:44px}.pe-tip{padding-bottom:8px}.pe-stage{overflow:auto}}' +
+    '@media (max-height:700px) and (max-width:699px){.pe-panel{max-height:36vh}.pe-tool{min-height:44px}.pe-tools{min-height:58px;max-height:58px}.pe-sheet,.pe-pop{min-height:0}.pe-sh-top{min-height:44px}.pe-sh-body{padding-bottom:6px}}' +
+    '@media (prefers-reduced-motion:reduce){.pe-stage,.pe-panel{scroll-behavior:auto;transition:none}}';
   function chips(row, list, cur, onPick, cls) {
     row.innerHTML = '';
     list.forEach(function (it) {
@@ -493,16 +507,16 @@
     var art = el('input', { type: 'checkbox' }); art.checked = S.art; art.addEventListener('change', function () { S.art = art.checked; draw(); });
     var artRow = el('label', { class: 'ps-tog pe-artrow' }, [art, el('span', { text: 'Template drawings' }), el('small', { text: 'the flowers and leaves that come with the template' })]);
     var box = el('div', { class: 'ps-picker', role: 'dialog', 'aria-label': 'Flowers and wedding drawings' }, [
-      el('div', { class: 'ps-top' }, [el('h3', { text: 'Flowers & drawings' }), el('button', { type: 'button', class: 'ps-x', 'aria-label': 'Close', text: '×', onclick: function () { box.remove(); } })]), artRow, tabs, grid]);
+      el('div', { class: 'ps-top' }, [el('h3', { text: 'Flowers & drawings' }), el('button', { type: 'button', class: 'ps-x', 'aria-label': 'Close', text: '×', onclick: closeSheet })]), artRow, tabs, grid]);
     function show(c) {
       cur = c; tabs.querySelectorAll('.ps-chip').forEach(function (b) { b.classList.toggle('on', b.textContent === c); }); grid.innerHTML = '';
       window.PG_STICKERS.filter(function (x) { return x.c === c; }).forEach(function (x) {
-        grid.appendChild(el('button', { type: 'button', class: 'ps-stk', 'aria-label': x.n, onclick: function () { box.remove(); addSticker(x.k); } },
+        grid.appendChild(el('button', { type: 'button', class: 'ps-stk', 'aria-label': x.n, onclick: function () { closeSheet(); addSticker(x.k); } },
           [el('span', { html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="' + x.d + '"/></svg>' }), el('small', { text: x.n })]));
       });
     }
     cats.forEach(function (c) { tabs.appendChild(el('button', { type: 'button', class: 'ps-chip', text: c, onclick: function () { show(c); } })); });
-    S.wrap.appendChild(box); show(cur);
+    S.panel.appendChild(box); S.drawingEl = box; show(cur);
   }
 
   // ---------- groups by event (styles and templates from the packs say which events they suit) ----------
@@ -704,9 +718,9 @@
     closeSheet();
     var body = el('div', { class: 'pe-sh-body' });
     var box = el('div', { class: 'pe-sheet', role: 'dialog', 'aria-label': title }, [el('div', { class: 'pe-sh-top' }, [el('b', { text: title }), el('button', { type: 'button', class: 'pe-done', text: 'Done', onclick: closeSheet })]), body]);
-    build(body); S.vEdit.appendChild(box); S.sheetEl = box; return body;
+    build(body); S.panel.appendChild(box); S.sheetEl = box; return body;
   }
-  function closeSheet() { if (S && S.sheetEl) { S.sheetEl.remove(); S.sheetEl = null; } }
+  function closeSheet() { if (!S) return; if (S.sheetEl) { S.sheetEl.remove(); S.sheetEl = null; } if (S.drawingEl) { S.drawingEl.remove(); S.drawingEl = null; } }
   function chipRow(list, cur, onPick, cls) { var r = el('div', { class: 'ps-row' }); chips(r, list, cur, onPick, cls); return r; }
   function lbl(t) { return el('div', { class: 'ps-lbl', text: t }); }
   function renderTools() {
@@ -934,7 +948,7 @@
   function openNow(opt) {
     if (S && S.wrap) close();
     if (!document.getElementById('ps-css')) document.head.appendChild(el('style', { id: 'ps-css', text: CSS + PE_CSS }));
-    S = { opt: opt, tid: 'album', pid: opt.palette || 'ivory', format: 'carousel', mode: opt.mode === 'album' ? 'album' : 'post', per: 1, slides: 0, art: true, names: opt.title || 'Our Wedding', date: opt.date || '',
+    S = { opt: opt, tid: 'album', pid: opt.palette || 'ivory', format: 'carousel', mode: opt.mode === 'album' ? 'album' : 'post', per: 1, slides: 0, art: true, wholeAlbum: false, names: opt.title || 'Our Wedding', date: opt.date || '',
       suggest: (opt.photos || []).slice(0, MAXPICK), grid: 0, border: true, postTid: 'pclean',
       photos: (opt.photos || []).slice(0, opt.mode === 'album' ? MAXPICK : 1).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, adj: {}, stickers: [], petals: false, sel: null, thumbs: {}, filter: 'none', fcss: '', view: 'pick', undo: [], redo: [], lastSnap: null };
     setShape(opt.shape || '34');
@@ -974,11 +988,16 @@
     S.toolsEl = el('div', { class: 'pe-tools' });
     S.undoBtn = el('button', { type: 'button', class: 'pe-ib pe-ur', 'aria-label': 'Undo', html: ic('undo'), onclick: undo });
     S.redoBtn = el('button', { type: 'button', class: 'pe-ib pe-ur', 'aria-label': 'Redo', html: ic('redo'), onclick: redo });
+    S.wholeBtn = el('button', { type: 'button', class: 'pe-whole', text: 'Whole album', onclick: function () { S.wholeAlbum = !S.wholeAlbum; S.workspace.classList.toggle('pe-whole-album', S.wholeAlbum); S.wholeBtn.textContent = S.wholeAlbum ? 'One slide' : 'Whole album'; draw(); } });
+    S.dotrow = el('div', { class: 'pe-dotrow' }, [S.wholeBtn, S.dotsEl, S.slideNo]);
+    S.tip = el('p', { class: 'pe-tip', text: 'Tap a photo on the post to move it, zoom it or replace it.' });
+    S.stageArea = el('div', { class: 'pe-stage-area' }, [S.stage, S.dotrow, S.tip]);
+    S.panel = el('div', { class: 'pe-panel' }, [S.edit, S.toolsEl]);
+    S.workspace = el('main', { class: 'pe-workspace' }, [S.stageArea, S.panel]);
     S.vEdit.append(
       el('div', { class: 'pe-bar' }, [el('button', { type: 'button', class: 'pe-ib', 'aria-label': 'Back', html: ic('back'), onclick: function () { show('pick'); paintPick(); } }),
         el('div', { class: 'pe-logo', html: LOGO + '<span>Post Edits</span>' }), S.undoBtn, S.redoBtn, el('button', { type: 'button', class: 'pe-next', text: 'Next', onclick: goShare })]),
-      S.stage, el('div', { class: 'pe-dotrow' }, [S.dotsEl, S.slideNo]),
-      el('p', { class: 'pe-tip', text: 'Tap a photo on the post to move it, zoom it or replace it.' }), S.edit, S.toolsEl);
+      S.workspace);
     // share screen
     S.shStrip = el('div', { class: 'pe-shstrip' });
     S.cap = el('textarea', { class: 'pe-cap', rows: '3', maxlength: '200', 'aria-label': 'Caption', placeholder: 'Write a caption…' }); S.cap.addEventListener('input', function () { S.capTouched = true; });
@@ -992,10 +1011,15 @@
     S.msgEl = el('p', { class: 'pe-msg', 'aria-live': 'polite' });
     wrap.append(S.vPick, S.vEdit, S.vShare, S.msgEl);
     document.body.appendChild(wrap); bindEditing(); buildPick();
+    var hintSeen = false; try { hintSeen = localStorage.getItem('pg_post_edits_hint_v1') === '1'; } catch (e) {}
+    if (hintSeen) S.tip.classList.add('pe-hint-gone');
+    else { var hideHint = function () { if (!S || !S.tip) return; S.tip.classList.add('pe-hint-gone'); try { localStorage.setItem('pg_post_edits_hint_v1', '1'); } catch (e) {} }; S.stage.addEventListener('pointerdown', hideHint, { once: true }); setTimeout(hideHint, 3000); }
+    S.vvHandler = function () { if (!S || !S.wrap || !window.visualViewport) return; var vv = window.visualViewport; S.wrap.style.top = Math.max(0, vv.offsetTop || 0) + 'px'; S.wrap.style.height = Math.max(1, vv.height) + 'px'; S.wrap.style.bottom = 'auto'; if (S.view === 'edit') redraw(); };
+    if (window.visualViewport) { window.visualViewport.addEventListener('resize', S.vvHandler); window.visualViewport.addEventListener('scroll', S.vvHandler); S.vvHandler(); }
     stickersReady().then(function () { if (S && S.view === 'edit') redraw(); }, function () {});
     if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('500 100px "Cormorant Garamond"'), document.fonts.load('italic 500 60px "Cormorant Garamond"'), document.fonts.load('500 30px "IBM Plex Mono"')]).then(function () { if (S && S.view === 'edit') draw(); }, function () {});
   }
-  function close() { if (!S) return; if (S.wrap) S.wrap.remove(); document.body.classList.remove('ps-on'); freeUrls(); S = null; }
+  function close() { if (!S) return; if (window.visualViewport && S.vvHandler) { window.visualViewport.removeEventListener('resize', S.vvHandler); window.visualViewport.removeEventListener('scroll', S.vvHandler); } if (S.wrap) S.wrap.remove(); document.body.classList.remove('ps-on'); freeUrls(); S = null; }
   // the phone's back gesture: one step back inside Post Edits; true = still open
   function back() {
     if (!S) return false;
