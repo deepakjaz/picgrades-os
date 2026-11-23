@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PicGrades · Universal Editor Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Jost', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* Dark glass & editorial palette */
+    --bg-app: #0c0b0a;
+    --bg-stage: #12100e;
+    --bg-canvas: #f7f3ec;
+    --bg-panel: rgba(24, 21, 19, 0.88);
+    --bg-surface: rgba(255, 255, 255, 0.055);
+    --bg-surface-hover: rgba(255, 255, 255, 0.1);
+    --bg-top: rgba(16, 14, 12, 0.76);
+    --ink: #f5f0e8;
+    --ink-soft: rgba(245, 240, 232, 0.66);
+    --ink-muted: rgba(245, 240, 232, 0.44);
+    --line: rgba(255, 255, 255, 0.1);
+    --line-strong: rgba(255, 255, 255, 0.2);
+    --accent: #e5b878;
+    --accent-ink: #17120d;
+    --sel: #6aa6ff;
+    --grey-block: #cfc8be;
+    --grey-block-2: #ded8cf;
+    --grey-ink: #5a524a;
+    --shadow-panel: 0 18px 48px rgba(0, 0, 0, 0.48);
+  }
+
+  html[data-theme="light"] {
+    --bg-app: #eae4da;
+    --bg-stage: #f2ede4;
+    --bg-canvas: #fbf9f5;
+    --bg-panel: rgba(252, 250, 246, 0.9);
+    --bg-surface: rgba(36, 31, 28, 0.045);
+    --bg-surface-hover: rgba(36, 31, 28, 0.085);
+    --bg-top: rgba(28, 24, 21, 0.82);
+    --ink: #241f1c;
+    --ink-soft: rgba(36, 31, 28, 0.68);
+    --ink-muted: rgba(36, 31, 28, 0.46);
+    --line: rgba(36, 31, 28, 0.11);
+    --line-strong: rgba(36, 31, 28, 0.22);
+    --accent: #9a743f;
+    --accent-ink: #ffffff;
+    --sel: #2b6ee8;
+    --grey-block: #dcd5cb;
+    --grey-block-2: #e7e2da;
+    --grey-ink: #645b52;
+    --shadow-panel: 0 18px 44px rgba(36, 31, 28, 0.14);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button, input, select {
+    font-family: var(--font-sans);
+    color: inherit;
+    border: 0;
+    background: none;
+    outline: none;
+  }
+
+  button { cursor: pointer; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-app);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* Mockup Switcher Bar (outside the editor frames) */
+  .demo-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #171412;
+    color: #f5f0e8;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 12px;
+    z-index: 50;
+  }
+  .demo-bar b { font-weight: 600; color: #e5b878; margin-right: 4px; }
+  .demo-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .demo-pill.is-on {
+    background: #e5b878;
+    color: #17120d;
+    font-weight: 600;
+  }
+
+  /* Showcase Layout */
+  .showcase {
+    width: 100%;
+    max-width: 1680px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .device-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .device-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding-left: 4px;
+  }
+
+  /* Editor Shell Base */
+  .ue-shell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 24px;
+    background: var(--bg-stage);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-panel);
+  }
+  .ue-phone { width: 390px; height: 844px; }
+  .ue-laptop { width: 1200px; height: 760px; max-width: calc(100vw - 28px); }
+
+  /* Top Bar (Dark glass, 1 row) */
+  .ue-top {
+    height: 52px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 0 10px;
+    background: var(--bg-top);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    color: #f7f3ec;
+    z-index: 20;
+  }
+  .ue-top-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ue-top-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(247, 243, 236, 0.88);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .ue-top-btn:hover { background: rgba(255, 255, 255, 0.12); }
+  .ue-top-btn svg { width: 17px; height: 17px; flex: none; }
+
+  .ue-seg {
+    display: inline-flex;
+    padding: 2px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .ue-seg button {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(247, 243, 236, 0.72);
+  }
+  .ue-seg button.is-on {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .ue-apply-btn {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    background: #e5b878;
+    color: #17120d;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* "⋯" Popover Menu on Phone */
+  .ue-more-menu {
+    position: absolute;
+    top: 58px;
+    right: 68px;
+    width: 210px;
+    padding: 8px;
+    border-radius: 14px;
+    background: #1b1815;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+    color: #f7f3ec;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .ue-more-menu.is-open { display: flex; }
+  .ue-menu-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 8px;
+    border-radius: 9px;
+    font-size: 11.5px;
+    color: rgba(247, 243, 236, 0.86);
+  }
+  .ue-menu-row:hover { background: rgba(255, 255, 255, 0.06); }
+  .ue-menu-mini {
+    display: inline-flex;
+    gap: 3px;
+  }
+  .ue-menu-mini span {
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 10.5px;
+  }
+  .ue-menu-mini span.on { background: #e5b878; color: #17120d; font-weight: 600; }
+
+  /* Workspace Grid/Flex */
+  .ue-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    position: relative;
+  }
+  .ue-phone .ue-body { flex-direction: column; }
+  .ue-laptop .ue-body { flex-direction: row; }
+
+  /* Left Rail (56px on laptop, 1st row of drawer on phone) */
+  .ue-rail {
+    display: flex;
+    background: var(--bg-panel);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-color: var(--line);
+    flex-shrink: 0;
+  }
+  .ue-laptop .ue-rail {
+    width: 56px;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px;
+    gap: 6px;
+    border-right: 1px solid var(--line);
+  }
+  .ue-phone .ue-rail {
+    height: 54px;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+    gap: 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ue-rail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border-radius: 10px;
+    color: var(--ink-soft);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .ue-laptop .ue-rail-item { width: 48px; height: 48px; }
+  .ue-phone .ue-rail-item { flex: 1; height: 46px; }
+  .ue-rail-item svg { width: 17px; height: 17px; }
+  .ue-rail-item span {
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .ue-rail-item:hover { background: var(--bg-surface-hover); color: var(--ink); }
+  .ue-rail-item.is-active { background: var(--bg-surface); color: var(--accent); font-weight: 600; }
+
+  /* Stage & Living Story Canvas */
+  .ue-stage {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: var(--bg-stage);
+  }
+  .ue-phone .ue-stage {
+    padding: 8px 14px;
+  }
+
+  .story-page {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-canvas);
+    color: #241f1c;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px;
+    gap: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  }
+
+  .story-hero-box {
+    position: relative;
+    flex: 1.25;
+    min-height: 0;
+    border-radius: 12px;
+    background: linear-gradient(155deg, var(--grey-block-2), var(--grey-block));
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 12px;
+    gap: 4px;
+    border: 1px dashed rgba(36, 31, 28, 0.16);
+  }
+  .story-tag {
+    align-self: flex-start;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(36, 31, 28, 0.08);
+    color: var(--grey-ink);
+  }
+  .story-names {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 26px;
+    line-height: 1.02;
+    color: #241f1c;
+  }
+  .ue-laptop .story-names { font-size: 34px; }
+  .story-date {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--grey-ink);
+  }
+
+  /* Selected Element + Resize/Move Handles */
+  .is-selected {
+    position: relative;
+    outline: 2px solid var(--sel);
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
+  .sel-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid var(--sel);
+  }
+  .sel-nw { top: -5px; left: -5px; }
+  .sel-ne { top: -5px; right: -5px; }
+  .sel-sw { bottom: -5px; left: -5px; }
+  .sel-se { bottom: -5px; right: -5px; }
+  .sel-move-pill {
+    position: absolute;
+    top: -11px;
+    right: 12px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--sel);
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .story-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    flex: 0.85;
+    min-height: 0;
+  }
+  .grey-slot {
+    border-radius: 10px;
+    background: var(--grey-block);
+    border: 1px solid rgba(36, 31, 28, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--grey-ink);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 6px;
+  }
+  .grey-slot svg { width: 16px; height: 16px; opacity: 0.65; }
+
+  .story-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: var(--grey-block-2);
+    color: var(--grey-ink);
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  /* Inspector Panel (360px right on laptop, <=40% drawer on phone) */
+  .ue-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-color: var(--line);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .ue-laptop .ue-panel {
+    width: 360px;
+    height: 100%;
+    border-left: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .ue-phone .ue-panel {
+    height: 338px; /* 40.04% of 844px */
+    max-height: 40%;
+    width: 100%;
+    border-top: 1px solid var(--line);
+    border-radius: 18px 18px 0 0;
+    flex-shrink: 0;
+  }
+
+  .ue-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 4px;
+  }
+  .ue-panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ue-panel-sub {
+    font-size: 10px;
+    color: var(--ink-muted);
+  }
+
+  /* 3 Inspector Tabs with Icon + Tiny Label Under */
+  .ue-3tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 4px 10px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .ue-3tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border-radius: 10px;
+    color: var(--ink-soft);
+    background: var(--bg-surface);
+  }
+  .ue-3tab svg { width: 15px; height: 15px; }
+  .ue-3tab span { font-size: 9.5px; font-weight: 500; line-height: 1; }
+  .ue-3tab.is-active {
+    background: var(--bg-surface-hover);
+    color: var(--accent);
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+
+  .ue-panel-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ue-panel-body::-webkit-scrollbar { width: 4px; }
+  .ue-panel-body::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+
+  /* Design Tab Controls */
+  .sec-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    margin-bottom: 5px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .field-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 9px;
+    border-radius: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    font-size: 11px;
+  }
+  .field-box span { color: var(--ink-soft); }
+  .field-box b { font-weight: 600; color: var(--ink); }
+  .swatch-chip {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    display: inline-block;
+  }
+
+  /* Motion Tab Controls */
+  .motion-subtabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+  .motion-subtab {
+    padding: 6px 4px;
+    border-radius: 9px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--bg-surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+  .motion-subtab.is-active {
+    background: var(--bg-surface-hover);
+    color: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .motion-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .motion-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 4px;
+    border-radius: 11px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .motion-tile.is-chosen {
+    border-color: var(--accent);
+    background: var(--bg-surface-hover);
+    color: var(--accent);
+  }
+  .motion-tile svg { width: 18px; height: 18px; }
+  .motion-tile span { font-size: 9.5px; font-weight: 500; line-height: 1; }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .slider-track {
+    flex: 1;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--line-strong);
+    position: relative;
+  }
+  .slider-fill {
+    width: 55%;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+  }
+
+  /* Connect Tab Controls */
+  .connect-card {
+    padding: 9px 10px;
+    border-radius: 11px;
+    background: var(--bg-surface);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .connect-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .connect-badge {
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: 600;
+    background: rgba(229, 184, 120, 0.18);
+    color: var(--accent);
+  }
+  .connect-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .connect-pill {
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 10.5px;
+    background: var(--bg-surface-hover);
+    color: var(--ink-soft);
+  }
+  .connect-pill.is-active {
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  /* State visibility helpers */
+  [data-tab-pane] { display: none; }
+  [data-tab-pane].is-visible { display: flex; flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body>
+
+  <!-- Interactive Mockup Switcher -->
+  <div class="demo-bar" role="region" aria-label="Mockup controls">
+    <b>Universal Editor Mockup</b>
+    <button type="button" class="demo-pill is-on" id="themeToggle">Theme: Dark</button>
+    <button type="button" class="demo-pill is-on" data-set-tab="design">Design tab</button>
+    <button type="button" class="demo-pill" data-set-tab="motion">Motion tab</button>
+    <button type="button" class="demo-pill" data-set-tab="connect">Connect tab</button>
+    <button type="button" class="demo-pill" id="phoneMenuBtn">Phone ⋯ menu</button>
+  </div>
+
+  <div class="showcase">
+
+    <!-- ================= PHONE (390 x 844) ================= -->
+    <div class="device-card">
+      <div class="device-label">Phone · 390 × 844 · Drawer ≤ 40% · Design Visible Above</div>
+      <div class="ue-shell ue-phone" id="phoneEditor">
+
+        <!-- 1-Row Dark Glass Top Bar: ‹ ↶ ↷ … ▶ Apply -->
+        <header class="ue-top">
+          <div class="ue-top-group">
+            <button type="button" class="ue-top-btn" aria-label="Back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <button type="button" class="ue-top-btn" aria-label="Undo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+            </button>
+            <button type="button" class="ue-top-btn" aria-label="Redo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>
+            </button>
+          </div>
+
+          <div class="ue-top-group">
+            <button type="button" class="ue-top-btn" id="phoneMoreTrigger" aria-label="More options" aria-expanded="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            </button>
+            <button type="button" class="ue-top-btn" aria-label="Play">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button type="button" class="ue-apply-btn">Apply</button>
+          </div>
+        </header>
+
+        <!-- "⋯" Menu holding Simple/Free, Phone/Laptop, Zoom & Save -->
+        <div class="ue-more-menu is-open" id="phoneMoreMenu">
+          <div class="ue-menu-row">
+            <span>Mode</span>
+            <div class="ue-menu-mini"><span class="on">Simple</span><span>Free</span></div>
+          </div>
+          <div class="ue-menu-row">
+            <span>View</span>
+            <div class="ue-menu-mini"><span class="on">Phone</span><span>Laptop</span></div>
+          </div>
+          <div class="ue-menu-row">
+            <span>Zoom</span>
+            <div class="ue-menu-mini"><span>−</span><span class="on">100%</span><span>+</span><span>Fit</span></div>
+          </div>
+          <button type="button" class="ue-menu-row" style="width:100%">
+            <span>Save draft</span>
+            <b style="color:var(--accent)">Save</b>
+          </button>
+        </div>
+
+        <div class="ue-body">
+          <!-- Stage (Top ~60% above drawer): Living Story with grey photo blocks + selected part -->
+          <main class="ue-stage">
+            <div class="story-page">
+              <div class="story-hero-box is-selected">
+                <span class="sel-move-pill">Move</span>
+                <span class="sel-handle sel-nw"></span>
+                <span class="sel-handle sel-ne"></span>
+                <span class="sel-handle sel-sw"></span>
+                <span class="sel-handle sel-se"></span>
+                <span class="story-tag">Living Story · Hero</span>
+                <div class="story-names">Anika &amp; Rohan</div>
+                <div class="story-date">14.12.26 · Udaipur</div>
+              </div>
+
+              <div class="story-row-2">
+                <div class="grey-slot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-6 6"/></svg>
+                  <span>Glancing strip</span>
+                </div>
+                <div class="grey-slot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 14h5"/></svg>
+                  <span>Events</span>
+                </div>
+              </div>
+
+              <div class="story-actions-bar">
+                <span>Find me · Reel · Post</span>
+                <span>Blessings · Credit</span>
+              </div>
+            </div>
+          </main>
+
+          <!-- Bottom Drawer (<=40% height): 1st row = Rail icons + tiny labels, then Inspector -->
+          <section class="ue-panel" aria-label="Editor drawer">
+            <nav class="ue-rail" aria-label="Tools rail">
+              <button type="button" class="ue-rail-item is-active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>
+                <span>Add</span>
+              </button>
+              <button type="button" class="ue-rail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+                <span>Layers</span>
+              </button>
+              <button type="button" class="ue-rail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/></svg>
+                <span>Pages</span>
+              </button>
+              <button type="button" class="ue-rail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>
+                <span>Collections</span>
+              </button>
+              <button type="button" class="ue-rail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/></svg>
+                <span>Theme</span>
+              </button>
+              <button type="button" class="ue-rail-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-6 6"/></svg>
+                <span>Media</span>
+              </button>
+            </nav>
+
+            <div class="ue-panel-head">
+              <div class="ue-panel-title">Hero photo</div>
+              <div class="ue-panel-sub">Selected part</div>
+            </div>
+
+            <div class="ue-3tabs" role="tablist">
+              <button type="button" class="ue-3tab is-active" data-tab="design">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                <span>Design</span>
+              </button>
+              <button type="button" class="ue-3tab" data-tab="motion">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+                <span>Motion</span>
+              </button>
+              <button type="button" class="ue-3tab" data-tab="connect">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Connect</span>
+              </button>
+            </div>
+
+            <div class="ue-panel-body">
+              <!-- Design Tab -->
+              <div data-tab-pane="design" class="is-visible">
+                <div class="grid-2">
+                  <div class="field-box"><span>W</span><b>342 px</b></div>
+                  <div class="field-box"><span>H</span><b>480 px</b></div>
+                  <div class="field-box"><span>Padding</span><b>12 px</b></div>
+                  <div class="field-box"><span>Font</span><b>Cormorant</b></div>
+                </div>
+                <div class="grid-2">
+                  <div class="field-box"><span>Fill</span><i class="swatch-chip" style="background:#cfc8be"></i></div>
+                  <div class="field-box"><span>Accent</span><i class="swatch-chip" style="background:#e5b878"></i></div>
+                </div>
+              </div>
+
+              <!-- Motion Tab -->
+              <div data-tab-pane="motion">
+                <div class="motion-subtabs">
+                  <button type="button" class="motion-subtab is-active">In</button>
+                  <button type="button" class="motion-subtab">Loop</button>
+                  <button type="button" class="motion-subtab">Scroll</button>
+                </div>
+                <div class="motion-grid">
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/></svg>
+                    <span>None</span>
+                  </button>
+                  <button type="button" class="motion-tile is-chosen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="5" width="14" height="14" rx="3" opacity="0.45"/><rect x="8" y="8" width="8" height="8" rx="2"/></svg>
+                    <span>Fade</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
+                    <span>Move</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="8" width="8" height="8" rx="2"/><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg>
+                    <span>Grow</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5"/></svg>
+                    <span>Blur</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M12 5v14"/></svg>
+                    <span>Reveal</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polygon points="12,4 20,12 12,20 4,12"/></svg>
+                    <span>Shape</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18V8l8-4 8 4v10"/></svg>
+                    <span>Unfold</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"/></svg>
+                    <span>Shine</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+                    <span>Shrink</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M4 14h16"/></svg>
+                    <span>Shutters</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 5l12 3v8l-12 3V5z"/></svg>
+                    <span>Flip</span>
+                  </button>
+                </div>
+                <div class="slider-row">
+                  <span>Speed</span>
+                  <div class="slider-track"><div class="slider-fill" style="width:60%"></div></div>
+                  <b>0.8s</b>
+                </div>
+                <div class="slider-row">
+                  <span>Wait</span>
+                  <div class="slider-track"><div class="slider-fill" style="width:25%"></div></div>
+                  <b>0.2s</b>
+                </div>
+              </div>
+
+              <!-- Connect Tab -->
+              <div data-tab-pane="connect">
+                <div class="connect-card">
+                  <div class="connect-head">
+                    <span>This photo shows</span>
+                    <span class="connect-badge">Highlights</span>
+                  </div>
+                  <div class="connect-pills">
+                    <span class="connect-pill is-active">Highlights</span>
+                    <span class="connect-pill">Event</span>
+                    <span class="connect-pill">Root Moment</span>
+                    <span class="connect-pill">Chosen photo</span>
+                  </div>
+                </div>
+                <div class="connect-card">
+                  <div class="connect-head">
+                    <span>This button opens</span>
+                    <span class="connect-badge">Find me</span>
+                  </div>
+                  <div class="connect-pills">
+                    <span class="connect-pill is-active">Find me</span>
+                    <span class="connect-pill">Reel</span>
+                    <span class="connect-pill">Post</span>
+                    <span class="connect-pill">Moment</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= LAPTOP (1200+) ================= -->
+    <div class="device-card">
+      <div class="device-label">Laptop · 1200+ · 56px Rail Left · Stage Centre · 360px Panel Right</div>
+      <div class="ue-shell ue-laptop" id="laptopEditor">
+
+        <!-- 1-Row Dark Glass Top Bar -->
+        <header class="ue-top">
+          <div class="ue-top-group">
+            <button type="button" class="ue-top-btn" aria-label="Back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <button type="button" class="ue-top-btn" aria-label="Undo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+            </button>
+            <button type="button" class="ue-top-btn" aria-label="Redo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg>
+            </button>
+          </div>
+
+          <div class="ue-top-group">
+            <div class="ue-seg" role="group" aria-label="Editor mode">
+              <button type="button" class="is-on">Simple</button>
+              <button type="button">Free</button>
+            </div>
+            <div class="ue-seg" role="group" aria-label="Viewport">
+              <button type="button">Phone</button>
+              <button type="button" class="is-on">Laptop</button>
+            </div>
+            <button type="button" class="ue-top-btn">100%</button>
+            <button type="button" class="ue-top-btn" aria-label="Play">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+          </div>
+
+          <div class="ue-top-group">
+            <button type="button" class="ue-top-btn">Save</button>
+            <button type="button" class="ue-apply-btn">Apply</button>
+          </div>
+        </header>
+
+        <div class="ue-body">
+          <!-- Thin 56px Left Icon Rail -->
+          <nav class="ue-rail" aria-label="Editor tools">
+            <button type="button" class="ue-rail-item is-active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>
+              <span>Add</span>
+            </button>
+            <button type="button" class="ue-rail-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+              <span>Layers</span>
+            </button>
+            <button type="button" class="ue-rail-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/></svg>
+              <span>Pages</span>
+            </button>
+            <button type="button" class="ue-rail-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>
+              <span>Collections</span>
+            </button>
+            <button type="button" class="ue-rail-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/></svg>
+              <span>Theme</span>
+            </button>
+            <button type="button" class="ue-rail-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-6 6"/></svg>
+              <span>Media</span>
+            </button>
+          </nav>
+
+          <!-- Centre Stage: Living Story Layout with Grey Photo Blocks -->
+          <main class="ue-stage">
+            <div class="story-page" style="max-width:720px;padding:18px;gap:14px;">
+              <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:14px;flex:1.3;min-height:0;">
+                <div class="grey-slot" style="border-radius:14px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-6 6"/></svg>
+                  <span>Cover photo</span>
+                </div>
+
+                <div class="story-hero-box is-selected" style="justify-content:center;padding:18px;gap:8px;">
+                  <span class="sel-move-pill">Move</span>
+                  <span class="sel-handle sel-nw"></span>
+                  <span class="sel-handle sel-ne"></span>
+                  <span class="sel-handle sel-sw"></span>
+                  <span class="sel-handle sel-se"></span>
+                  <span class="story-tag">Living Story · Title block</span>
+                  <div class="story-names">Anika &amp; Rohan</div>
+                  <div class="story-date">14.12.26 · Udaipur</div>
+                  <div class="story-actions-bar" style="margin-top:8px;">
+                    <span>Find me</span>
+                    <span>Highlights</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="story-row-2" style="grid-template-columns:repeat(3,1fr);flex:0.8;">
+                <div class="grey-slot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-6 6"/></svg>
+                  <span>Glancing photo 1</span>
+                </div>
+                <div class="grey-slot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-6 6"/></svg>
+                  <span>Glancing photo 2</span>
+                </div>
+                <div class="grey-slot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-6 6"/></svg>
+                  <span>Glancing photo 3</span>
+                </div>
+              </div>
+
+              <div class="story-actions-bar">
+                <span>Events · Reel · Post · Add a moment</span>
+                <span>Blessings · Photographed by</span>
+              </div>
+            </div>
+          </main>
+
+          <!-- Fixed 360px Right Inspector Panel -->
+          <aside class="ue-panel" aria-label="Inspector panel">
+            <div class="ue-panel-head">
+              <div class="ue-panel-title">Title block</div>
+              <div class="ue-panel-sub">Living Story</div>
+            </div>
+
+            <div class="ue-3tabs" role="tablist">
+              <button type="button" class="ue-3tab is-active" data-tab="design">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                <span>Design</span>
+              </button>
+              <button type="button" class="ue-3tab" data-tab="motion">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+                <span>Motion</span>
+              </button>
+              <button type="button" class="ue-3tab" data-tab="connect">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Connect</span>
+              </button>
+            </div>
+
+            <div class="ue-panel-body">
+              <!-- Design Tab -->
+              <div data-tab-pane="design" class="is-visible">
+                <div>
+                  <div class="sec-label">Size &amp; space</div>
+                  <div class="grid-2">
+                    <div class="field-box"><span>W</span><b>480 px</b></div>
+                    <div class="field-box"><span>H</span><b>240 px</b></div>
+                    <div class="field-box"><span>Padding</span><b>18 px</b></div>
+                    <div class="field-box"><span>Corners</span><b>14 px</b></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="sec-label">Type &amp; style</div>
+                  <div class="grid-2">
+                    <div class="field-box"><span>Font</span><b>Cormorant</b></div>
+                    <div class="field-box"><span>Body</span><b>Jost</b></div>
+                    <div class="field-box"><span>Border</span><b>1 px</b></div>
+                    <div class="field-box"><span>Opacity</span><b>100%</b></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="sec-label">Colours</div>
+                  <div class="grid-2">
+                    <div class="field-box"><span>Background</span><i class="swatch-chip" style="background:#f7f3ec"></i></div>
+                    <div class="field-box"><span>Accent</span><i class="swatch-chip" style="background:#e5b878"></i></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Motion Tab -->
+              <div data-tab-pane="motion">
+                <div class="motion-subtabs">
+                  <button type="button" class="motion-subtab is-active">In</button>
+                  <button type="button" class="motion-subtab">Loop</button>
+                  <button type="button" class="motion-subtab">Scroll</button>
+                </div>
+                <div class="motion-grid">
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="7" stroke-dasharray="3 3"/></svg>
+                    <span>None</span>
+                  </button>
+                  <button type="button" class="motion-tile is-chosen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="5" width="14" height="14" rx="3" opacity="0.45"/><rect x="8" y="8" width="8" height="8" rx="2"/></svg>
+                    <span>Fade</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 12h14M14 7l5 5-5 5"/></svg>
+                    <span>Move</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="8" width="8" height="8" rx="2"/><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg>
+                    <span>Grow</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5"/></svg>
+                    <span>Blur</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M12 5v14"/></svg>
+                    <span>Reveal</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><polygon points="12,4 20,12 12,20 4,12"/></svg>
+                    <span>Shape</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18V8l8-4 8 4v10"/></svg>
+                    <span>Unfold</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z"/></svg>
+                    <span>Shine</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+                    <span>Shrink</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M4 14h16"/></svg>
+                    <span>Shutters</span>
+                  </button>
+                  <button type="button" class="motion-tile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 5l12 3v8l-12 3V5z"/></svg>
+                    <span>Flip</span>
+                  </button>
+                </div>
+                <div class="slider-row">
+                  <span>Speed</span>
+                  <div class="slider-track"><div class="slider-fill" style="width:65%"></div></div>
+                  <b>0.9s</b>
+                </div>
+                <div class="slider-row">
+                  <span>Wait</span>
+                  <div class="slider-track"><div class="slider-fill" style="width:20%"></div></div>
+                  <b>0.1s</b>
+                </div>
+              </div>
+
+              <!-- Connect Tab -->
+              <div data-tab-pane="connect">
+                <div class="connect-card">
+                  <div class="connect-head">
+                    <span>This photo shows</span>
+                    <span class="connect-badge">Highlights</span>
+                  </div>
+                  <div class="connect-pills">
+                    <span class="connect-pill is-active">Highlights</span>
+                    <span class="connect-pill">Event</span>
+                    <span class="connect-pill">Root Moment</span>
+                    <span class="connect-pill">Chosen photo</span>
+                  </div>
+                </div>
+                <div class="connect-card">
+                  <div class="connect-head">
+                    <span>This button opens</span>
+                    <span class="connect-badge">Find me</span>
+                  </div>
+                  <div class="connect-pills">
+                    <span class="connect-pill is-active">Find me</span>
+                    <span class="connect-pill">Reel</span>
+                    <span class="connect-pill">Post</span>
+                    <span class="connect-pill">Moment</span>
+                  </div>
+                </div>
+                <div class="connect-card">
+                  <div class="connect-head">
+                    <span>This text shows</span>
+                    <span class="connect-badge">Title</span>
+                  </div>
+                  <div class="connect-pills">
+                    <span class="connect-pill is-active">Title</span>
+                    <span class="connect-pill">Date</span>
+                    <span class="connect-pill">My words</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (function () {
+      const html = document.documentElement;
+      const themeBtn = document.getElementById('themeToggle');
+      const phoneMenu = document.getElementById('phoneMenuBtn');
+      const moreMenu = document.getElementById('phoneMoreMenu');
+      const tabBtns = document.querySelectorAll('[data-set-tab], .ue-3tab[data-tab]');
+
+      function setTab(tabName) {
+        document.querySelectorAll('[data-tab-pane]').forEach((pane) => {
+          pane.classList.toggle('is-visible', pane.getAttribute('data-tab-pane') === tabName);
+        });
+        document.querySelectorAll('.ue-3tab[data-tab]').forEach((b) => {
+          b.classList.toggle('is-active', b.getAttribute('data-tab') === tabName);
+        });
+        document.querySelectorAll('[data-set-tab]').forEach((b) => {
+          b.classList.toggle('is-on', b.getAttribute('data-set-tab') === tabName);
+        });
+      }
+
+      themeBtn.addEventListener('click', () => {
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        themeBtn.textContent = 'Theme: ' + (next === 'dark' ? 'Dark' : 'Light');
+      });
+
+      tabBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const t = btn.getAttribute('data-set-tab') || btn.getAttribute('data-tab');
+          if (t) setTab(t);
+        });
+      });
+
+      function toggleMoreMenu() {
+        moreMenu.classList.toggle('is-open');
+        phoneMenu.classList.toggle('is-on', moreMenu.classList.contains('is-open'));
+      }
+      phoneMenu.addEventListener('click', toggleMoreMenu);
+      document.getElementById('phoneMoreTrigger').addEventListener('click', toggleMoreMenu);
+
+      document.querySelectorAll('.motion-tile').forEach((tile) => {
+        tile.addEventListener('click', () => {
+          const group = tile.parentElement;
+          group.querySelectorAll('.motion-tile').forEach((el) => el.classList.remove('is-chosen'));
+          tile.classList.add('is-chosen');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
