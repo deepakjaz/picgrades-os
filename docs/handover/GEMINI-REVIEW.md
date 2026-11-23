@@ -81,5 +81,34 @@ Gemini's files:
 5. **English by default.** Hindi only when the wedding's language is set to Hindi. For the action, use «पल देखें» ("see the moment").
 6. The Control Panel switch "At this time on the wedding day" is on by default.
 
+## T2 code (Gemini, `gemini/T2-code.md`): ✅ approved, with these corrections
+Claude checked every app function it uses. They all exist (`pgAfter`, `pgRenderHub`, `switchView`, `pgOpenEvent`, `pgImgFallback`, `GALLERY.gated/found/pool/personal`, the CSS variables), except as noted below.
+
+ChatGPT applies Gemini's FIND/REPLACE blocks, plus these corrections, in one PR: `step-81-t2-same-time`.
+1. **The switch must save.** The backend only keeps known switches. In `apps-script/Code.gs`, add `'sameTime'` to `FEATURE_KEYS` (line ~2150). → **Backend changed — paste Code.gs and deploy.**
+2. **Put the switch in the normal list**, not a special case in `17-control.js`.
+   - Add `['sameTime', 'At this time on the wedding day', 'Show guests 1–3 photos from around this time of day']` to the `KEYS` list in `app/gallery/16-features.js`.
+   - Drop Gemini's `cpFeats` change to `17-control.js`.
+   - In `48-same-time.js`, use `window.pgFeatureOn ? pgFeatureOn('sameTime') : true` for `featureEnabled()`.
+3. **Guest rule: use the app's real flags only.** In `guestAllowed()`, the gate is `if (GALLERY.gated && !GALLERY.found) return false;`. Remove the guesses (`GALLERY.guestPhotos === 'findme'`, `PGRules.found`, `pgStore('found')`).
+4. **Don't add a fake collection.**
+   - In `openMatchedPhotos()`, delete the lines that add "At this time" to `GALLERY.personal`; it would show up as a new collection in the gallery.
+   - Use `pgOpenEvent(name, subset)` instead, where `name` is the event of the first photo (or "Right now"). `pgOpenEvent(name, photos)` already exists in `18-grids.js`.
+5. **Close button 44 px:** `.pgst-x{width:44px;height:44px;margin:-8px -8px -8px 0}`.
+6. **Laptop at 700 px:** change `@media (min-width:900px)` to `700px`.
+7. **Also hide the pop in Reel Edits and Post Edits:** add `body.rl-on .pgst-pop, body.ps-on .pgst-pop` to the hide rule.
+8. **Replace Gemini's test.** Its own fake server doesn't answer like our backend.
+   - Write `tests/e2e_same_time.js` (port 8902) with the normal set-up from `tests/e2e_canvas_editor.js` (gas_mock + made-up photos).
+   - Photos have no `t` until T1, so the test sets `t` on a few photos with `page.evaluate` and then calls `PGSameTime.resetVisit(); PGSameTime.check()`.
+   - Checks:
+     - pop shows on a match (±20 min);
+     - no pop without a match;
+     - no pop when the switch is off;
+     - no pop for a gated guest who hasn't found themselves;
+     - it hides itself after 10 s (fake the timer);
+     - the close button is ≥ 44 px;
+     - `page errors: []`.
+   - Add a line to `tests/step79.test.js` (or a new `tests/step81.test.js`) that the backend keeps `sameTime: 'off'`.
+
 ## Order for ChatGPT
 F0 → F1 → F2 → F3 → F4 → F5 → F6, one PR each. F5 is small and data only, so it can go any time after F0.
