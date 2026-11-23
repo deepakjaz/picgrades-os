@@ -51,3 +51,16 @@ Today the app has several editors: the card editor, the free editor ("Design you
 - One section per point (1–5): phone layout, laptop layout, exact words, icon descriptions (or simple SVG), and drawer heights.
 - Then **one** reference sketch of HTML/CSS for the shell (rail + panel + top bar).
 - Then at most 3 suggestions, clearly marked.
+
+
+## Status (24 Nov): design APPROVED
+- `gemini/universal-editor-mockup.html` (v3) is the approved look.
+- Claude checked it at iPhone SE 375 × 667, Pro Max 430 × 932 and laptop:
+  - text ≥ 11 px, buttons ≥ 44 px;
+  - one-row top bar;
+  - all 6 rail items fit on the SE;
+  - two-step drawer (closed = rail only; open ≤ 40 %; the design stays visible).
+- **When building:**
+  - make the laptop rail about 72 px wide ("Collections" is 1 px wider than 64 px);
+  - use the app's local fonts, not Google Fonts.
+- **Claude builds it after the 28 Nov reset**, on the free editor (same layout format).
