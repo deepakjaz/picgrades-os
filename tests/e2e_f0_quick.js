@@ -57,3 +57,17 @@ const srv=http.createServer((req,res)=>{
     },sel);
     ok(!!(v&&v.ok),label+' '+JSON.stringify(v));
   };
+
+  for(const size of [{w:390,h:844,n:'phone'},{w:1280,h:800,n:'laptop'}]){
+    const ctx=await browser.newContext({viewport:{width:size.w,height:size.h},hasTouch:size.w<700,isMobile:size.w<700});
+    const pg=await ctx.newPage();
+    pg.on('pageerror',e=>errors.push(e.message));
+    pg.on('dialog',d=>d.accept('Our evening'));
+    await pg.route('https://lh3.googleusercontent.com/**',r=>{
+      const id=(r.request().url().match(/\/d\/([^=?]+)/)||[])[1];
+      r.fulfill({contentType:'image/jpeg',body:bytesOf(id)});
+    });
+    await require('./fonts_local').install(pg);
+    await pg.goto(url+'?couple='+ck);
+    await pg.waitForSelector('#pgBoot.hide',{state:'attached'});
+    await pg.waitForFunction(()=>window.PGControl&&PGControl.role()==='couple');
