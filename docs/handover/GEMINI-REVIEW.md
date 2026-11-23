@@ -37,5 +37,35 @@ Gemini's files:
 3. Cancel must put the old theme back exactly; only Apply saves.
 4. Layout cards with the couple's cover photo: use the cover from `GALLERY` (`pgImg`), and fall back to today's card when there is no cover.
 
+## F2 — Free editor + Template editor: ✅ approved, with these changes (Gemini's file: `gemini/F2-F4-design.md`)
+1. **Laptop starts at 700 px**, not 900 (again).
+2. **The phone top bar must fit one row at 390 px.** Gemini's bar (back, undo, redo, − 100 % + Fit, Play, Save, Apply) is about 440 px, too wide. Instead:
+   - Zoom becomes **one "100 %" chip**; tapping it shows − / + / Fit in a small pop.
+   - Play becomes an icon button.
+   - Order: ‹ ↶ ↷ · 100 % · ▶ · Save · Apply.
+   - **Save and Apply both stay.**
+3. Closed drawer = the tab row (Add, Style, Layers, Page) + the open/close chevron, 64 px. Open = at most 40 %.
+4. Template editor: the photo slot names come from the wedding's own events. Don't hard-code Haldi/Sangeet.
+
+## F3 — Card editor: ✅ approved, with one change
+1. **"+ Add card" stays one tap away.** Put it in the bottom tool row next to "Page settings" (closed drawer), not inside Page settings.
+2. Everything else as Gemini says:
+   - top bar ‹ ↶ ↷ Preview Publish;
+   - logo side, light/dark, colours and "Start again from a layout" inside Page settings;
+   - with a card selected, the drawer is at most 34 % and the grid scrolls so the card stays in view.
+
+## F4 — Reel Edits: ✅ approved, with these changes
+1. **Phone: don't make the reel smaller than today.**
+   - Gemini's 270 px reel is smaller than today's (~416 px).
+   - With no drawer open, the reel keeps today's size.
+   - With a drawer open, the reel shrinks to fit above it, but never below 60 % of today's size.
+   - Every drawer is at most 40 %.
+2. **Laptop: the timeline goes full width under the reel**, not inside the 360 px right panel. The timeline needs width to drag clips on the beat.
+   - Layout: reel stage on the left (at least 3× bigger than today), tool controls in the right panel, timeline under both (~140 px).
+3. **Add clip:**
+   - Clips already in the reel get a number badge (#1, #2…) and a highlight.
+   - Tapping works as today (choose / un-choose). No "jump to clip" for now.
+4. Gemini's two suggestions (a length badge, an "In reel" filter) are parked. Don't build them.
+
 ## Order for ChatGPT
 F0 → F1 → F2 → F3 → F4 → F5 → F6, one PR each. F5 is small and data only, so it can go any time after F0.
