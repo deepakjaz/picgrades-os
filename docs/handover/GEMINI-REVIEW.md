@@ -67,5 +67,19 @@ Gemini's files:
    - Tapping works as today (choose / un-choose). No "jump to clip" for now.
 4. Gemini's two suggestions (a length badge, an "In reel" filter) are parked. Don't build them.
 
+## T1 — Events from photo time: ✅ approved, with these changes (Gemini's file: `gemini/T1-T2-design.md`)
+1. It opens **inside the Control Panel sheet** (a new section, "Events from photo time"), not as a new modal. Laptop starts at 700 px, with 2 columns of groups.
+2. Photo counts per group ("18 photos") are fine here, because counts are allowed in the Control Panel.
+3. The quick chips are only suggestions to fill the box. The event list never depends on these names.
+4. Gemini's idea to guess the name from the time of day is **parked** (a wrong guess is worse than none).
+
+## T2 — At this time on the wedding day: ✅ the **small pop** (Gemini's option B), with these changes
+1. **Phone:** the pop sits just above the bottom bar, as Gemini designed it. It also **hides itself after 10 seconds** if nobody touches it, so it never stays over the photos.
+2. Tapping the pop opens those 1–3 photos in the viewer. ✕ closes it for this visit.
+3. **Follow the guest rules:** if this wedding shows photos only after Find me, a guest who hasn't found themselves sees no pop.
+4. **Accepted from Gemini's suggestions:** a small time pill on each photo (e.g. "6:42 pm"), so the guest understands why these photos appear.
+5. **English by default.** Hindi only when the wedding's language is set to Hindi. For the action, use «पल देखें» ("see the moment").
+6. The Control Panel switch "At this time on the wedding day" is on by default.
+
 ## Order for ChatGPT
 F0 → F1 → F2 → F3 → F4 → F5 → F6, one PR each. F5 is small and data only, so it can go any time after F0.
