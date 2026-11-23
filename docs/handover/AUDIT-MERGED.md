@@ -76,7 +76,7 @@ All of them follow the **Editor layout rule** in `AGENTS.md` §5.
 | **F3** | Card editor: the tools don't cover the grid; the header settings fold into one "Page settings" button (#11, #12) | ChatGPT | small |
 | **F4** | Reel Edits: on laptop the tools move to a right side panel and the reel grows; drawer height capped; the picker shows the chosen clips (#13–#16) | ChatGPT | medium |
 | **F5** | Living Story / Editorial rebuilt in the free editor (#1). **Deepak chose B (24 Nov)** = card T5: Gemini writes the layout docs, ChatGPT adds them, Claude checks | Gemini → ChatGPT → Claude | medium |
-| **F6** | Control Panel: Theme previews live behind a slim bottom bar; merge Look + Theme; layout cards show the couple's real cover photo (#26–#28) | Gemini designs → ChatGPT | medium |
+| **F6** | Control Panel: **layout and theme are one choice** (a layout brings its theme; "Change colours" to pick another; Deepak chose A, 24 Nov). The theme previews live behind a slim bottom bar; Look + Theme are merged; layout cards show the couple's real cover photo (#26–#28) | Gemini designs → ChatGPT | medium |
 
 **F5 — Deepak chose B (24 Nov).** The options were:
 - **A. Add a live preview to the current Living Story / Editorial editor.** Fast. It keeps the old editor (switches + list) and adds the picture next to it.
