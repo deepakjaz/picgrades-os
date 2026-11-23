@@ -90,3 +90,14 @@ const srv=http.createServer((req,res)=>{
     ok(await hidden(pg),size.n+' Post Edits hides navigation and badge');
     await bar(pg,'.pe-v-edit .pe-bar',size.n+' Post Edits top bar');
     await pg.evaluate(()=>PGPost.close());
+
+    await pg.click('#pghReel');
+    await pg.waitForSelector('.rl-wrap[data-view=inspo]');
+    await pg.locator('.re-ins .re-use').first().click();
+    await pg.waitForSelector('.rl-picker');
+    await pg.locator('.rl-pick').first().click();
+    await pg.click('.rl-picker .re-next');
+    await pg.waitForSelector('.rl-wrap[data-view=edit]');
+    ok(await hidden(pg),size.n+' Reel Edits hides navigation and badge');
+    await bar(pg,'.re-v-edit .re-bar',size.n+' Reel Edits top bar');
+    await pg.evaluate(()=>PGReel.close());
