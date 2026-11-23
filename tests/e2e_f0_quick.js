@@ -38,3 +38,22 @@ const srv=http.createServer((req,res)=>{
     res.end(d);
   });
 }).listen(8901,async()=>{
+
+  const {chromium}=require('playwright'), browser=await chromium.launch(), errors=[];
+  let fails=0;
+  const ok=(v,m)=>{console.log((v?'ok   ':'FAIL ')+m);if(!v)fails++;};
+  const url='http://localhost:8901/g/'+pub.galleryId;
+  const hidden=pg=>pg.evaluate(()=>[...document.querySelectorAll('.tkg-global-nav,#globalNav,#pgRoleBadge')].every(n=>{
+    const s=getComputedStyle(n),r=n.getBoundingClientRect();
+    return s.display==='none'||s.visibility==='hidden'||+s.opacity===0||!r.width||!r.height;
+  }));
+  const bar=async(pg,sel,label)=>{
+    const v=await pg.evaluate(s=>{
+      const e=document.querySelector(s);if(!e)return null;
+      const bs=[...e.querySelectorAll('button')].filter(x=>x.getBoundingClientRect().height>0);
+      const rs=bs.map(x=>x.getBoundingClientRect());
+      return {ok:rs.length>0&&rs.every(r=>r.height>=44)&&Math.max(...rs.map(r=>r.top))-Math.min(...rs.map(r=>r.top))<=2,
+        heights:rs.map(r=>Math.round(r.height))};
+    },sel);
+    ok(!!(v&&v.ok),label+' '+JSON.stringify(v));
+  };
