@@ -3110,3 +3110,7 @@ body.rl-on #globalNav,body.rl-on #pgRoleBadge,body.rl-on #pgLinkBar{display:none
   .pged-btn,.pgte-btn{height:44px;padding:0 8px;font-size:11px;white-space:nowrap}
 }
 @media (max-width:600px){.re-bar{gap:5px;padding-left:8px;padding-right:8px}.re-logo{min-width:0;overflow:hidden;text-overflow:ellipsis}.re-q,.re-next{min-height:44px;height:44px}.re-next{padding:0 10px}}
+
+/* step 86 follow-up: keep free-editor title and mode controls tappable at every viewport */
+.pce-top .pce-title{min-height:44px}
+.pce-mode button{min-height:44px}
