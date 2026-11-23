@@ -37,6 +37,11 @@ const srv = http.createServer((req, res) => {
       ok(info.names && info.evs === 4 && info.imgs >= 3 && info.wide && !info.hidden, tag + ' ' + id + ': names, 4 events, photos, nothing sideways, every part shown after scrolling ' + JSON.stringify(info));
       if (process.env.SHOTS) for (let y = 0, n = 0; y < H && n < 8; y += vh - 60, n++) { await pg.evaluate(y => scrollTo(0, y), y); await pg.waitForTimeout(500); await pg.screenshot({ path: '/tmp/cv_' + tag + '_' + id + '_' + n + '.png' }); }
     }
+    if (tag === 'phone') {   // step 77c: the layout's own Find me button replaces the floating one
+      await pg.goto(URL + '?layout=canvas-quiet'); await pg.waitForSelector('#pgStory .pgc'); await pg.waitForTimeout(400);
+      const fmx = await pg.evaluate(() => ({ own: !!document.querySelector('.pgc [data-act="findme"]'), floating: !!document.querySelector('.pgs-findme'), can: PGLayout.storyData().can }));
+      ok(!fmx.floating && fmx.own === fmx.can.findme, 'the layout\'s own Find me button follows the app\'s rules (shown only when Find me is on for this guest), never a second floating one ' + JSON.stringify(fmx));
+    }
     if (tag === 'phone') {   // event cards and buttons do what they say
       await pg.goto(URL + '?layout=canvas-quiet'); await pg.waitForSelector('#pgStory .pgc');
       await pg.evaluate(() => document.querySelector('.pgc [data-ev="1"]').click()); await pg.waitForTimeout(700);

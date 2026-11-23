@@ -182,14 +182,18 @@
   let cvList = null;
   function collectionGroups(la, group) {
     if (ROLE === 'demo' || ROLE === 'guest') { if (GALLERY.canvas && GALLERY.canvas.id === 'cv-demo') group('Your layouts', 'Made on this phone (demo).', [cvCard({ id: 'cv-demo', name: GALLERY.canvas.name })]); return; }
+    // shown at the top of the list (step 77c): the layouts you saved first, newest first, then your collections, then what others shared
     const paint = r => {
       if (!la.isConnected) return;
       la.querySelectorAll('.pgcp-lgroup.cv').forEach(x => x.remove());
-      const L = r.layouts || [], used = {}, add = (t, n, cards) => { const before = la.children.length; group(t, n, cards); if (la.children.length > before) la.lastElementChild.classList.add('cv'); };
-      (r.collections || []).forEach(c => { const ls = L.filter(l => l.collection === c.id); ls.forEach(l => { used[l.id] = 1; }); add(c.name, c.note || (c.mine ? 'Your collection.' : 'A collection shared with you.'), ls.map(cvCard)); });
-      const mine = L.filter(l => !used[l.id] && l.mine), other = L.filter(l => !used[l.id] && !l.mine);
-      add('Your layouts', 'Made with the layout editor.', mine.map(cvCard));
-      add('Shared with you', 'Layouts others shared with this wedding.', other.map(cvCard));
+      const anchor = la.firstChild, newest = (a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+      const L = (r.layouts || []).slice().sort(newest), used = {}, made = [];
+      const add = (t, n, cards) => { const before = la.children.length; group(t, n, cards); if (la.children.length > before) { const g = la.lastElementChild; g.classList.add('cv'); made.push(g); } };
+      const mine = L.filter(l => !l.collection && l.mine);
+      add('Your layouts', 'Made with the layout editor. Newest first.', mine.map(cvCard)); mine.forEach(l => { used[l.id] = 1; });
+      (r.collections || []).slice().sort((a, b) => (b.mine - a.mine) || newest(a, b)).forEach(c => { const ls = L.filter(l => l.collection === c.id); ls.forEach(l => { used[l.id] = 1; }); add(c.name, c.note || (c.mine ? 'Your collection.' : 'A collection shared with you.'), ls.map(cvCard)); });
+      add('Shared with you', 'Layouts others shared with this wedding.', L.filter(l => !used[l.id]).map(cvCard));
+      made.forEach(g => la.insertBefore(g, anchor));
     };
     if (cvList) paint(cvList);
     pgApi('canvasList', {}).then(r => { cvList = r; paint(r); }).catch(() => {});

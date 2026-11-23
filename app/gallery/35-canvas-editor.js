@@ -23,9 +23,10 @@
   function starter() {
     return { v: 1, name: 'My layout', colors: { bg: '#f6f1ea', ink: '#2a2420', acc: '#a07d4c', acc2: '#c9a56a', card: '#ffffff' }, fonts: { head: 'Cormorant Garamond', body: 'Jost' },
       sections: [{ id: uid('s'), h: { p: 844, l: 760 }, els: [
-        { id: uid('e'), t: 'photo', p: { x: 30, y: 100, w: 330, h: 500, z: 1 }, l: { x: 120, y: 100, w: 440, h: 600, z: 1 }, s: { shape: 'arch', radius: 6, fy: 28 }, src: { k: 'cover', n: 0 }, m: 'fade' },
-        { id: uid('e'), t: 'names', p: { x: 20, y: 620, w: 350, h: 70, z: 2 }, l: { x: 640, y: 300, w: 460, h: 140, z: 2 }, s: { font: 'Cormorant Garamond', size: 40, italic: true, align: 'center' }, sl: { size: 64, align: 'left' }, m: 'rise' },
-        { id: uid('e'), t: 'date', p: { x: 20, y: 694, w: 350, h: 26, z: 2 }, l: { x: 640, y: 450, w: 460, h: 30, z: 2 }, s: { size: 12, ls: 0.25, upper: true, align: 'center', color: '#a07d4c' }, sl: { align: 'left', size: 14 } }] },
+        { id: uid('e'), t: 'photo', p: { x: 30, y: 90, w: 330, h: 500, z: 1 }, l: { x: 120, y: 100, w: 440, h: 600, z: 1 }, s: { shape: 'arch', radius: 6, fy: 28 }, src: { k: 'cover', n: 0 }, m: 'fade' },
+        { id: uid('e'), t: 'names', p: { x: 20, y: 606, w: 350, h: 70, z: 2 }, l: { x: 640, y: 300, w: 460, h: 140, z: 2 }, s: { font: 'Cormorant Garamond', size: 40, italic: true, align: 'center' }, sl: { size: 64, align: 'left' }, m: 'rise' },
+        { id: uid('e'), t: 'date', p: { x: 20, y: 680, w: 350, h: 26, z: 2 }, l: { x: 640, y: 450, w: 460, h: 30, z: 2 }, s: { size: 12, ls: 0.25, upper: true, align: 'center', color: '#a07d4c' }, sl: { align: 'left', size: 14 } },
+        { id: uid('e'), t: 'action', act: 'findme', p: { x: 125, y: 724, w: 140, h: 40, z: 3 }, l: { x: 640, y: 510, w: 170, h: 48, z: 3 }, s: { border: 1, bcolor: '#a07d4c', color: '#2a2420', radius: 24, size: 14, weight: 500 } }] },
       { id: uid('s'), h: { p: 420, l: 520 }, els: [
         { id: uid('e'), t: 'events', p: { x: 20, y: 40, w: 370, h: 300, z: 1 }, l: { x: 120, y: 60, w: 960, h: 380, z: 1 }, s: { radius: 14, size: 14 }, v: 'row', per: { p: 2.2, l: 3.4 } }] }] };
   }
@@ -125,7 +126,7 @@
     const page = h('div', 'pce-page'); st.appendChild(page);
     E.pageW = E.mode === 'p' ? Math.min(390, st.clientWidth) : Math.max(600, st.clientWidth - 40);
     page.style.width = E.pageW + 'px';
-    E.inst = PGCanvas.render(page, E.doc, PGLayout.storyData(), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: true, onTap: () => true });
+    E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: true, onTap: () => true });
     st.scrollTop = y;
     page.querySelectorAll('.pgc-el').forEach(x => { if (x.dataset.el === E.sel) x.classList.add('pce-on-el'); });
     selBox();
