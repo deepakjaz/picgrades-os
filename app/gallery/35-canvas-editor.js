@@ -184,6 +184,7 @@
     const sec = node.closest('.pgc-sec'), inn = node.parentElement, sp = spot(f.e), k = kNow();
     const box = h('div', 'pce-sel'); box.style.cssText = 'left:' + (inn.offsetLeft + node.offsetLeft) + 'px;top:' + (sec.offsetTop + node.offsetTop) + 'px;width:' + node.offsetWidth + 'px;height:' + node.offsetHeight + 'px;' + (sp.r ? 'rotate:' + sp.r + 'deg' : '');
     box.innerHTML = ['nw', 'ne', 'sw', 'se'].map(c => '<i class="pce-h pce-h-' + c + '" data-h="' + c + '"></i>').join('') + '<i class="pce-h pce-rot" data-h="rot"></i><b class="pce-tag">' + esc(TYPE[f.e.t] || f.e.t) + ' · ' + Math.round(sp.w) + '×' + Math.round(sp.h) + '</b>';
+    if (E.frame && E.frame === E.sel) { box.classList.add('pce-framing'); const tg = box.querySelector('.pce-tag'); if (tg) tg.textContent = 'Framing · drag the photo'; }
     page.appendChild(box); E.box = box; E.k = k;
   }
 
@@ -193,8 +194,10 @@
     if (ev.button > 0 || E.play || ev.target.closest('[contenteditable]')) return;
     const hnd = ev.target.closest('[data-h]'), node = ev.target.closest('.pgc-el');
     if (hnd && E.sel) return start(ev, hnd.dataset.h);
-    if (!node) { if (E.sel) { E.sel = null; draw(); panel(); } return; }
+    if (!node) { if (E.sel) { E.sel = null; E.frame = null; draw(); panel(); } return; }
     const id = node.dataset.el, was = id === E.sel;
+    if (was && E.frame === id) return start(ev, 'frame', true);   // step 79: framing — dragging moves the photo inside its holder
+    if (!was && E.frame) E.frame = null;
     if (!was) { E.sel = id; E.tab = E.tab === 'add' ? 'style' : E.tab; draw(); panel(); }
     if (!was && ev.pointerType === 'touch') return;   // touch: the first tap selects (so the page still scrolls), the next touch drags
     start(ev, 'move', was);
@@ -203,6 +206,7 @@
     const f = find(E.sel); if (!f) return;
     const page = E.el.querySelector('.pce-page'), node = page.querySelector('.pgc-el[data-el="' + CSS.escape(E.sel) + '"]');
     drag = { how, x0: ev.clientX, y0: ev.clientY, sp: Object.assign({}, spot(f.e)), f, node, moved: false, k: kNow(), sec: node.closest('.pgc-sec'), was: !!was };
+    if (how === 'frame') { const s = Object.assign({}, f.e.s, E.mode === 'l' && f.e.sl ? f.e.sl : {}), img = node.querySelector('img'); drag.fr = { fx: num(s.fx, 50), fy: num(s.fy, 30), zm: Math.max(1, num(s.zm, 1)), img }; }
     page.classList.add('pce-drag');
     ev.preventDefault();
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up, { once: true }); window.addEventListener('pointercancel', cancel, { once: true });
@@ -217,6 +221,7 @@
     const dx = (ev.clientX - drag.x0) / drag.k, dy = (ev.clientY - drag.y0) / drag.k, s0 = drag.sp, sp = Object.assign({}, s0);
     if (Math.abs(ev.clientX - drag.x0) + Math.abs(ev.clientY - drag.y0) > 3) drag.moved = true;
     if (!drag.moved) return;
+    if (drag.how === 'frame') return frameMove(ev);
     const L = snapLines(drag.f, sp), th = SNAP / drag.k, guides = [];
     const snap = (val, list, dir) => { let best = null; list.forEach(l => { if (Math.abs(l - val) < th && (best == null || Math.abs(l - val) < Math.abs(best - val))) best = l; }); if (best != null) guides.push([dir, best]); return best; };
     if (drag.how === 'move') {
@@ -252,7 +257,8 @@
     window.removeEventListener('pointermove', move);
     const page = E.el.querySelector('.pce-page'); if (page) page.classList.remove('pce-drag');
     const d = drag; drag = null; if (!d) return;
-    if (!d.moved) { if (d.how === 'move' && d.was && ['names', 'date', 'text', 'credit'].indexOf(d.f.e.t) > -1) editText(d.f.e.id); return; }   // a second tap on words: type straight on the page
+    if (!d.moved) { if (d.how === 'move' && d.was && ['names', 'date', 'text', 'credit'].indexOf(d.f.e.t) > -1) editText(d.f.e.id); if (d.how === 'move' && d.was && d.f.e.t === 'photo') frameOn(d.f.e.id); return; }   // a second tap on words: type straight on the page; on a photo: frame it
+    if (d.how === 'frame') { if (d.fr.now) change(() => { const t = styleTarget(d.f.e); t.fx = d.fr.now.fx; t.fy = d.fr.now.fy; }, true); return; }
     if (!d.now) return;
     // dropped over another section: it moves into that section (both screens keep their place on the page)
     const secs = [...page.querySelectorAll('.pgc-sec')], k = d.k, cy = d.sec.offsetTop + (d.now.y + d.now.h / 2) * k;
@@ -270,6 +276,15 @@
       }
     }, true);
     panelSpot();
+  }
+  // step 79: frame a photo like in Photo Edits — drag the photo inside its holder, zoom in or out, Reset
+  function frameOn(id) { E.frame = id; E.tab = 'style'; draw(); panel(); }
+  function frameMove(ev) {
+    const d = drag, fr = d.fr, img = fr.img, r = d.node.getBoundingClientRect(); if (!img || !img.naturalWidth) return;
+    const cs = Math.max(r.width / img.naturalWidth, r.height / img.naturalHeight) * fr.zm, ow = Math.max(img.naturalWidth * cs - r.width, r.width * 0.3), oh = Math.max(img.naturalHeight * cs - r.height, r.height * 0.3);
+    const fx = Math.round(Math.max(0, Math.min(100, fr.fx - (ev.clientX - d.x0) / ow * 100))), fy = Math.round(Math.max(0, Math.min(100, fr.fy - (ev.clientY - d.y0) / oh * 100)));
+    fr.now = { fx, fy }; img.style.objectPosition = fx + '% ' + fy + '%'; if (fr.zm > 1) img.style.transformOrigin = fx + '% ' + fy + '%';
+    const tag = E.box && E.box.querySelector('.pce-tag'); if (tag) tag.textContent = 'Framing · ' + fx + '%, ' + fy + '%';
   }
   // type straight on the page (names, date, text, credit): Enter or tapping away keeps it, Esc leaves it
   function editText(id) {
@@ -362,7 +377,10 @@
     c += row('Border', '<input type="range" min="0" max="16" data-s="border" value="' + num(s.border, 0) + '"><output>' + num(s.border, 0) + '</output>') + (s.border ? row('Border colour', colorIn('bcolor', s.bcolor)) : '');
     c += row('Shadow', '<input type="range" min="0" max="4" data-s="shadow" value="' + num(s.shadow, 0) + '"><output>' + num(s.shadow, 0) + '</output>');
     c += row('See-through', '<input type="range" min="0.05" max="1" step="0.05" data-s="opacity" value="' + num(s.opacity, 1) + '"><output>' + num(s.opacity, 1) + '</output>');
-    if (t === 'photo' || t === 'strip') c += row('Focus left ↔ right', '<input type="range" min="0" max="100" data-s="fx" value="' + num(s.fx, 50) + '"><output>' + num(s.fx, 50) + '</output>') + row('Focus top ↕ bottom', '<input type="range" min="0" max="100" data-s="fy" value="' + num(s.fy, 30) + '"><output>' + num(s.fy, 30) + '</output>');
+    if (t === 'photo') c += '<div class="pce-sub">Frame the photo</div><p class="pce-note">' + (E.frame === e.id ? 'Drag the photo on the page to move it inside its frame. Zoom to go closer.' : 'Tap the photo again (or press Frame) to move it inside its frame, like in Photo Edits.') + '</p>' +
+      '<div class="pce-acts"><button type="button" data-do="frame" class="' + (E.frame === e.id ? 'on' : '') + '">' + (E.frame === e.id ? 'Done framing' : 'Frame') + '</button><button type="button" data-do="frameReset">Reset</button></div>' +
+      row('Zoom', '<input type="range" min="1" max="3" step="0.05" data-s="zm" value="' + num(s.zm, 1) + '"><output>' + num(s.zm, 1) + '</output>');
+    if (t === 'strip') c += row('Focus left ↔ right', '<input type="range" min="0" max="100" data-s="fx" value="' + num(s.fx, 50) + '"><output>' + num(s.fx, 50) + '</output>') + row('Focus top ↕ bottom', '<input type="range" min="0" max="100" data-s="fy" value="' + num(s.fy, 30) + '"><output>' + num(s.fy, 30) + '</output>');
     if (textual) c += row('Inner space', '<input type="range" min="0" max="60" data-s="pad" value="' + num(s.pad, 0) + '"><output>' + num(s.pad, 0) + '</output>');
     const mo = e.m ? e.mo || {} : {}, MOV = [['', 'None'], ['fade', 'Fade in'], ['rise', 'Rise up'], ['drop', 'Drop down'], ['left', 'Slide from left'], ['right', 'Slide from right'], ['grow', 'Grow'], ['blur', 'Blur to sharp'], ['wipe', 'Wipe in'], ['iris', 'Iris open'], ['unfold', 'Unfold'], ['shine', 'Shine once'], ['zoom', 'Slow zoom (keeps going)'], ['float', 'Float (keeps going)']];
     c += '<div class="pce-sub">Motion</div><p class="pce-note">Plays once when it scrolls into view — or keeps going gently. Press ▶ Play to watch.' + (t === 'events' ? ' On event cards they come in one after another.' : '') + '</p>' +
@@ -396,7 +414,8 @@
       c += row('Height', '<input type="range" min="80" max="2400" step="10" data-sec="h" value="' + Math.round(PGCanvas.secH(s, E.mode)) + '"><output>' + Math.round(PGCanvas.secH(s, E.mode)) + '</output>');
       c += row('Stays while scrolling', '<input type="range" min="0" max="1600" step="20" data-sec="stay" value="' + num(+s.stay, 0) + '"><output>' + num(+s.stay, 0) + '</output>') + '<p class="pce-note">The section holds still on the screen for this much scrolling, so its motion can play (0 = scrolls normally).</p>';
       c += row('Background colour', '<span class="pce-col"><input type="color" data-sec="bgc" value="' + esc(String(bg.c || C.bg || '#ffffff').slice(0, 7)) + '">' + (bg.c ? '<button type="button" class="pce-mini" data-sec-unset="c">None</button>' : '<em>layout colour</em>') + '</span>');
-      c += row('Background photo', '<select data-sec="bgsrc">' + opt('', 'None', bg.src ? 'x' : '') + srcSelect(bg.src || { k: 'none' }).replace(/^<select data-f="src">|<\/select>$/g, '') + '</select>') + (bg.src ? '<button type="button" class="pce-mini" data-pick="bg">Choose a photo…</button>' + row('Darken photo', '<input type="range" min="0" max="0.8" step="0.05" data-sec="dim" value="' + num(bg.dim, 0) + '"><output>' + num(bg.dim, 0) + '</output>') : '');
+      c += row('Background photo', '<select data-sec="bgsrc">' + opt('', 'None', bg.src ? 'x' : '') + srcSelect(bg.src || { k: 'none' }).replace(/^<select data-f="src">|<\/select>$/g, '') + '</select>') + (bg.src ? '<button type="button" class="pce-mini" data-pick="bg">Choose a photo…</button>' + row('Darken photo', '<input type="range" min="0" max="0.8" step="0.05" data-sec="dim" value="' + num(bg.dim, 0) + '"><output>' + num(bg.dim, 0) + '</output>') +
+        row('Photo zoom', '<input type="range" min="1" max="3" step="0.05" data-sec="bgz" value="' + num(bg.z, 1) + '"><output>' + num(bg.z, 1) + '</output>') + row('Photo left ↔ right', '<input type="range" min="0" max="100" data-sec="bgfx" value="' + num(bg.fx, 50) + '"><output>' + num(bg.fx, 50) + '</output>') + row('Photo top ↕ bottom', '<input type="range" min="0" max="100" data-sec="bgfy" value="' + num(bg.fy, 35) + '"><output>' + num(bg.fy, 35) + '</output>') : '');
       c += '<div class="pce-acts"><button type="button" data-secdo="up">Move up</button><button type="button" data-secdo="down">Move down</button><button type="button" data-secdo="dup">Duplicate</button><button type="button" data-secdo="add">Add section below</button><button type="button" data-secdo="del" class="danger">Delete section</button></div>';
     }
     c += '<div class="pce-sub">Header · the whole app</div><p class="pce-note">The app header sits on top of every page (the outline in the preview). It changes for the whole wedding when you apply.</p>' +
@@ -448,17 +467,21 @@
     on('[data-do]', 'click', ev => { const d = ev.currentTarget.dataset.do;
       if (d === 'dup') duplicate(); if (d === 'del') remove(); if (d === 'front') order(1); if (d === 'back') order(-1); if (d === 'hide') toggleHide(E.sel);
       if (d === 'rename') E.el.querySelector('.pce-title').click();
+      if (d === 'frame') { E.frame = E.frame === E.sel ? null : E.sel; draw(); panel(); }
+      if (d === 'frameReset') { const f = find(E.sel); if (f) change(() => { const t = styleTarget(f.e); delete t.fx; delete t.fy; delete t.zm; }); }
       if (d === 'lapreset' && window.confirm('Put every element back where the phone has it (bigger, in the middle)?')) change(doc => doc.sections.forEach(s => { delete (s.h || {}).l; (s.els || []).forEach(x => { delete x.l; delete x.sl; }); }));
     });
     on('[data-pick]', 'click', ev => pickPhoto(ev.currentTarget.dataset.pick));
     // section
     const s = (E.sel && find(E.sel) || {}).s || sectionInView();
-    on('[data-sec]', 'input', ev => { const x = ev.currentTarget; if (x.dataset.sec === 'h' || x.dataset.sec === 'dim' || x.dataset.sec === 'stay') { const o = x.nextElementSibling; if (o) o.textContent = x.value; } });
+    on('[data-sec]', 'input', ev => { const x = ev.currentTarget; if (['h', 'dim', 'stay', 'bgz', 'bgfx', 'bgfy'].indexOf(x.dataset.sec) > -1) { const o = x.nextElementSibling; if (o) o.textContent = x.value; } });
     on('[data-sec]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.sec;
       change(() => { s.h = s.h || {}; s.bg = s.bg || {};
         if (k === 'h') s.h[E.mode] = Math.max(80, Math.min(2400, +x.value));
         if (k === 'bgc') s.bg.c = x.value;
         if (k === 'dim') s.bg.dim = +x.value;
+        if (k === 'bgz') { if (+x.value > 1) s.bg.z = +x.value; else delete s.bg.z; }
+        if (k === 'bgfx') s.bg.fx = +x.value; if (k === 'bgfy') s.bg.fy = +x.value;
         if (k === 'stay') { if (+x.value) s.stay = +x.value; else delete s.stay; }
         if (k === 'bgsrc') { if (x.value) s.bg.src = srcOf(x.value); else delete s.bg.src; }
         if (!Object.keys(s.bg).length) delete s.bg; });
@@ -561,6 +584,6 @@
     }).catch(err => { showToast(err.message || 'Could not apply'); btn.disabled = false; btn.textContent = 'Apply'; });
   }
 
-  window.PGCanvasEditor = { open, close, state: () => (E ? { zoom: E.zoom, play: E.play, pages: Object.assign({}, E.pages), mode: E.mode, sel: E.sel, tab: E.tab, doc: E.doc && clone(E.doc), src: Object.assign({}, E.src), dirty: E.doc && JSON.stringify(E.doc) !== E.saved } : null),
+  window.PGCanvasEditor = { open, close, state: () => (E ? { frame: E.frame || null, zoom: E.zoom, play: E.play, pages: Object.assign({}, E.pages), mode: E.mode, sel: E.sel, tab: E.tab, doc: E.doc && clone(E.doc), src: Object.assign({}, E.src), dirty: E.doc && JSON.stringify(E.doc) !== E.saved } : null),
     select: id => { if (E) { E.sel = id; E.tab = 'style'; draw(); panel(); } }, tab: k => { if (E) { E.tab = k; panel(); } }, mode: m => { if (E) { E.mode = m; draw(); panel(); } } };
 })();

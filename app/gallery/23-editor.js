@@ -254,8 +254,14 @@
         sel.addEventListener('change', () => change(f.key, sel.value)); row.appendChild(sel);
       } else if (f.type === 'photo') {
         const cur = set[f.key], pv = h('span', 'pged-ph' + (cur ? '' : ' empty'), cur ? '<img alt="" src="' + pgImg(cur, 200) + '">' : 'Cover photo');
-        const pick = h('button', 'pged-btn', cur ? 'Change photo' : 'Choose a photo'); pick.type = 'button'; pick.addEventListener('click', e => { e.preventDefault(); photoSheet(id => change(f.key, id)); });
+        const pick = h('button', 'pged-btn', cur ? 'Change photo' : 'Choose a photo'); pick.type = 'button'; pick.addEventListener('click', e => { e.preventDefault(); photoSheet(id => { change(f.key, id); if (set[f.key + 'Frame']) change(f.key + 'Frame', ''); }); });
         row.append(pv, pick);
+        if (cur || ((GALLERY.story || {}).cover || [])[0]) {   // step 79: move the photo inside its frame, zoom in or out
+          const fr = h('button', 'pged-btn pged-frame', set[f.key + 'Frame'] ? 'Frame ✓' : 'Frame'); fr.type = 'button';
+          fr.addEventListener('click', e => { e.preventDefault(); const pid = cur || GALLERY.story.cover[0], p = String(set[f.key + 'Frame'] || '').split(','), card = document.querySelector('.pged .x-photo, .x-photo'), r = card ? card.getBoundingClientRect() : null;
+            PGFrame.open({ id: pid, ratio: r && r.height ? r.width / r.height : 0.66, dfy: 50, frame: p.length === 3 ? { fx: p[0], fy: p[1], z: p[2] } : null, title: 'Frame the cover photo', onDone: v => change(f.key + 'Frame', v ? v.fx + ',' + v.fy + ',' + v.z : '') }); });
+          row.appendChild(fr);
+        }
         if (cur) { const clr = h('button', 'pged-btn', 'Use the cover'); clr.type = 'button'; clr.addEventListener('click', e => { e.preventDefault(); change(f.key, ''); }); row.appendChild(clr); }
       }
       wrap.appendChild(row);

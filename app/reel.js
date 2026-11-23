@@ -71,6 +71,7 @@
     '.rl-msg{font-size:.8rem;color:rgba(255,255,255,.75);margin:0;padding:0 14px;display:none}.rl-msg.on{display:block;padding:4px 14px}' +
     // tool sheets
     '.re-sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;max-height:56%;display:flex;flex-direction:column;background:#17130f;border-radius:20px 20px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.6);animation:reUp .22s ease}' +
+    '.re-frame{margin:10px 0 2px}.re-framerow{display:flex;align-items:center;gap:10px;margin-top:6px}.re-framerow small{font:600 12px/1 system-ui;color:rgba(255,255,255,.7)}.re-zoom{flex:1;accent-color:#FAC646}.re-framerow .re-freset{flex:0 0 auto;width:auto;min-height:36px;padding:0 16px;margin:0}' +
     '@keyframes reUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}' +
     '.re-sh-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px}.re-sh-top b{font-size:16px}' +
     '.re-sh-done{height:34px;padding:0 16px;border-radius:17px;border:0;background:#fff;color:#111;font:800 13px/1 inherit;cursor:pointer}' +
@@ -275,16 +276,30 @@
     [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(function (q) { xs.push(m.a * q[0] + m.c * q[1] + m.e); ys.push(m.b * q[0] + m.d * q[1] + m.f); });
     S.hits.push({ id: id, x0: Math.max(0, Math.min.apply(0, xs)), y0: Math.max(0, Math.min.apply(0, ys)), x1: Math.min(W, Math.max.apply(0, xs)), y1: Math.min(H, Math.max.apply(0, ys)) });
   }
-  function contain(ctx, id, bx, by, bw, bh, zoom, panX) {   // whole photo, never cut
-    var img = S.bitmaps[id]; if (!img) return;
-    var r = Math.min(bw / img.width, bh / img.height) * (zoom || 1), w = img.width * r, h = img.height * r;
-    ctx.drawImage(img, bx + (bw - w) / 2 + (panX || 0), by + (bh - h) / 2, w, h); hitRec(ctx, id, bx + (bw - w) / 2 + (panX || 0), by + (bh - h) / 2, w, h);
+  // step 79: each photo's framing — where it sits in its frame and how close (like Post Edits). Unset: the faces stay in view.
+  function frameOf(id) {
+    var a = (S.frame || {})[id]; if (a) return a;
+    var f = (S.opt.faces || {})[id];
+    if (f && f.length) { var tw = 0, fx = 0, fy = 0; f.forEach(function (b) { var wgt = b[2] * b[3]; tw += wgt; fx += (b[0] + b[2] / 2) * wgt; fy += (b[1] + b[3] / 2) * wgt; }); return { fx: fx / tw, fy: Math.max(0, fy / tw - 0.04), z: 1 }; }
+    return { fx: 0.5, fy: 0.4, z: 1 };
   }
-  function cover(ctx, id, bx, by, bw, bh, zoom) {            // fills a tile (collage layouts)
+  function contain(ctx, id, bx, by, bw, bh, zoom, panX) {   // whole photo, never cut — unless it was zoomed in on purpose
     var img = S.bitmaps[id]; if (!img) return;
-    var r = Math.max(bw / img.width, bh / img.height) * (zoom || 1), w = img.width * r, h = img.height * r;
+    var a = frameOf(id), own = !!(S.frame || {})[id];   // framed by hand: it fills its frame; Reset shows the whole photo again
+    if (own) {   // it fills the frame, the chosen point in the middle
+      var r2 = Math.max(bw / img.width, bh / img.height) * a.z * (zoom || 1), w2 = img.width * r2, h2 = img.height * r2;
+      var x2 = Math.min(bx, Math.max(bx + bw - w2, bx + bw / 2 - a.fx * w2)) + (panX || 0) * 0.3, y2 = Math.min(by, Math.max(by + bh - h2, by + bh / 2 - a.fy * h2));
+      ctx.save(); ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip(); ctx.drawImage(img, x2, y2, w2, h2); ctx.restore(); hitRec(ctx, id, bx, by, bw, bh); S.fdim[id] = { w: w2, h: h2 }; return;
+    }
+    var r = Math.min(bw / img.width, bh / img.height) * (zoom || 1), w = img.width * r, h = img.height * r;
+    ctx.drawImage(img, bx + (bw - w) / 2 + (panX || 0), by + (bh - h) / 2, w, h); hitRec(ctx, id, bx + (bw - w) / 2 + (panX || 0), by + (bh - h) / 2, w, h); S.fdim[id] = { w: w, h: h };
+  }
+  function cover(ctx, id, bx, by, bw, bh, zoom) {            // fills a tile (collage layouts): the faces — or the point the person chose — stay in view
+    var img = S.bitmaps[id]; if (!img) return;
+    var a = frameOf(id), r = Math.max(bw / img.width, bh / img.height) * (zoom || 1) * (a.z || 1), w = img.width * r, h = img.height * r;
+    var x = Math.min(bx, Math.max(bx + bw - w, bx + bw / 2 - a.fx * w)), y = Math.min(by, Math.max(by + bh - h, by + bh / 2 - a.fy * h));
     ctx.save(); ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip();
-    ctx.drawImage(img, bx + (bw - w) / 2, by + (bh - h) * 0.4, w, h); hitRec(ctx, id, bx, by, bw, bh); ctx.restore();
+    ctx.drawImage(img, x, y, w, h); hitRec(ctx, id, bx, by, bw, bh); ctx.restore(); S.fdim[id] = { w: w, h: h };
   }
   function pop(u) { if (u <= 0) return 0; if (u >= 1) return 1; var c = 1.70158 * 1.4; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); } // overshoot
   function scaled(ctx, cx, cy, s, fn) { ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); fn(); ctx.restore(); }
@@ -686,10 +701,10 @@
     P.dur = t; P.used = Object.keys(used).length; P.shots = P.segs.filter(function (s) { return s.type === 'shot'; }).length;
   }
   function freshPlan() { S.P = plan(); S.P.segs.forEach(function (sg) { sg.beats = Math.max(1, Math.round(sg.dur / S.P.beat)); }); relayout(); }
-  function snapshot() { return JSON.stringify({ tx: S.tx || {}, fxOff: S.fxOff || {}, segs: S.P.segs, texts: S.texts, stks: S.stks, filter: S.filter, adj: S.adj, tid: S.tid, track: S.track ? S.track.id : '', names: S.names, date: S.date, endCard: S.endCard }); }
+  function snapshot() { return JSON.stringify({ frame: S.frame || {}, tx: S.tx || {}, fxOff: S.fxOff || {}, segs: S.P.segs, texts: S.texts, stks: S.stks, filter: S.filter, adj: S.adj, tid: S.tid, track: S.track ? S.track.id : '', names: S.names, date: S.date, endCard: S.endCard }); }
   function changed() { if (!S || !S.P) return; S.undo.push(S.last); if (S.undo.length > 50) S.undo.shift(); S.redo = []; S.last = snapshot(); relayout(); renderTimeline(); seek(Math.min(S.t, S.P.dur - 0.01)); updUndo(); }
   function restore(js) {
-    var o = JSON.parse(js); S.tx = o.tx || {}; S.fxOff = o.fxOff || {}; S.P.segs = o.segs; S.texts = o.texts; S.stks = o.stks; S.filter = o.filter; S.adj = o.adj; S.tid = o.tid; S.T = TEMPLATES[o.tid] || S.T;
+    var o = JSON.parse(js); S.frame = o.frame || {}; S.tx = o.tx || {}; S.fxOff = o.fxOff || {}; S.P.segs = o.segs; S.texts = o.texts; S.stks = o.stks; S.filter = o.filter; S.adj = o.adj; S.tid = o.tid; S.T = TEMPLATES[o.tid] || S.T;
     S.track = S.tracks.filter(function (t) { return t.id === o.track; })[0] || null; S.names = o.names; S.date = o.date; S.endCard = o.endCard; S.fcss = filterCss();
     relayout(); renderTimeline(); seek(Math.min(S.t, S.P.dur - 0.01)); updUndo();
   }
@@ -736,7 +751,7 @@
     build(body); S.edit.appendChild(box); S.sheetEl = box;
     return body;
   }
-  function closeSheet() { if (S && S.sheetEl) { S.sheetEl.remove(); S.sheetEl = null; } if (S && S.selEl) { S.selEl.remove(); S.selEl = null; } }
+  function closeSheet() { if (S) S.frameSel = null; if (S && S.sheetEl) { S.sheetEl.remove(); S.sheetEl = null; } if (S && S.selEl) { S.selEl.remove(); S.selEl = null; } }
   function chips(row, list, cur, onPick) {
     row.innerHTML = '';
     list.forEach(function (it) {
@@ -865,6 +880,25 @@
         el('button', { type: 'button', class: 'rl-sub', text: 'Put it back where it was', onclick: function () { S.tx = Object.assign({}, S.tx); var o = Object.assign({}, S.tx[key]); delete o.dx; delete o.dy; S.tx[key] = o; changed(); toolCardText(key); } }));
     }, changed);
   }
+  // step 79: the photo picked in a clip can be moved in its frame by dragging it on the paused preview, and zoomed with the slider
+  function bindFrameDrag() {
+    var d = null;
+    var pt = function (e) { var rc = S.canvas.getBoundingClientRect(); return { x: (e.clientX - rc.left) * W / rc.width, y: (e.clientY - rc.top) * H / rc.height }; };
+    S.canvas.addEventListener('pointerdown', function (e) {
+      if (S.view !== 'edit' || S.raf || !S.P || !S.frameSel) return;
+      var p = pt(e), h = (S.hits || []).filter(function (x) { return x.id === S.frameSel && p.x >= x.x0 && p.x <= x.x1 && p.y >= x.y0 && p.y <= x.y1; }).pop();
+      if (!h) return; d = { id: S.frameSel, last: p, moved: false }; S.canvas.setPointerCapture(e.pointerId); e.preventDefault(); e.stopImmediatePropagation();
+    });
+    S.canvas.addEventListener('pointermove', function (e) {
+      if (!d) return; var p = pt(e), dx = p.x - d.last.x, dy = p.y - d.last.y; d.last = p;
+      if (Math.abs(dx) + Math.abs(dy) < 0.5) return; d.moved = true;
+      var dm = S.fdim[d.id] || { w: W, h: H }, a = Object.assign({}, frameOf(d.id));
+      a.fx = Math.max(0, Math.min(1, a.fx - dx / dm.w)); a.fy = Math.max(0, Math.min(1, a.fy - dy / dm.h));
+      S.frame = Object.assign({}, S.frame); S.frame[d.id] = a; if (S.selEl) { S.selEl.remove(); S.selEl = null; } seek(S.t);
+    });
+    var up = function () { if (!d) return; if (d.moved) { S.noTap = true; changed(); setTimeout(function () { S.noTap = false; }, 0); } d = null; };
+    S.canvas.addEventListener('pointerup', up); S.canvas.addEventListener('pointercancel', up);
+  }
   function bindTextDrag() {   // paused on a title card: drag its words
     var d = null;
     var pt = function (e) { var rc = S.canvas.getBoundingClientRect(); return { x: (e.clientX - rc.left) * W / rc.width, y: (e.clientY - rc.top) * H / rc.height }; };
@@ -907,6 +941,14 @@
         act('right', 'Start later', function () { sg.vt = Math.min(Math.max(0, S.vids[sg.ids[0]] - 1), (sg.vt || 0) + 1); sg.beats = Math.min(sg.beats, Math.max(1, Math.floor((S.vids[sg.ids[0]] - sg.vt) / S.P.beat))); changed(); toolClip(i, slot); seek(sg.start + 0.05); }, (sg.vt || 0) >= S.vids[sg.ids[0]] - 1);
       }
       act('trash', 'Delete', function () { if (S.P.shots <= 1) { msg('A reel needs at least one clip.'); return; } S.P.segs.splice(i, 1); closeSheet(); changed(); }, S.P.shots <= 1);
+      if (!vid) {   // step 79: frame this photo — drag it on the preview, zoom with the slider
+        var pid = sg.ids[slot], fa = frameOf(pid); S.frameSel = pid;
+        var zr = el('input', { type: 'range', min: '1', max: '3', step: '0.05', value: String(fa.z || 1), class: 're-zoom', 'aria-label': 'Zoom' });
+        zr.addEventListener('input', function () { S.frame = Object.assign({}, S.frame); S.frame[pid] = Object.assign({}, frameOf(pid), { z: Number(zr.value) }); seek(S.t); });
+        zr.addEventListener('change', function () { changed(); });
+        b.appendChild(el('div', { class: 're-frame' }, [el('span', { class: 'rl-lbl', text: 'Frame · drag the photo on the reel to move it' }), el('div', { class: 're-framerow' }, [el('small', { text: 'Zoom' }), zr,
+          el('button', { type: 'button', class: 'rl-sub re-freset', text: 'Reset', onclick: function () { S.frame = Object.assign({}, S.frame); delete S.frame[pid]; changed(); toolClip(i, slot); } })])]));
+      }
       var lay = el('div', { class: 'rl-row' });
       chips(lay, Object.keys(LAYOUT_N).filter(function (k) { return LAYOUT_N[k] === 1 || LAYOUT_N[k] <= sg.ids.length; }).map(function (k) { return { t: k, v: k }; }), sg.layout, function (v) { sg.layout = v; sg.beats = Math.max(sg.beats, LAYOUT_MIN[v] || 1); changed(); });
       b.append(row, el('div', { class: 'rl-lbl', text: sg.beats + ' beats · ' + sg.dur.toFixed(1) + ' s' + (isVideo(sg.ids[0]) ? ' · video from ' + fmt(sg.vt || 0) + ' (of ' + fmt(S.vids[sg.ids[0]]) + ') · its sound is off, the reel uses the music' : '') + ' · look' }), lay);
@@ -1245,7 +1287,7 @@
   function openNow(opt) {
     if (S && S.wrap) close();
     if (!document.getElementById('rl-css')) document.head.appendChild(el('style', { id: 'rl-css', text: CSS }));
-    S = { opt: opt, tid: opt.style && TEMPLATES[opt.style] ? opt.style : 'south', seed: Math.floor(Math.random() * 1e9), T: null, photos: opt.photos.slice(0, 80).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, blurs: {}, buffers: {}, vids: {}, thumbs: {},
+    S = { frame: {}, fdim: {}, opt: opt, tid: opt.style && TEMPLATES[opt.style] ? opt.style : 'south', seed: Math.floor(Math.random() * 1e9), T: null, photos: opt.photos.slice(0, 80).map(function (p) { return { id: p.id, on: true }; }), bitmaps: {}, blurs: {}, buffers: {}, vids: {}, thumbs: {},
       names: opt.title || 'Our Wedding', date: opt.date || '', studio: opt.studio || '', length: 30, endCard: true, tracks: [], track: null,
       texts: [], stks: [], filter: 'none', adj: {}, fcss: 'none', t: 0, undo: [], redo: [], group: 'all' };
     S.T = TEMPLATES[S.tid];
@@ -1271,7 +1313,7 @@
     // 3. editor
     S.stage = el('div', { class: 're-stage' });
     S.playBtn = el('button', { type: 'button', class: 're-play', 'aria-label': 'Play', html: '&#9654;', onclick: play });
-    S.canvas.addEventListener('click', tapPreview); bindTextDrag();
+    S.canvas.addEventListener('click', tapPreview); bindFrameDrag(); bindTextDrag();
     S.undoBtn = el('button', { type: 'button', class: 're-ib', 'aria-label': 'Undo', html: '&#8630;', onclick: undo });
     S.redoBtn = el('button', { type: 'button', class: 're-ib', 'aria-label': 'Redo', html: '&#8631;', onclick: redo });
     S.timeEl = el('div', { class: 're-time' }, [el('b', { text: '00:00' }), el('span', { text: '00:00' })]);
@@ -1342,8 +1384,8 @@
     if (S.view === 'edit') { var eb = S.wrap.querySelector('.re-v-edit .re-ib'); if (eb) eb.click(); return !!S; }   // asks before leaving the reel
     close(); return false;
   }
-  window.PGReel = { back: back, open: open, close: close, styles: ORDER, addStyle: addStyle,
+  window.PGReel = { setFaces: function (f) { if (S) { S.opt.faces = f; seek(S.t || 0); } }, back: back, open: open, close: close, styles: ORDER, addStyle: addStyle,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), curPlan(), t); return S ? curPlan().dur : 0; },  // used by tests
     setStyle: function (k) { if (S && TEMPLATES[k]) { if (S.view === 'edit' && S.P) applyStyle(k); else pickStyle(k); } },
-    state: function () { return S ? { tx: S.tx || {}, names: S.names, date: S.date, textHits: (S.textHits || []).slice(), t: S.t, fxOff: S.fxOff || {}, sound: !!S.inspoSound, soundPlaying: !!S.inspoAud, segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
+    state: function () { return S ? { frame: JSON.parse(JSON.stringify(S.frame || {})), frameSel: S.frameSel || null, tx: S.tx || {}, names: S.names, date: S.date, textHits: (S.textHits || []).slice(), t: S.t, fxOff: S.fxOff || {}, sound: !!S.inspoSound, soundPlaying: !!S.inspoAud, segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
 })();

@@ -68,6 +68,18 @@ const srv = http.createServer((req, res) => {
   const slotK = await pg.evaluate(() => Object.keys(PGTemplateEditor.state().tune.photos || {})[0]);
   ok(slotK && (await pg.evaluate(k => PGTemplateEditor.state().tune.photos[k], slotK)) === want, 'tap a photo → choose another: ' + slotK);
   ok(await pg.evaluate((w) => [...document.querySelectorAll('.pgte-scroll img[data-slot]')].some(i => i.src.includes(w)), want), '…the preview shows it at once');
+  // step 79: frame that photo — drag it inside its holder, zoom in
+  await pg.evaluate(() => PGTemplateEditor.tab && PGTemplateEditor.tab('photos')); await pg.waitForTimeout(200);
+  await pg.click('.pgte-frame[data-frame="' + slotK + '"]'); await pg.waitForSelector('.pgfr .pgfr-hold img');
+  await pg.waitForFunction(() => document.querySelector('.pgfr-hold img').naturalWidth > 0);
+  await pg.$eval('.pgfr input[type=range]', r => { r.value = '1.6'; r.dispatchEvent(new Event('input', { bubbles: true })); });
+  const hb = await pg.locator('.pgfr-hold').boundingBox();
+  await pg.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await pg.mouse.down(); await pg.mouse.move(hb.x + hb.width / 2 + 60, hb.y + hb.height / 2 + 40, { steps: 8 }); await pg.mouse.up();
+  await pg.screenshot({ path: '/tmp/tpl_frame_sheet.png' });
+  await pg.click('.pgfr-done'); await pg.waitForTimeout(500);
+  const fr = await pg.evaluate(k => (PGTemplateEditor.state().tune.frame || {})[k], slotK);
+  ok(fr && fr.z === 1.6 && fr.fx < 50, 'Frame: the photo moved inside its holder and zoomed ' + JSON.stringify(fr));
+  ok(await pg.evaluate(k => { const i = document.querySelector('.pgte-scroll img[data-slot="' + k + '"]'); return i && i.style.scale === '1.6' && /%/.test(i.style.objectPosition); }, slotK), '…the preview shows it framed');
   // colours, parts, words, motion
   await pg.click('[data-tab=colours]'); await pg.waitForTimeout(200);
   await pg.evaluate(() => { const i = document.querySelector('[data-col=bg]'); i.value = '#203040'; i.dispatchEvent(new Event('change')); }); await pg.waitForTimeout(300);
@@ -88,7 +100,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('.pgte-x'); await pg.waitForTimeout(400);
   await pg.evaluate(() => PGControl.designLayout('tpl-c1')); await pg.waitForSelector('.pgte .pss-c1');
   const back = await pg.evaluate(() => PGTemplateEditor.state().tune);
-  ok(back.names === 'Ani & Ro' && (back.hide || []).includes('wax-seal') && back.colors.light.bg === '#203040' && back.photos[slotK] === want, 'opening it again brings back everything that was kept, hidden or changed');
+  ok(back.names === 'Ani & Ro' && (back.hide || []).includes('wax-seal') && back.colors.light.bg === '#203040' && back.photos[slotK] === want && back.frame && back.frame[slotK] && back.frame[slotK].z === 1.6, 'opening it again brings back everything that was kept, hidden or changed');
   // apply
   await pg.click('.pgte-apply'); await pg.waitForSelector('.pgte', { state: 'detached' }); await pg.waitForTimeout(800);
   ok(await pg.evaluate(() => !!document.querySelector('#pgStory .pss-c1') && document.querySelector('#pgStory .pss').textContent.includes('Ani & Ro')), 'Apply: the Hub is the couple\'s version now');

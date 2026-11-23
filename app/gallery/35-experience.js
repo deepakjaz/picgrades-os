@@ -76,6 +76,7 @@
   const T = {};
   const val = (b, k, def) => { const s = b.set || {}; return s[k] != null && s[k] !== '' ? s[k] : def; };
   const photoOf = (D, b, key) => { const id = val(b, key, ''); if (id) return id; const P = (GALLERY.story || {}).cover || []; if (P.length) return P[0]; const a = D.all[0]; return a ? a.p.id : ''; };
+  const frameCss = v => { if (!v || !window.PGFrame) return ''; const p = String(v).split(','); return PGFrame.style({ fx: p[0], fy: p[1], z: p[2] }, true); };   // step 79: "fx,fy,z" — the photo moved inside its holder / zoomed
   const bg = (id, w) => id ? "url('" + String(pgImg(id, w)).replace(/'/g, '%27') + "')" : 'none';
 
   // 1. World cover
@@ -95,7 +96,7 @@
       el.classList.add('x-world', 'x-w-' + v, 'x-sky-' + sky);
       const eye = val(b, 'eyebrow', [D.date, D.place].filter(Boolean).join(' · ')), title = val(b, 'title', D.names);
       const letters = Array.from(String(title)).map((c, i) => '<span style="--i:' + i + '">' + (c === ' ' ? '&nbsp;' : esc(c)) + '</span>').join('');
-      el.innerHTML = '<div class="x-scene"><div class="x-photo" style="background-image:' + bg(pid, 1600) + '"></div><div class="x-skytint"></div><div class="x-sun"></div><div class="x-stars"></div></div>' +
+      el.innerHTML = '<div class="x-scene"><div class="x-photo" style="background-image:' + bg(pid, 1600) + ';' + frameCss(val(b, 'photoFrame', '')) + '"></div><div class="x-skytint"></div><div class="x-sun"></div><div class="x-stars"></div></div>' +
         (v === 'arch' ? '<svg class="x-archframe" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0h100v140H0z M14 140V62C14 34 30 14 50 8c20 6 36 26 36 54v78z" fill-rule="evenodd"/><path class="x-archline" d="M14 140V62C14 34 30 14 50 8c20 6 36 26 36 54v78"/></svg>' : '') +
         '<div class="x-wtext"><div class="x-eye">' + esc(eye) + '</div><h2 class="x-title">' + letters + '</h2><p class="x-wline">' + esc(val(b, 'line', 'Welcome to our wedding world')) + '</p>' +
         '<button type="button" class="x-btn">' + esc(val(b, 'btn', 'Begin the journey')) + ' <span aria-hidden="true">↓</span></button></div>';
