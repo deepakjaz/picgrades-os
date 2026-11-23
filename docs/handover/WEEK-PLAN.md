@@ -1,7 +1,7 @@
 # Week plan — 24 to 28 Nov 2026 (ChatGPT + Gemini build, Claude guides)
 
-> **On hold (23 Nov):** first, three audits of the current app — see `AUDIT-BRIEF.md` (Claude's is `AUDIT-CLAUDE.md`).
-> After all three, Claude merges them into one fix list. Overlay and preview fixes come **before** the cards below; the card order may change.
+> **Updated 24 Nov — after the three audits:** do the fix cards **F0–F4 and F6** in `AUDIT-MERGED.md` first (F0 first: it is small and unblocks the framing sheet). F5 waits for Deepak's A/B/C choice.
+> Then T1–T6 below, in the same order. Every screen change must follow the Editor layout rule in `AGENTS.md`.
 
 Claude's weekly limit is low until about Sat 28 Nov. This week ChatGPT and Gemini do the building, using Claude's rules (`AGENTS.md`) and these task cards.
 Claude only reviews PR links and answers short questions.

@@ -1,5 +1,5 @@
 // Audit tool (not a test): opens every editor on phone and laptop sizes, measures how much of the preview stays visible,
-// and saves screenshots to /tmp/audit. Run: node tools/audit/overlay-audit.js [--layouts]   (made-up photos only; --layouts adds every layout's Hub and Design screen)
+// and saves screenshots to /tmp/audit. Run: node tools/audit/overlay-audit.js [--layouts] [--only=part-of-a-name]   (made-up photos only; --layouts adds every layout's Hub and Design screen)
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('../../tests/gas_mock');
 const root = path.join(__dirname, '..', '..'), FX = path.join(__dirname, '..', '..', 'tests', 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
@@ -63,7 +63,9 @@ const srv = http.createServer((req, res) => {
       S.push(['Layout ' + l.group + ' ' + l.id + ' — Design', '.pce-page, .pgte-scroll, .pged-story:not([hidden]), .pged-canvas:not([hidden])', async pg => { await pg.evaluate(id => PGControl.designLayout(id), l.id); }]);
     }
   }
+  const only = (process.argv.find(x => x.startsWith('--only=')) || '').slice(7).toLowerCase();   // --only=text runs just the cases whose name contains it
   for (const vp of [['phone', 390, 844], ['laptop', 1280, 800]]) for (const [name, sel, go, full] of S) {
+    if (only && name.toLowerCase().indexOf(only) < 0) continue;
     const ctx = await b.newContext({ viewport: { width: vp[1], height: vp[2] }, hasTouch: vp[0] === 'phone' }); const pg = await ctx.newPage(); const errs = [];
     pg.on('pageerror', e => errs.push(e.message)); pg.on('dialog', d => d.accept());
     await pg.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
@@ -71,7 +73,7 @@ const srv = http.createServer((req, res) => {
     let m; try { await pg.goto(URL); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(600); await go(pg); await pg.waitForTimeout(1200); m = sel ? await pg.evaluate(measure, sel) : {}; }
     catch (e) { m = { error: e.message.split('\n')[0].slice(0, 120) }; }
     const dir = '/tmp/audit/pack/' + (name.startsWith('Layout') ? 'layouts' : 'editors'); fs.mkdirSync(dir, { recursive: true });
-    const file = dir + '/' + vp[0] + '_' + name.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/-+$/, '') + '.jpg'; await pg.screenshot({ path: file, type: 'jpeg', quality: 70, fullPage: !!full }).catch(() => {});
+    const file = dir + '/' + vp[0] + '_' + name.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/-+$/, '') + '.jpg'; await pg.screenshot({ path: file, type: 'jpeg', quality: 70, fullPage: !!full }).catch(() => {}); if (full) await pg.screenshot({ path: file.replace('.jpg', '-screen.jpg'), type: 'jpeg', quality: 70 }).catch(() => {});
     rows.push(Object.assign({ screen: vp[0], editor: name }, m, errs.length ? { pageErrors: errs.slice(0, 2) } : {})); console.log(JSON.stringify(rows[rows.length - 1])); await ctx.close();
   }
   fs.writeFileSync('/tmp/audit/pack/overlay.json', JSON.stringify(rows, null, 1)); await b.close(); srv.close(); process.exit(0);
