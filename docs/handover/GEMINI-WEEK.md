@@ -82,10 +82,73 @@ Keep each one's idea, colours and feel (see `PicGrades-audit-screens.pdf`, pages
 - **Wedding-like look:** no typewriter fonts. Sentence case for words on screen. Short, plain English.
 - **Laptop gets a real laptop layout:** use the width (side-by-side), not a stretched phone.
 
+## Every layout also brings its theme (Deepak chose this, 24 Nov)
+Picking a layout gives the **whole app** its look: every page's colours and fonts, in light and dark. The couple can still press "Change colours" to pick another theme.
+
+So for each layout, give a **second JSON block**: a theme in the same format as the app's themes (`app/themes/themes.json`).
+- `id` = the layout id + `-theme` (e.g. `horizon-theme`).
+- Both `light` and `dark` must be filled.
+- Fonts only from the list above.
+- Text on its background must be easy to read: `ink` on `bg` and `onAccent` on `accent` should have strong contrast.
+- If the layout matches one of the 16 existing themes closely, you may instead write `"theme": "<that id>"` and skip the block. Existing themes: ivory-glass, udaipur-sandstone, malabar-kasavu, jaipur-rose, midnight-velvet, ivory-glass-c, gallery-museum, rose-editorial, midnight-cinema, sandalwood, travertine-silk, mewar-terracotta, malabar-zari, pearl-atelier, monsoon-archive, gulabi-editorial.
+
+A full theme example (copy its shape exactly):
+```json
+{
+ "id": "ivory-glass",
+ "name": "Ivory Glass",
+ "mood": "Sunlit limestone, warm silk, and frosted crystal.",
+ "fonts": {
+  "script": "Great Vibes",
+  "display": "Cormorant Garamond",
+  "body": "Jost"
+ },
+ "radius": {
+  "tile": 22,
+  "button": 14,
+  "sheet": 28
+ },
+ "glass": {
+  "blur": 20,
+  "opacity": 0.65,
+  "border": 0.35
+ },
+ "shadow": "soft",
+ "motion": {
+  "duration": 240,
+  "easing": "cubic-bezier(.2,.8,.2,1)"
+ },
+ "light": {
+  "bg": "#F7F3EE",
+  "surface": "#FFFFFF",
+  "glass": "#FFFFFF",
+  "ink": "#1C1815",
+  "ink2": "#635A52",
+  "line": "#E6DFD6",
+  "accent": "#8F6B32",
+  "accent2": "#6E4F3A",
+  "onAccent": "#FFFFFF"
+ },
+ "dark": {
+  "bg": "#0F0D0C",
+  "surface": "#1A1715",
+  "glass": "#26221F",
+  "ink": "#F5F0EA",
+  "ink2": "#A89E94",
+  "line": "#2E2925",
+  "accent": "#D6B476",
+  "accent2": "#C29B78",
+  "onAccent": "#14110F"
+ },
+ "icons": "line",
+ "by": "G"
+}
+```
+
 ## Answer format
 For each layout:
 1. The name.
 2. 3 lines on the idea.
-3. **One JSON block with nothing else in it.**
+3. **One JSON block for the layout, then one JSON block for its theme** (or the line `"theme": "<existing id>"`).
 
 Then up to 3 suggestions, clearly marked as suggestions.
