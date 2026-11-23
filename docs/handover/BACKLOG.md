@@ -31,6 +31,17 @@ Done work is not listed. Steps 1–79 are merged: gallery, Hub, Find me, Moments
 | A10 | Event page styles: shapes by event (e.g. wine glass for Cocktail), collage inside an event, comments typed in front of a photo | Not started | M |
 | A11 | PicGrades designs a custom Hub for a client on request (a service, no code) | Idea | — |
 
+### A12 — the ONE universal editor (decided 24 Nov)
+- One editor for every layout, page and theme. The card editor and the template editor retire once every layout has moved over. Reel Edits and Post Edits stay separate.
+- Wix-like but simple:
+  - a left rail (Add · Layers · Pages · Collections · Theme · Media);
+  - a panel with Design / Motion / Connect;
+  - rows & columns per section, padding;
+  - motion as picture tiles (In / Loop / Scroll);
+  - two modes: Simple (snap) and Free.
+- **Everyone sees every tool for now**, to learn what is used.
+- Gemini designs it (`GEMINI-UNIVERSAL-EDITOR.md`). Claude builds it on the free editor; the layout format stays, so every layout keeps working. Status: design.
+
 ## B. Collections and the timeline (new: Deepak's 23 Nov vision)
 
 | # | Point | Status | Who |
@@ -92,6 +103,13 @@ Done work is not listed. Steps 1–79 are merged: gallery, Hub, Find me, Moments
 | F5 | Pre-wedding flow (bride or groom side, how you know them, mascot Q&A, testimonials, surprises) | Parked (Ashish & Muskan showcase) |
 | F6 | Video → subtitles → transcript → blog; voice/video stories | Not started |
 | F7 | Lifetime journey / "life app" (birthdays, anniversaries) | Vision |
+
+## H. The bigger vision (Deepak, 24 Nov)
+- PicGrades is an **OS**, not a website builder.
+- Weddings come first. Later, artists, freelancers and studios use it under their own domain: Hub = their own feed, Root Moment = their own posts, their own crowd and insights, a place to advertise, and their own layout instead of social media's.
+- Build with general words where possible.
+- Deepak's estimate: the app is about **30 %** done. Still missing: games, chat rooms, family tree, pre-wedding, legacy (section F).
+- Simple, privacy-safe usage counts (which tools people use) come later, to decide what to keep.
 
 ## G. Business and setup (no code yet)
 
