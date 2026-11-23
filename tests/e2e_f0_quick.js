@@ -124,5 +124,6 @@ const srv=http.createServer((req,res)=>{
   console.log('page errors:',JSON.stringify(errors));
   ok(errors.length===0,'no page errors');
   await browser.close();
+  if(fails) throw new Error(fails+' F0 checks failed');
   srv.close();
 });
