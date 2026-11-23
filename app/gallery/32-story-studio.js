@@ -559,6 +559,9 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
     const layers = () => [...root.querySelectorAll('[data-l]'), ...ovEl.querySelectorAll('[data-l]')];
     const applyHide = () => layers().forEach(x => x.classList.toggle('pss-hide', hide.has(slug(x.dataset.l))));
     applyHide();
+    // step 79: photos framed by the couple (moved inside their holder / zoomed)
+    const frames = tune.frame || {};
+    if (window.PGFrame && Object.keys(frames).length) [...root.querySelectorAll('img[data-slot]'), ...ovEl.querySelectorAll('img[data-slot]')].forEach(x => { if (frames[x.dataset.slot]) PGFrame.apply(x, frames[x.dataset.slot]); });
     if (tune.motion === 'off') { root.classList.add('pss-still'); ovEl.classList.add('pss-still'); }
     // colours (light / dark follows the app)
     const isDark = () => (opts.dark != null ? !!opts.dark : document.documentElement.getAttribute('data-tkg-theme') === 'dark');

@@ -82,7 +82,7 @@
       S.forEach(s => { s.label = s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '').replace(/\s*\(.*\)$/, '').replace(/^Create · /, ''); total[s.label] = (total[s.label] || 0) + 1; });
       S.forEach(s => { if (total[s.label] > 1) { seen[s.label] = (seen[s.label] || 0) + 1; s.label += ' ' + seen[s.label]; } });   // "Film strip 1, 2, 3…"
       html = '<p class="pgte-note">Every photo on this page. Tap one to choose another of your wedding photos. ' + (GALLERY.guestPhotos === 'findme' ? 'Guests will see the photos you choose here, even before Find me.' : '') + '</p>' +
-        '<div class="pgte-slots">' + S.map(s => '<button type="button" class="pgte-slot" data-slot="' + s.k + '"><span style="' + (s.id ? 'background-image:url(\'' + pgImg(s.id, 240) + '\')' : '') + '"></span><b>' + esc(s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '')) + '</b><small>' + (mine[s.k] ? 'Your choice' : 'Automatic') + '</small></button>').join('') + '</div>';
+        '<div class="pgte-slots">' + S.map(s => '<div class="pgte-slotw"><button type="button" class="pgte-slot" data-slot="' + s.k + '"><span style="' + (s.id ? 'background-image:url(\'' + pgImg(s.id, 240) + '\')' : '') + '"></span><b>' + esc(s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '')) + '</b><small>' + (mine[s.k] ? 'Your choice' : 'Automatic') + ((t.frame || {})[s.k] ? ' · framed' : '') + '</small></button>' + (s.id ? '<button type="button" class="pgte-mini pgte-frame" data-frame="' + s.k + '" aria-label="Frame this photo">Frame</button>' : '') + '</div>').join('') + '</div>';
     } else if (E.tab === 'parts') {
       const hid = new Set(t.hide || []);
       html = '<p class="pgte-note">Hide anything you don’t want. Hidden parts stay saved here, so you can bring them back.</p>' +
@@ -106,6 +106,7 @@
     pane.querySelectorAll('[data-col]').forEach(inp => inp.addEventListener('change', () => change(t => { const m = E.dark ? 'dark' : 'light'; t.colors = t.colors || {}; t.colors[m] = Object.assign({}, t.colors[m], { [inp.dataset.col]: inp.value }); })));
     pane.querySelectorAll('[data-uncol]').forEach(b => b.addEventListener('click', () => change(t => { const m = E.dark ? 'dark' : 'light'; delete ((t.colors || {})[m] || {})[b.dataset.uncol]; })));
     pane.querySelectorAll('.pgte-slot').forEach(b => b.addEventListener('click', () => pickPhoto(b.dataset.slot)));
+    pane.querySelectorAll('[data-frame]').forEach(b => b.addEventListener('click', () => frameSlot(b.dataset.frame)));
     pane.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => change(t => { const s = new Set(t.hide || []), k = b.dataset.layer; if (s.has(k)) s.delete(k); else s.add(k); t.hide = [...s]; if (!t.hide.length) delete t.hide; })));
     pane.querySelectorAll('[data-text]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(); if (v) t[inp.dataset.text] = v; else delete t[inp.dataset.text]; })));
     const rs = pane.querySelector('.pgte-reset'); if (rs) rs.addEventListener('click', () => change(t => { Object.keys(t).forEach(k => { if (k !== 'kind') delete t[k]; }); }));
@@ -120,17 +121,27 @@
     (GALLERY.events || []).forEach(e => { const ids = (e.photos || []).map(p => p.id); if (ids.length) groups.push([e.name, ids]); });
     const cur = E.inst.photo(slot), mine = !!(E.tune.photos || {})[slot];
     const back = h('div', 'pgte-back'), sh = h('div', 'pgte-pick'); sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-label', 'Choose a photo');
-    sh.innerHTML = '<div class="pgte-pick-top"><b>Choose a photo</b>' + (mine ? '<button type="button" class="pgte-mini pgte-auto">Use automatic</button>' : '') + '<button type="button" class="pgte-x" aria-label="Close">✕</button></div>' +
+    sh.innerHTML = '<div class="pgte-pick-top"><b>Choose a photo</b>' + (cur ? '<button type="button" class="pgte-mini pgte-frameit">Frame this one</button>' : '') + (mine ? '<button type="button" class="pgte-mini pgte-auto">Use automatic</button>' : '') + '<button type="button" class="pgte-x" aria-label="Close">✕</button></div>' +
       '<div class="pgte-pick-list">' + groups.map(([name, ids], gi) => '<h6>' + esc(name) + '</h6><div class="pgte-grid" data-g="' + gi + '">' + ids.slice(0, 48).map(id => '<button type="button" data-id="' + esc(id) + '" class="' + (id === cur ? 'on' : '') + '"><img loading="lazy" alt="" src="' + pgImg(id, 240) + '"></button>').join('') +
         (ids.length > 48 ? '<button type="button" class="pgte-more" data-more="' + gi + '">All ' + ids.length + '</button>' : '') + '</div>').join('') + '</div>';
     const shut = () => { back.remove(); sh.remove(); };
     back.addEventListener('click', shut); sh.querySelector('.pgte-x').addEventListener('click', shut);
+    const fit = sh.querySelector('.pgte-frameit'); if (fit) fit.addEventListener('click', () => { shut(); frameSlot(slot); });
     const auto = sh.querySelector('.pgte-auto'); if (auto) auto.addEventListener('click', () => { shut(); change(t => { delete t.photos[slot]; if (!Object.keys(t.photos).length) delete t.photos; }); });
     sh.querySelector('.pgte-pick-list').addEventListener('click', e => {
       const m = e.target.closest('[data-more]'); if (m) { const [, ids] = groups[+m.dataset.more]; m.insertAdjacentHTML('beforebegin', ids.slice(48).map(id => '<button type="button" data-id="' + esc(id) + '"><img loading="lazy" alt="" src="' + pgImg(id, 240) + '"></button>').join('')); m.remove(); return; }
-      const b = e.target.closest('[data-id]'); if (!b) return; shut(); change(t => { t.photos = Object.assign({}, t.photos, { [slot]: b.dataset.id }); });
+      const b = e.target.closest('[data-id]'); if (!b) return; shut(); change(t => { t.photos = Object.assign({}, t.photos, { [slot]: b.dataset.id }); if (t.frame) { delete t.frame[slot]; if (!Object.keys(t.frame).length) delete t.frame; } });   // a new photo starts unframed
     });
     E.el.append(back, sh);
+  }
+  // step 79: move the photo inside its holder and zoom, like Photo Edits
+  function frameSlot(slot) {
+    if (!E || !window.PGFrame) return;
+    const id = E.inst.photo(slot); if (!id) return;
+    const node = E.el.querySelector('.pss [data-slot="' + slot + '"]');
+    let ratio = 0.8, dfy = 40;
+    if (node) { const r = node.getBoundingClientRect(); if (r.width && r.height) ratio = r.width / r.height; const op = getComputedStyle(node).objectPosition.split(' '); if (op[1] && /%$/.test(op[1])) dfy = parseFloat(op[1]); }
+    PGFrame.open({ id, ratio, dfy, frame: (E.tune.frame || {})[slot], title: 'Frame this photo', onDone: f => change(t => { t.frame = Object.assign({}, t.frame); if (f) t.frame[slot] = f; else delete t.frame[slot]; if (!Object.keys(t.frame).length) delete t.frame; }) });
   }
 
   // ---- save this version, or apply it to the wedding ----

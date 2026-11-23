@@ -62,6 +62,14 @@ const srv = http.createServer((req, res) => {
   await pg.click('.pged-photosheet .pged-phgrid button >> nth=3'); await pg.waitForTimeout(300);
   const ph = await pg.evaluate(() => PGHubEditor.draft().blocks[0].set.photo);
   check(!!ph && await pg.evaluate(id => document.querySelector('.pged-canvas .x-world .x-photo').style.backgroundImage.indexOf(id) > -1, ph), 'a photo chosen from the wedding becomes the scene (' + ph + ')');
+  // step 79: frame the cover photo — drag it inside its holder, zoom in
+  await sel('x-world'); await pg.locator('.pged-field', { hasText: 'Scene photo' }).locator('.pged-frame').click(); await pg.waitForSelector('.pgfr .pgfr-hold img');
+  await pg.waitForFunction(() => document.querySelector('.pgfr-hold img').naturalWidth > 0);
+  await pg.$eval('.pgfr input[type=range]', r => { r.value = '1.5'; r.dispatchEvent(new Event('input', { bubbles: true })); });
+  { const hb = await pg.locator('.pgfr-hold').boundingBox(); await pg.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await pg.mouse.down(); await pg.mouse.move(hb.x + hb.width / 2 - 50, hb.y + hb.height / 2, { steps: 6 }); await pg.mouse.up(); }
+  await pg.click('.pgfr-done'); await pg.waitForTimeout(300);
+  const pf = await pg.evaluate(() => PGHubEditor.draft().blocks[0].set.photoFrame);
+  check(/^\d+,\d+,1\.5$/.test(pf || '') && +pf.split(',')[0] > 50 && await pg.evaluate(() => document.querySelector('.pged-canvas .x-world .x-photo').style.scale === '1.5'), 'Frame: the cover photo moves inside its holder and zooms (' + pf + ')');
   await sel('x-chapter'); await pg.locator('.pged-field', { hasText: 'Which event' }).locator('select').selectOption('Reception'); await pg.waitForTimeout(300);
   check(await pg.evaluate(() => document.querySelector('.pged-canvas .x-chapter').classList.contains('x-id-reception')), 'a chapter switched to Reception takes the night look');
   await sel('x-chapter'); await pg.locator('.pged-field', { hasText: 'Line' }).locator('textarea').fill('Under a thousand lights'); await pg.locator('.pged-field', { hasText: 'Line' }).locator('textarea').press('Tab'); await pg.waitForTimeout(300);

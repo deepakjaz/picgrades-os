@@ -137,7 +137,8 @@
   // ---- what each kind of element shows ----
   function body(el, k, doc, data, P, ctx, sp) {
     const s = ctx.mode === 'l' && el.sl ? Object.assign({}, el.s, el.sl) : el.s || {}, t = el.t, st = styleOf(s, k, doc, sp);   // sl: the laptop's own style changes
-    const imgPos = 'object-position:' + num(s.fx, 50) + '% ' + num(s.fy, 30) + '%';   // default keeps faces (top third) in frame
+    const zm = Math.max(1, Math.min(4, num(s.zm, 1)));   // step 79: how close the photo sits in its frame (1 = fills it)
+    const imgPos = 'object-position:' + num(s.fx, 50) + '% ' + num(s.fy, 30) + '%' + (zm > 1 ? ';scale:' + zm + ';transform-origin:' + num(s.fx, 50) + '% ' + num(s.fy, 30) + '%' : '');   // default keeps faces (top third) in frame
     if (t === 'photo') { const id = P.of(el.src); ctx.used.push(id); return '<div class="pgc-body pgc-ph" style="' + st + '"><img alt="" loading="lazy" decoding="async" draggable="false" src="' + url(id, el.p && el.p.w > 250 ? 1400 : 800) + '" style="' + imgPos + '" data-photo="' + esc(id) + '"></div>'; }
     if (t === 'names') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || data.names || '') + '</div>';
     if (t === 'date') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || [data.date, data.place].filter(Boolean).join(' · ')) + '</div>';
@@ -196,7 +197,7 @@
       root.innerHTML = (doc.sections || []).map(sec => {
         const h = secH(sec, mode) * k, bg = sec.bg || {};
         let bgHtml = '';
-        if (bg.src) { const id = P.of(bg.src); ctx.used.push(id); bgHtml = '<img class="pgc-bgimg" alt="" src="' + url(id, 1600) + '" style="object-position:' + num(bg.fx, 50) + '% ' + num(bg.fy, 35) + '%">'; }
+        if (bg.src) { const id = P.of(bg.src); ctx.used.push(id); bgHtml = '<img class="pgc-bgimg" alt="" src="' + url(id, 1600) + '" style="object-position:' + num(bg.fx, 50) + '% ' + num(bg.fy, 35) + '%' + (num(bg.z, 1) > 1 ? ';scale:' + Math.min(4, num(bg.z, 1)) + ';transform-origin:' + num(bg.fx, 50) + '% ' + num(bg.fy, 35) + '%' : '') + '">'; }
         if (bg.dim) bgHtml += '<div class="pgc-dim" style="background:rgba(0,0,0,' + Math.max(0, Math.min(.8, num(bg.dim, 0))) + ')"></div>';
         const els = (sec.els || []).map(el => {
           const sp = spotOf(el, mode); if (!sp || sp.hide) return '';

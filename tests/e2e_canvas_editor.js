@@ -169,7 +169,20 @@ const srv = http.createServer((req, res) => {
     moved = await lp.evaluate(id => PGCanvasEditor.state().doc.sections[1].els.some(e => e.id === id), mv);
   }
   ok(moved, 'drag a part into the next section');
-  await lp.screenshot({ path: '/tmp/ce_between.png' }); await lp.close();
+  await lp.screenshot({ path: '/tmp/ce_between.png' });
+  // step 79: frame a photo inside its holder — tap it twice, drag, zoom
+  const ph = await lp.evaluate(() => { const s = PGCanvasEditor.state(); for (const sec of s.doc.sections) for (const e of sec.els) if (e.t === 'photo') { document.querySelector('.pce-page .pgc-el[data-el="' + e.id + '"]').scrollIntoView({ block: 'center' }); return e.id; } return null; });
+  await lp.waitForTimeout(300);
+  const pc = await lp.evaluate(id => { const r = document.querySelector('.pce-page .pgc-el[data-el="' + id + '"]').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, ph);
+  await lp.mouse.click(pc.x, pc.y); await lp.waitForTimeout(250); await lp.mouse.click(pc.x, pc.y); await lp.waitForTimeout(300);
+  ok(await lp.evaluate(id => PGCanvasEditor.state().frame === id && !!document.querySelector('.pce-sel.pce-framing'), ph), 'second tap on a photo: framing (like Photo Edits)');
+  const sp0 = await lp.evaluate(id => { for (const sec of PGCanvasEditor.state().doc.sections) for (const e of sec.els) if (e.id === id) return JSON.stringify(e.p) + JSON.stringify(e.l || {}); }, ph);
+  await lp.mouse.move(pc.x, pc.y); await lp.mouse.down(); await lp.mouse.move(pc.x + 50, pc.y + 40, { steps: 8 }); await lp.mouse.up(); await lp.waitForTimeout(300);
+  await lp.$eval('.pce [data-s="zm"]', r => { r.value = '1.8'; r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); }); await lp.waitForTimeout(300);
+  const fs1 = await lp.evaluate(id => { for (const sec of PGCanvasEditor.state().doc.sections) for (const e of sec.els) if (e.id === id) return { s: Object.assign({}, e.s, e.sl || {}), sp: JSON.stringify(e.p) + JSON.stringify(e.l || {}) }; }, ph);
+  ok(fs1.s.fx < 50 && +fs1.s.zm === 1.8 && fs1.sp === sp0, 'dragging moves the photo inside its frame (the frame stays put) and zoom goes closer ' + JSON.stringify({ fx: fs1.s.fx, fy: fs1.s.fy, zm: fs1.s.zm }));
+  ok(await lp.evaluate(id => document.querySelector('.pce-page .pgc-el[data-el="' + id + '"] img').style.scale === '1.8', ph), '…the page shows it zoomed');
+  await lp.screenshot({ path: '/tmp/ce_frame.png' }); await lp.close();
   console.log('page errors: ' + JSON.stringify(errors));
   ok(!errors.length, 'no page errors');
   await b.close(); srv.close(); process.exit(fails ? 1 : 0);

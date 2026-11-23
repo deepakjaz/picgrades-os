@@ -2351,6 +2351,10 @@ function tplTune_(st, out) {
   var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return /^[a-z0-9-]{1,40}$/.test(k); }).slice(0, 80);
   if (hide.length) out.hide = hide;
   if (st.motion === 'off') out.motion = 'off';
+  var frame = {}, fn = 0;   // step 79: photos moved inside their holder / zoomed { slot: { fx, fy, z } }
+  Object.keys(st.frame || {}).forEach(function (k) { var f = (st.frame || {})[k]; if (!/^[se]\d{1,3}$/.test(k) || !f || typeof f !== 'object' || fn >= 80) return;
+    frame[k] = { fx: Math.max(0, Math.min(100, Math.round(+f.fx || 0))), fy: Math.max(0, Math.min(100, Math.round(+f.fy || 0))), z: Math.max(1, Math.min(3, Math.round((+f.z || 1) * 100) / 100)) }; fn++; });
+  if (fn) out.frame = frame;
   ['names', 'date'].forEach(function (k) { var v = String(st[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, k === 'names' ? 60 : 80); if (v) out[k] = v; });
   return out;
 }
@@ -2988,6 +2992,7 @@ function cvStyle_(o) {
   var out = {};
   if (CANVAS_FONTS.indexOf(o.font) > -1) out.font = o.font;
   ['size', 'weight', 'ls', 'lh', 'radius', 'border', 'shadow', 'opacity', 'fx', 'fy', 'pad'].forEach(function (k) { if (o[k] != null && o[k] !== '') out[k] = cvNum_(o[k], -10, 1000, 0); });
+  if (o.zm != null && o.zm !== '') out.zm = cvNum_(o.zm, 1, 4, 1);   // step 79: photo zoom in its frame
   ['color', 'bg', 'bcolor'].forEach(function (k) { var c = cvCol_(o[k]); if (c) out[k] = c; });
   if (['left', 'center', 'right'].indexOf(o.align) > -1) out.align = o.align;
   if (['arch', 'circle'].indexOf(o.shape) > -1) out.shape = o.shape;
@@ -3018,6 +3023,7 @@ function canvasDoc_(d) {
     var bs = cvSrc_(bg.src); if (bs) ob.src = bs;
     if (bg.dim) ob.dim = cvNum_(bg.dim, 0, 0.8, 0);
     ['fx', 'fy'].forEach(function (k) { if (bg[k] != null) ob[k] = cvNum_(bg[k], 0, 100, 50); });
+    if (bg.z != null && +bg.z > 1) ob.z = cvNum_(bg.z, 1, 4, 1);   // step 79: background photo zoom
     if (Object.keys(ob).length) o.bg = ob;
     (Array.isArray(sec.els) ? sec.els : []).slice(0, 60).forEach(function (el, ei) {
       if (!el || CANVAS_EL_TYPES.indexOf(el.t) < 0) return;
