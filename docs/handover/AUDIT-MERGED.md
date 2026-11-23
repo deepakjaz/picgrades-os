@@ -75,10 +75,10 @@ All of them follow the **Editor layout rule** in `AGENTS.md` §5.
 | **F2** | Free editor + template editor on phone: collapsible drawer, zoom in the top bar, one-row top bar, the photo picker as a drawer with the design visible (#6–#10, #25) | ChatGPT | medium |
 | **F3** | Card editor: the tools don't cover the grid; the header settings fold into one "Page settings" button (#11, #12) | ChatGPT | small |
 | **F4** | Reel Edits: on laptop the tools move to a right side panel and the reel grows; drawer height capped; the picker shows the chosen clips (#13–#16) | ChatGPT | medium |
-| **F5** | Living Story / Editorial show the real layout while editing (#1) — **Deepak chooses A or B, below** | Claude (Sat) | medium |
+| **F5** | Living Story / Editorial rebuilt in the free editor (#1). **Deepak chose B (24 Nov)** = card T5: Gemini writes the layout docs, ChatGPT adds them, Claude checks | Gemini → ChatGPT → Claude | medium |
 | **F6** | Control Panel: Theme previews live behind a slim bottom bar; merge Look + Theme; layout cards show the couple's real cover photo (#26–#28) | Gemini designs → ChatGPT | medium |
 
-**F5 — choose one:**
+**F5 — Deepak chose B (24 Nov).** The options were:
 - **A. Add a live preview to the current Living Story / Editorial editor.** Fast. It keeps the old editor (switches + list) and adds the picture next to it.
 - **B. Move them into the free editor** (backlog A1 / card T5). Slower, but every layout then uses one editor, as Deepak wanted on 23 Nov.
 - **C. Both:** A now, so couples see something today; B later; A goes away when B is ready.
