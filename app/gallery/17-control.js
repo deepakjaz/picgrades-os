@@ -208,7 +208,7 @@
     if (id === 'custom') { closeSheet(); PGHubEditor.open(); return true; }
     if (/^cv-/.test(id) && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }   // step 77: a layout from a collection
     const l = window.PGLayout && PGLayout.find(id); if (!l) return false;
-    if (l.canvas && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }
+    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }   // step 77d: card layouts open in the free editor too
     if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) { closeSheet(); PGTemplateEditor.open(id); return true; }
     if (window.PGHubEditor) { closeSheet(); PGHubEditor.open({ from: id }); return true; }
     return false;
@@ -218,12 +218,12 @@
     const p = h('div', 'pgcp-pane',
       (part === 'all' || part === 'theme' ? (part === 'all' ? '<h4>Theme</h4>' : '') + '<p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' : '') +
       (part === 'all' || part === 'layout' ? (part === 'all' ? '<h4>Hub layout</h4>' : '') + '<p class="pgcp-note">How the Hub is arranged. Tap one to design it: change its colours, photos and parts, then apply it. Each layout keeps your version, so you can come back to it later.</p>' +
-      '<div class="pgcp-designs"><button type="button" class="pgcp-design">✎ Design your own Hub</button><button type="button" class="pgcp-design pgcp-canvas">＋ New free layout (drag and drop)</button></div><div class="pgcp-layouts"></div>' : '') +
+      '<div class="pgcp-designs"><button type="button" class="pgcp-design pgcp-canvas">✎ Design your own Hub — drag and drop</button><button type="button" class="pgcp-design pgcp-grided">Card editor (grid, header and logo)</button></div><div class="pgcp-layouts"></div>' : '') +
       (part === 'all' || part === 'pages' ? Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join('') : ''));
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }
-      if (e.target.closest('.pgcp-canvas')) { closeSheet(); PGCanvasEditor.open(); return; }   // step 77
-      if (e.target.closest('.pgcp-design')) { closeSheet(); PGHubEditor.open(); return; }
+      if (e.target.closest('.pgcp-canvas')) { closeSheet(); PGCanvasEditor.open('current'); return; }   // step 77d: starts from the Hub the wedding has now
+      if (e.target.closest('.pgcp-grided')) { closeSheet(); PGHubEditor.open(); return; }   // the card editor stays (header and logo places live there for now)
       const st = e.target.closest('.pgcp-style'); if (st) { preview({ pages: { [st.dataset.pagekey]: st.dataset.style } }, p.parentNode); return; }
       const l = e.target.closest('.pgcp-layout'); if (l) { if (!designLayout(l.dataset.layout)) preview({ layout: l.dataset.layout }, p.parentNode); }
     });

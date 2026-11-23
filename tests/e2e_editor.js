@@ -32,7 +32,7 @@ const srv = http.createServer((req, res) => {
     for (const s in C) { const P = d.blocks.filter(b => b.pos[s] && (b.hide || []).indexOf(s) < 0).map(b => b.pos[s]); let ov = 0, outside = 0;
       P.forEach((a, i) => { if (a[0] + a[2] > C[s]) outside++; P.forEach((c, j) => { if (j > i && a[0] < c[0] + c[2] && c[0] < a[0] + a[2] && a[1] < c[1] + c[3] && c[1] < a[1] + a[3]) ov++; }); });
       out[s] = { cards: P.length, overlaps: ov, outside }; } return JSON.stringify(out); });
-  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-design'); await pg.click('.pgcp-design'); await pg.waitForSelector('.pged .pged-card'); await pg.waitForTimeout(900);
+  await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-grided'); await pg.click('.pgcp-grided'); await pg.waitForSelector('.pged .pged-card'); await pg.waitForTimeout(900);
   console.log('editor open: cards', await pg.locator('.pged-card').count(), '| screen', await pg.textContent('.pged-screens .on'), '| from', await pg.evaluate(() => PGHubEditor.draft().base), '|', await check());
   await pg.screenshot({ path: '/tmp/s44_editor.png' });
   // every card of the starting layout must survive opening the editor (step 49 regression: the Events card had been commented out)

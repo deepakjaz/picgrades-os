@@ -384,5 +384,5 @@
     }).catch(err => { showToast(err.message); if (btn) { btn.disabled = false; btn.textContent = 'Publish'; } });
   }
   pgAfter('pgRenderHub', applyHeader);
-  window.PGHubEditor = { open, close, preview, publish, draft: () => (E ? clone(E.d) : loadDraft()), state: () => (E ? { scr: E.scr, sel: E.sel, undo: E.undo.length } : null), settle, pack };
+  window.PGHubEditor = { catalog: () => { addExperienceCards(); return { CARDS: clone(CARDS), VNAME: clone(VNAME) }; }, open, close, preview, publish, draft: () => (E ? clone(E.d) : loadDraft()), state: () => (E ? { scr: E.scr, sel: E.sel, undo: E.undo.length } : null), settle, pack };
 })();

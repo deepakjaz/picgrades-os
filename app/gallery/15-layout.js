@@ -364,7 +364,22 @@
   const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); LAYOUTS.forEach(l => { if (l.canvas) { l.story = 'canvas'; l.tune = { doc: l.canvas }; } }); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
   pgAfter('pgRenderHub', () => { if (LAYOUTS.length) { cur = choose(); render(); } });
   // apply(id) shows a layout straight away (the Control Panel saves it for the wedding); '' = the original Hub
-  window.PGLayout = { ready, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render, build, plan: (l, scr) => { SCR_FOR = scr; try { return plan(l, scr, data()); } finally { SCR_FOR = null; } },
+  // step 77d: one Hub card on its own, drawn into a free layout's element (34-canvas.js 'card'): the same card the grid layouts use
+  function card(host, b0, w, ht, scr) {
+    SCR_FOR = scr || null;
+    try {
+      const D = data();
+      if (!b0 || b0.block === 'findme' || !(B[b0.block] || (window.PGX && PGX.has(b0.block)))) return false;
+      if (!visible(b0.block) || (b0.block === 'loved' && !D.loved.length) || (b0.block === 'notes' && !D.notes.length)) return false;
+      const letter = w < 120 || ht < 96 ? 'S' : ht < 170 ? 'W' : w < 360 ? 'M' : ht < 420 ? 'L' : ht < 620 ? 'XL' : 'XXL';
+      const b = Object.assign({}, b0, { _letter: letter }), el = h('section', 'pgl-b pgl-' + b.block + ' pgl-v-' + b.variant + ' pgl-s' + letter);
+      el.dataset.block = b.block;
+      const cols = Math.max(1, Math.round(w / 90)), rows = Math.max(1, Math.round(ht / 90));
+      if (B[b.block] ? B[b.block](el, b, D) === false : !PGX.render(el, b, D, { scr: scr || screenOf(), cols, rows, editing: false, act: storyAct })) return false;
+      host.appendChild(el); return true;
+    } finally { SCR_FOR = null; }
+  }
+  window.PGLayout = { ready, card, list: () => LAYOUTS.slice(), current: () => (cur ? cur.id : ''), render, build, plan: (l, scr) => { SCR_FOR = scr; try { return plan(l, scr, data()); } finally { SCR_FOR = null; } },
     SCREEN, sizeOf, act: (a, x) => storyAct(a, x), data: () => data(), find: id => LAYOUTS.find(l => l.id === id) || null, refresh: () => { cur = choose(); render(); },
     apply: id => { const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {}; const l = id === 'custom' ? (G.custom && (G.custom.story || (G.custom.blocks && G.custom.blocks.length)) ? customOf(G.custom) : null) : LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
     reset: () => { cur = null; render(); }, stop: () => storyStop(),

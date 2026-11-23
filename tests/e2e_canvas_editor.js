@@ -93,6 +93,24 @@ const srv = http.createServer((req, res) => {
   await pg.evaluate(() => PGCanvasEditor.open('canvas-quiet')); await pg.waitForSelector('.pce .pgc-sec');
   await pg.click('.pce-apply'); await pg.waitForSelector('.pce', { state: 'detached' }); await pg.waitForTimeout(600);
   ok(call('getGallery', { g: pub.galleryId }).gallery.layout === 'canvas-quiet', 'a ready free layout (Quiet Portrait) applies');
+  // step 77d: a Minimal (card) layout opens in the free editor with every card where it was, phone and laptop
+  call('coupleLook', { g: pub.galleryId, coupleKey: ck, layout: 'magazine-cover' });
+  await pg.goto(URL + '?couple=' + ck); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForTimeout(1200); await pg.screenshot({ path: '/tmp/ce_grid_original.png' });
+  await pg.evaluate(() => PGCanvasEditor.open('magazine-cover')); await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(600);
+  const conv = await pg.evaluate(() => { const d = PGCanvasEditor.state().doc, els = d.sections[0].els; return { n: els.length, cards: els.every(e => e.t === 'card'), both: els.filter(e => !e.p.hide && e.l && !e.l.hide).length, drawn: document.querySelectorAll('.pce .pgc-cardhost .pgl-b').length }; });
+  ok(conv.n >= 3 && conv.cards && conv.both >= 3 && conv.drawn >= 3, 'Magazine Cover opens in the free editor: its cards, placed for phone and laptop ' + JSON.stringify(conv));
+  await pg.screenshot({ path: '/tmp/ce_grid_laptop.png' });
+  // move one card, apply: it is saved as the couple's own free layout and guests see the cards
+  const c0 = await pg.evaluate(() => PGCanvasEditor.state().doc.sections[0].els[0].id);
+  await pg.evaluate(id => PGCanvasEditor.select(id), c0); await pg.waitForSelector('.pce-sel');
+  await pg.evaluate(() => { const i = document.querySelector('.pce-pane [data-sp="y"]'); i.value = String(+i.value + 30); i.dispatchEvent(new Event('change')); });
+  await pg.click('.pce-apply'); await pg.waitForSelector('.pce-sgo'); await pg.fill('.pce-sname', 'Our magazine'); await pg.click('.pce-sgo');
+  await pg.waitForSelector('.pce', { state: 'detached' }); await pg.waitForTimeout(800);
+  ok(await pg.evaluate(() => /^cv-/.test(GALLERY.layout) && document.querySelectorAll('#pgStory .pgc-cardhost .pgl-b').length >= 3), 'Apply: the changed Magazine Cover is the couple\'s own layout; the Hub shows its cards');
+  const gp = await ctx.newPage(); gp.on('pageerror', e => errors.push(e.message)); await gp.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: bytesOf('4') }));
+  await gp.goto(URL); await gp.waitForSelector('#pgStory .pgc', { timeout: 10000 }); await gp.waitForTimeout(800);
+  ok(await gp.evaluate(() => document.querySelectorAll('#pgStory .pgc-cardhost .pgl-b').length >= 3), 'a guest sees the cards too');
+  await gp.screenshot({ path: '/tmp/ce_grid_guest_laptop.png' }); await gp.close();
   // phone-size editor
   const mp = await (await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })).newPage(); mp.on('pageerror', e => errors.push(e.message));
   await mp.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: bytesOf('2') })); await require('./fonts_local').install(mp);

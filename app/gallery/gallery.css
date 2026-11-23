@@ -3041,3 +3041,4 @@ body.pce-on{overflow:hidden}body.pce-on .tkg-global-nav,body.pce-on .pg-totop,bo
 /* Control Panel: layouts from collections */
 .pgcp-mini.cvl{display:grid;place-items:center;background:linear-gradient(160deg,#efe7dc,#d9cbb8);font:italic 600 15px/1.1 'Cormorant Garamond',Georgia,serif;color:#4a3a2a;text-align:center;padding:6px}
 @media (max-width:600px){.pce-top{flex-wrap:wrap;row-gap:6px}.pce-mode{order:5;flex-basis:100%;justify-content:center}.pce-mode button{flex:1}.pce-btn{padding:0 12px}}
+.pgcp-design.pgcp-grided{border-style:solid;border-width:1px;border-color:var(--border-hairline);font-weight:500;opacity:.85}
