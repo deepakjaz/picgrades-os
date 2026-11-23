@@ -14,7 +14,8 @@
     ['hearts', 'Hearts', 'Double-tap to love a photo; Most loved'],
     ['download', 'Downloads', 'Save photos to the phone'],
     ['share', 'Share', 'Share the gallery link'],
-    ['install', 'Add to Home Screen', 'Keep the gallery as an app']
+    ['install', 'Add to Home Screen', 'Keep the gallery as an app'],
+    ['sameTime', 'At this time on the wedding day', 'Show guests 1–3 photos from around this time of day']
   ];
   // what each function shows on screen (hidden when it is off)
   const HIDE = {
