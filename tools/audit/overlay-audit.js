@@ -56,6 +56,13 @@ const srv = http.createServer((req, res) => {
     const bx = await pg.locator('.re-v-edit .re-stage canvas').boundingBox(); await pg.mouse.click(bx.x + bx.width / 2, bx.y + bx.height / 2); }]);
   for (const t of ['audio', 'text', 'sticker', 'filters', 'adjust', 'style', 'length', 'title', 'add']) S.push(['Reel Edits — ' + t + ' open', '.re-v-edit .re-stage canvas', async pg => { await reelEdit(pg); await pg.click('.re-tool[data-tool=' + t + ']'); }]);
   for (const t of ['home', 'look', 'layout', 'theme', 'features']) S.push(['Control Panel — ' + t, '#view-hub', async pg => { await pg.evaluate(t => PGControl.go(t), t); await pg.waitForSelector('.pgcp-sheet'); }]);
+  for (const a of process.argv.filter(x => x.startsWith('--doc='))) {   // --doc=file.json: show a free-canvas layout doc (e.g. from Gemini) as guests see it, and in the editor
+    const doc = JSON.parse(fs.readFileSync(a.slice(6), 'utf8')), nm = path.basename(a.slice(6), '.json');
+    S.push(['Doc ' + nm + ' — as guests see it', null, async pg => { await pg.evaluate(doc => { const box = document.createElement('div'); box.id = 'auditDoc';
+      box.style.cssText = 'position:absolute;left:0;top:0;width:100%;z-index:99999;background:#fff'; document.body.appendChild(box); document.querySelectorAll('body > :not(#auditDoc)').forEach(x => { if (x.tagName !== 'SCRIPT') x.style.display = 'none'; });
+      PGCanvas.render(box, doc, PGLayout.storyData(), () => {}, { still: true }); }, doc); await pg.waitForTimeout(1200); }, true]);
+    S.push(['Doc ' + nm + ' — in the editor', '.pce-page', async pg => { await pg.evaluate(doc => PGCanvasEditor.open({ doc }), doc); await pg.waitForSelector('.pce .pgc-sec'); }]);
+  }
   if (process.argv.includes('--layouts')) {   // every layout: the Hub itself, then its Design screen
     const ids = JSON.parse(fs.readFileSync(path.join(root, 'app/themes/layouts.json'), 'utf8')); const L = Array.isArray(ids) ? ids : ids.layouts;
     for (const l of L) {
