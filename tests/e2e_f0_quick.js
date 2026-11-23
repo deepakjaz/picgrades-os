@@ -113,3 +113,16 @@ const srv=http.createServer((req,res)=>{
     ok(await hidden(pg),size.n+' card editor hides navigation and badge');
     await bar(pg,'.pged-top',size.n+' card editor top bar');
     await pg.evaluate(()=>PGHubEditor.close());
+
+    await pg.evaluate(()=>PGControl.designLayout('tpl-c1'));
+    await pg.waitForSelector('.pgte');
+    ok(await hidden(pg),size.n+' template editor hides navigation and badge');
+    await bar(pg,'.pgte-top',size.n+' template editor top bar');
+    await pg.evaluate(()=>PGTemplateEditor.close(true));
+    await ctx.close();
+  }
+  console.log('page errors:',JSON.stringify(errors));
+  ok(errors.length===0,'no page errors');
+  await browser.close();
+  srv.close();
+});
