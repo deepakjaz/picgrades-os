@@ -33,7 +33,7 @@
   }
 
   let open_ = null;
-  function close() { if (open_) { open_.back.remove(); open_.sh.remove(); open_ = null; } }
+  function close() { if (open_) { open_.back.remove(); open_.sh.remove(); open_ = null; document.body.classList.remove('pgfr-on'); } }
   function open(o) {
     close();
     const ratio = clamp(num(o.ratio, 0.8), 0.3, 3.5);
@@ -46,6 +46,7 @@
       '<label class="pgfr-zoom"><span>Zoom</span><input type="range" min="1" max="3" step="0.05" aria-label="Zoom"><output></output></label>' +
       '<div class="pgfr-acts"><button type="button" class="pgfr-reset">Reset</button><button type="button" class="pgfr-done">Done</button></div>';
     document.body.append(back, sh);
+    document.body.classList.add('pgfr-on');
     open_ = { back, sh };
     const hold = sh.querySelector('.pgfr-hold'), img = hold.querySelector('img'), zr = sh.querySelector('input'), out = sh.querySelector('output');
     // the holder keeps the shape of the place on the page, as big as fits

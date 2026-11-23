@@ -3080,3 +3080,37 @@ body.pce-on{overflow:hidden}body.pce-on .tkg-global-nav,body.pce-on .pg-totop,bo
 .pgfr-acts button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:none;color:inherit;font:600 14px/1 inherit;cursor:pointer}
 .pgfr-acts .pgfr-done{background:#FAC646;color:#1a1a1a;border-color:#FAC646}
 .pgte-slotw{position:relative}.pgte-slotw .pgte-frame{position:absolute;top:6px;right:6px;z-index:1}
+
+
+/* step 86: keep editor controls reachable without changing their actions */
+body.pged-on #globalNav,body.pged-on #pgRoleBadge,body.pged-on #pgLinkBar,body.pged-on .pgs-findme,
+body.pgte-on #globalNav,body.pgte-on #pgRoleBadge,body.pgte-on #pgLinkBar,
+body.pce-on #globalNav,body.pce-on #pgRoleBadge,body.pce-on #pgLinkBar,
+body.pgfr-on .tkg-global-nav,body.pgfr-on #globalNav,body.pgfr-on #pgRoleBadge,body.pgfr-on #pgLinkBar,body.pgfr-on .pg-totop,body.pgfr-on .pgs-findme,
+body.ps-on #globalNav,body.ps-on #pgRoleBadge,body.ps-on #pgLinkBar,
+body.rl-on #globalNav,body.rl-on #pgRoleBadge,body.rl-on #pgLinkBar{display:none!important}
+.pged-top,.pgte-top,.pce-top{min-height:60px;box-sizing:border-box}
+.pged-x,.pged-ic,.pged-btn,.pgte-x,.pgte-ic,.pgte-btn,.pce-x,.pce-ic,.pce-btn{min-width:44px;min-height:44px;box-sizing:border-box}
+.pged-title,.pgte-title,.pce-title{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pgte-slotw .pgte-frame{position:static;display:block;width:100%;min-height:44px;height:auto;margin:5px 0 0;padding:0 12px}
+.pgfr{z-index:6101}.pgfr-back{z-index:6100}
+.pgfr-acts{position:relative;z-index:2;padding-bottom:2px}
+.pgfr-acts button{min-width:76px;min-height:48px}
+@media (max-width:600px){
+  .pce-top{flex-wrap:nowrap;gap:2px;padding-left:8px;padding-right:8px;overflow:hidden}
+  .pce-title{display:none!important}
+  .pce-title b{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .pce-title small{display:none}
+  .pce-x,.pce-ic{width:44px;height:44px;flex:0 0 44px}
+  .pce-mode{flex:0 0 88px;gap:0;padding:0}
+  .pce-mode button{width:44px;min-width:44px;height:44px;padding:0;font-size:11px}
+  .pce-play,.pce-save,.pce-apply{flex:0 0 44px;width:44px;height:44px;padding:0;font-size:11px;white-space:nowrap;overflow:hidden}
+  .pged-top,.pgte-top{gap:3px;padding-left:8px;padding-right:8px}
+  .pged-x,.pged-ic,.pgte-x,.pgte-ic{width:44px;height:44px;flex:0 0 44px}
+  .pged-btn,.pgte-btn{height:44px;padding:0 8px;font-size:11px;white-space:nowrap}
+}
+@media (max-width:600px){.re-bar{gap:5px;padding-left:8px;padding-right:8px}.re-logo{min-width:0;overflow:hidden;text-overflow:ellipsis}.re-q,.re-next{min-height:44px;height:44px}.re-next{padding:0 10px}}
+
+/* step 86 follow-up: keep free-editor title and mode controls tappable at every viewport */
+.pce-top .pce-title{min-height:44px}
+.pce-mode button{min-height:44px}
