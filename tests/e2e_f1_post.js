@@ -61,9 +61,11 @@ const server = http.createServer((req, res) => {
       const canvas = document.querySelector('.pe-stage canvas');
       const stage = document.querySelector('.pe-stage');
       if (!canvas || !stage) return { score: 0, points: 0, reason: 'design canvas missing' };
-      const c = canvas.getBoundingClientRect(), s = stage.getBoundingClientRect();
-      const left = Math.max(c.left, s.left, 0), top = Math.max(c.top, s.top, 0);
-      const right = Math.min(c.right, s.right, innerWidth), bottom = Math.min(c.bottom, s.bottom, innerHeight);
+      const c = canvas.getBoundingClientRect();
+      const whole = document.querySelector('.pe-whole-album');
+      const albumSlideWidth = c.height * 1080 / 1440;
+      const designWidth = whole ? c.width : Math.min(c.width, albumSlideWidth);
+      const left = c.left, top = c.top, right = c.left + designWidth, bottom = c.bottom;
       if (right <= left || bottom <= top) return { score: 0, points: 0, reason: 'no visible design area' };
       let hits = 0, points = 0;
       for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
@@ -99,13 +101,12 @@ const server = http.createServer((req, res) => {
       if (tool === 'text') {
         const field = page.locator('.pe-panel input.ps-in').first();
         await field.focus();
-        const viewport = await page.evaluate(() => ({
-          height: window.visualViewport ? window.visualViewport.height : innerHeight,
-          offsetTop: window.visualViewport ? window.visualViewport.offsetTop : 0,
-          wrap: document.querySelector('.pe-wrap').getBoundingClientRect().toJSON(),
-          field: fieldRect()
-        }));
-        function fieldRect() { const r = document.querySelector('.pe-panel input.ps-in').getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; }
+        const viewport = await page.evaluate(() => {
+          const r = document.querySelector('.pe-panel input.ps-in').getBoundingClientRect();
+          return { height: window.visualViewport ? window.visualViewport.height : innerHeight,
+            offsetTop: window.visualViewport ? window.visualViewport.offsetTop : 0,
+            field: { top: r.top, bottom: r.bottom } };
+        });
         check(viewport.field.bottom <= viewport.offsetTop + viewport.height + 1, sizeLabel + ' ' + mode + ' Text field stays inside visualViewport');
       }
       const score = await designScore(page);
@@ -139,6 +140,7 @@ const server = http.createServer((req, res) => {
       await auditMode(page, 'post', size.label);
       await page.click('.pe-v-edit .pe-ib');
       await page.click('.pe-tab[data-mode=album]');
+      for (let i = 0; i < 5; i++) if (await page.locator('.pe-pick:not(.on)').count()) await page.locator('.pe-pick:not(.on)').first().click();
       await page.click('.pe-v-pick .pe-next');
       await page.waitForSelector('.pe-wrap[data-view=edit]');
       await page.waitForTimeout(400);
