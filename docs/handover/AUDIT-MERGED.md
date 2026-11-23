@@ -82,3 +82,23 @@ All of them follow the **Editor layout rule** in `AGENTS.md` §5.
 - **A. Add a live preview to the current Living Story / Editorial editor.** Fast. It keeps the old editor (switches + list) and adds the picture next to it.
 - **B. Move them into the free editor** (backlog A1 / card T5). Slower, but every layout then uses one editor, as Deepak wanted on 23 Nov.
 - **C. Both:** A now, so couples see something today; B later; A goes away when B is ready.
+
+## Done when (for ChatGPT, one PR per card, branch `step-86-f0-quick-fixes`, `step-87-f1-post`, …)
+
+- **F0 (step 86):**
+  - On phone, the framing sheet's Reset and Done can be tapped (no bar over them).
+  - No app bottom bar or role badge shows inside Post Edits, Reel Edits, the Hub editors, the template editor or the framing sheet.
+  - The "Frame" button no longer covers the photo, and its word isn't cut.
+  - Order is hidden on single-photo posts.
+  - Top-bar buttons are 44 px or more.
+  - Every editor's top bar is on one row.
+  - `npm test` passes.
+- **F1 (step 87):** `overlay-audit.js --only="Post Edits"` shows design visible ≥ 85 % for every tool, on phone and laptop. Template and Drawings choices change the design live while the drawer is open.
+- **F2 (step 88):** `--only="Free editor"` and `--only="Template editor (tpl"` show ≥ 85 % on phone. The drawer can be closed to the tool row. Zoom is in the top bar. Choose a photo opens as a drawer with the design visible.
+- **F3 (step 89):** `--only="Card editor"` ≥ 85 % with a card selected. The phone header is one row with a "Page settings" button.
+- **F4 (step 90):** `--only="Reel Edits"` ≥ 85 % for every sheet. On laptop the reel is at least 3× bigger than today, with the tools in a right panel. The Add-clip picker shows the clips already in the reel.
+- **F6 (step 91):**
+  - Tapping a theme shows it on the real pages behind a slim bottom bar.
+  - Look and Theme are one screen.
+  - The layout cards show the couple's cover photo.
+- **Every card:** don't remove any tool or feature; only where it sits and how big it is changes.
