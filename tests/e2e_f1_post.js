@@ -46,7 +46,7 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', url.endsWith('.html') ? 'text/html' : url.endsWith('.css') ? 'text/css' : url.endsWith('.json') ? 'application/json' : 'text/javascript');
     res.end(data);
   });
-}).listen(8901, async () => {
+}).listen(8904, async () => {
   const { chromium } = require('playwright');
   const browser = await chromium.launch();
   const errors = [];
@@ -79,7 +79,7 @@ const server = http.createServer((req, res) => {
     });
   }
   async function openEditor(page, mode) {
-    await page.goto('http://localhost:8901/g/' + pub.galleryId + '?couple=' + coupleKey);
+    await page.goto('http://localhost:8904/g/' + pub.galleryId + '?couple=' + coupleKey);
     await page.waitForSelector('#pgBoot.hide', { state: 'attached' });
     await page.waitForTimeout(600);
     await page.click('#pgcPost');
