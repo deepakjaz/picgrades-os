@@ -11,9 +11,9 @@ const FX = path.join(__dirname, 'fixtures');
 const files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
 const W = 'F1WEDDINGROOT000000001';
 DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' };
-[['F1EVENTSANGEET00000001', 'Sangeet'], ['F1EVENTWEDDING00000001', 'Wedding'], ['F1EVENTRECEPT00000001', 'Reception']].forEach(([id, name]) => {
+[['F1EVENTSANGEET00000001', 'Sangeet'], ['F1EVENTWEDDING00000001', 'Wedding'], ['F1EVENTRECEPT00000001', 'Reception']].forEach(([id, name], eventIndex) => {
   DRIVE.folders[id] = { name, parent: W };
-  for (let i = 0; i < 6; i++) DRIVE.files['F1PHOTO0000000000' + id.slice(-1) + i] = { name: 'photo-' + i + '.jpg', parent: id, mime: 'image/jpeg' };
+  for (let i = 0; i < 6; i++) DRIVE.files['F1PHOTO000000000' + eventIndex + i] = { name: 'photo-' + i + '.jpg', parent: id, mime: 'image/jpeg' };
 });
 function login(email) {
   call('requestCode', { email });
