@@ -17,7 +17,7 @@ DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' };
 });
 function login(email) {
   call('requestCode', { email });
-  const code = /code: (\\d{6})/.exec(mail[mail.length - 1].subject)[1];
+  const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1];
   return call('verifyCode', { email, code }).token;
 }
 const admin = login('adcmediaa@gmail.com');
@@ -26,7 +26,7 @@ const coupleKey = call('facesStatus', { token: admin, g: pub.galleryId }).galler
 const bytesOf = id => {
   const f = DRIVE.files[id];
   if (f && f.bytes) return Buffer.from(f.bytes);
-  const n = parseInt(String(id).replace(/\\D/g, ''), 10) || 0;
+  const n = parseInt(String(id).replace(/\D/g, ''), 10) || 0;
   return fs.readFileSync(path.join(FX, files[n % files.length]));
 };
 global.__fetchBytes = bytesOf;
@@ -40,7 +40,7 @@ const server = http.createServer((req, res) => {
   }
   if (req.url === '/app/config.js') { res.end("window.PG_CONFIG={apiUrl:'/api'}"); return; }
   let url = req.url.split('?')[0];
-  if (/^\\/(g|c|ph|pg)\\/[a-z0-9]+(\\/[A-Za-z0-9_-]+)?$/.test(url)) url = '/app/gallery.html';
+  if (/^\/(g|c|ph|pg)\/[a-z0-9]+(\/[A-Za-z0-9_-]+)?$/.test(url)) url = '/app/gallery.html';
   fs.readFile(path.join(root, url), (err, data) => {
     if (err) { res.statusCode = 404; res.end(); return; }
     res.setHeader('Content-Type', url.endsWith('.html') ? 'text/html' : url.endsWith('.css') ? 'text/css' : url.endsWith('.json') ? 'application/json' : 'text/javascript');
@@ -131,7 +131,7 @@ const server = http.createServer((req, res) => {
       const page = await context.newPage();
       page.on('pageerror', e => errors.push(size.label + ': ' + e.message));
       await page.route('https://lh3.googleusercontent.com/**', route => {
-        const id = (route.request().url().match(/\\/d\\/([^=?]+)/) || [])[1];
+        const id = (route.request().url().match(/\/d\/([^=?]+)/) || [])[1];
         route.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) });
       });
       await require('./fonts_local').install(page);
