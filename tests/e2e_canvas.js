@@ -32,7 +32,7 @@ const srv = http.createServer((req, res) => {
       const H = await pg.evaluate(() => document.documentElement.scrollHeight);
       for (let y = 0; y < H; y += 300) { await pg.evaluate(y => scrollTo(0, y), y); await pg.waitForTimeout(120); }
       await pg.evaluate(() => scrollTo(0, 0)); await pg.waitForTimeout(900);
-      const info = await pg.evaluate(() => { const r = document.querySelector('.pgc'); return { mode: r.dataset.mode, names: r.textContent.includes('Anika'), evs: r.querySelectorAll('[data-ev]').length, wide: document.documentElement.scrollWidth <= innerWidth + 1, imgs: r.querySelectorAll('img').length, hidden: [...r.querySelectorAll('.pgc-m-fade,.pgc-m-rise')].filter(x => !x.classList.contains('in')).length }; });
+      const info = await pg.evaluate(() => { const r = document.querySelector('.pgc'); return { mode: r.dataset.mode, names: r.textContent.includes('Anika'), evs: r.querySelectorAll('[data-ev]').length, wide: document.documentElement.scrollWidth <= innerWidth + 1, imgs: r.querySelectorAll('img').length, hidden: [...r.querySelectorAll('.pgc-e,.pgc-stg')].filter(x => !x.classList.contains('in')).length }; });
       ok(info.mode === (vw >= 700 ? 'l' : 'p'), tag + ' ' + id + ': ' + (vw >= 700 ? 'laptop' : 'phone') + ' spots');
       ok(info.names && info.evs === 4 && info.imgs >= 3 && info.wide && !info.hidden, tag + ' ' + id + ': names, 4 events, photos, nothing sideways, every part shown after scrolling ' + JSON.stringify(info));
       if (process.env.SHOTS) for (let y = 0, n = 0; y < H && n < 8; y += vh - 60, n++) { await pg.evaluate(y => scrollTo(0, y), y); await pg.waitForTimeout(500); await pg.screenshot({ path: '/tmp/cv_' + tag + '_' + id + '_' + n + '.png' }); }

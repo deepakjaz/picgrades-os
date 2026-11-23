@@ -2968,6 +2968,7 @@ function getStudio_(p) {
 var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status'];
 var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card'];   // card (step 77d): one of the app's own Hub cards
 var CANVAS_ACTS = ['findme', 'reel', 'post', 'memory', 'moments', 'notes'];
+var CANVAS_MOTIONS = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine', 'zoom', 'float'];
 var CANVAS_FONTS = ['Cormorant Garamond', 'Pinyon Script', 'Marcellus', 'Jost', 'Instrument Serif', 'Parisienne', 'Bodoni Moda', 'Playfair Display', 'Great Vibes', 'Montserrat'];
 var CANVAS_MAX_DOC = 45000, CANVAS_MAX_PER_OWNER = 200;
 
@@ -3011,6 +3012,7 @@ function canvasDoc_(d) {
     if (!sec || typeof sec !== 'object') return;
     var o = { id: cvId_(sec.id) || ('s' + si), h: { p: cvNum_((sec.h || {}).p, 40, 4000, 600) }, els: [] };
     if ((sec.h || {}).l != null) o.h.l = cvNum_(sec.h.l, 40, 4000, 600);
+    if (sec.stay) o.stay = cvNum_(sec.stay, 0, 3000, 0);   // step 78: holds still while scrolling
     var bg = sec.bg || {}, ob = {};
     if (cvCol_(bg.c)) ob.c = cvCol_(bg.c);
     var bs = cvSrc_(bg.src); if (bs) ob.src = bs;
@@ -3023,7 +3025,9 @@ function canvasDoc_(d) {
       var l = cvSpot_(el.l, 1200); if (l) e.l = l;
       var st = cvStyle_(el.s); if (st) e.s = st;
       var sl = cvStyle_(el.sl); if (sl) e.sl = sl;
-      if (['fade', 'rise', 'zoom', 'float'].indexOf(el.m) > -1) e.m = el.m;
+      if (CANVAS_MOTIONS.indexOf(el.m) > -1) e.m = el.m;   // step 78: more motion, with delay / speed / scroll depth
+      if (e.m && el.mo && typeof el.mo === 'object') { var mo = {}; if (el.mo.d) mo.d = cvNum_(el.mo.d, 0, 5000, 0); if (el.mo.t) mo.t = cvNum_(el.mo.t, 100, 6000, 900); if (el.mo.p) mo.p = cvNum_(el.mo.p, -0.6, 0.6, 0); if (Object.keys(mo).length) e.mo = mo; }
+      else if (el.mo && el.mo.p) e.mo = { p: cvNum_(el.mo.p, -0.6, 0.6, 0) };
       if (el.text != null && el.text !== '') e.text = cvTxt_(el.text, 400);
       var src = cvSrc_(el.src); if (src) e.src = src;
       if (CANVAS_ACTS.indexOf(el.act) > -1) e.act = el.act;
