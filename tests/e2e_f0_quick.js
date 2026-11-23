@@ -71,3 +71,22 @@ const srv=http.createServer((req,res)=>{
     await pg.goto(url+'?couple='+ck);
     await pg.waitForSelector('#pgBoot.hide',{state:'attached'});
     await pg.waitForFunction(()=>window.PGControl&&PGControl.role()==='couple');
+
+    await pg.evaluate(()=>PGFrame.open({id:GALLERY.events[0].photos[0].id,ratio:.8,onDone:()=>{}}));
+    await pg.waitForSelector('.pgfr-reset');
+    ok(await hidden(pg),size.n+' framing hides navigation and role badge');
+    const hit=await pg.evaluate(()=>['.pgfr-reset','.pgfr-done'].map(s=>{
+      const e=document.querySelector(s),r=e.getBoundingClientRect();
+      return document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)===e;
+    }));
+    ok(hit.every(Boolean),size.n+' Reset and Done centre hit targets');
+    await pg.evaluate(()=>PGFrame.close());
+
+    await pg.click('#pgcPost');
+    await pg.waitForSelector('.pe-wrap[data-view=pick]');
+    await pg.click('.pe-v-pick .pe-next');
+    await pg.waitForSelector('.pe-wrap[data-view=edit]');
+    ok(await pg.locator('.pe-tool[data-tool=order]').count()===0,size.n+' single-photo Post Edits hides Order');
+    ok(await hidden(pg),size.n+' Post Edits hides navigation and badge');
+    await bar(pg,'.pe-v-edit .pe-bar',size.n+' Post Edits top bar');
+    await pg.evaluate(()=>PGPost.close());
