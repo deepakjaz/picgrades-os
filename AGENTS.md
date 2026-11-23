@@ -69,6 +69,7 @@ PicGrades OS = the PicGrades order system + the **wedding gallery app** (a PWA) 
   - If you change `Code.gs`, say **"Backend changed — paste Code.gs and deploy"** at the top of the PR.
 - **Screens:**
   - Every screen works on phone (design width **390**) and laptop (**1200**). Screens 700 px and wider use the laptop design.
+  - **iPhone first:** check at 375 × 667 (SE/mini), 390 × 844 and 430 × 932. GitHub also tests in Safari's engine (WebKit). Text at least 11 px, nothing wider than the screen. See `docs/handover/IPHONE.md`.
   - Tap targets are at least 44 px.
   - Light and dark mode both work.
 - **Editor layout rule** (every editor: Hub editors, template editor, Post Edits, Reel Edits, Control Panel previews, and any new editor). The design you edit is **never covered by a tool**.
