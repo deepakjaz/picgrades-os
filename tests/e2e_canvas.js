@@ -58,6 +58,12 @@ const srv = http.createServer((req, res) => {
     await pg.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: bytesOf('3') }));
     await pg.goto(URL); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForSelector('#pgStory .pgc', { timeout: 10000 });
     ok(await pg.evaluate(id => PGLayout.current() === id && document.querySelectorAll('#pgStory .pgc-sec').length === 4, lay.id), 'a guest sees it');
+    // step 93: parts with a clipping motion (wipe / iris / unfold) must still appear, and their photo must load
+    const shown = await pg.evaluate(async () => { const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px;overflow:auto;z-index:99999;background:#fff'; document.body.appendChild(box);
+      const d = { v: 1, name: 'm', sections: [{ id: 's', h: { p: 700 }, els: [['unfold', 'photo', 20], ['iris', 'photo', 240], ['wipe', 'text', 460]].map(([m, t, y], i) => ({ id: 'e' + i, t, m, text: t === 'text' ? 'Hello' : undefined, src: t === 'photo' ? { k: 'cover', n: 0 } : undefined, p: { x: 20, y, w: 300, h: 200 } })) }] };
+      PGCanvas.render(box, d, PGLayout.storyData(), () => {}, { scroller: box }); await new Promise(r => setTimeout(r, 2500));
+      return [...box.querySelectorAll('.pgc-el')].map(e => e.classList.contains('in') && getComputedStyle(e.firstElementChild).clipPath.replace(/ /g, '') === 'inset(0px)' + '' || getComputedStyle(e.firstElementChild).clipPath.indexOf('150%') > -1 ? (e.querySelector('img') ? e.querySelector('img').naturalWidth > 0 : true) : false); });
+    ok(shown.length === 3 && shown.every(Boolean), 'parts with wipe / iris / unfold motion appear and their photos load ' + JSON.stringify(shown));
     await ctx.close(); call('coupleLook', { g: pub.galleryId, coupleKey: ck, layout: '' });
   }
   console.log('page errors: ' + JSON.stringify(errors));

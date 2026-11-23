@@ -62,10 +62,11 @@
 .pgc-bl{display:flex;flex-direction:column;justify-content:center;gap:.6em}.pgc-bl q{quotes:'“' '”'}.pgc-bl small{opacity:.75;font-size:.72em;letter-spacing:.06em}
 .pgc-stick{position:relative;width:100%;overflow:hidden}
 .pgc-sec.stay>.pgc-stick{position:sticky;top:0}
-.pgc-e{transition-property:opacity,translate,scale,filter,clip-path;transition-duration:var(--t,900ms);transition-delay:var(--d,0ms);transition-timing-function:cubic-bezier(.2,.8,.2,1)}
+.pgc-e,.pgc-e>.pgc-body{transition-property:opacity,translate,scale,filter,clip-path;transition-duration:var(--t,900ms);transition-delay:var(--d,0ms);transition-timing-function:cubic-bezier(.2,.8,.2,1)}
 .pgc-m-fade{opacity:0}.pgc-m-rise{opacity:0;translate:0 40px}.pgc-m-drop{opacity:0;translate:0 -40px}.pgc-m-left{opacity:0;translate:-60px 0}.pgc-m-right{opacity:0;translate:60px 0}
-.pgc-m-grow{opacity:0;scale:.86}.pgc-m-blur{opacity:0;filter:blur(14px)}.pgc-m-wipe{clip-path:inset(0 100% 0 0)}.pgc-m-iris{clip-path:circle(0% at 50% 50%)}.pgc-m-unfold{clip-path:inset(50% 0 50% 0)}
-.pgc-e.in{opacity:1;translate:0 0;scale:1;filter:none;clip-path:inset(0 0 0 0)}.pgc-m-iris.in{clip-path:circle(150% at 50% 50%)}
+.pgc-m-grow{opacity:0;scale:.86}.pgc-m-blur{opacity:0;filter:blur(14px)}/* step 93: wipe / iris / unfold clip the part's inside, not the part itself — a fully clipped part never counted as "on screen", so it never appeared (and its photo never loaded) */
+.pgc-m-wipe>.pgc-body{clip-path:inset(0 100% 0 0)}.pgc-m-iris>.pgc-body{clip-path:circle(0% at 50% 50%)}.pgc-m-unfold>.pgc-body{clip-path:inset(50% 0 50% 0)}
+.pgc-e.in{opacity:1;translate:0 0;scale:1;filter:none}.pgc-e.in>.pgc-body{clip-path:inset(0 0 0 0)}.pgc-m-iris.in>.pgc-body{clip-path:circle(150% at 50% 50%)}
 .pgc-m-shine>.pgc-body::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-130%)}
 .pgc-m-shine.in>.pgc-body::after{animation:pgc-shine var(--t,1400ms) var(--d,0ms) ease-out 1 forwards}@keyframes pgc-shine{to{transform:translateX(130%)}}
 .pgc-stg .pgc-ev>button{opacity:0;translate:0 24px;transition:opacity var(--t,700ms) ease,translate var(--t,700ms) cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--d,0ms) + var(--i,0) * 140ms)}
