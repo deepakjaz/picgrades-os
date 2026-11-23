@@ -8,7 +8,7 @@
 // Layout format (version 1) — also cleaned by Code.gs canvasDoc_():
 // { v: 1, name, colors: { bg, ink, acc, acc2, card }, fonts: { head, body },
 //   sections: [ { id, h: { p: 844, l: 760 }, bg: { c: '#fff', src: {…photo} , dim: 0.3 }, els: [
-//     { id, t: 'photo'|'names'|'date'|'text'|'events'|'strip'|'action'|'blessings'|'credit'|'shape',
+//     { id, t: 'photo'|'names'|'date'|'text'|'events'|'strip'|'action'|'blessings'|'credit'|'shape'|'card' (one of the app's own Hub cards: block, variant, set),
 //       p: { x, y, w, h, r, z, hide }, l: { … } | null,                       // phone / laptop spot (design units)
 //       s: { font, size, weight, italic, color, bg, align, ls, lh, radius, border, bcolor, shadow, opacity, fx, fy, upper, shape: 'arch'|'circle', pad },
 //       sl: { …the laptop's own style changes }, per: { p, l } (event cards showing at once),
@@ -61,6 +61,9 @@
 .pgc-m-fade.in,.pgc-m-rise.in{opacity:1;translate:0 0}
 .pgc-m-zoom img{animation:pgc-kb 14s ease-in-out infinite alternate}@keyframes pgc-kb{to{transform:scale(1.12)}}
 .pgc-m-float{animation:pgc-float 5s ease-in-out infinite}@keyframes pgc-float{50%{translate:0 -8px}}
+.pgc .pgc-cardhost.pgl-grid{display:block;padding:0;margin:0;max-width:none;grid-template-columns:none;gap:0;--u:86px;overflow:visible}
+.pgc .pgc-cardhost>.pgl-b{width:100%;height:100%}
+.pgc-cardnone{width:100%;height:100%;display:grid;place-items:center;border:1.5px dashed rgba(127,127,127,.5);border-radius:14px;font:600 12px var(--font-sans,system-ui);opacity:.7;text-align:center;padding:6px}
 .pgc-still *,.pgc-still{animation:none!important;transition:none!important}.pgc-still .pgc-m-fade,.pgc-still .pgc-m-rise{opacity:1;translate:0 0}
 @media (prefers-reduced-motion:reduce){.pgc *{animation:none!important;transition:none!important}.pgc .pgc-m-fade,.pgc .pgc-m-rise{opacity:1;translate:0 0}}`;
 
@@ -129,6 +132,7 @@
     if (t === 'text') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || '') + '</div>';
     if (t === 'credit') { const stu = data.studio && data.studio !== 'Your photographer' && !(window.GALLERY && GALLERY.credit === false) ? data.studio : ''; return stu ? '<div class="pgc-body pgc-txt" style="' + st + '">' + esc((el.text || 'Photographed by') + ' ' + stu) + '</div>' : null; }
     if (t === 'shape') return '<div class="pgc-body" style="' + (st || 'background:currentColor') + '"></div>';
+    if (t === 'card') { ctx.cards.push({ el, i: ctx.cards.length }); return '<div class="pgc-body pgl-grid pgc-cardhost" data-card="' + (ctx.cards.length - 1) + '" style="' + st + '"></div>'; }   // step 77d: one of the app's own Hub cards
     if (t === 'events') {
       const v = ['row', 'circles', 'list'].indexOf(el.v) > -1 ? el.v : 'row', r = s.radius ? (num(s.radius, 0) * k).toFixed(1) + 'px' : '0';
       const pv = el.per && typeof el.per === 'object' ? el.per[ctx.mode] : el.per, per = Math.max(1, Math.min(8, num(pv, ctx.mode === 'l' ? (v === 'circles' ? 6 : 3.5) : (v === 'circles' ? 3.3 : 2.2)))), wd = v === 'list' ? '' : 'width:' + ((100 - 4 * (Math.ceil(per) - 1)) / per).toFixed(2) + '%;';   // how many cards show at once
@@ -164,7 +168,7 @@
       const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth, mode = opts.mode || (W >= LAPTOP_AT ? 'l' : 'p');
       const D = mode === 'p' ? PW : LW, k = mode === 'p' ? W / PW : Math.min(W, 1680) / LW, inW = D * k, off = (W - inW) / 2;
       lastW = W;
-      const P = photos(data), ctx = { used: [], mode };
+      const P = photos(data), ctx = { used: [], mode, cards: [] };
       root.style.setProperty('--c-bg', col(C.bg, '#faf7f2')); root.style.setProperty('--c-ink', col(C.ink, '#2a2420')); root.style.setProperty('--c-acc', col(C.acc, '#b08d57'));
       root.style.setProperty('--c-card', col(C.card, '#ffffff')); root.style.setProperty('--c-acc2', col(C.acc2, col(C.acc, '#b08d57')));
       root.style.fontFamily = "'" + (FONTS.indexOf((doc.fonts || {}).body) > -1 ? doc.fonts.body : 'Jost') + "',system-ui,sans-serif";
@@ -182,6 +186,10 @@
         }).join('');
         return '<section class="pgc-sec" data-sec="' + esc(sec.id || '') + '" style="height:' + h.toFixed(1) + 'px;background:' + col(bg.c, 'transparent') + '">' + bgHtml + '<div class="pgc-in" style="left:' + off.toFixed(1) + 'px;width:' + inW.toFixed(1) + 'px">' + els + '</div></section>';
       }).join('');
+      // the app's own cards draw themselves into their boxes (a card with nothing to show for this person leaves its box empty)
+      root.querySelectorAll('[data-card]').forEach(host => { const c = ctx.cards[+host.dataset.card]; if (!c || !window.PGLayout || !PGLayout.card) return;
+        const ok = PGLayout.card(host, { block: c.el.block, variant: c.el.variant, set: c.el.set || undefined }, host.clientWidth, host.clientHeight, mode === 'p' ? 'phone' : 'wide');
+        if (!ok) { if (opts.editing) host.innerHTML = '<div class="pgc-cardnone">' + esc(c.el.block) + ' · nothing to show yet</div>'; else host.parentElement.style.display = 'none'; } });
       if (opts.still) root.classList.add('pgc-still');
       if (io) io.disconnect();
       io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: opts.scroller || null, threshold: .15 }) : null;

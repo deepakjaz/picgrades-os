@@ -15,7 +15,9 @@
   const r1 = v => Math.round(v * 10) / 10;
   const uid = p => p + Math.random().toString(36).slice(2, 8);
   const TABS = [['add', 'Add'], ['style', 'Style'], ['layers', 'Layers'], ['page', 'Page']];
-  const TYPE = { photo: 'Photo', names: 'Names', date: 'Date', text: 'Text', events: 'Events', strip: 'Photo strip', action: 'Button', blessings: 'Blessing', credit: 'Credit', shape: 'Shape' };
+  const TYPE = { photo: 'Photo', names: 'Names', date: 'Date', text: 'Text', events: 'Events', strip: 'Photo strip', action: 'Button', blessings: 'Blessing', credit: 'Credit', shape: 'Shape', card: 'App card' };
+  const catalog = () => (window.PGHubEditor && PGHubEditor.catalog ? PGHubEditor.catalog() : { CARDS: {}, VNAME: {} });
+  const cardName = e => ((catalog().CARDS[e.block] || [])[0]) || e.block;
   const SNAP = 6;   // px
   let E = null;
 
@@ -42,8 +44,29 @@
     if (t === 'action') Object.assign(base, { p: { x: 45, y: 40, w: 300, h: 52, z: 5 }, s: { bg: '#2a2420', color: '#ffffff', radius: 26, size: 15, weight: 500 }, act: v || 'findme' });
     if (t === 'blessings') Object.assign(base, { p: { x: 30, y: 40, w: 330, h: 150, z: 5 }, s: { font: 'Cormorant Garamond', size: 22, italic: true, align: 'center' } });
     if (t === 'credit') Object.assign(base, { p: { x: 20, y: 40, w: 350, h: 28, z: 5 }, s: { size: 11, ls: 0.2, upper: true, align: 'center', opacity: 0.7 } });
+    if (t === 'card') { const C = catalog().CARDS[v] || ['', []]; Object.assign(base, { p: { x: 20, y: 40, w: 350, h: v === 'studio' || v === 'install' || v === 'review' ? 90 : 260, z: 5 }, block: v, variant: C[1][0] || undefined }); }
     if (t === 'shape') Object.assign(base, v === 'line' ? { p: { x: 95, y: 40, w: 200, h: 2, z: 5 }, s: { bg: '#a07d4c' } } : v === 'circle' ? { p: { x: 145, y: 40, w: 100, h: 100, z: 5 }, s: { bg: '#a07d4c', shape: 'circle', opacity: 0.3 } } : { p: { x: 45, y: 40, w: 300, h: 200, z: 1 }, s: { bg: '#ffffff', radius: 16, shadow: 1 } });
     return base;
+  }
+
+  // ---- a card layout (Minimal, or "Our own Hub") becomes a free layout: every card keeps its place on the phone and on the laptop ----
+  const hex = c => { const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/.exec(c || ''); return m && (m[4] == null || +m[4] > 0.5) ? '#' + [m[1], m[2], m[3]].map(v => (+v).toString(16).padStart(2, '0')).join('') : ''; };   // see-through colours don't count
+  function fromGrid(l) {
+    const sec = { id: uid('s'), h: { p: 844, l: 760 }, els: [] }, doc = { v: 1, name: l.name || 'My layout', colors: {}, fonts: {}, sections: [sec] }, made = new Map();
+    [['p', 'phone', PGCanvas.PW], ['l', 'wide', PGCanvas.LW]].forEach(([m, scr, W]) => {
+      const box = h('div', 'pgl-grid'); box.style.cssText = 'position:absolute;left:-30000px;top:0;width:' + W + 'px;max-width:none'; document.body.appendChild(box);
+      try {
+        const out = PGLayout.build(box, l, scr, W, true) || [], br = box.getBoundingClientRect(); let bottom = 0;
+        out.forEach(o => { const r = o.el.getBoundingClientRect(); if (!r.width) return;
+          let e = made.get(o.b0); if (!e) { e = { id: uid('e'), t: 'card', block: o.b0.block, p: { x: 0, y: 0, w: 40, h: 40, z: 1, hide: true } }; if (o.b0.variant) e.variant = o.b0.variant; if (o.b0.set) e.set = clone(o.b0.set); made.set(o.b0, e); }
+          e[m] = { x: r1(r.left - br.left), y: r1(r.top - br.top), w: r1(r.width), h: r1(r.height), z: 1 }; bottom = Math.max(bottom, r.top - br.top + r.height); });
+        sec.h[m] = Math.ceil(bottom + (m === 'p' ? 110 : 80));
+      } finally { box.remove(); }
+    });
+    made.forEach(e => { if (!e.l) e.l = { x: 0, y: 0, w: 40, h: 40, z: 1, hide: true }; sec.els.push(e); });
+    const bg = [document.getElementById('view-hub'), document.body, document.documentElement].reduce((v, n) => v || (n ? hex(getComputedStyle(n).backgroundColor) : ''), '');   // the page colour guests see behind the cards
+    if (bg) doc.colors.bg = bg;
+    return doc;
   }
 
   // ---- open ----
@@ -54,8 +77,15 @@
     build();
     const start = (doc, src) => { E.doc = doc; E.src = src; E.saved = JSON.stringify(doc); draw(); panel(); };
     if (arg && typeof arg === 'object' && arg.doc) return start(clone(arg.doc), { id: arg.id || '', mine: !!arg.mine });
+    if (arg === 'current') {   // "Design your own Hub": start from the Hub the wedding has now
+      const G = GALLERY, C = G.custom || {};
+      if (/^cv-/.test(G.layout || '') && G.canvas && G.canvas.doc) arg = G.layout;
+      else if (G.layout === 'custom' && C.blocks && C.blocks.length && !C.story) return start(fromGrid({ id: 'custom', name: 'Our own Hub', blocks: clone(C.blocks) }), {});
+      else { const cl = G.layout && PGLayout.find(G.layout); if (cl && cl.canvas) arg = cl.id; else if (cl && !cl.story && (cl.blocks || []).length) arg = cl.id; else return start(starter(), {}); }
+    }
     const l = arg && window.PGLayout ? PGLayout.find(arg) : null;
     if (l && l.canvas) return start(clone(l.canvas), { builtin: l.id });
+    if (l && !l.story && (l.blocks || []).length) return start(fromGrid(l), { builtin: l.id, converted: true });   // step 77d: Minimal layouts open here too
     if (arg && /^cv-/.test(arg)) {
       if (GALLERY.canvas && GALLERY.canvas.id === arg && role === 'demo') return start(clone(GALLERY.canvas.doc), { id: arg, mine: true, demo: true });
       E.el.querySelector('.pce-stage').innerHTML = '<p class="pce-wait">Opening…</p>';
@@ -126,7 +156,7 @@
     const page = h('div', 'pce-page'); st.appendChild(page);
     E.pageW = E.mode === 'p' ? Math.min(390, st.clientWidth) : Math.max(600, st.clientWidth - 40);
     page.style.width = E.pageW + 'px';
-    E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: true, onTap: () => true });
+    E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: true, editing: true, onTap: () => true });
     st.scrollTop = y;
     page.querySelectorAll('.pgc-el').forEach(x => { if (x.dataset.el === E.sel) x.classList.add('pce-on-el'); });
     selBox();
@@ -262,7 +292,8 @@
       b('events', 'row', 'Events · cards', 'every event, swipe') + b('events', 'circles', 'Events · circles', 'round event photos') + b('events', 'list', 'Events · list', 'names only') +
       b('strip', '', 'Photo strip', 'photos gliding by') + b('blessings', '', 'Blessing', 'the latest note from guests') + b('credit', '', 'Credit', 'photographed by…') +
       b('action', 'findme', 'Find me', 'button') + b('action', 'reel', 'Make a reel', 'button') + b('action', 'post', 'Make a post', 'button') + b('action', 'memory', 'Add a moment', 'button') + b('action', 'moments', 'Root Moment', 'button') + b('action', 'notes', 'Blessings', 'button') +
-      b('shape', 'box', 'Box', 'a card behind things') + b('shape', 'circle', 'Circle', 'a soft round shape') + b('shape', 'line', 'Line', 'a thin divider') + '</div>';
+      b('shape', 'box', 'Box', 'a card behind things') + b('shape', 'circle', 'Circle', 'a soft round shape') + b('shape', 'line', 'Line', 'a thin divider') + '</div>' +
+      '<div class="pce-sub">App cards · the cards of the card layouts</div><div class="pce-adds">' + Object.keys(catalog().CARDS).filter(k => k !== 'findme').map(k => b('card', k, catalog().CARDS[k][0], (catalog().CARDS[k][1] || []).length + ' looks')).join('') + '</div>';
   }
   function stylePane() {
     const f = E.sel && find(E.sel);
@@ -274,6 +305,7 @@
     if (t === 'photo') c += row('Photo', srcSelect(e.src)) + '<button type="button" class="pce-mini" data-pick="el">Choose a photo…</button>';
     if (t === 'action') c += row('Button', '<select data-f="act">' + Object.keys(PGCanvas.LABEL).map(k => opt(k, PGCanvas.LABEL[k], e.act)).join('') + '</select>') + row('Label (empty = usual)', '<input type="text" data-f="text" maxlength="40" value="' + esc(e.text || '') + '">') + seg('v', e.v || 'pill', [['pill', 'With icon'], ['circle', 'Icon only'], ['text', 'Words only']]);
     if (t === 'events') c += seg('v', e.v || 'row', [['row', 'Cards'], ['circles', 'Circles'], ['list', 'List']]) + (e.v === 'list' ? '' : row('Cards showing at once (' + (lap ? 'laptop' : 'phone') + ')', '<input type="number" step="0.1" min="1" max="8" data-f="per" value="' + num(e.per && typeof e.per === 'object' ? e.per[E.mode] : e.per, lap ? 3.5 : 2.2) + '">'));
+    if (t === 'card') { const C = catalog(), vs = (C.CARDS[e.block] || ['', []])[1]; c += '<p class="pce-note">' + esc(cardName(e)) + ' — the same card the card layouts use. It draws itself; choose its look here.</p>' + (vs.length ? row('Look', '<select data-f="variant">' + vs.map(v => opt(v, C.VNAME[v] || v, e.variant || vs[0])).join('') + '</select>') : ''); }
     if (t === 'blessings') c += row('Which blessing', '<select data-f="n">' + [0, 1, 2, 3, 4].map(i => opt(i, i ? 'Number ' + (i + 1) : 'The latest', num(e.n, 0))).join('') + '</select>');
     // look
     if (lap) c += '<label class="pce-check"><input type="checkbox" data-f="ownstyle"' + (own ? ' checked' : '') + '> Laptop has its own look (changes below stay on laptop)</label>';
@@ -287,7 +319,7 @@
       c += row('Line height', '<input type="range" min="0.8" max="2.2" step="0.05" data-s="lh" value="' + num(s.lh, 1.3) + '"><output>' + num(s.lh, 1.3) + '</output>');
       c += row('Text colour', colorIn('color', s.color));
     }
-    c += row(t === 'shape' ? 'Colour' : 'Background', colorIn('bg', s.bg));
+    if (t !== 'card') c += row(t === 'shape' ? 'Colour' : 'Background', colorIn('bg', s.bg));
     if (t === 'photo' || t === 'shape') c += seg('shape', s.shape || '', [['', 'Square'], ['arch', 'Arch'], ['circle', 'Circle']]);
     c += row('Corners', '<input type="range" min="0" max="200" data-s="radius" value="' + num(s.radius, 0) + '"><output>' + num(s.radius, 0) + '</output>');
     c += row('Border', '<input type="range" min="0" max="16" data-s="border" value="' + num(s.border, 0) + '"><output>' + num(s.border, 0) + '</output>') + (s.border ? row('Border colour', colorIn('bcolor', s.bcolor)) : '');
@@ -310,7 +342,7 @@
     return '<select data-f="src">' + o.join('') + '</select>';
   }
   function layersPane() {
-    const icon = { photo: '▣', names: 'Aa', date: '◷', text: 'T', events: '▤', strip: '⋯', action: '●', blessings: '❝', credit: '©', shape: '◆' };
+    const icon = { photo: '▣', names: 'Aa', date: '◷', text: 'T', events: '▤', strip: '⋯', action: '●', blessings: '❝', credit: '©', shape: '◆', card: '▦' };
     return '<p class="pce-note">Everything on the page, front first. ' + (E.mode === 'l' ? 'Hiding here hides on laptop only.' : 'Hiding here hides on phone only.') + '</p>' + E.doc.sections.map((s, si) =>
       '<div class="pce-lsec"><b>Section ' + (si + 1) + '</b>' + (s.els || []).slice().sort((a, b) => num(spot(b).z, 1) - num(spot(a).z, 1)).map(e => { const sp = spot(e);
         return '<div class="pce-layer' + (e.id === E.sel ? ' on' : '') + (sp.hide ? ' off' : '') + '"><button type="button" data-sel="' + e.id + '"><i>' + icon[e.t] + '</i>' + esc(TYPE[e.t]) + (e.text ? ' · ' + esc(String(e.text).slice(0, 18)) : e.act ? ' · ' + esc(PGCanvas.LABEL[e.act]) : '') + '</button><button type="button" class="pce-eye" data-eye="' + e.id + '" aria-label="' + (sp.hide ? 'Show' : 'Hide') + '">' + (sp.hide ? 'Hidden' : 'Shown') + '</button></div>'; }).join('') + '</div>').join('');
@@ -357,6 +389,7 @@
       change(() => {
         if (k === 'text') { const v = x.value.replace(/[<>]/g, ''); if (v.trim()) e.text = v; else delete e.text; }
         else if (k === 'act') e.act = x.value;
+        else if (k === 'variant') e.variant = x.value;
         else if (k === 'n') e.n = +x.value;
         else if (k === 'per') { const p = e.per && typeof e.per === 'object' ? e.per : { p: num(e.per, 2.2), l: num(e.per, 3.5) }; p[E.mode] = Math.max(1, Math.min(8, parseFloat(x.value) || 2)); e.per = p; }
         else if (k === 'src') e.src = srcOf(x.value);
@@ -457,7 +490,7 @@
   // ---- apply ----
   function apply() {
     const dirty = JSON.stringify(E.doc) !== E.saved;
-    if (E.src.builtin && !dirty) return applyId(E.src.builtin, null);   // a ready layout, unchanged
+    if (E.src.builtin && !dirty) return applyId(E.src.builtin, null);   // a ready layout, unchanged (a Minimal layout stays the card layout it was)
     if (E.role === 'demo') return demoKeep(true);
     if (!E.src.id || !E.src.mine || dirty) {
       if (E.src.id && E.src.mine && dirty) return pgApi('canvasSave', { item: { id: E.src.id, kind: 'layout', name: E.doc.name || 'My layout', collection: E.src.collection || undefined, scope: E.src.scope || 'wedding', doc: E.doc } }).then(() => { E.saved = JSON.stringify(E.doc); applySaved(); }).catch(err => showToast(err.message || 'Could not save'));

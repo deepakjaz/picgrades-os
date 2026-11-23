@@ -96,10 +96,10 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/tpl_applied.png' });
   await openLook();
   ok(await pg.evaluate(() => !document.querySelector('.pgcp-layout[data-layout="custom"]')), 'a designed template is not shown as "Our own Hub"');
-  // a card layout opens the Hub editor on that layout
-  await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.waitForSelector('.pged .pged-card'); await pg.waitForTimeout(300);
-  ok((await pg.textContent('.pged-title')) === 'Magazine Cover' && (await pg.evaluate(() => PGHubEditor.draft().base)) === 'magazine-cover', 'a card layout opens the Hub editor on that layout');
-  await pg.click('.pged-x'); await pg.waitForTimeout(300);
+  // a card layout opens the free editor (step 77d), every card in its place
+  await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(300);
+  ok((await pg.textContent('.pce-title b')) === 'Magazine Cover' && (await pg.evaluate(() => PGCanvasEditor.state().doc.sections[0].els.every(e => e.t === 'card'))), 'a card layout opens the free editor, its cards placed as they were');
+  await pg.evaluate(() => PGCanvasEditor.close(true)); await pg.waitForTimeout(300);
   // a guest sees the applied template with the chosen photo, and no versions
   const gp = await ctx.newPage(); gp.on('pageerror', e => errors.push(e.message)); await gp.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: bytesOf('1') }));
   await gp.goto(URL); await gp.waitForSelector('#pgBoot.hide', { state: 'attached' }); await gp.waitForSelector('#pgStory .pss-c1', { timeout: 10000 });

@@ -2966,7 +2966,7 @@ function getStudio_(p) {
 //   me (only who made it) · wedding (this wedding) · studio (all of a photographer's weddings) · all (every wedding: PicGrades only).
 // The layout format is drawn by app/gallery/34-canvas.js; canvasDoc_() keeps only what it knows.
 var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status'];
-var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape'];
+var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card'];   // card (step 77d): one of the app's own Hub cards
 var CANVAS_ACTS = ['findme', 'reel', 'post', 'memory', 'moments', 'notes'];
 var CANVAS_FONTS = ['Cormorant Garamond', 'Pinyon Script', 'Marcellus', 'Jost', 'Instrument Serif', 'Parisienne', 'Bodoni Moda', 'Playfair Display', 'Great Vibes', 'Montserrat'];
 var CANVAS_MAX_DOC = 45000, CANVAS_MAX_PER_OWNER = 200;
@@ -3030,6 +3030,11 @@ function canvasDoc_(d) {
       if (['row', 'circles', 'list', 'pill', 'circle', 'text', 'line'].indexOf(el.v) > -1) e.v = el.v;
       if (el.per != null) e.per = typeof el.per === 'object' ? { p: cvNum_(el.per.p, 1, 8, 2.2), l: cvNum_(el.per.l, 1, 8, 3.5) } : cvNum_(el.per, 1, 8, 2.2);
       if (el.n != null) e.n = cvNum_(el.n, 0, 50, 0);
+      if (el.t === 'card') {   // which card, which look, and its few settings (short words and numbers only)
+        e.block = /^[a-z0-9-]{1,30}$/.test(String(el.block || '')) ? String(el.block) : ''; if (!e.block) return;
+        if (/^[a-z0-9-]{1,30}$/.test(String(el.variant || ''))) e.variant = String(el.variant);
+        if (el.set && typeof el.set === 'object') { var set = {}; Object.keys(el.set).slice(0, 12).forEach(function (k) { var v = el.set[k]; if (/^[A-Za-z0-9_]{1,20}$/.test(k) && (typeof v === 'number' || typeof v === 'boolean' || (typeof v === 'string' && v.length <= 80))) set[k] = typeof v === 'string' ? cvTxt_(v, 80) : v; }); if (Object.keys(set).length) e.set = set; }
+      }
       o.els.push(e);
     });
     out.sections.push(o);
