@@ -143,6 +143,7 @@
     }
     if (t === 'action') {
       const a = LABEL[el.act] ? el.act : 'findme', v = el.v === 'circle' ? 'circle' : el.v === 'text' ? 'text' : 'pill';
+      if (data.can && data.can[a] === false) return null;   // the function is off for this person (Find me after they were found)
       return '<div class="pgc-body" style="' + st + '"><button type="button" class="pgc-act ' + v + '" data-act="' + a + '">' + (v === 'text' ? '' : ICON[a]) + '<span>' + esc(el.text || LABEL[a]) + '</span></button></div>';
     }
     if (t === 'blessings') {

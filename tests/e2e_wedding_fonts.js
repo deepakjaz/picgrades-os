@@ -43,7 +43,7 @@ const srv = http.createServer((req, res) => {
     const mono = [...document.querySelectorAll('body *')].filter(e => e.offsetParent && [...e.childNodes].some(c => c.nodeType === 3 && c.textContent.trim()) && /mono|consol|courier/i.test(getComputedStyle(e).fontFamily)).map(e => e.textContent.trim().slice(0, 30));
     const names = [...document.querySelectorAll('.pgl-names,.pgh-title,.psh-couple-names')].filter(e => e.offsetParent).map(e => { const cs = getComputedStyle(e), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.15; return { font: cs.fontFamily, wide: e.scrollWidth > e.clientWidth + 1, lines: Math.round(e.scrollHeight / lh) }; });
     const acts = [...document.querySelectorAll('.pgl-findme,.pgl-reel,.pgl-post,.pgl-upload,.pgl-install,.pgl-review')].filter(e => e.offsetParent);
-    return { mono, names, photoCards: acts.filter(e => e.querySelector('img,.pg-cover')).length, fm: { cards: [...document.querySelectorAll('.pgl-findme')].filter(e => e.offsetParent).length, pins: [...document.querySelectorAll('#view-hub .pgs-findme, #pgStory .pgs-findme')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').length } };
+    return { mono, names, photoCards: acts.filter(e => e.querySelector('img,.pg-cover')).length, fm: { own: [...document.querySelectorAll('#pgStory .pgc [data-act="findme"]')].length, cards: [...document.querySelectorAll('.pgl-findme')].filter(e => e.offsetParent).length, pins: [...document.querySelectorAll('#view-hub .pgs-findme, #pgStory .pgs-findme')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden').length } };
   };
   let fmSeen = 0, fmCard = [], monoAll = [], nameBad = [], photoCards = 0;
   for (const [i, l] of L.entries()) {
@@ -52,14 +52,14 @@ const srv = http.createServer((req, res) => {
     monoAll = monoAll.concat(r.mono.map(x => l + ': ' + x));
     r.names.forEach(n => { if (n.wide || n.lines > 2 || n.font.indexOf(t.fonts.script) < 0) nameBad.push(l + '/' + t.id + ' ' + JSON.stringify(n)); });
     photoCards += r.photoCards;
-    if (r.fm.cards) fmCard.push(l); if (r.fm.pins === 1) fmSeen++;
+    if (r.fm.cards) fmCard.push(l); if (r.fm.pins + r.fm.own === 1) fmSeen++;   // step 77c: a free layout carries its own small Find me button instead of the pinned one
     await ctx.close();
   }
   check(monoAll.length === 0, 'no typewriter text in any of the ' + L.length + ' layouts' + (monoAll.length ? ' (' + monoAll.slice(0, 4).join(' | ') + ')' : ''));
   check(nameBad.length === 0, 'the couple\'s names use the theme\'s script font and fit in two lines, never cut' + (nameBad.length ? ' (' + nameBad.slice(0, 3).join(' | ') + ')' : ''));
   check(photoCards === 0, 'function cards never carry a wedding photo');
   check(fmCard.length === 0, 'Find me is never a card in the grid' + (fmCard.length ? ' (' + fmCard.join(', ') + ')' : ''));
-  check(fmSeen === L.length, 'Find me is the small pinned button in every layout (' + fmSeen + ' of ' + L.length + ')');
+  check(fmSeen === L.length, 'Find me is one small button in every layout — pinned, or the free layout\'s own (' + fmSeen + ' of ' + L.length + ')');
   if (process.env.PG_SHOTS && process.env.PG_FONTS_ROUTE) {   // screenshots with the real fonts (served locally)
     for (const [l, t] of [['bento-concierge', 'udaipur-sandstone'], ['ios-widget-home', 'jaipur-rose'], ['magazine-cover', 'ivory-glass'], ['story-living', 'pearl-atelier'], ['cinema-panorama', 'midnight-velvet']]) {
       const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }); await require(process.env.PG_FONTS_ROUTE)(ctx); const pg = await ctx.newPage();

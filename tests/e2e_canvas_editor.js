@@ -60,8 +60,9 @@ const srv = http.createServer((req, res) => {
   await pg.click('.pce-mode [data-mode=p]'); await pg.waitForTimeout(300);
   ok((await S()).mode === 'p' && await pg.evaluate(() => document.querySelector('.pce-page').offsetWidth === 390), 'Phone shows the 390-wide phone page');
   // add a Find me button
+  const before = new Set((await S()).doc.sections.flatMap(s => s.els).map(e => e.id));
   await pg.click('[data-tab=add]'); await pg.click('[data-add=action][data-v=findme]'); await pg.waitForTimeout(200);
-  const st = await S(), fm = st.doc.sections.flatMap(s => s.els).find(e => e.t === 'action' && e.act === 'findme');
+  const st = await S(), fm = st.doc.sections.flatMap(s => s.els).find(e => e.t === 'action' && e.act === 'findme' && !before.has(e.id));
   ok(fm && st.sel === fm.id && await pg.$('.pce-page .pgc-el[data-el="' + fm.id + '"] .pgc-act'), 'Add puts a Find me button in and selects it');
   // hide on phone via Layers
   await pg.click('[data-tab=layers]'); await pg.click('[data-eye="' + fm.id + '"]'); await pg.waitForTimeout(200);
@@ -83,7 +84,8 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/ce_applied.png' });
   // open it again from its collection
   await openLook(); await pg.waitForSelector('.pgcp-layout[data-layout="' + lay.id + '"]');
-  ok(await pg.evaluate(() => [...document.querySelectorAll('.pgcp-lgroup h5')].some(h => h.textContent === 'Our layouts')), 'the collection shows in Hub layout');
+  const heads = await pg.evaluate(() => [...document.querySelectorAll('.pgcp-lgroup h5')].map(h => h.textContent));
+  ok(heads[0] === 'Our layouts' && heads.indexOf('Story') > 0, 'saved layouts come first in Hub layout: ' + heads.slice(0, 3).join(' / '));
   await pg.click('.pgcp-layout[data-layout="' + lay.id + '"]'); await pg.waitForFunction(() => window.PGCanvasEditor && PGCanvasEditor.state() && PGCanvasEditor.state().doc);
   ok(await pg.evaluate(() => PGCanvasEditor.state().doc.name === 'Our evening' && PGCanvasEditor.state().src.mine), 'tap it: it opens in the editor with everything kept');
   await pg.evaluate(() => PGCanvasEditor.close(true)); await pg.waitForTimeout(300);

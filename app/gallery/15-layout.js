@@ -294,7 +294,7 @@
       order.concat(movable.filter(p => order.indexOf(p) < 0)).forEach(p => { if (p.el.parentElement === par) par.insertBefore(p.el, anchor); }); }
     box.classList.toggle('pgs-bar-on', t.bar === 'on');
     let fm = box.querySelector('.pgs-findme');
-    if (t.findme !== 'off' && visible('findme')) {
+    if (t.findme !== 'off' && visible('findme') && !box.querySelector('.pgc [data-act="findme"]')) {   // step 77: a free layout with its own Find me button needs no floating one
       if (!fm) { fm = h('button', 'pgs-findme', '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 5-6 8-6s6.5 1.5 8 6"/></svg><span>Find me</span>'); fm.type = 'button'; fm.addEventListener('click', () => storyAct('findme')); box.appendChild(fm); }
       fm.classList.toggle('left', t.findme === 'left');
     } else if (fm) fm.remove();
@@ -306,7 +306,8 @@
     const D0 = data(), evs = (GALLERY.events || []).map(e => ({ name: e.name, photos: (e.photos || []).map(p => ({ id: p.id })), teaser: (e.teaser || []).map(p => ({ id: p.id || p })), featured: hl[e.name] && hl[e.name].length ? hl[e.name].slice() : undefined }));
     const couple = P.bride && P.groom ? { bride: P.bride, groom: P.groom } : undefined;   // both chosen, or the varmala part is left out
     const pool = [].concat(P.wh || [], (GALLERY.highlights || []).map(x => x.id || x), (GALLERY.pool || []).map(x => x.id || x));   // step 76: what a gated phone may show
-    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, pool, demo: !!GALLERY.demo, cover: (P.cover || []).length ? P.cover.slice() : undefined, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
+    const can = { findme: visible('findme'), reel: visible('reel'), post: visible('post'), memory: visible('upload') };   // step 77: buttons for switched-off functions stay hidden (Find me goes once found)
+    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, pool, can, demo: !!GALLERY.demo, cover: (P.cover || []).length ? P.cover.slice() : undefined, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
   }
   function storyAct(a, x) {
     const run = k => { if (!visible(k)) return; const t = (window.PGRules && PGRules.act(k)) || ACT[k]; if (t) t[2](); };
