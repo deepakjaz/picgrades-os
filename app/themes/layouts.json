@@ -3552,6 +3552,1072 @@
    }
   },
   {
+   "id": "canvas-living",
+   "name": "Living Story (editor)",
+   "group": "progress",
+   "blocks": [],
+   "canvas": {
+    "v": 1,
+    "name": "Living Story (editor)",
+    "colors": {
+     "bg": "#f7f3ec",
+     "ink": "#241f1c",
+     "acc": "#9a7b4f",
+     "acc2": "#c9a56a",
+     "card": "#ffffff"
+    },
+    "fonts": {
+     "head": "Cormorant Garamond",
+     "body": "Jost"
+    },
+    "sections": [
+     {
+      "id": "hero",
+      "h": {
+       "p": 844,
+       "l": 780
+      },
+      "bg": {
+       "c": "#1c1815",
+       "src": {
+        "k": "cover",
+        "n": 0
+       },
+       "dim": 0.38,
+       "fy": 30
+      },
+      "els": [
+       {
+        "id": "kicker",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 530,
+         "w": 342,
+         "h": 24,
+         "z": 2
+        },
+        "l": {
+         "x": 100,
+         "y": 460,
+         "w": 600,
+         "h": 28,
+         "z": 2
+        },
+        "s": {
+         "size": 11,
+         "ls": 0.28,
+         "upper": true,
+         "color": "#f7f3ec",
+         "align": "center",
+         "opacity": 0.85
+        },
+        "m": "fade",
+        "text": "THE WEDDING STORY",
+        "sl": {
+         "size": 13,
+         "align": "left"
+        }
+       },
+       {
+        "id": "names",
+        "t": "names",
+        "p": {
+         "x": 20,
+         "y": 560,
+         "w": 350,
+         "h": 84,
+         "z": 2
+        },
+        "l": {
+         "x": 100,
+         "y": 494,
+         "w": 760,
+         "h": 96,
+         "z": 2
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 44,
+         "italic": true,
+         "color": "#ffffff",
+         "align": "center",
+         "lh": 1.05
+        },
+        "m": "rise",
+        "sl": {
+         "size": 68,
+         "align": "left"
+        }
+       },
+       {
+        "id": "date",
+        "t": "date",
+        "p": {
+         "x": 24,
+         "y": 652,
+         "w": 342,
+         "h": 24,
+         "z": 2
+        },
+        "l": {
+         "x": 100,
+         "y": 600,
+         "w": 500,
+         "h": 28,
+         "z": 2
+        },
+        "s": {
+         "size": 12,
+         "ls": 0.26,
+         "upper": true,
+         "color": "#e5cfa8",
+         "align": "center"
+        },
+        "m": "rise",
+        "sl": {
+         "size": 14,
+         "align": "left"
+        }
+       },
+       {
+        "id": "findme",
+        "t": "action",
+        "act": "findme",
+        "p": {
+         "x": 115,
+         "y": 700,
+         "w": 160,
+         "h": 46,
+         "z": 3
+        },
+        "l": {
+         "x": 100,
+         "y": 652,
+         "w": 190,
+         "h": 50,
+         "z": 3
+        },
+        "s": {
+         "bg": "#f7f3ec",
+         "color": "#241f1c",
+         "radius": 25,
+         "size": 14,
+         "weight": 500
+        },
+        "m": "rise"
+       }
+      ]
+     },
+     {
+      "id": "glancing",
+      "h": {
+       "p": 390,
+       "l": 470
+      },
+      "els": [
+       {
+        "id": "g_head",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 32,
+         "w": 342,
+         "h": 40,
+         "z": 1
+        },
+        "l": {
+         "x": 100,
+         "y": 48,
+         "w": 680,
+         "h": 52,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 30,
+         "italic": true
+        },
+        "m": "rise",
+        "text": "Glancing moments",
+        "sl": {
+         "size": 40
+        }
+       },
+       {
+        "id": "g_strip",
+        "t": "strip",
+        "p": {
+         "x": 0,
+         "y": 88,
+         "w": 390,
+         "h": 260,
+         "z": 1
+        },
+        "l": {
+         "x": 0,
+         "y": 116,
+         "w": 1200,
+         "h": 310,
+         "z": 1
+        },
+        "s": {
+         "radius": 10
+        }
+       }
+      ]
+     },
+     {
+      "id": "events",
+      "h": {
+       "p": 460,
+       "l": 560
+      },
+      "bg": {
+       "c": "#efe8dc"
+      },
+      "els": [
+       {
+        "id": "e_head",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 36,
+         "w": 342,
+         "h": 42,
+         "z": 1
+        },
+        "l": {
+         "x": 100,
+         "y": 54,
+         "w": 680,
+         "h": 54,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 30,
+         "italic": true
+        },
+        "m": "rise",
+        "text": "The celebrations",
+        "sl": {
+         "size": 40
+        }
+       },
+       {
+        "id": "e_row",
+        "t": "events",
+        "p": {
+         "x": 24,
+         "y": 96,
+         "w": 366,
+         "h": 320,
+         "z": 1
+        },
+        "l": {
+         "x": 100,
+         "y": 130,
+         "w": 1000,
+         "h": 380,
+         "z": 1
+        },
+        "s": {
+         "radius": 14,
+         "size": 15,
+         "weight": 500
+        },
+        "v": "row",
+        "per": {
+         "p": 1.6,
+         "l": 3.2
+        }
+       }
+      ]
+     },
+     {
+      "id": "showcase",
+      "h": {
+       "p": 420,
+       "l": 360
+      },
+      "els": [
+       {
+        "id": "s_card",
+        "t": "shape",
+        "p": {
+         "x": 20,
+         "y": 28,
+         "w": 350,
+         "h": 364,
+         "z": 0
+        },
+        "l": {
+         "x": 100,
+         "y": 40,
+         "w": 1000,
+         "h": 280,
+         "z": 0
+        },
+        "s": {
+         "bg": "#ffffff",
+         "radius": 20,
+         "shadow": 1
+        }
+       },
+       {
+        "id": "s_head",
+        "t": "text",
+        "p": {
+         "x": 40,
+         "y": 54,
+         "w": 310,
+         "h": 38,
+         "z": 1
+        },
+        "l": {
+         "x": 140,
+         "y": 72,
+         "w": 460,
+         "h": 48,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 28,
+         "italic": true
+        },
+        "text": "Create from our story",
+        "sl": {
+         "size": 36
+        }
+       },
+       {
+        "id": "s_sub",
+        "t": "text",
+        "p": {
+         "x": 40,
+         "y": 98,
+         "w": 310,
+         "h": 44,
+         "z": 1
+        },
+        "l": {
+         "x": 140,
+         "y": 130,
+         "w": 460,
+         "h": 54,
+         "z": 1
+        },
+        "s": {
+         "size": 14,
+         "opacity": 0.72,
+         "lh": 1.45
+        },
+        "text": "Turn your favourite photos into a beat-synced reel or keepsake post."
+       },
+       {
+        "id": "reel_btn",
+        "t": "action",
+        "act": "reel",
+        "p": {
+         "x": 40,
+         "y": 168,
+         "w": 310,
+         "h": 52,
+         "z": 2
+        },
+        "l": {
+         "x": 680,
+         "y": 82,
+         "w": 370,
+         "h": 56,
+         "z": 2
+        },
+        "s": {
+         "bg": "#241f1c",
+         "color": "#f7f3ec",
+         "radius": 26,
+         "size": 15,
+         "weight": 500
+        }
+       },
+       {
+        "id": "post_btn",
+        "t": "action",
+        "act": "post",
+        "p": {
+         "x": 40,
+         "y": 234,
+         "w": 310,
+         "h": 52,
+         "z": 2
+        },
+        "l": {
+         "x": 680,
+         "y": 154,
+         "w": 370,
+         "h": 56,
+         "z": 2
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#241f1c",
+         "color": "#241f1c",
+         "radius": 26,
+         "size": 15,
+         "weight": 500
+        }
+       },
+       {
+        "id": "moment_btn",
+        "t": "action",
+        "act": "memory",
+        "p": {
+         "x": 40,
+         "y": 300,
+         "w": 310,
+         "h": 52,
+         "z": 2
+        },
+        "l": {
+         "x": 680,
+         "y": 226,
+         "w": 370,
+         "h": 56,
+         "z": 2
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#9a7b4f",
+         "color": "#9a7b4f",
+         "radius": 26,
+         "size": 15,
+         "weight": 500
+        }
+       }
+      ]
+     },
+     {
+      "id": "closing",
+      "h": {
+       "p": 340,
+       "l": 320
+      },
+      "bg": {
+       "c": "#efe8dc"
+      },
+      "els": [
+       {
+        "id": "bless",
+        "t": "blessings",
+        "p": {
+         "x": 32,
+         "y": 36,
+         "w": 326,
+         "h": 170,
+         "z": 1
+        },
+        "l": {
+         "x": 260,
+         "y": 48,
+         "w": 680,
+         "h": 150,
+         "z": 1
+        },
+        "s": {
+         "font": "Cormorant Garamond",
+         "size": 24,
+         "italic": true,
+         "align": "center",
+         "lh": 1.35
+        },
+        "m": "fade"
+       },
+       {
+        "id": "notes_btn",
+        "t": "action",
+        "act": "notes",
+        "p": {
+         "x": 115,
+         "y": 220,
+         "w": 160,
+         "h": 44,
+         "z": 2
+        },
+        "l": {
+         "x": 510,
+         "y": 212,
+         "w": 180,
+         "h": 46,
+         "z": 2
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#9a7b4f",
+         "color": "#241f1c",
+         "radius": 23,
+         "size": 14,
+         "weight": 500
+        }
+       },
+       {
+        "id": "credit",
+        "t": "credit",
+        "p": {
+         "x": 24,
+         "y": 288,
+         "w": 342,
+         "h": 26,
+         "z": 1
+        },
+        "l": {
+         "x": 300,
+         "y": 276,
+         "w": 600,
+         "h": 26,
+         "z": 1
+        },
+        "s": {
+         "size": 11,
+         "ls": 0.22,
+         "upper": true,
+         "align": "center",
+         "opacity": 0.68
+        }
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "id": "canvas-editorial",
+   "name": "Editorial Album (editor)",
+   "group": "progress",
+   "blocks": [],
+   "canvas": {
+    "v": 1,
+    "name": "Editorial Album (editor)",
+    "colors": {
+     "bg": "#faf8f4",
+     "ink": "#1a1918",
+     "acc": "#7c6548",
+     "acc2": "#b89f7d",
+     "card": "#ffffff"
+    },
+    "fonts": {
+     "head": "Instrument Serif",
+     "body": "Montserrat"
+    },
+    "sections": [
+     {
+      "id": "spread1",
+      "h": {
+       "p": 844,
+       "l": 780
+      },
+      "bg": {
+       "c": "#faf8f4"
+      },
+      "els": [
+       {
+        "id": "issue",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 44,
+         "w": 342,
+         "h": 22,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 72,
+         "w": 460,
+         "h": 24,
+         "z": 1
+        },
+        "s": {
+         "size": 10,
+         "ls": 0.28,
+         "upper": true,
+         "color": "#7c6548",
+         "align": "center"
+        },
+        "text": "VOLUME I · WEDDING MONOGRAPH",
+        "sl": {
+         "align": "left"
+        }
+       },
+       {
+        "id": "names",
+        "t": "names",
+        "p": {
+         "x": 20,
+         "y": 74,
+         "w": 350,
+         "h": 72,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 112,
+         "w": 480,
+         "h": 130,
+         "z": 1
+        },
+        "s": {
+         "font": "Instrument Serif",
+         "size": 42,
+         "align": "center",
+         "lh": 1.02
+        },
+        "m": "fade",
+        "sl": {
+         "size": 64,
+         "align": "left"
+        }
+       },
+       {
+        "id": "rule1",
+        "t": "shape",
+        "p": {
+         "x": 145,
+         "y": 156,
+         "w": 100,
+         "h": 1,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 260,
+         "w": 120,
+         "h": 1,
+         "z": 1
+        },
+        "s": {
+         "bg": "#7c6548",
+         "opacity": 0.45
+        }
+       },
+       {
+        "id": "date",
+        "t": "date",
+        "p": {
+         "x": 24,
+         "y": 170,
+         "w": 342,
+         "h": 22,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 282,
+         "w": 460,
+         "h": 24,
+         "z": 1
+        },
+        "s": {
+         "size": 11,
+         "ls": 0.24,
+         "upper": true,
+         "align": "center",
+         "opacity": 0.75
+        },
+        "sl": {
+         "align": "left"
+        }
+       },
+       {
+        "id": "cover",
+        "t": "photo",
+        "p": {
+         "x": 24,
+         "y": 214,
+         "w": 342,
+         "h": 456,
+         "z": 1
+        },
+        "l": {
+         "x": 620,
+         "y": 72,
+         "w": 490,
+         "h": 636,
+         "z": 1
+        },
+        "s": {
+         "radius": 2,
+         "fy": 26
+        },
+        "src": {
+         "k": "cover",
+         "n": 0
+        },
+        "m": "unfold"
+       },
+       {
+        "id": "findme",
+        "t": "action",
+        "act": "findme",
+        "p": {
+         "x": 24,
+         "y": 698,
+         "w": 164,
+         "h": 46,
+         "z": 2
+        },
+        "l": {
+         "x": 90,
+         "y": 656,
+         "w": 180,
+         "h": 50,
+         "z": 2
+        },
+        "s": {
+         "bg": "#1a1918",
+         "color": "#faf8f4",
+         "radius": 4,
+         "size": 13,
+         "weight": 500
+        },
+        "m": "rise"
+       },
+       {
+        "id": "moments",
+        "t": "action",
+        "act": "moments",
+        "p": {
+         "x": 202,
+         "y": 698,
+         "w": 164,
+         "h": 46,
+         "z": 2
+        },
+        "l": {
+         "x": 284,
+         "y": 656,
+         "w": 180,
+         "h": 50,
+         "z": 2
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#1a1918",
+         "color": "#1a1918",
+         "radius": 4,
+         "size": 13,
+         "weight": 500
+        },
+        "m": "rise"
+       }
+      ]
+     },
+     {
+      "id": "spread2",
+      "h": {
+       "p": 760,
+       "l": 640
+      },
+      "bg": {
+       "c": "#f2ede4"
+      },
+      "els": [
+       {
+        "id": "plate_a",
+        "t": "photo",
+        "p": {
+         "x": 24,
+         "y": 32,
+         "w": 212,
+         "h": 280,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 64,
+         "w": 320,
+         "h": 440,
+         "z": 1
+        },
+        "s": {
+         "radius": 2
+        },
+        "src": {
+         "k": "hl",
+         "n": 0
+        },
+        "m": "fade"
+       },
+       {
+        "id": "plate_b",
+        "t": "photo",
+        "p": {
+         "x": 248,
+         "y": 72,
+         "w": 118,
+         "h": 240,
+         "z": 1
+        },
+        "l": {
+         "x": 434,
+         "y": 144,
+         "w": 250,
+         "h": 360,
+         "z": 1
+        },
+        "s": {
+         "radius": 2
+        },
+        "src": {
+         "k": "hl",
+         "n": 1
+        },
+        "m": "fade"
+       },
+       {
+        "id": "cap_a",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 324,
+         "w": 342,
+         "h": 22,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 520,
+         "w": 594,
+         "h": 24,
+         "z": 1
+        },
+        "s": {
+         "size": 10,
+         "ls": 0.22,
+         "upper": true,
+         "color": "#7c6548"
+        },
+        "text": "PLATES 01 & 02 · SELECTED HIGHLIGHTS"
+       },
+       {
+        "id": "chapters_head",
+        "t": "text",
+        "p": {
+         "x": 24,
+         "y": 376,
+         "w": 342,
+         "h": 36,
+         "z": 1
+        },
+        "l": {
+         "x": 750,
+         "y": 64,
+         "w": 360,
+         "h": 44,
+         "z": 1
+        },
+        "s": {
+         "font": "Instrument Serif",
+         "size": 30
+        },
+        "text": "Chapters",
+        "sl": {
+         "size": 38
+        }
+       },
+       {
+        "id": "chapters",
+        "t": "events",
+        "p": {
+         "x": 24,
+         "y": 424,
+         "w": 342,
+         "h": 300,
+         "z": 1
+        },
+        "l": {
+         "x": 750,
+         "y": 124,
+         "w": 360,
+         "h": 420,
+         "z": 1
+        },
+        "s": {
+         "font": "Instrument Serif",
+         "size": 24
+        },
+        "v": "list"
+       }
+      ]
+     },
+     {
+      "id": "spread3",
+      "h": {
+       "p": 520,
+       "l": 420
+      },
+      "els": [
+       {
+        "id": "guest_card",
+        "t": "shape",
+        "p": {
+         "x": 24,
+         "y": 32,
+         "w": 342,
+         "h": 210,
+         "z": 0
+        },
+        "l": {
+         "x": 90,
+         "y": 56,
+         "w": 600,
+         "h": 240,
+         "z": 0
+        },
+        "s": {
+         "bg": "#ffffff",
+         "border": 1,
+         "bcolor": "#e5ddd0",
+         "radius": 4
+        }
+       },
+       {
+        "id": "bless",
+        "t": "blessings",
+        "p": {
+         "x": 44,
+         "y": 56,
+         "w": 302,
+         "h": 162,
+         "z": 1
+        },
+        "l": {
+         "x": 130,
+         "y": 86,
+         "w": 520,
+         "h": 180,
+         "z": 1
+        },
+        "s": {
+         "font": "Instrument Serif",
+         "size": 24,
+         "align": "center",
+         "lh": 1.3
+        },
+        "m": "fade"
+       },
+       {
+        "id": "reel",
+        "t": "action",
+        "act": "reel",
+        "p": {
+         "x": 24,
+         "y": 268,
+         "w": 342,
+         "h": 48,
+         "z": 2
+        },
+        "l": {
+         "x": 750,
+         "y": 64,
+         "w": 360,
+         "h": 54,
+         "z": 2
+        },
+        "s": {
+         "bg": "#1a1918",
+         "color": "#faf8f4",
+         "radius": 4,
+         "size": 14,
+         "weight": 500
+        }
+       },
+       {
+        "id": "post",
+        "t": "action",
+        "act": "post",
+        "p": {
+         "x": 24,
+         "y": 328,
+         "w": 342,
+         "h": 48,
+         "z": 2
+        },
+        "l": {
+         "x": 750,
+         "y": 134,
+         "w": 360,
+         "h": 54,
+         "z": 2
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#1a1918",
+         "color": "#1a1918",
+         "radius": 4,
+         "size": 14,
+         "weight": 500
+        }
+       },
+       {
+        "id": "memory",
+        "t": "action",
+        "act": "memory",
+        "p": {
+         "x": 24,
+         "y": 388,
+         "w": 342,
+         "h": 48,
+         "z": 2
+        },
+        "l": {
+         "x": 750,
+         "y": 204,
+         "w": 360,
+         "h": 54,
+         "z": 2
+        },
+        "s": {
+         "border": 1,
+         "bcolor": "#7c6548",
+         "color": "#7c6548",
+         "radius": 4,
+         "size": 14,
+         "weight": 500
+        }
+       },
+       {
+        "id": "credit",
+        "t": "credit",
+        "p": {
+         "x": 24,
+         "y": 466,
+         "w": 342,
+         "h": 24,
+         "z": 1
+        },
+        "l": {
+         "x": 90,
+         "y": 340,
+         "w": 1020,
+         "h": 24,
+         "z": 1
+        },
+        "s": {
+         "size": 10,
+         "ls": 0.24,
+         "upper": true,
+         "align": "center",
+         "opacity": 0.65
+        }
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
    "id": "canvas-night",
    "name": "Night Gallery",
    "group": "canvas",
