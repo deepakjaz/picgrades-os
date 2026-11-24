@@ -3248,10 +3248,6 @@ body.pgv-on .pgst-pop,body.pgm-on .pgst-pop,body.pged-on .pgst-pop,body.pgte-on 
 .pce-zoom-toggle{height:44px!important;min-width:44px!important;padding:0 4px!important;border:0!important;border-radius:0!important;background:none!important;color:rgba(247,243,236,.82)!important;font:500 11px var(--font-sans)!important}
 .pce-zoom-menu{position:absolute;top:44px;left:0;z-index:20;padding:6px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#171412;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .pce-play{width:44px;height:44px;min-width:44px;padding:8px;border:0;border-radius:0;background:none;color:rgba(247,243,236,.9);font-size:16px}
-.pce-save,.pce-apply{height:44px;min-width:44px;padding:0 3px;border:0;border-radius:0;background:none;color:#f7f3ec}
-.pce-save:after,.pce-apply:after{content:attr(data-label)}
-.pce-save{font-size:0}.pce-save:before{content:"Save";height:32px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.11);display:inline-flex;align-items:center;justify-content:center;font:500 12px var(--font-sans)}
-.pce-apply{font-size:0}.pce-apply:before{content:"Apply";height:32px;padding:0 12px;border-radius:999px;background:#e5b878;color:#17120d;display:inline-flex;align-items:center;justify-content:center;font:600 12px var(--font-sans)}
 .pce-body{flex:1;min-height:0;display:flex;flex-direction:column;background:#12100e}
 .pce-stage{flex:1 1 auto;min-height:0;height:auto;overflow:auto;padding:10px 10px 16px;background:#12100e}
 .pce-panel{position:relative;flex:none;min-height:44px;max-height:40vh;display:flex;flex-direction:column;background:rgba(22,19,17,.96);border-top:1px solid rgba(255,255,255,.1);border-radius:14px 14px 0 0;overflow:hidden}
@@ -3279,12 +3275,17 @@ body.pgv-on .pgst-pop,body.pgm-on .pgst-pop,body.pged-on .pgst-pop,body.pgte-on 
  .pce:not(.pce-drawer-open) .pce-panel{height:100%;max-height:none}
  .pce-drawer-open .pce-panel{height:100%;max-height:none}
  .pce-panel-tools{padding:8px 12px 0}
+ /* F2b (Claude): the laptop side panel is always open — the phone drawer rules must not hide it */
+ .pce:not(.pce-drawer-open) .pce-pane{display:block!important}
+ .pce:not(.pce-drawer-open) .pce-panel:has(.pce-tabs [data-tab="page"].on) .pce-panel-tools{display:flex!important}
+ .pce-drawer-toggle{display:none}
+ .pce-top{justify-content:flex-start}.pce-top .pce-save{margin-left:auto}
 }
 @media (max-width:699px){
  .pce-top{gap:0;padding-left:2px;padding-right:2px}
  .pce-x,.pce-ic,.pce-play{width:40px;min-width:40px}
  .pce-zoom-toggle{min-width:40px!important}
- .pce-save,.pce-apply{min-width:42px}
+ .pce-top .pce-save,.pce-top .pce-apply{min-width:44px}
  .pce-tabs{padding:0 6px;gap:2px}
  .pce-tabs button[data-tab]{padding:0 5px;font-size:12px}
 }
@@ -3295,4 +3296,9 @@ body.pce-on .pgs-findme{display:none!important}
 .pce-global-layer{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px;padding:0 8px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(245,240,232,.88)}
 .pce-global-layer>span{display:flex;align-items:center;gap:8px;font:500 13px var(--font-sans)}
 .pce-global-layer i{width:22px;text-align:center;font-style:normal;opacity:.75}
-.pce-global-layer small{font:500 10px var(--font-sans);opacity:.55}
+.pce-global-layer small{font:500 11px var(--font-sans);opacity:.6}
+
+/* F2b (Claude): Save / Apply = slim 32px pill drawn inside a real 44px tap box; the button keeps its own text (Save → Saved) */
+.pce-top .pce-save,.pce-top .pce-apply{height:44px;min-height:44px;min-width:44px;padding:0 12px;margin:0 1px;border:0;border-radius:999px;font:500 12px var(--font-sans);white-space:nowrap;background:linear-gradient(var(--pill),var(--pill)) center/100% 32px no-repeat}
+.pce-top .pce-save{--pill:rgba(255,255,255,.11);color:#f7f3ec}
+.pce-top .pce-apply{--pill:#e5b878;color:#17120d;font-weight:600}
