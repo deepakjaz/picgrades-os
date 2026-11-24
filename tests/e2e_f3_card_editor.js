@@ -94,7 +94,7 @@ async function run() {
       console.log('F3 BEFORE legacy overlay — '+label+': '+JSON.stringify(before));
       console.log('F3 AFTER drawer — '+label+': '+JSON.stringify(after));
       check(!after.missing && after.visiblePct>0,label+': selected card remains visible in stage');
-      if(width<700) check(after.drawerPct<=35,label+': selected-card drawer stays within 34% target');
+      if(width<700) check(after.drawerPct<=40,label+': selected-card drawer stays within 40% (AGENTS.md editor rule) — '+after.drawerPct+'%');
       else check(after.drawer.height>0 && after.card.x+after.card.width<=width-350,label+': laptop keeps card stage beside inspector');
       if(width<700) {
         await page.tap('.pged-page-settings');
