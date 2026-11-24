@@ -143,7 +143,7 @@ const C3={id:'c3',src:'Claude',name:'Cloud Pages',venue:'Mountain destination',f
   <div data-l="Progress bars" style="position:absolute;top:20px;left:16px;right:16px;display:flex;gap:4px">${E.map((_,k)=>`<i style="flex:1;height:3px;border-radius:2px;background:#fff;opacity:${k<=i?1:.35}"></i>`).join('')}</div>
   <div style="position:absolute;left:24px;bottom:290px;font:600 10px Jost;letter-spacing:3px;color:#E9CF8E">PAGE ${i+1}</div>
   <div class="rise" style="position:absolute;left:22px;bottom:220px;font:60px 'Instrument Serif'">${e.n}</div>
-  <div data-l="Peek photos" style="position:absolute;left:24px;bottom:146px;display:flex;gap:8px">${[0,1,2,3].map(k=>`<div class="rise" style="width:60px;height:56px;border-radius:8px;overflow:hidden;transition-delay:${.15+k*.07}s">${img(MOM[(i+k)%12])}</div>`).join('')}<div onclick="PGSS.ev(this,${e.i})" style="width:60px;height:56px;border-radius:8px;border:1px solid #fff;display:grid;place-items:center;font:600 12px Jost;cursor:pointer">Open</div></div></section>`).join('')}
+  <div data-l="Peek photos" style="position:absolute;left:24px;bottom:146px;display:flex;gap:8px">${[0,1,2,3].map(k=>`<div class="rise" style="width:60px;height:56px;border-radius:8px;overflow:hidden;transition-delay:${.15+k*.07}s">${img('e'+i+'h'+(k+1))}</div>`).join('')}<div onclick="PGSS.ev(this,${e.i})" style="width:60px;height:56px;border-radius:8px;border:1px solid #fff;display:grid;place-items:center;font:600 12px Jost;cursor:pointer">Open</div></div></section>`).join('')}
  <section data-l="Notes page" style="min-height:500px;padding:120px 26px 140px;scroll-snap-align:start">
   <div style="font:44px 'Instrument Serif'">Words for us</div>
   ${QL().map(q=>`<div class="rise" style="font:italic 20px 'Instrument Serif';margin:22px 0;border-left:2px solid var(--acc);padding-left:14px">${q}</div>`).join('')}
@@ -211,7 +211,7 @@ const C5={id:'c5',src:'Claude',name:'Cinema Chapters',venue:'5-star ballroom · 
  ${E.map((e,i)=>`<section data-l="Event · ${e.n}" style="padding:80px 0 40px;text-align:center;background:#000;color:#F4EDE2">
   <div class="rise" style="font:600 11px Jost;letter-spacing:6px;color:#D8C197">CHAPTER</div><div class="rise" style="font:110px/1 Bodoni Moda;color:#D8C197;transition-delay:.1s">${RN[i]}</div>
   <div class="rise" style="font:italic 46px Bodoni Moda;transition-delay:.2s">${e.n}</div><div class="rise" style="font-size:11px;color:#D8C197;opacity:.8;transition-delay:.25s">${e.t}</div>
-  <div data-l="Film strip (moving)" style="margin-top:34px;background:#211E1B;padding:14px 0;overflow:hidden;position:relative;border-top:6px dashed #000;border-bottom:6px dashed #000" onclick="PGSS.ev(this,${e.i})"><div class="pss-strip" style="display:flex;gap:8px;width:max-content;animation-duration:${18+i}s">${[...Array(2)].map(()=>[0,1,2,3,4].map(k=>`<div style="width:100px;height:130px">${img(k?MOM[(i+k)%12]:e.ph)}</div>`).join('')).join('')}</div></div></section>`).join('')}
+  <div data-l="Film strip (moving)" style="margin-top:34px;background:#211E1B;padding:14px 0;overflow:hidden;position:relative;border-top:6px dashed #000;border-bottom:6px dashed #000" onclick="PGSS.ev(this,${e.i})"><div class="pss-strip" style="display:flex;gap:8px;width:max-content;animation-duration:${18+i}s">${[...Array(2)].map(()=>[0,1,2,3,4].map(k=>`<div style="width:100px;height:130px">${img(k?'e'+i+'h'+k:e.ph)}</div>`).join('')).join('')}</div></div></section>`).join('')}
  <section data-l="Create · clapperboard" id="c5c" style="background:#000;color:#F4EDE2;text-align:center;padding:40px 0 30px">
   <div onclick="document.getElementById('c5c').classList.toggle('open')" style="cursor:pointer;width:170px;margin:0 auto;position:relative" data-l="Clapperboard"><div id="c5arm" style="height:34px;background:repeating-linear-gradient(110deg,#D8C197 0 18px,#0F0E0D 18px 34px);border-radius:4px;transform-origin:0 100%;transform:rotate(-22deg);transition:transform .25s"></div><div style="height:90px;background:#211E1B;border:1px solid #D8C197;border-radius:4px;display:grid;place-items:center;font:italic 22px Bodoni Moda">Your cut</div></div>
   <div style="font-size:11px;color:#D8C197;margin-top:10px">guests and the couple · tap the board</div>
@@ -526,6 +526,10 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
     return k => {
       if (own[k]) return own[k];
       if (given[k] != null) return given[k];
+      const eh = /^e(\d+)h(\d+)$/.exec(k);   // clean-up #4: an event's own photo no. n (Cinema Chapters strip, Cloud Pages peeks) — its highlights first, then its photos
+      if (eh) { const e = evs[+eh[1]], n = +eh[2], hl = (e && e.featured) || [], ph = (e && (e.photos || e.teaser)) || [];
+        const id = hl[n] || (hlOnly ? hl[n % (hl.length || 1)] : ((ph[n] || {}).id || ph[n] || hl[n % (hl.length || 1)]));
+        if (id) return (given[k] = id); }
       const m = /^e(\d+)$/.exec(k);
       if (m) { const e = evs[+m[1]]; const id = e && (((e.featured || [])[0]) || (hlOnly ? '' : ((e.photos || [])[0] || {}).id || ((e.teaser || [])[0] || {}).id)); if (id) return (given[k] = id); }
       return (given[k] = pool.length ? pool[next++ % pool.length] : '');
