@@ -351,6 +351,7 @@
   function panel() {
     if (!E || !E.doc) return;
     const pane = E.el.querySelector('.pce-pane');
+    E.el.dataset.pane = E.tab;   // clean-up #6: the Phone/Laptop switch shows only on the Page tab
     E.el.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('on', b.dataset.tab === E.tab); b.setAttribute('aria-selected', b.dataset.tab === E.tab); });
     pane.innerHTML = E.tab === 'add' ? addPane() : E.tab === 'style' ? stylePane() : E.tab === 'layers' ? layersPane() : pagePane();
     wire(pane);
