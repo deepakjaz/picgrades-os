@@ -2983,13 +2983,13 @@ body.pce-on{overflow:hidden}body.pce-on .tkg-global-nav,body.pce-on .pg-totop,bo
 .pce-page{position:relative;margin:0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
 .pce-page .pgc-el{cursor:pointer;touch-action:pan-y}
 .pce-page .pgc-el:hover{outline:1px dashed rgba(80,160,255,.7);outline-offset:-1px}
-.pce-page .pgc-el.pce-on-el{touch-action:none}
+.pce-page .pgc-el.pce-on-el{touch-action:pan-y}.pce-page .pgc-el.pce-frame-on{touch-action:none}   /* clean-up #2: a selected part still lets the page scroll; framing a photo does not */
 .pce-page .pgc-sec+.pgc-sec{box-shadow:0 -1px 0 rgba(80,160,255,.35)}
 .pce-sel{position:absolute;z-index:200;box-sizing:border-box;border:1.5px solid #3d8bff;pointer-events:none;transform-origin:50% 50%}
 .pce-h{position:absolute;width:16px;height:16px;margin:-8px;border-radius:50%;background:#fff;border:2px solid #3d8bff;pointer-events:auto;touch-action:none;box-sizing:border-box}
 .pce-h-nw{left:0;top:0;cursor:nwse-resize}.pce-h-ne{right:0;top:0;margin-right:-8px;cursor:nesw-resize}.pce-h-sw{left:0;bottom:0;margin-bottom:-8px;cursor:nesw-resize}.pce-h-se{right:0;bottom:0;margin:-8px;margin-right:-8px;margin-bottom:-8px;cursor:nwse-resize}
 .pce-rot{left:50%;top:-30px;background:#3d8bff;cursor:grab}
-.pce-tag{position:absolute;left:0;bottom:-24px;white-space:nowrap;font:600 10.5px var(--font-sans);background:#3d8bff;color:#fff;padding:3px 7px;border-radius:6px}
+.pce-tag{position:absolute;left:0;bottom:-24px;white-space:nowrap;font:600 11px var(--font-sans);background:#3d8bff;color:#fff;padding:3px 7px;border-radius:6px}
 .pce-guide{position:absolute;z-index:199;background:#ff3d8b;pointer-events:none}.pce-guide.x{width:1px}.pce-guide.y{height:1px}
 @media (pointer:coarse){.pce-h{width:24px;height:24px;margin:-12px}.pce-h-ne{margin-right:-12px}.pce-h-sw{margin-bottom:-12px}.pce-h-se{margin:-12px}}
 .pce-panel{flex:1;min-height:0;display:flex;flex-direction:column}
@@ -3302,3 +3302,7 @@ body.pce-on .pgs-findme{display:none!important}
 .pce-top .pce-save,.pce-top .pce-apply{height:44px;min-height:44px;min-width:44px;padding:0 12px;margin:0 1px;border:0;border-radius:999px;font:500 12px var(--font-sans);white-space:nowrap;background:linear-gradient(var(--pill),var(--pill)) center/100% 32px no-repeat}
 .pce-top .pce-save{--pill:rgba(255,255,255,.11);color:#f7f3ec}
 .pce-top .pce-apply{--pill:#e5b878;color:#17120d;font-weight:600}
+
+/* clean-up #2: ✥ Move handle above the selected part — 44px tap area, slim pill look */
+.pce-mv{position:absolute;left:-4px;top:-44px;height:44px;min-width:76px;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;cursor:move;font:600 11px var(--font-sans,system-ui);font-style:normal;color:#fff;background:linear-gradient(#3d8bff,#3d8bff) center/100% 26px no-repeat;border-radius:13px;white-space:nowrap;z-index:3}
+.pce-framing .pce-mv{display:none}

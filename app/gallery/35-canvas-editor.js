@@ -201,7 +201,7 @@
     if (!node || !f) return;
     const sec = node.closest('.pgc-sec'), inn = node.parentElement, sp = spot(f.e), k = kNow();
     const box = h('div', 'pce-sel'); box.style.cssText = 'left:' + (inn.offsetLeft + node.offsetLeft) + 'px;top:' + (sec.offsetTop + node.offsetTop) + 'px;width:' + node.offsetWidth + 'px;height:' + node.offsetHeight + 'px;' + (sp.r ? 'rotate:' + sp.r + 'deg' : '');
-    box.innerHTML = ['nw', 'ne', 'sw', 'se'].map(c => '<i class="pce-h pce-h-' + c + '" data-h="' + c + '"></i>').join('') + '<i class="pce-h pce-rot" data-h="rot"></i><b class="pce-tag">' + esc(TYPE[f.e.t] || f.e.t) + ' · ' + Math.round(sp.w) + '×' + Math.round(sp.h) + '</b>';
+    box.innerHTML = ['nw', 'ne', 'sw', 'se'].map(c => '<i class="pce-h pce-h-' + c + '" data-h="' + c + '"></i>').join('') + '<i class="pce-h pce-rot" data-h="rot"></i><i class="pce-mv" data-h="move" role="button" aria-label="Move">✥ Move</i><b class="pce-tag">' + esc(TYPE[f.e.t] || f.e.t) + ' · ' + Math.round(sp.w) + '×' + Math.round(sp.h) + '</b>';
     if (E.frame && E.frame === E.sel) { box.classList.add('pce-framing'); const tg = box.querySelector('.pce-tag'); if (tg) tg.textContent = 'Framing · drag the photo'; }
     page.appendChild(box); E.box = box; E.k = k;
   }
@@ -216,8 +216,8 @@
     const id = node.dataset.el, was = id === E.sel;
     if (was && E.frame === id) return start(ev, 'frame', true);   // step 79: framing — dragging moves the photo inside its holder
     if (!was && E.frame) E.frame = null;
-    if (!was) { E.sel = id; E.tab = E.tab === 'add' ? 'style' : E.tab; draw(); panel(); }
-    if (!was && ev.pointerType === 'touch') return;   // touch: the first tap selects (so the page still scrolls), the next touch drags
+    if (!was) { E.sel = id; E.tab = E.tab === 'add' ? 'style' : E.tab; draw(); panel(); return; }   // clean-up #2: the first tap / click only selects — nothing moves
+    if (ev.pointerType === 'touch') return start(ev, 'tap', true);   // phone: touching the selected part never drags it (the page scrolls); drag ✥ Move to move it
     start(ev, 'move', was);
   }
   function start(ev, how, was) {
@@ -225,8 +225,7 @@
     const page = E.el.querySelector('.pce-page'), node = page.querySelector('.pgc-el[data-el="' + CSS.escape(E.sel) + '"]');
     drag = { how, x0: ev.clientX, y0: ev.clientY, sp: Object.assign({}, spot(f.e)), f, node, moved: false, k: kNow(), sec: node.closest('.pgc-sec'), was: !!was };
     if (how === 'frame') { const s = Object.assign({}, f.e.s, E.mode === 'l' && f.e.sl ? f.e.sl : {}), img = node.querySelector('img'); drag.fr = { fx: num(s.fx, 50), fy: num(s.fy, 30), zm: Math.max(1, num(s.zm, 1)), img }; }
-    page.classList.add('pce-drag');
-    ev.preventDefault();
+    if (how !== 'tap') { page.classList.add('pce-drag'); ev.preventDefault(); }
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up, { once: true }); window.addEventListener('pointercancel', cancel, { once: true });
   }
   function snapLines(f, sp) {   // where things line up in this section: the middle, the sides, the other elements' edges and middles
@@ -237,8 +236,8 @@
   function move(ev) {
     if (!drag) return;
     const dx = (ev.clientX - drag.x0) / drag.k, dy = (ev.clientY - drag.y0) / drag.k, s0 = drag.sp, sp = Object.assign({}, s0);
-    if (Math.abs(ev.clientX - drag.x0) + Math.abs(ev.clientY - drag.y0) > 3) drag.moved = true;
-    if (!drag.moved) return;
+    if (Math.abs(ev.clientX - drag.x0) + Math.abs(ev.clientY - drag.y0) > 6) drag.moved = true;
+    if (!drag.moved || drag.how === 'tap') return;
     if (drag.how === 'frame') return frameMove(ev);
     const L = snapLines(drag.f, sp), th = SNAP / drag.k, guides = [];
     const snap = (val, list, dir) => { let best = null; list.forEach(l => { if (Math.abs(l - val) < th && (best == null || Math.abs(l - val) < Math.abs(best - val))) best = l; }); if (best != null) guides.push([dir, best]); return best; };
@@ -275,7 +274,7 @@
     window.removeEventListener('pointermove', move);
     const page = E.el.querySelector('.pce-page'); if (page) page.classList.remove('pce-drag');
     const d = drag; drag = null; if (!d) return;
-    if (!d.moved) { if (d.how === 'move' && d.was && ['names', 'date', 'text', 'credit'].indexOf(d.f.e.t) > -1) editText(d.f.e.id); if (d.how === 'move' && d.was && d.f.e.t === 'photo') frameOn(d.f.e.id); return; }   // a second tap on words: type straight on the page; on a photo: frame it
+    if (!d.moved || d.how === 'tap') { if (d.moved) return; if ((d.how === 'move' || d.how === 'tap') && d.was && ['names', 'date', 'text', 'credit'].indexOf(d.f.e.t) > -1) editText(d.f.e.id); if ((d.how === 'move' || d.how === 'tap') && d.was && d.f.e.t === 'photo') frameOn(d.f.e.id); return; }   // a second tap on words: type straight on the page; on a photo: frame it
     if (d.how === 'frame') { if (d.fr.now) change(() => { const t = styleTarget(d.f.e); t.fx = d.fr.now.fx; t.fy = d.fr.now.fy; }, true); return; }
     if (!d.now) return;
     // dropped over another section: it moves into that section (both screens keep their place on the page)

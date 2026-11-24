@@ -164,6 +164,7 @@ const srv = http.createServer((req, res) => {
   if (mv) {
     const r0 = await lp.evaluate(id => { const r = document.querySelector('.pce-page .pgc-el[data-el="' + id + '"]').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + Math.min(20, r.height / 2) }; }, mv);
     const s1 = await lp.evaluate(() => document.querySelectorAll('.pce-page .pgc-sec')[1].getBoundingClientRect().top);
+    await lp.mouse.click(r0.x, r0.y); await lp.waitForTimeout(200);   // clean-up #2: the first click only selects — then drag
     await lp.mouse.move(r0.x, r0.y); await lp.mouse.down(); await lp.mouse.move(r0.x, r0.y + 20, { steps: 3 });
     const target = Math.min(s1 + 120, 820); await lp.mouse.move(r0.x, target, { steps: 12 }); await lp.waitForTimeout(150); await lp.mouse.up(); await lp.waitForTimeout(400);
     moved = await lp.evaluate(id => PGCanvasEditor.state().doc.sections[1].els.some(e => e.id === id), mv);
