@@ -570,7 +570,7 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
     const mo = opts.dark == null ? new MutationObserver(recolour) : null; if (mo) mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-tkg-theme'] });
     const cover = photoFn('s58') || photoFn('e0'); if (cover && window.pgImg) bd.style.backgroundImage = 'url("' + pgImg(cover, 800) + '")';
     // the opening stage: a 390 × 844 design, scaled down on shorter screens so nothing hides under the bottom bar
-    const zoomOf = () => (scroller ? 1 : Math.min(1, (window.innerWidth || 390) / 390));
+    const zoomOf = () => Math.min(1, (scroller ? scroller.clientWidth : (window.innerWidth || 390)) / 390);
     function fit() {
       const z = zoomOf(); root.style.zoom = z === 1 ? '' : z; ovEl.style.zoom = root.style.zoom;
       const H = (scroller ? scroller.clientHeight : window.innerHeight) / z;

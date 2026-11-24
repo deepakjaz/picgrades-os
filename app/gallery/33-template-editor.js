@@ -27,24 +27,26 @@
     const l = window.PGLayout && PGLayout.find(id); if (!l || !handles(l.story) || E) return false;
     if (PGLayout.stop) PGLayout.stop();   // the Hub's own copy of a template uses the same ids: stop it while editing
     const tune = versionOf(id, l.story);
-    E = { id, l, tune, saved: JSON.stringify(tune), undo: [], redo: [], inst: null, dark: isDarkApp(), tab: 'photos' };
+    E = { id, l, tune, saved: JSON.stringify(tune), undo: [], redo: [], inst: null, dark: isDarkApp(), tab: 'photos', drawerOpen: false };
     const el = h('div', 'pgte'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Design ' + l.name); E.el = el;
-    el.innerHTML = '<div class="pgte-top"><button type="button" class="pgte-x" aria-label="Close">✕</button>' +
+    el.innerHTML = '<div class="pgte-top"><button type="button" class="pgte-x" aria-label="Close">‹</button>' +
       '<div class="pgte-title"><b>' + esc(l.name) + '</b><small>' + esc(l.idea || '') + '</small></div>' +
       '<button type="button" class="pgte-ic pgte-undo" aria-label="Undo">↶</button><button type="button" class="pgte-ic pgte-redo" aria-label="Redo">↷</button>' +
       '<button type="button" class="pgte-btn pgte-save">Save</button><button type="button" class="pgte-btn pgte-apply">Apply</button></div>' +
       '<div class="pgte-body"><div class="pgte-stage"><div class="pgte-phone"><div class="pgte-scroll"></div></div><p class="pgte-tip">Scroll the page to see it move. Tap any photo to change it.</p></div>' +
-      '<div class="pgte-panel"><div class="pgte-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" role="tab" data-tab="' + k + '">' + n + '</button>').join('') + '</div><div class="pgte-pane"></div></div></div>';
+      '<div class="pgte-panel"><div class="pgte-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" role="tab" data-tab="' + k + '">' + n + '</button>').join('') + '<button type="button" class="pgte-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pgte-pane"></div></div></div>';
     el.querySelector('.pgte-x').addEventListener('click', () => close());
     el.querySelector('.pgte-undo').addEventListener('click', () => { if (!E.undo.length) return; E.redo.push(JSON.stringify(E.tune)); E.tune = JSON.parse(E.undo.pop()); draw(); });
     el.querySelector('.pgte-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.tune)); E.tune = JSON.parse(E.redo.pop()); draw(); });
     el.querySelector('.pgte-save').addEventListener('click', () => save(false));
     el.querySelector('.pgte-apply').addEventListener('click', () => save(true));
-    el.querySelector('.pgte-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { E.tab = b.dataset.tab; panel(); } });
+    el.querySelector('.pgte-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { const same = E.tab === b.dataset.tab; E.tab = b.dataset.tab; setDrawer(!(same && E.drawerOpen)); panel(); } });
+    el.querySelector('.pgte-drawer-toggle').addEventListener('click', () => setDrawer(!E.drawerOpen));
     document.body.appendChild(el); document.body.classList.add('pgte-on');
     draw();
     return true;
   }
+  function setDrawer(open) { if (!E) return; E.drawerOpen = !!open; E.el.classList.toggle('pgte-drawer-open', E.drawerOpen); const b = E.el.querySelector('.pgte-drawer-toggle'); b.textContent = E.drawerOpen ? '⌄' : '⌃'; b.setAttribute('aria-expanded', String(E.drawerOpen)); b.setAttribute('aria-label', E.drawerOpen ? 'Close tools' : 'Open tools'); }
   function close(force) {
     if (!E) return;
     if (!force && JSON.stringify(E.tune) !== E.saved && !window.confirm('Leave without saving your changes to ' + E.l.name + '?')) return;
@@ -158,5 +160,5 @@
     }).catch(err => { showToast(err.message || 'Could not save'); btn.disabled = false; btn.textContent = was; });
   }
 
-  window.PGTemplateEditor = { open, close, handles, state: () => (E ? { id: E.id, tab: E.tab, tune: clone(E.tune), dirty: JSON.stringify(E.tune) !== E.saved } : null), tab: k => { if (E) { E.tab = k; panel(); } } };
+  window.PGTemplateEditor = { open, close, handles, state: () => (E ? { id: E.id, tab: E.tab, tune: clone(E.tune), dirty: JSON.stringify(E.tune) !== E.saved } : null), tab: k => { if (E) { E.tab = k; setDrawer(true); panel(); } } };
 })();
