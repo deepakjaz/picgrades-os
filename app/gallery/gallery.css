@@ -3317,3 +3317,39 @@ body.pce-on .pgs-findme{display:none!important}
 .pgcp-pv-acts .pgcp-pv-apply{flex:1;margin:0}
 .pgcp-pv-edit{flex:0 0 auto;min-width:96px;min-height:48px;padding:0 20px;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;font:600 14px var(--font-sans,system-ui);cursor:pointer}
 .pgcp-pv-edit[hidden]{display:none}
+
+/* ===== clean-up #6: one slim look for the three Hub editors (free .pce, story template .pgte, card .pged) — Gemini v2 =====
+   Every tap area stays ≥44px; only what you SEE gets lighter. Buttons keep their own text (no CSS content for words). */
+/* top bars: back / undo / redo / ✕ = plain icons, no circles or boxes */
+.pce-top .pce-x,.pce-top .pce-ic,.pce-top .pce-play,.pgte-top .pgte-x,.pgte-top .pgte-ic,.pged-top .pged-x,.pged-top .pged-ic{background:transparent!important;border:0!important;box-shadow:none!important;color:rgba(247,243,236,.88)}
+.pged-top .pged-x:before,.pged-top .pged-ic:before{display:none!important}
+.pce-top .pce-ic:disabled,.pgte-top .pgte-ic:disabled,.pged-top .pged-ic:disabled{opacity:.35}
+/* Save / Saved / Apply / Preview / Publish = slim 32px pills drawn inside the 44px tap box */
+.pgte-top .pgte-save,.pgte-top .pgte-apply{width:auto!important;flex:0 0 auto!important;min-width:44px!important;height:44px;padding:0 12px!important;border:0!important;border-radius:16px!important;font:600 12px var(--font-sans)!important;white-space:nowrap;background:linear-gradient(var(--pill),var(--pill)) center/100% 32px no-repeat!important}
+.pgte-top .pgte-save{--pill:rgba(255,255,255,.11);color:#f7f3ec!important}
+.pgte-top .pgte-apply{--pill:#e5b878;color:#17120d!important}
+/* tabs = plain words with a thin gold line under the chosen one */
+.pgte-tabs button{background:none!important;border:0!important;border-radius:0!important;color:rgba(245,240,232,.62)!important;font:500 12px var(--font-sans)!important;position:relative}
+.pgte-tabs button.on{color:#e5b878!important;font-weight:600!important}
+.pgte-tabs button.on:after{content:"";position:absolute;left:22%;right:22%;bottom:8px;height:2px;border-radius:2px;background:#e5b878}
+/* the drawer open/close arrow = a plain icon */
+.pce-drawer-toggle,.pgte-drawer-toggle{background:none!important;border:0!important;box-shadow:none!important;color:rgba(245,240,232,.72)!important}
+/* Shown / Hidden and Frame = small quiet pills (44px tap, 28px look) */
+.pce-eye,.pgte-layer button,.pgte-frame,.pgte-pane .pgte-mini{position:relative;min-height:28px!important;height:28px!important;min-width:64px;margin:8px 0;padding:0 12px!important;border:0!important;border-radius:14px!important;font:600 11px var(--font-sans)!important;color:rgba(247,243,236,.9)!important;background:rgba(255,255,255,.1)!important;box-shadow:none!important}
+.pce-eye:after,.pgte-layer button:after,.pgte-frame:after,.pgte-pane .pgte-mini:after{content:"";position:absolute;left:0;right:0;top:-8px;bottom:-8px}   /* invisible: keeps a 44px tap area */
+.pgte-layer.off button,.pce-eye[aria-label="Show"]{color:rgba(247,243,236,.5)!important}
+.pgte-layer{min-height:44px}
+/* Phone / Laptop (free editor): only on the Page tab, a small 28px switch — no grey blob */
+.pce:not([data-pane="page"]) .pce-panel-tools{display:none!important}
+.pce-mode{height:28px!important;padding:2px!important;gap:2px;border-radius:999px!important;background:rgba(255,255,255,.08)!important;border:0!important}
+.pce-mode button{height:24px!important;min-height:24px!important;padding:0 10px!important;border-radius:999px!important;font:500 11px var(--font-sans)!important;background:none!important;color:rgba(247,243,236,.72)!important}
+.pce-mode button.on{background:rgba(255,255,255,.2)!important;color:#fff!important}
+.pce-mode button:before{background:none!important}
+/* Phone / Tablet / Laptop (card editor): the same small switch; 44px tap area kept with an invisible ::before */
+.pged-screens{height:32px;padding:2px;gap:2px;border-radius:999px;background:rgba(255,255,255,.08)}
+.pged-screens button{position:relative;height:28px!important;min-height:28px!important;padding:0 12px!important;border-radius:999px!important;font:500 12px var(--font-sans)!important;background:none!important;color:rgba(247,243,236,.72)!important}
+.pged-screens button:before{content:"";position:absolute;left:0;right:0;top:-8px;bottom:-8px}
+.pged-screens button.on,.pged-screens button[aria-selected="true"]{background:rgba(255,255,255,.2)!important;color:#fff!important}
+/* switches inside the panels (Left / Centre / Right, Italic / CAPITALS, Light / Dark): no big white blocks */
+.pce-pane .pce-seg,.pgte-pane .pgte-seg{background:rgba(255,255,255,.06)!important;border-radius:12px}
+.pce-pane .pce-seg button.on,.pgte-pane .pgte-seg button.on,.pce-toggles button.on{background:rgba(255,255,255,.2)!important;color:#fff!important;border-color:transparent!important}
