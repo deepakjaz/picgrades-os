@@ -3304,5 +3304,11 @@ body.pce-on .pgs-findme{display:none!important}
 .pce-top .pce-apply{--pill:#e5b878;color:#17120d;font-weight:600}
 
 /* clean-up #2: ✥ Move handle above the selected part — 44px tap area, slim pill look */
-.pce-mv{position:absolute;left:-4px;top:-44px;height:44px;min-width:76px;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;cursor:move;font:600 11px var(--font-sans,system-ui);font-style:normal;color:#fff;background:linear-gradient(#3d8bff,#3d8bff) center/100% 26px no-repeat;border-radius:13px;white-space:nowrap;z-index:3}
+.pce-mv{position:absolute;left:-4px;top:-44px;height:44px;min-width:76px;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;cursor:move;font:600 11px var(--font-sans,system-ui);font-style:normal;color:#fff;background:none;white-space:nowrap;z-index:3;isolation:isolate}
+.pce-mv:before,.pce-chg:before{content:"";position:absolute;left:0;right:0;top:9px;bottom:9px;border-radius:13px;background:#3d8bff;z-index:-1}
 .pce-framing .pce-mv{display:none}
+/* clean-up #3: 'Change photo' on a selected photo, next to ✥ Move — 44px tap area, slim pill look */
+.pce-chg{position:absolute;left:78px;top:-44px;height:44px;min-width:104px;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;font:600 11px var(--font-sans,system-ui);font-style:normal;color:#17120d;background:none;white-space:nowrap;z-index:3;isolation:isolate}
+.pce-chg:before{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.pce-framing .pce-chg{display:none}
+.pce-back{z-index:300}.pce-pick{z-index:301}   /* clean-up #3: the photo picker sits above the selection frame */

@@ -201,7 +201,7 @@
     if (!node || !f) return;
     const sec = node.closest('.pgc-sec'), inn = node.parentElement, sp = spot(f.e), k = kNow();
     const box = h('div', 'pce-sel'); box.style.cssText = 'left:' + (inn.offsetLeft + node.offsetLeft) + 'px;top:' + (sec.offsetTop + node.offsetTop) + 'px;width:' + node.offsetWidth + 'px;height:' + node.offsetHeight + 'px;' + (sp.r ? 'rotate:' + sp.r + 'deg' : '');
-    box.innerHTML = ['nw', 'ne', 'sw', 'se'].map(c => '<i class="pce-h pce-h-' + c + '" data-h="' + c + '"></i>').join('') + '<i class="pce-h pce-rot" data-h="rot"></i><i class="pce-mv" data-h="move" role="button" aria-label="Move">✥ Move</i><b class="pce-tag">' + esc(TYPE[f.e.t] || f.e.t) + ' · ' + Math.round(sp.w) + '×' + Math.round(sp.h) + '</b>';
+    box.innerHTML = ['nw', 'ne', 'sw', 'se'].map(c => '<i class="pce-h pce-h-' + c + '" data-h="' + c + '"></i>').join('') + '<i class="pce-h pce-rot" data-h="rot"></i><i class="pce-mv" data-h="move" role="button" aria-label="Move">✥ Move</i>' + (f.e.t === 'photo' ? '<i class="pce-chg" data-h="chg" role="button" aria-label="Change photo">Change photo</i>' : '') + '<b class="pce-tag">' + esc(TYPE[f.e.t] || f.e.t) + ' · ' + Math.round(sp.w) + '×' + Math.round(sp.h) + '</b>';
     if (E.frame && E.frame === E.sel) { box.classList.add('pce-framing'); const tg = box.querySelector('.pce-tag'); if (tg) tg.textContent = 'Framing · drag the photo'; }
     page.appendChild(box); E.box = box; E.k = k;
   }
@@ -211,6 +211,7 @@
   function down(ev) {
     if (ev.button > 0 || E.play || ev.target.closest('[contenteditable]')) return;
     const hnd = ev.target.closest('[data-h]'), node = ev.target.closest('.pgc-el');
+    if (hnd && E.sel && hnd.dataset.h === 'chg') { ev.preventDefault(); return pickPhoto('el'); }   // clean-up #3: change the photo straight from the page
     if (hnd && E.sel) return start(ev, hnd.dataset.h);
     if (!node) { if (E.sel) { E.sel = null; E.frame = null; draw(); panel(); } return; }
     const id = node.dataset.el, was = id === E.sel;
