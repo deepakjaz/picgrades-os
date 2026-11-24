@@ -59,7 +59,7 @@ const srv = http.createServer((req, res) => {
   check(rc && rc.n >= 2 && Math.abs(rc.ratio - 9 / 16) < 0.04 && rc.inside, 'Hub: the Reel Edits card shows a 9:16 phone with the wedding\'s photos, inside the card');
   await pg.waitForTimeout(3900);
   const second = await pg.evaluate(() => [...document.querySelectorAll('.pgl-reelcard .pgrm img')].findIndex(i => i.classList.contains('on')));
-  check(rc && second !== rc.first, 'the phone moves to the next photo, like a reel');
+  check(rc && second === rc.first, 'the phone stays on one photo (clean-up #9: Hub function cards stay still — no flashing)');
   check(await pg.evaluate(() => [...document.querySelectorAll('.pgl-b')].filter(e => !e.classList.contains('pgl-reelcard') && /pgl-(findme|post|upload|install|review)\b/.test(e.className)).every(e => !e.querySelector('img,.pg-cover'))), 'other function cards stay without photos');
   if (SHOTS) await pg.screenshot({ path: path.join(SHOTS, 'reel-1-hub.png') });
   await ctx.close();

@@ -212,10 +212,8 @@
     if (cvList) paint(cvList);
     pgApi('canvasList', {}).then(r => { cvList = r; paint(r); }).catch(() => {});
   }
-  function cvCard(l) {
-    const b = h('button', 'pgcp-layout' + (GALLERY.layout === l.id ? ' on' : '')); b.type = 'button'; b.dataset.layout = l.id;
-    b.append(h('span', 'pgcp-mini cvl', esc(l.name)), h('b', '', esc(l.name)), h('small', '', GALLERY.layout === l.id ? 'In use' : 'Tap to design'));
-    return b;
+  function cvCard(l) {   // clean-up #8b: a saved layout is a simple row too
+    return layoutRow({ id: l.id, name: l.name, idea: 'Saved layout · tap to design' }, GALLERY.layout === l.id, false);
   }
   // clean-up #1: an editor opened from the Control Panel goes back there (Hub layout) when closed with ✕ / back — never straight to the Hub
   // clean-up #5: ✕ in the editor comes back to the layout's preview (if it was opened from one), else to the layouts list
@@ -240,7 +238,7 @@
     const p = h('div', 'pgcp-pane',
       (part === 'all' || part === 'theme' ? (part === 'all' ? '<h4>Theme</h4>' : '') + '<p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' : '') +
       (part === 'all' || part === 'layout' ? (part === 'all' ? '<h4>Hub layout</h4>' : '') + '<p class="pgcp-note">How the Hub is arranged. Tap one to see it as guests do, then Use this or Edit. Each layout keeps your version, so you can come back to it.</p>' +
-      (ROLE === 'picgrades' ? '<div class="pgcp-designs">' : '<div class="pgcp-designs" hidden>') + '<button type="button" class="pgcp-design pgcp-canvas">✎ Design your own Hub — drag and drop</button><button type="button" class="pgcp-design pgcp-grided">Card editor (grid, header and logo)</button></div><div class="pgcp-layouts"></div>' : '') +
+      '<div class="pgcp-designs" hidden>'   /* clean-up #8b: removed for everyone (Edit is in each layout's preview) */ + '' + '<button type="button" class="pgcp-design pgcp-canvas">✎ Design your own Hub — drag and drop</button><button type="button" class="pgcp-design pgcp-grided">Card editor (grid, header and logo)</button></div><div class="pgcp-layouts"></div>' : '') +
       (part === 'all' || part === 'pages' ? Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join('') : ''));
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }

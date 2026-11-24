@@ -3380,3 +3380,9 @@ body[data-view="hub"] .pg-modebtn,body[data-view="hub"] .mk-stamp-badge,body[dat
 .pgcp-layout.pgcp-lrow .pgcp-ltxt b,.pgcp-layout.pgcp-lrow .pgcp-ltxt small{display:block;width:100%;max-width:100%;margin:0!important;text-align:left!important}
 .pgcp-layout.pgcp-lrow .pgcp-ltag{margin:0!important}
 .pgcp-layout.pgcp-lrow .pgcp-chev{margin:0!important}
+/* clean-up #9 (Deepak, 25 Nov): the function cards on the Hub (Reel Edits, Post Edits, Add a moment) stay still —
+   their little looping previews flashed like ads. The page's own scroll effects are not touched. */
+.pss .lp,.pss .lp *{animation:none!important}
+.pss .lp.sm img:first-child{opacity:1}
+.pss .lp .bars b{height:55%}.pss .lp .bars b:nth-child(2){height:85%}.pss .lp .bars b:nth-child(3){height:40%}.pss .lp .bars b:nth-child(4){height:70%}
+.pgl-reelcard .pgrm-scr img.on,.pgl-reelcard .pgrm-bars *{animation:none!important;transition:none!important}
