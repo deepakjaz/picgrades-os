@@ -3353,3 +3353,14 @@ body.pce-on .pgs-findme{display:none!important}
 /* switches inside the panels (Left / Centre / Right, Italic / CAPITALS, Light / Dark): no big white blocks */
 .pce-pane .pce-seg,.pgte-pane .pgte-seg{background:rgba(255,255,255,.06)!important;border-radius:12px}
 .pce-pane .pce-seg button.on,.pgte-pane .pgte-seg button.on,.pce-toggles button.on{background:rgba(255,255,255,.2)!important;color:#fff!important;border-color:transparent!important}
+/* clean-up #7: the Hub's top buttons (logo, light/dark, menu) are a small frosted chip in the theme's own colours,
+   so they read on any layout — light page, dark page or a photo (they vanished on ~12 story / canvas layouts) */
+body[data-view="hub"] .pg-modebtn,body[data-view="hub"] .mk-stamp-badge,body[data-view="hub"] .pg-menubtn{
+  background:color-mix(in srgb,var(--bg-box,#fff) 80%,transparent)!important;color:var(--ink)!important;
+  border-color:color-mix(in srgb,var(--ink) 16%,transparent)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+/* clean-up #7: Living Story / Editorial (card editor's story panel) — same small pills and soft switches as the other editors */
+.pged-stog,.pged-stog.on,.pged-stog[aria-pressed="true"]{position:relative;min-width:64px!important;height:28px!important;min-height:28px!important;margin:8px 0;padding:0 12px!important;border:0!important;border-radius:14px!important;font:600 11px var(--font-sans)!important;background:rgba(255,255,255,.1)!important;color:rgba(247,243,236,.9)!important}
+.pged-stog:after{content:"";position:absolute;left:0;right:0;top:-8px;bottom:-8px}
+.pged-sic{background:none!important;border:0!important}
+.pged-seg{background:rgba(255,255,255,.06)}
+.pged-seg button.on{background:rgba(255,255,255,.2)!important;color:#fff!important}
