@@ -3312,3 +3312,8 @@ body.pce-on .pgs-findme{display:none!important}
 .pce-chg:before{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .pce-framing .pce-chg{display:none}
 .pce-back{z-index:300}.pce-pick{z-index:301}   /* clean-up #3: the photo picker sits above the selection frame */
+/* clean-up #5: layout preview — Edit next to Use this */
+.pgcp-pv-acts{display:flex;gap:10px;align-items:center}
+.pgcp-pv-acts .pgcp-pv-apply{flex:1;margin:0}
+.pgcp-pv-edit{flex:0 0 auto;min-width:96px;min-height:48px;padding:0 20px;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;font:600 14px var(--font-sans,system-ui);cursor:pointer}
+.pgcp-pv-edit[hidden]{display:none}

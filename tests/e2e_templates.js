@@ -109,7 +109,7 @@ const srv = http.createServer((req, res) => {
   await openLook();
   ok(await pg.evaluate(() => !document.querySelector('.pgcp-layout[data-layout="custom"]')), 'a designed template is not shown as "Our own Hub"');
   // a card layout opens the free editor (step 77d), every card in its place
-  await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(300);
+  await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.click('.pgcp-pv-edit'); await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(300);
   ok((await pg.textContent('.pce-title b')) === 'Magazine Cover' && (await pg.evaluate(() => PGCanvasEditor.state().doc.sections[0].els.every(e => e.t === 'card'))), 'a card layout opens the free editor, its cards placed as they were');
   await pg.evaluate(() => PGCanvasEditor.close(true)); await pg.waitForTimeout(300);
   // a guest sees the applied template with the chosen photo, and no versions
