@@ -200,11 +200,11 @@ const C5={id:'c5',src:'Claude',name:'Cinema Chapters',venue:'5-star ballroom · 
  return `<section data-stage style="height:${844+560}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden;background:#000">
  ${L('Spotlight','', 'div','id="c5g" style="position:absolute;left:25px;top:250px;width:340px;height:340px;border-radius:50%;background:radial-gradient(#D8C19766,transparent 70%)"')}
  ${L('Gold dust',parts('glow',26),'div','style="position:absolute;inset:0"')}
- ${L('Cover photo (iris)',img(83,'cover kb'),'div','id="c5f" style="position:absolute;inset:0;clip-path:circle(0px at 50% 50%)"')}
- ${L('Iris ring',`<div id="c5r" style="width:0;height:0;border-radius:50%;border:2px solid #D8C19788"></div>`,'div','style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)"')}
+ ${L('Cover photo (iris)',`<div id="c5fi" style="position:absolute;left:365px;top:138px;width:390px;height:844px;will-change:transform">${img(83,'cover kb')}</div>`,'div','id="c5f" style="position:absolute;left:50%;top:50%;width:1120px;height:1120px;margin:-560px 0 0 -560px;border-radius:50%;overflow:hidden;transform:scale(.001);will-change:transform"')}
+ ${L('Iris ring',`<div id="c5r" style="width:1120px;height:1120px;border-radius:50%;border:2px solid #D8C19788;box-sizing:border-box;transform:scale(.001);will-change:transform"></div>`,'div','style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)"')}
  ${L('Couple names',`<div style="font:500 40px Bodoni Moda;letter-spacing:8px">${nm()[0].toUpperCase()}</div><div style="font:italic 18px Bodoni Moda;color:#D8C197">&amp;</div><div style="font:500 40px Bodoni Moda;letter-spacing:8px">${(nm()[1]||'').toUpperCase()}</div><div style="font:600 9px Jost;letter-spacing:4px;color:#D8C197;margin-top:14px">A FILM IN ${E.length} CHAPTER${E.length>1?'S':''}</div>`,'div','id="c5n" style="position:absolute;top:340px;left:0;right:0;text-align:center;color:#F4EDE2"')}
- ${L('Letterbox top','', 'div','id="c5lt" style="position:absolute;top:0;left:0;right:0;height:0;background:#000;z-index:3"')}
- ${L('Letterbox bottom','', 'div','id="c5lb" style="position:absolute;bottom:0;left:0;right:0;height:0;background:#000;z-index:3"')}
+ ${L('Letterbox top','', 'div','id="c5lt" style="position:absolute;top:0;left:0;right:0;height:200px;background:#000;z-index:3;transform:scaleY(0);transform-origin:top;will-change:transform"')}
+ ${L('Letterbox bottom','', 'div','id="c5lb" style="position:absolute;bottom:0;left:0;right:0;height:200px;background:#000;z-index:3;transform:scaleY(0);transform-origin:bottom;will-change:transform"')}
  ${L('Opening credits',`<div style="font:italic 30px Bodoni Moda;color:#F4EDE2">${S.names}</div><div style="font:500 9px Jost;letter-spacing:3px;color:#D8C197;margin-top:6px">${S.date.toUpperCase()}</div>`,'div','id="c5t" style="position:absolute;bottom:150px;left:0;right:0;text-align:center;z-index:4;opacity:0"')}
  </div></section>
  <div data-events></div>
@@ -220,8 +220,8 @@ const C5={id:'c5',src:'Claude',name:'Cinema Chapters',venue:'5-star ballroom · 
   <div style="font:500 9px Jost;letter-spacing:3px;color:#D8C197;padding:28px 0 100px">PHOTOGRAPHED BY ${STU.toUpperCase()}</div></section>
  <style>.pss-strip{animation:pss-strip linear infinite}@keyframes pss-strip{to{transform:translateX(-50%)}}.cpv{max-height:0;overflow:hidden;opacity:0;transition:.5s}#c5c.open .cpv{max-height:200px;opacity:1}#c5c.open #c5arm{transform:none}</style>`},
  scroll(vp){const p=Math.min(1,vp.scrollTop/560),q=id=>vp.querySelector('#'+id);if(!q('c5f'))return;const r=p*560;
-  q('c5f').style.clipPath=`circle(${r}px at 50% 50%)`;q('c5r').style.width=q('c5r').style.height=2*r+'px';q('c5r').parentNode.style.opacity=p<.95?1:0;
-  q('c5n').style.opacity=1-p*1.8;q('c5g').style.opacity=1-p;const lb=Math.max(0,(p-.75)*4)*200;q('c5lt').style.height=lb+'px';q('c5lb').style.height=lb+'px';q('c5t').style.opacity=Math.max(0,(p-.85)*6.6)}};
+  const s=Math.max(.001,r/560);q('c5f').style.transform=`scale(${s})`;q('c5fi').style.transform=`scale(${1/s})`;q('c5r').style.transform=`scale(${s})`;q('c5r').parentNode.style.opacity=p<.95?1:0;   // clean-up: scale, not clip-path — smooth on phones
+  q('c5n').style.opacity=1-p*1.8;q('c5g').style.opacity=1-p;const lb=Math.max(0,(p-.75)*4);q('c5lt').style.transform=q('c5lb').style.transform=`scaleY(${lb})`;q('c5t').style.opacity=Math.max(0,(p-.85)*6.6)}};
 const G1={id:'g1',col:'gemini',src:'Gemini',name:'Heritage Courtyard · Dusk',venue:'Historic haveli · evening courtyard',fd:'Cormorant Garamond',fb:'Jost',hub:'palace',
  pal:{bg:'#F6F2EC',ink:'#1E1B18',acc:'#B8925A',card:'#EFE8DC',acc2:'#7A5A32',nav:'#171C26',navInk:'#F9F7F3',navOn:'#171C26',hdrInk:'#1E1B18',glass:'#F6F2ECb8'},
  dpal:{bg:'#12151C',ink:'#F9F7F3',acc:'#CFA86E',card:'#1B202B',acc2:'#E5C38E',nav:'#0B0D12',navInk:'#F9F7F3',navOn:'#0B0D12',hdrInk:'#F9F7F3',glass:'#12151Cb8'},
@@ -328,7 +328,7 @@ const G2={id:'g2',col:'gemini',src:'Gemini',name:'Misty Tea Estate · Morning',v
  return `
  <section data-stage style="height:${844+420}px;position:relative">
   <div style="position:sticky;top:0;height:844px;overflow:hidden;background:var(--bg)">
-   ${L('Cover photo (full-bleed)',img(12,'cover kb','object-position:50% 35%'),'div','id="g2f" style="position:absolute;inset:0;filter:blur(6px) brightness(1.04);transform:scale(1.06)"')}
+   ${L('Cover photo (full-bleed)',img(12,'cover kb','object-position:50% 35%')+`<div id="g2fb" style="position:absolute;inset:0;filter:blur(6px) brightness(1.04);will-change:opacity">${img(12,'cover','object-position:50% 35%')}</div>`,'div','id="g2f" style="position:absolute;inset:0;transform:scale(1.06);will-change:transform"')}
    <div style="position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 34%,transparent 62%,var(--bg) 100%)"></div>
    <div id="g2ml" data-l="Mist veil left" style="position:absolute;inset:0 45% 0 0;background:linear-gradient(90deg,var(--bg) 55%,transparent);pointer-events:none"></div>
    <div id="g2mr" data-l="Mist veil right" style="position:absolute;inset:0 0 0 45%;background:linear-gradient(270deg,var(--bg) 55%,transparent);pointer-events:none"></div>
@@ -382,7 +382,7 @@ const G2={id:'g2',col:'gemini',src:'Gemini',name:'Misty Tea Estate · Morning',v
   if(!q('g2f'))return;
   q('g2ml').style.transform=`translateX(${-p*110}%)`;
   q('g2mr').style.transform=`translateX(${p*110}%)`;
-  q('g2f').style.filter=`blur(${Math.max(0,6*(1-p))}px) brightness(1)`;
+  const fb=q('g2fb'); if(fb) fb.style.opacity=Math.max(0,1-p);   // clean-up: a pre-blurred copy fades out (smooth on phones) instead of changing the blur every frame
   q('g2f').style.transform=`scale(${1.06-p*0.06})`;
   q('g2n').style.transform=`translateY(${p*170}px)`;
   q('g2n').style.opacity=Math.max(0.15,1-p*0.85);
