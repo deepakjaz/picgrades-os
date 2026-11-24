@@ -129,7 +129,7 @@ const server = http.createServer((req, res) => {
       }));
       const small = controls.filter(b => b.w < 44 || b.h < 44);
       check(!small.length, sizeLabel + ' ' + mode + ' ' + tool + ' visible buttons at least 44px' + (small.length ? ': ' + JSON.stringify(small.slice(0, 3)) : ''));
-      const close = tool === 'sticker' ? '.pe-panel .ps-x' : '.pe-panel .pe-done';
+      const close = tool === 'sticker' ? '.pe-panel .ps-x' : '.pe-panel .pe-sheet .pe-done';
       await page.click(close);
     }
   }
