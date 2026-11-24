@@ -125,11 +125,11 @@
       '<div class="pged-bar"><div class="pged-seg pged-screens" role="tablist">' + Object.keys(COLS).map(s => '<button type="button" data-scr="' + s + '">' + LABEL[s] + '</button>').join('') + '</div></div>' +
       '<div class="pged-story" hidden></div>' +
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
-      '<div class="pged-drawer"><div class="pged-settings" hidden><div class="pged-settings-head"><b>Page settings</b><button type="button" class="pged-settings-close" aria-label="Close page settings">Done</button></div>' +
+      '<div class="pged-drawer"><div class="pged-dock"><button type="button" class="pged-add">+ Add card</button><button type="button" class="pged-page-settings" aria-expanded="false">Page settings</button></div><div class="pged-drawer-content"><div class="pged-settings" hidden><div class="pged-settings-head"><b>Page settings</b><button type="button" class="pged-settings-close" aria-label="Close page settings">Done</button></div>' +
       '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="right">Right</button></div>' +
       '<div class="pged-seg pged-mode" aria-label="Light / dark button"><span>Light/dark</span><button type="button" data-mode="left">Left</button><button type="button" data-mode="right">Right</button></div>' +
       '<div class="pged-settings-actions"><button type="button" class="pged-btn pged-pal">Colours</button><select class="pged-from" aria-label="Start from a layout"></select></div></div>' +
-      '<div class="pged-tools" hidden></div><div class="pged-dock"><button type="button" class="pged-add">+ Add card</button><button type="button" class="pged-page-settings" aria-expanded="false">Page settings</button></div></div>';
+      '<div class="pged-tools" hidden></div></div></div>';
     const bl = E.d.base && PGLayout.find(E.d.base); if (bl) el.querySelector('.pged-title').textContent = bl.name;   // step 76: the layout being designed
     const from = el.querySelector('.pged-from');
     // step 76: the Template Studio templates have their own editor, and the layouts being reworked are for PicGrades only

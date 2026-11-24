@@ -74,7 +74,7 @@ const srv = http.createServer((req, res) => {
   // the editor again: back to a card layout from the menu
   await pg.evaluate(() => PGHubEditor.open()); await pg.waitForSelector('.pged-story:not([hidden])');
   check(await pg.locator('.pged-from option', { hasText: 'Editorial Album · story' }).count() === 1, 'the layout menu offers the stories too');
-  await pg.selectOption('.pged-from', 'magazine-cover'); await pg.waitForTimeout(400);
+  await pg.click('.pged-page-settings'); await pg.waitForSelector('.pged-settings:not([hidden])'); await pg.selectOption('.pged-from', 'magazine-cover'); await pg.waitForTimeout(400);
   check(await pg.isVisible('.pged-canvas') && !(await pg.isVisible('.pged-story')) && (await pg.evaluate(() => PGHubEditor.draft().blocks.length)) > 0, 'choosing a card layout gives the card grid back');
   await pg.click('.pged-x'); await pg.waitForTimeout(500);
   check(await pg.evaluate(() => !!document.getElementById('pgStory')), 'closing the editor shows the wedding’s story again');

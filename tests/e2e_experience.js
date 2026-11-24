@@ -75,7 +75,7 @@ const srv = http.createServer((req, res) => {
   await sel('x-chapter'); await pg.locator('.pged-field', { hasText: 'Line' }).locator('textarea').fill('Under a thousand lights'); await pg.locator('.pged-field', { hasText: 'Line' }).locator('textarea').press('Tab'); await pg.waitForTimeout(300);
   check(await pg.evaluate(() => document.querySelector('.pged-canvas .x-chapter .x-cline').textContent === 'Under a thousand lights'), 'the chapter line is rewritten');
   await pg.screenshot({ path: '/tmp/s57_editor.png' });
-  await pg.click('.pged-pal'); await pg.waitForSelector('.pged-palsheet');
+  await pg.click('.pged-page-settings'); await pg.waitForSelector('.pged-settings:not([hidden])'); await pg.click('.pged-pal'); await pg.waitForSelector('.pged-palsheet');
   await pg.click('.pged-pals [data-p=haldi]'); await pg.waitForTimeout(200);
   check(await pg.evaluate(() => getComputedStyle(document.body).getPropertyValue('--x-bg').trim() === '#fff6dc'), 'Colours: the Haldi sunshine palette colours the Hub');
   await pg.locator('.pged-own input[data-k=acc]').evaluate(i => { i.value = '#123456'; i.dispatchEvent(new Event('change')); }); await pg.waitForTimeout(200);
