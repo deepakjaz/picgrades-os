@@ -3202,3 +3202,6 @@ body.pgv-on .pgst-pop,body.pgm-on .pgst-pop,body.pged-on .pgst-pop,body.pgte-on 
 .pce-pane button,.pgte-pane button{min-height:44px}
 .pce-pane small,.pgte-pane small{font-size:11px!important}
 @media (max-width:699px){.pce-panel-tools .pce-mode button{height:44px;min-height:44px}}
+
+/* F2: the zoom chip in the top bar is a 44px tap target on every screen */
+.pce-top .pce-zoom-toggle{min-height:44px;min-width:48px}
