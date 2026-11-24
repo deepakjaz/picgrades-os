@@ -52,7 +52,7 @@ const srv = http.createServer((req, res) => {
 
   // ---- 1. the Hub's Reel Edits card: a phone playing the wedding like a reel ----
   const ck = call('facesStatus', { token: admin, g: pub.galleryId }).gallery.coupleKey;
-  let ctx = await ctxOf(), pg = await go(ctx, '/c/' + pub.galleryId + '/' + ck + '?layout=bento-concierge');
+  let ctx = await ctxOf(), pg = await go(ctx, '/c/' + pub.galleryId + '/' + ck + '?layout=ios-widget-home');   // step 95: bento-concierge became a free-canvas layout (no Hub cards)
   await pg.evaluate(() => { const c = document.querySelector('.pgl-reelcard'); if (c) c.scrollIntoView({ block: 'center' }); }); await pg.waitForTimeout(300);
   const rc = await pg.evaluate(() => { const c = document.querySelector('.pgl-reel.pgl-reelcard'); if (!c) return null; const m = c.querySelector('.pgrm'), on = () => [...c.querySelectorAll('.pgrm img')].findIndex(i => i.classList.contains('on'));
     const r = m.getBoundingClientRect(), cr = c.getBoundingClientRect(); return { n: c.querySelectorAll('.pgrm img').length, ratio: r.width / r.height, inside: r.left >= cr.left - 1 && r.right <= cr.right + 1 && r.top >= cr.top - 1 && r.bottom <= cr.bottom + 1, first: on() }; });

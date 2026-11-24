@@ -1,4 +1,4 @@
-// Browser test (step 32): the Hub drawn from the 10 layouts — every block shows real wedding data and opens the same function as before; original Hub when none.
+// Browser test (step 32): the Hub drawn from the registered layouts — every block shows real wedding data and opens the same function as before; original Hub when none.
 const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
@@ -55,7 +55,7 @@ const srv = http.createServer((req, res) => {
     await pg.evaluate(() => document.documentElement.setAttribute('data-tkg-theme', 'light'));
   }
   // functions still work from the blocks
-  await pg.evaluate(() => { PGLayout.apply('bento-concierge'); switchViewFromNav('hub'); });
+  await pg.evaluate(() => { PGLayout.apply('ios-widget-home'); /* step 95: bento-concierge is a free-canvas layout now */ switchViewFromNav('hub'); });
   const tap = async (sel) => { await pg.locator(sel).first().scrollIntoViewIfNeeded(); await pg.locator(sel).first().click(); await pg.waitForTimeout(600); };
   console.log('no number box in the starting layouts (step 33):', await pg.evaluate(() => PGLayout.list().every(l => !l.blocks.some(b => b.block === 'stats'))));
   await tap('#pgLay .pgl-evt'); console.log('event → viewer:', await pg.evaluate(() => document.querySelector('.pg-view.active').id + ' / ' + CURRENT_SET));
