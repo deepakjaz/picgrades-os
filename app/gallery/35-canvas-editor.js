@@ -73,7 +73,7 @@
   function open(arg) {
     if (E) return;
     const role = window.PGControl ? PGControl.role() : 'guest';
-    E = { role, mode: window.innerWidth >= 900 ? 'l' : 'p', sel: null, undo: [], redo: [], tab: 'add', src: {}, inst: null, zoom: 1, play: false,
+    E = { role, mode: window.innerWidth >= 700 ? 'l' : 'p', sel: null, undo: [], redo: [], tab: 'add', src: {}, inst: null, zoom: 1, play: false,
       pages: { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' } };   // step 78: zoom, Play, the app header's places
     build();
     const start = (doc, src) => { E.doc = doc; E.src = src; E.saved = JSON.stringify(doc); draw(); panel(); };
@@ -95,6 +95,7 @@
     }
     start(starter(), {});
   }
+  function setDrawer(open) { if (!E) return; E.drawerOpen = !!open; E.el.classList.toggle('pce-drawer-open', E.drawerOpen); const b = E.el.querySelector('.pce-drawer-toggle'); b.textContent = E.drawerOpen ? '⌄' : '⌃'; b.setAttribute('aria-expanded', String(E.drawerOpen)); b.setAttribute('aria-label', E.drawerOpen ? 'Close tools' : 'Open tools'); }
   function close(force) {
     if (!E) return;
     if (!force && E.doc && JSON.stringify(E.doc) !== E.saved && !window.confirm('Leave without saving your changes?')) return;
@@ -106,22 +107,24 @@
   function build() {
     if (window.PGLayout && PGLayout.stop) PGLayout.stop();
     const el = h('div', 'pce'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Layout editor'); E.el = el;
-    el.innerHTML = '<div class="pce-top"><button type="button" class="pce-x" aria-label="Close">✕</button>' +
+    el.innerHTML = '<div class="pce-top"><button type="button" class="pce-x" aria-label="Close">‹</button>' +
       '<button type="button" class="pce-title" aria-label="Rename"><b></b><small>Tap an element, then drag it</small></button>' +
       '<button type="button" class="pce-ic pce-undo" aria-label="Undo">↶</button><button type="button" class="pce-ic pce-redo" aria-label="Redo">↷</button>' +
-      '<div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div>' +
-      '<button type="button" class="pce-btn pce-play" aria-pressed="false">▶ Play</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
-      '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '">' + n + '</button>').join('') + '</div><div class="pce-pane"></div></div></div>';
+      '<div class="pce-zoom"><button type="button" class="pce-zoom-toggle" aria-label="Zoom">100%</button><div class="pce-zoom-menu" hidden><button type="button" data-z="-">−</button><b>100%</b><button type="button" data-z="+">+</button><button type="button" data-z="1">Fit</button></div></div>' +
+      '<button type="button" class="pce-btn pce-play" aria-label="Play" aria-pressed="false">▶</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
+      '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-panel-tools"><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '">' + n + '</button>').join('') + '<button type="button" class="pce-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pce-pane"></div></div></div>';
     el.querySelector('.pce-x').addEventListener('click', () => close());
     el.querySelector('.pce-undo').addEventListener('click', undo);
     el.querySelector('.pce-redo').addEventListener('click', redo);
     el.querySelector('.pce-title').addEventListener('click', () => { const n = window.prompt('Name of this layout', E.doc.name || ''); if (n != null && n.trim()) change(d => { d.name = n.trim().slice(0, 60); }); });
     el.querySelector('.pce-mode').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b && b.dataset.mode !== E.mode) { E.mode = b.dataset.mode; draw(); panel(); } });
+    el.querySelector('.pce-drawer-toggle').addEventListener('click', () => setDrawer(!E.drawerOpen));
+    el.querySelector('.pce-zoom-toggle').addEventListener('click', () => { E.zoomOpen = !E.zoomOpen; el.querySelector('.pce-zoom-menu').hidden = !E.zoomOpen; });
     el.querySelector('.pce-save').addEventListener('click', () => saveDialog(false));
     el.querySelector('.pce-apply').addEventListener('click', apply);
     el.querySelector('.pce-play').addEventListener('click', () => { E.play = !E.play; if (E.play) { E.sel = null; panel(); } draw(); if (E.play) { const st = el.querySelector('.pce-stage'); st.scrollTop = 0; } });   // watch the motion; any change stops it
 
-    el.querySelector('.pce-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { E.tab = b.dataset.tab; panel(); } });
+    el.querySelector('.pce-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { const same = E.tab === b.dataset.tab; E.tab = b.dataset.tab; setDrawer(!(same && E.drawerOpen)); panel(); } });
     document.body.appendChild(el); document.body.classList.add('pce-on');
     window.addEventListener('keydown', onKey); window.addEventListener('resize', onResize);
   }
@@ -157,14 +160,15 @@
     if (E.inst) { E.inst.destroy(); E.inst = null; }
     st.innerHTML = '';
     const page = h('div', 'pce-page'); st.appendChild(page);
-    E.pageW = Math.round((E.mode === 'p' ? 390 : Math.max(600, st.clientWidth - 40)) * E.zoom);   // zoom draws the page smaller or bigger (the spots stay the same)
+    E.pageW = Math.round((E.mode === 'p' ? Math.min(390, st.clientWidth) : Math.max(1, st.clientWidth - 40)) * E.zoom);   // zoom draws the page smaller or bigger (the spots stay the same)
     page.style.width = E.pageW + 'px';
     E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: !E.play, editing: !E.play, onTap: () => true });
     page.insertAdjacentHTML('beforeend', '<div class="pce-hdr ' + (E.mode === 'p' ? 'p' : 'l') + '" style="--z:' + (E.pageW / (E.mode === 'p' ? 390 : 1200) * (E.mode === 'p' ? 1 : 1.6)) + '"><i class="lg ' + E.pages.header + '">A&amp;R</i><i class="md ' + E.pages.modeside + '">☾</i><i class="mn ' + E.pages.modeside + '">≡</i></div>');   // where the app header sits on top (Page › Header)
-    const zb = h('div', 'pce-zoom', '<button type="button" data-z="-">−</button><b>' + Math.round(E.zoom * 100) + '%</b><button type="button" data-z="+">+</button><button type="button" data-z="1">Fit</button>');
-    zb.addEventListener('click', ev => { const b = ev.target.closest('[data-z]'); if (!b) return; const z = b.dataset.z; E.zoom = z === '1' ? 1 : Math.max(0.3, Math.min(1.6, Math.round((E.zoom + (z === '+' ? 0.1 : -0.1)) * 10) / 10)); draw(); });
-    st.appendChild(zb);
-    page.classList.toggle('pce-playing', E.play); E.el.querySelector('.pce-play').classList.toggle('on', E.play); E.el.querySelector('.pce-play').textContent = E.play ? '■ Stop' : '▶ Play';
+    const zb = E.el.querySelector('.pce-zoom-menu');
+    zb.querySelector('b').textContent = Math.round(E.zoom * 100) + '%';
+    E.el.querySelector('.pce-zoom-toggle').textContent = Math.round(E.zoom * 100) + '%';
+    zb.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { const z = b.dataset.z; E.zoom = z === '1' ? 1 : Math.max(0.3, Math.min(1.6, Math.round((E.zoom + (z === '+' ? 0.1 : -0.1)) * 10) / 10)); zb.hidden = true; E.zoomOpen = false; draw(); });
+    page.classList.toggle('pce-playing', E.play); E.el.querySelector('.pce-play').classList.toggle('on', E.play); E.el.querySelector('.pce-play').textContent = E.play ? '■' : '▶'; E.el.querySelector('.pce-play').setAttribute('aria-label', E.play ? 'Stop' : 'Play');
     st.scrollTop = y;
     page.querySelectorAll('.pgc-el').forEach(x => { if (x.dataset.el === E.sel) x.classList.add('pce-on-el'); });
     selBox();
@@ -585,5 +589,5 @@
   }
 
   window.PGCanvasEditor = { open, close, state: () => (E ? { frame: E.frame || null, zoom: E.zoom, play: E.play, pages: Object.assign({}, E.pages), mode: E.mode, sel: E.sel, tab: E.tab, doc: E.doc && clone(E.doc), src: Object.assign({}, E.src), dirty: E.doc && JSON.stringify(E.doc) !== E.saved } : null),
-    select: id => { if (E) { E.sel = id; E.tab = 'style'; draw(); panel(); } }, tab: k => { if (E) { E.tab = k; panel(); } }, mode: m => { if (E) { E.mode = m; draw(); panel(); } } };
+    select: id => { if (E) { E.sel = id; E.tab = 'style'; draw(); panel(); } }, tab: k => { if (E) { E.tab = k; setDrawer(true); panel(); } }, mode: m => { if (E) { E.mode = m; draw(); panel(); } } };
 })();
