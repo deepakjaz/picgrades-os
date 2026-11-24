@@ -37,6 +37,15 @@ Gemini's files:
 3. Cancel must put the old theme back exactly; only Apply saves.
 4. Layout cards with the couple's cover photo: use the cover from `GALLERY` (`pgImg`), and fall back to today's card when there is no cover.
 
+5. **Layout and theme are now one choice (Deepak chose A, 24 Nov).**
+   - A layout may carry `"theme": "<theme id>"`.
+   - Picking that layout also sets the app theme (all pages, light + dark) to it.
+   - The "Look & theme" screen shows **layouts first**; each card shows the layout in its own colours.
+   - Under them is one **"Change colours"** button, which opens the theme list with the live preview. It is for couples who want the layout with another palette.
+   - If the couple changed colours and later picks another layout, ask once: "Use this layout's colours?" (Yes / Keep mine).
+   - Layouts without a `theme` keep today's behaviour.
+   - Backend: the layout's `theme` is saved the same way the theme is saved today. Check `saveLook_` in `Code.gs` (Claude reviews this part).
+
 ## F2 — Free editor + Template editor: ✅ approved, with these changes (Gemini's file: `gemini/F2-F4-design.md`)
 1. **Laptop starts at 700 px**, not 900 (again).
 2. **The phone top bar must fit one row at 390 px.** Gemini's bar (back, undo, redo, − 100 % + Fit, Play, Save, Apply) is about 440 px, too wide. Instead:
