@@ -74,13 +74,13 @@ const srv = http.createServer((req, res) => {
   // the editor again: back to a card layout from the menu
   await pg.evaluate(() => PGHubEditor.open()); await pg.waitForSelector('.pged-story:not([hidden])');
   check(await pg.locator('.pged-from option', { hasText: 'Editorial Album · story' }).count() === 1, 'the layout menu offers the stories too');
-  await pg.selectOption('.pged-from', 'magazine-cover'); await pg.waitForTimeout(400);
+  await pg.click('.pged-page-settings'); await pg.waitForSelector('.pged-settings:not([hidden])'); await pg.selectOption('.pged-from', 'magazine-cover'); await pg.waitForTimeout(400);
   check(await pg.isVisible('.pged-canvas') && !(await pg.isVisible('.pged-story')) && (await pg.evaluate(() => PGHubEditor.draft().blocks.length)) > 0, 'choosing a card layout gives the card grid back');
   await pg.click('.pged-x'); await pg.waitForTimeout(500);
   check(await pg.evaluate(() => !!document.getElementById('pgStory')), 'closing the editor shows the wedding’s story again');
   // step 55: an old story draft must not block the card editor once the Hub is a card layout again
   await pg.evaluate(() => PGHubEditor.open()); await pg.waitForSelector('.pged-wrap, .pged-story', { state: 'attached' });
-  await pg.selectOption('.pged-from', 'story-editorial'); await pg.waitForSelector('.pged-story:not([hidden])'); await pg.click('.pged-x'); await pg.waitForTimeout(300);   // leaves a story draft behind
+  await pg.click('.pged-page-settings'); await pg.selectOption('.pged-from', 'story-editorial'); await pg.waitForSelector('.pged-story:not([hidden])'); await pg.click('.pged-x'); await pg.waitForTimeout(300);   // leaves a story draft behind
   await pg.evaluate(() => PGControl.save({ layout: 'magazine-cover' }).then(r => { GALLERY.layout = r.layout; PGLayout.refresh(); }));
   await pg.evaluate(() => PGHubEditor.open()); await pg.waitForTimeout(500);
   check(await pg.isVisible('.pged-canvas') && !(await pg.isVisible('.pged-story')) && (await pg.locator('.pged-canvas [draggable], .pged-canvas .pged-card, .pged-canvas > *').count()) > 0, 'after going back to a card Hub the editor opens the cards to drag, not the old story draft');

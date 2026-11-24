@@ -79,7 +79,7 @@ const srv = http.createServer((req, res) => {
   await pg.screenshot({ path: '/tmp/s44_laptop.png' });
   await pick(0); await pg.click('.pged-sizes button:has-text("Full")'); await pg.waitForTimeout(400);
   console.log('laptop cover → Full:', await pg.evaluate(() => PGHubEditor.draft().blocks[0].pos.wide.join(',')), '| phone unchanged:', await pg.evaluate(() => PGHubEditor.draft().blocks[0].pos.phone.join(',')), '|', await check());
-  await pg.click('.pged-screens [data-scr=phone]'); await pg.click('.pged-logo [data-logo=left]'); await pg.waitForTimeout(300);
+  await pg.click('.pged-screens [data-scr=phone]'); await pg.click('.pged-page-settings'); await pg.click('.pged-logo [data-logo=left]'); await pg.waitForTimeout(300);
   // preview on this phone only
   await pg.click('.pged-prev'); await pg.waitForTimeout(900);
   console.log('preview: banner', await pg.isVisible('.pged-banner'), '| Hub shows', await pg.evaluate(() => PGLayout.current()), '| logo left', await pg.evaluate(() => document.body.classList.contains('pg-logo-left')), '| wedding unchanged:', call('getGallery', { g: pub.galleryId }).gallery.layout);

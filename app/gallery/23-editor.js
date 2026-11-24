@@ -122,13 +122,14 @@
     el.innerHTML = '<div class="pged-top"><button type="button" class="pged-x" aria-label="Close the editor">✕</button><b class="pged-title">Edit Hub</b>' +
       '<button type="button" class="pged-ic pged-undo" aria-label="Undo">↶</button><button type="button" class="pged-ic pged-redo" aria-label="Redo">↷</button>' +
       '<button type="button" class="pged-btn pged-prev">Preview</button><button type="button" class="pged-btn pged-pub">Publish</button></div>' +
-      '<div class="pged-bar"><div class="pged-seg pged-screens" role="tablist">' + Object.keys(COLS).map(s => '<button type="button" data-scr="' + s + '">' + LABEL[s] + '</button>').join('') + '</div>' +
-      '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="right">Right</button></div>' +
-      '<div class="pged-seg pged-mode" aria-label="Light / dark button"><span>Light/dark</span><button type="button" data-mode="left">Left</button><button type="button" data-mode="right">Right</button></div>' +
-      '<button type="button" class="pged-btn pged-add">+ Add card</button><button type="button" class="pged-btn pged-pal">Colours</button><select class="pged-from" aria-label="Start from a layout"></select></div>' +
+      '<div class="pged-bar"><div class="pged-seg pged-screens" role="tablist">' + Object.keys(COLS).map(s => '<button type="button" data-scr="' + s + '">' + LABEL[s] + '</button>').join('') + '</div></div>' +
       '<div class="pged-story" hidden></div>' +
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
-      '<div class="pged-tools" hidden></div>';
+      '<div class="pged-drawer"><div class="pged-dock"><button type="button" class="pged-add">+ Add card</button><button type="button" class="pged-page-settings" aria-expanded="false">Page settings</button></div><div class="pged-drawer-content"><div class="pged-settings" hidden><div class="pged-settings-head"><b>Page settings</b><button type="button" class="pged-settings-close" aria-label="Close page settings">Done</button></div>' +
+      '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="right">Right</button></div>' +
+      '<div class="pged-seg pged-mode" aria-label="Light / dark button"><span>Light/dark</span><button type="button" data-mode="left">Left</button><button type="button" data-mode="right">Right</button></div>' +
+      '<div class="pged-settings-actions"><button type="button" class="pged-btn pged-pal">Colours</button><select class="pged-from" aria-label="Start from a layout"></select></div></div>' +
+      '<div class="pged-tools" hidden></div></div></div>';
     const bl = E.d.base && PGLayout.find(E.d.base); if (bl) el.querySelector('.pged-title').textContent = bl.name;   // step 76: the layout being designed
     const from = el.querySelector('.pged-from');
     // step 76: the Template Studio templates have their own editor, and the layouts being reworked are for PicGrades only
@@ -144,6 +145,8 @@
     el.querySelector('.pged-logo').addEventListener('click', e => { const b = e.target.closest('[data-logo]'); if (!b) return; snapshot(); E.d.header = b.dataset.logo; commit(); });
     el.querySelector('.pged-mode').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (!b) return; snapshot(); E.d.modeside = b.dataset.mode; commit(); });   // step 49: the light/dark button moves on its own
     el.querySelector('.pged-add').addEventListener('click', addSheet);
+    el.querySelector('.pged-page-settings').addEventListener('click', () => { const panel = el.querySelector('.pged-settings'), open = panel.hidden; if (open && E.sel >= 0) { E.sel = -1; draw(); } panel.hidden = !open; el.querySelector('.pged-page-settings').setAttribute('aria-expanded', String(open)); el.classList.toggle('pged-settings-open', open); });
+    el.querySelector('.pged-settings-close').addEventListener('click', () => { el.querySelector('.pged-settings').hidden = true; el.querySelector('.pged-page-settings').setAttribute('aria-expanded', 'false'); el.classList.remove('pged-settings-open'); });
     el.querySelector('.pged-prev').addEventListener('click', preview);
     el.querySelector('.pged-pub').addEventListener('click', publish);
     window.addEventListener('resize', draw);
@@ -180,11 +183,12 @@
       card.dataset.i = i; card.classList.add('pged-card'); card.classList.toggle('pged-sel', i === E.sel);
       const ov = h('div', 'pged-ov', '<span class="pged-name">' + CARDS[b.block][0] + '</span>' + (i === E.sel ? '<button type="button" class="pged-move" aria-label="Move">✥</button><button type="button" class="pged-size" aria-label="Change size"></button>' : ''));
       card.appendChild(ov); E.cards[i] = card;
-      card.addEventListener('click', e => { if (E.dragged) return; e.preventDefault(); e.stopPropagation(); E.sel = i; draw(); }, true);
+      card.addEventListener('click', e => { if (E.dragged) return; e.preventDefault(); e.stopPropagation(); E.el.querySelector('.pged-settings').hidden = true; E.el.querySelector('.pged-page-settings').setAttribute('aria-expanded', 'false'); E.el.classList.remove('pged-settings-open'); E.sel = i; draw(); }, true);
       if (i === E.sel) { drag(card, ov.querySelector('.pged-move'), 'move', i); drag(card, ov.querySelector('.pged-size'), 'size', i); drag(card, card, 'move', i, true); }   // with a mouse the whole card drags
     });
     frame.style.height = Math.ceil(grid.offsetHeight * k) + 'px'; frame.style.width = Math.ceil(W * k) + 'px';
     tools();
+    if (E.sel >= 0) { const selected = E.cards[E.sel]; if (selected) requestAnimationFrame(() => { if (E && E.cards[E.sel] === selected) selected.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }); }
   }
   // move / resize by dragging (finger or mouse); the layout follows live
   function drag(card, handle, kind, i, mouseOnly) {
@@ -220,7 +224,8 @@
   // the selected card's tools: style, ready sizes, swap, hide here, remove
   function tools() {
     const box = E.el.querySelector('.pged-tools'), i = E.sel, b = E.d.blocks[i];
-    if (!b) { box.hidden = true; box.innerHTML = ''; return; }
+    if (!b) { box.hidden = true; box.innerHTML = ''; E.el.classList.remove('pged-card-open'); return; }
+    E.el.classList.add('pged-card-open');
     const scr = E.scr, p = b.pos[scr];
     box.hidden = false;
     box.innerHTML = '<div class="pged-trow"><b>' + CARDS[b.block][0] + '</b><button type="button" class="pged-done" aria-label="Done">Done</button></div>' +
