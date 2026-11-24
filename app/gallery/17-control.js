@@ -123,6 +123,15 @@
     b.setAttribute('aria-label', (l ? l.name : 'Original Hub') + (cur ? ' (in use)' : designs ? ' — design it' : ' — preview'));
     return b;
   }
+  // clean-up #8: the Hub layout screen is a simple list — a name, one short line, and what it is to you
+  function layoutRow(l, cur, mine) {
+    const b = h('button', 'pgcp-layout pgcp-lrow' + (cur ? ' on' : '')); b.type = 'button'; b.dataset.layout = l ? l.id : '';
+    const name = l ? l.name : 'Original Hub', line = l ? (l.venue || (l.story && window.PGStoryStudio && PGStoryStudio.info(l.story) || {}).venue || l.idea || '') : 'The app’s own simple Hub';
+    const tag = cur ? '<em class="pgcp-ltag on">In use</em>' : mine ? '<em class="pgcp-ltag">Your version</em>' : '';
+    b.innerHTML = '<span class="pgcp-ltxt"><b>' + esc(name) + '</b><small>' + esc(String(line).slice(0, 90)) + '</small></span>' + tag + '<svg class="pgcp-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+    b.setAttribute('aria-label', name + (cur ? ' (in use)' : mine ? ' (your version)' : '') + ' — preview');
+    return b;
+  }
   // Pages (steps 36–37): the style of the Events page (all events) and of the page inside each event
   const PAGE_DEFS = {
     events: { title: 'Events page', note: 'How the list of all events looks. Tap one to preview it.', page: 'gallery', param: 'eventsstyle', def: 'cards',
@@ -162,15 +171,20 @@
       la.innerHTML = '';
       const C = GALLERY.custom || {}, own = GALLERY.layout === 'custom' && !C.base, inUse = l => GALLERY.layout === l.id || (GALLERY.layout === 'custom' && !!C.base && C.base === l.id);
       const group = (title, note, cards) => { if (!cards.length) return; const g = h('div', 'pgcp-lgroup'); g.innerHTML = '<h5>' + esc(title) + '</h5><p class="pgcp-note">' + esc(note) + '</p>'; const row = h('div', 'pgcp-row'); cards.forEach(c => row.appendChild(c)); g.appendChild(row); la.appendChild(g); };
-      const ownCards = [];
-      if (C.story && own) ownCards.push(layoutCard({ id: 'custom', name: 'Our own Hub', story: C.story.kind, blocks: [] }, true));   // a story Hub changed in the editor (step 54)
-      else if (C.blocks && C.blocks.length && (own || !C.base)) ownCards.push(layoutCard({ id: 'custom', name: 'Our own Hub', blocks: C.blocks.map(b => ({ block: b.block, size: 'W' })) }, own));
-      group('Your own', 'The Hub you designed from the start.', ownCards);
-      const of = g => layouts.filter(l => (l.group || 'progress') === g);
-      group('Story', 'One long page that tells the wedding as a story while guests scroll.', of('story').map(l => layoutCard(l, inUse(l))));
-      group('Minimal', 'Calm, simple pages with the photos first.', [layoutCard(null, !GALLERY.layout)].concat(of('minimal').map(l => layoutCard(l, inUse(l)))));
-      if (ROLE === 'picgrades') group('Free canvas · samples · PicGrades only', 'Step 77: the new layout format — each element placed by hand, separately for phone and laptop.', of('canvas').map(l => layoutCard(l, inUse(l))));
-      if (ROLE === 'picgrades') group('In progress · PicGrades only', 'Being reworked. Couples and photographers don’t see these yet.', of('progress').map(l => layoutCard(l, inUse(l))));
+      // clean-up #8: Yours first (in use, your versions, your own Hub), then Stories and Free canvas. Minimal and the old card layouts are hidden (PicGrades staff still see them at the bottom).
+      const V = GALLERY.versions || {}, shownIds = {}, yours = [];
+      const canvas = l => !!l.canvas, story = l => !!l.story && !l.canvas, older = l => !story(l) && !canvas(l);   // a canvas layout also carries story 'canvas'
+      if (C.story && own) yours.push(layoutRow({ id: 'custom', name: 'Our own Hub', idea: 'The Hub you designed' }, true));   // a story Hub changed in the editor (step 54)
+      else if (C.blocks && C.blocks.length && (own || !C.base)) yours.push(layoutRow({ id: 'custom', name: 'Our own Hub', idea: 'The Hub you designed' }, own));
+      if (!GALLERY.layout) yours.push(layoutRow(null, true));
+      layouts.filter(l => inUse(l)).forEach(l => { shownIds[l.id] = 1; yours.push(layoutRow(l, true, !!V[l.id])); });
+      layouts.filter(l => V[l.id] && !shownIds[l.id]).forEach(l => { shownIds[l.id] = 1; yours.push(layoutRow(l, false, true)); });
+      group('Yours', 'In use now, and the layouts you have made your own.', yours);
+      const rest = f => layouts.filter(l => !shownIds[l.id] && f(l)).map(l => layoutRow(l, false, false));
+      group('Stories', 'One long page that tells the wedding as a story while guests scroll.', rest(story));
+      const storyNames = {}; layouts.filter(story).forEach(l => { storyNames[l.name] = 1; });
+      group('Free canvas', 'Every part placed by hand, separately for phone and laptop.', rest(canvas).map(r => { const n = r.querySelector('b'); if (n && storyNames[n.textContent]) n.textContent += ' · canvas'; return r; }));   // same name as a story: tell them apart
+      if (ROLE === 'picgrades') group('Minimal and older · PicGrades only', 'Hidden from couples and photographers.', (GALLERY.layout ? [layoutRow(null, false)] : []).concat(rest(older)));
       collectionGroups(la, group);
     }
     box.querySelectorAll('.pgcp-pagestyles').forEach(ps => { const key = ps.dataset.pagekey; ps.innerHTML = ''; Object.keys(PAGE_DEFS[key].styles).forEach(k => ps.appendChild(styleCard(key, k, curStyle(key) === k))); });
@@ -225,8 +239,8 @@
     part = part || 'all';
     const p = h('div', 'pgcp-pane',
       (part === 'all' || part === 'theme' ? (part === 'all' ? '<h4>Theme</h4>' : '') + '<p class="pgcp-note">Colours, fonts and icons of the whole app. Tap one to see every page in it first — guests see it only when you press Apply.</p><div class="pgcp-row pgcp-themes"></div>' : '') +
-      (part === 'all' || part === 'layout' ? (part === 'all' ? '<h4>Hub layout</h4>' : '') + '<p class="pgcp-note">How the Hub is arranged. Tap one to design it: change its colours, photos and parts, then apply it. Each layout keeps your version, so you can come back to it later.</p>' +
-      '<div class="pgcp-designs"><button type="button" class="pgcp-design pgcp-canvas">✎ Design your own Hub — drag and drop</button><button type="button" class="pgcp-design pgcp-grided">Card editor (grid, header and logo)</button></div><div class="pgcp-layouts"></div>' : '') +
+      (part === 'all' || part === 'layout' ? (part === 'all' ? '<h4>Hub layout</h4>' : '') + '<p class="pgcp-note">How the Hub is arranged. Tap one to see it as guests do, then Use this or Edit. Each layout keeps your version, so you can come back to it.</p>' +
+      (ROLE === 'picgrades' ? '<div class="pgcp-designs">' : '<div class="pgcp-designs" hidden>') + '<button type="button" class="pgcp-design pgcp-canvas">✎ Design your own Hub — drag and drop</button><button type="button" class="pgcp-design pgcp-grided">Card editor (grid, header and logo)</button></div><div class="pgcp-layouts"></div>' : '') +
       (part === 'all' || part === 'pages' ? Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join('') : ''));
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }

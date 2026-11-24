@@ -48,10 +48,11 @@ const srv = http.createServer((req, res) => {
   const openLook = async () => { await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-lgroup'); await pg.waitForTimeout(300); };
   await openLook();
   const groups = await pg.$$eval('.pgcp-lgroup h5', x => x.map(e => e.textContent));
-  ok(JSON.stringify(groups) === '["Story","Minimal"]', 'the couple sees two groups: ' + groups.join(' / '));
+  // clean-up #8 (Deepak, 25 Nov): Yours first, then Stories and Free canvas; Minimal and the old card layouts are hidden from couples
+  ok(JSON.stringify(groups) === '["Yours","Stories","Free canvas"]', 'the couple sees Yours / Stories / Free canvas: ' + groups.join(' / '));
   const inGroup = await pg.evaluate(() => [...document.querySelectorAll('.pgcp-lgroup')].map(g => [...g.querySelectorAll('.pgcp-layout b')].map(b => b.textContent).join(',')));
-  ok(inGroup[0] === 'Living Story,Editorial Album' && inGroup[1] === 'Original Hub,Magazine Cover,Widget Home,Editorial Timeline,Portrait Atlas', 'Story = 2, Minimal = 5: ' + inGroup.join(' | '));
-  ok(!/Royal Journey|Bento|Darbar|Heritage/.test(inGroup.join()), 'the layouts being reworked (and the 8 new templates, for now) are hidden from the couple');
+  ok(inGroup[0] === 'Original Hub' && /^Living Story,Editorial Album,/.test(inGroup[1]) && /Cinema Chapters/.test(inGroup[1]) && /Horizon/.test(inGroup[2]), 'Yours = the Hub in use; Stories and Free canvas list the templates: ' + inGroup.join(' | '));
+  ok(!/Magazine Cover|Royal Journey|Widget Home/.test(inGroup.join()), 'Minimal and the old card layouts are hidden from the couple');
   await pg.evaluate(() => document.querySelector('.pgcp-lgroup').scrollIntoView()); await pg.screenshot({ path: '/tmp/tpl_panel.png' });
   await pg.evaluate(() => PGControl.designLayout('tpl-c1'));   // staff-only for now: opened directly
   await pg.waitForSelector('.pgte .pss-c1', { timeout: 8000 });
@@ -109,7 +110,7 @@ const srv = http.createServer((req, res) => {
   await openLook();
   ok(await pg.evaluate(() => !document.querySelector('.pgcp-layout[data-layout="custom"]')), 'a designed template is not shown as "Our own Hub"');
   // a card layout opens the free editor (step 77d), every card in its place
-  await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.click('.pgcp-pv-edit'); await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(300);
+  await pg.evaluate(() => PGControl.designLayout('magazine-cover'));   // clean-up #8: Minimal layouts are hidden from couples; open it the way Edit does await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(300);
   ok((await pg.textContent('.pce-title b')) === 'Magazine Cover' && (await pg.evaluate(() => PGCanvasEditor.state().doc.sections[0].els.every(e => e.t === 'card'))), 'a card layout opens the free editor, its cards placed as they were');
   await pg.evaluate(() => PGCanvasEditor.close(true)); await pg.waitForTimeout(300);
   // a guest sees the applied template with the chosen photo, and no versions

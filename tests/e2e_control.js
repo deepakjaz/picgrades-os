@@ -54,7 +54,7 @@ const srv = http.createServer((req, res) => {
   await pg.click('.pgcp-pv-apply'); await pg.waitForTimeout(900);
   console.log('Apply: saved', call('getGallery', { g: pub.galleryId }).gallery.theme, '| shown now:', await pg.evaluate(() => PGTheme.current()), '| preview closed:', !(await pg.locator('.pgcp-pv').count()), '| card says In use:', await pg.textContent('.pgcp-tcard.on small'));
   // a layout (step 76): tapping it opens its editor straight away — no preview page. The preview window stays for the Original Hub.
-  await pg.locator('.pgcp-layout[data-layout="magazine-cover"]').scrollIntoViewIfNeeded(); await pg.click('.pgcp-layout[data-layout="magazine-cover"]'); await pg.click('.pgcp-pv-edit'); await pg.waitForSelector('.pce .pgc-cardhost .pgl-b');   // step 77d: card layouts open in the free editor
+  await pg.evaluate(() => PGControl.designLayout('magazine-cover'));   // clean-up #8: Minimal layouts are hidden from couples; open it the way Edit does await pg.waitForSelector('.pce .pgc-cardhost .pgl-b');   // step 77d: card layouts open in the free editor
   console.log('layout opens its editor:', await pg.textContent('.pce-title b'), '| no preview page:', !(await pg.locator('.pgcp-pv').count()));
   await pg.evaluate(() => PGCanvasEditor.close(true)); await pg.waitForTimeout(300);
   await pg.click('.tkg-nav-item[data-nav=studio]'); await pg.waitForSelector('.pgcp-sheet'); await pg.evaluate(() => PGControl.go('look')); await pg.waitForSelector('.pgcp-sheet .pgcp-layout');
