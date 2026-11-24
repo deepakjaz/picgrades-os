@@ -35,7 +35,7 @@
       '<button type="button" class="pgte-btn pgte-save">Save</button><button type="button" class="pgte-btn pgte-apply">Apply</button></div>' +
       '<div class="pgte-body"><div class="pgte-stage"><div class="pgte-phone"><div class="pgte-scroll"></div></div><p class="pgte-tip">Scroll the page to see it move. Tap any photo to change it.</p></div>' +
       '<div class="pgte-panel"><div class="pgte-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" role="tab" data-tab="' + k + '">' + n + '</button>').join('') + '<button type="button" class="pgte-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pgte-pane"></div></div></div>';
-    el.querySelector('.pgte-x').addEventListener('click', () => close());
+    el.querySelector('.pgte-x').addEventListener('click', () => { close(); if (!E && window.pgBackToPanel) pgBackToPanel(); });   // clean-up #1: back to where it was opened from
     el.querySelector('.pgte-undo').addEventListener('click', () => { if (!E.undo.length) return; E.redo.push(JSON.stringify(E.tune)); E.tune = JSON.parse(E.undo.pop()); draw(); });
     el.querySelector('.pgte-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.tune)); E.tune = JSON.parse(E.redo.pop()); draw(); });
     el.querySelector('.pgte-save').addEventListener('click', () => save(false));
@@ -154,7 +154,7 @@
     return PGControl.save(body).then(r => {
       if (r.versions) GALLERY.versions = r.versions; else { GALLERY.versions = Object.assign({}, GALLERY.versions); GALLERY.versions[E.id] = custom; }
       const demo = PGControl.role() === 'demo';
-      if (apply) { GALLERY.layout = r.layout; GALLERY.custom = r.custom; if (r.theme != null) GALLERY.theme = r.theme; E.saved = JSON.stringify(E.tune); close(true); if (window.switchViewFromNav) switchViewFromNav('hub'); window.scrollTo(0, 0);
+      if (apply) { GALLERY.layout = r.layout; GALLERY.custom = r.custom; if (r.theme != null) GALLERY.theme = r.theme; E.saved = JSON.stringify(E.tune); window.pgEditorBack = null; close(true); if (window.switchViewFromNav) switchViewFromNav('hub'); window.scrollTo(0, 0);
         showToast(demo ? 'Applied on this phone (demo)' : 'Applied — every guest sees this Hub now'); return; }
       E.saved = JSON.stringify(E.tune); btn.disabled = false; draw(); showToast('Saved — your version of ' + E.l.name + ' is kept. Guests see it once you apply it.');
     }).catch(err => { showToast(err.message || 'Could not save'); btn.disabled = false; btn.textContent = was; });

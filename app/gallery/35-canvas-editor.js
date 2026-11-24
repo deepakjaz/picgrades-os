@@ -127,7 +127,7 @@
       '<div class="pce-zoom"><button type="button" class="pce-zoom-toggle" aria-label="Zoom">100%</button><div class="pce-zoom-menu" hidden><button type="button" data-z="-">−</button><b>100%</b><button type="button" data-z="+">+</button><button type="button" data-z="1">Fit</button></div></div>' +
       '<button type="button" class="pce-btn pce-play" aria-label="Play" aria-pressed="false">▶</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
       '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '">' + n + '</button>').join('') + '<button type="button" class="pce-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pce-panel-tools"><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div><div class="pce-pane"></div></div></div>';
-    el.querySelector('.pce-x').addEventListener('click', () => close());
+    el.querySelector('.pce-x').addEventListener('click', () => { close(); if (!E && window.pgBackToPanel) pgBackToPanel(); });   // clean-up #1: back to where it was opened from
     el.querySelector('.pce-undo').addEventListener('click', undo);
     el.querySelector('.pce-redo').addEventListener('click', redo);
     el.querySelector('.pce-title').addEventListener('click', () => { const n = window.prompt('Name of this layout', E.doc.name || ''); if (n != null && n.trim()) change(d => { d.name = n.trim().slice(0, 60); }); });
@@ -575,7 +575,7 @@
     const d = pgDemoLocal(); d.canvas = { id: 'cv-demo', name: E.doc.name || 'My layout', doc: clone(E.doc) }; if (thenApply) d.layout = 'cv-demo';
     try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {}
     pgDemoMerge(GALLERY); E.src = { id: 'cv-demo', mine: true, demo: true }; E.saved = JSON.stringify(E.doc);
-    if (thenApply) { GALLERY.layout = 'cv-demo'; GALLERY.canvas = d.canvas; close(true); window.scrollTo(0, 0); showToast('Applied on this phone (demo)'); } else { draw(); showToast('Saved on this phone (demo)'); }
+    if (thenApply) { GALLERY.layout = 'cv-demo'; GALLERY.canvas = d.canvas; window.pgEditorBack = null; close(true); window.scrollTo(0, 0); showToast('Applied on this phone (demo)'); } else { draw(); showToast('Saved on this phone (demo)'); }
   }
 
   // ---- apply ----
@@ -597,7 +597,7 @@
     if ((gp.header || 'right') !== E.pages.header || (gp.modeside || 'right') !== E.pages.modeside) body.pages = JSON.stringify(E.pages);
     return PGControl.save(body).then(r => { if (r.pages) GALLERY.pages = r.pages;
       GALLERY.layout = r.layout; if (canvas) GALLERY.canvas = canvas; if (r.custom) GALLERY.custom = r.custom;
-      E.saved = JSON.stringify(E.doc); close(true); if (window.switchViewFromNav) switchViewFromNav('hub'); window.scrollTo(0, 0);
+      E.saved = JSON.stringify(E.doc); window.pgEditorBack = null; close(true); if (window.switchViewFromNav) switchViewFromNav('hub'); window.scrollTo(0, 0);
       showToast('Applied — every guest sees this Hub now');
     }).catch(err => { showToast(err.message || 'Could not apply'); btn.disabled = false; btn.textContent = 'Apply'; });
   }

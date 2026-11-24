@@ -203,8 +203,11 @@
     b.append(h('span', 'pgcp-mini cvl', esc(l.name)), h('b', '', esc(l.name)), h('small', '', GALLERY.layout === l.id ? 'In use' : 'Tap to design'));
     return b;
   }
+  // clean-up #1: an editor opened from the Control Panel goes back there (Hub layout) when closed with ✕ / back — never straight to the Hub
+  const fromPanel = () => { window.pgEditorBack = () => open('layout'); };
   function designLayout(id) {
     if (!id) return false;
+    fromPanel();
     if (id === 'custom') { closeSheet(); PGHubEditor.open(); return true; }
     if (/^cv-/.test(id) && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }   // step 77: a layout from a collection
     const l = window.PGLayout && PGLayout.find(id); if (!l) return false;
@@ -222,8 +225,8 @@
       (part === 'all' || part === 'pages' ? Object.keys(PAGE_DEFS).map(key => '<h4>' + PAGE_DEFS[key].title + '</h4><p class="pgcp-note">' + PAGE_DEFS[key].note + '</p><div class="pgcp-row pgcp-pagestyles" data-pagekey="' + key + '"></div>').join('') : ''));
     p.addEventListener('click', e => {
       const t = e.target.closest('.pgcp-tcard'); if (t) { preview({ theme: t.dataset.theme }, p.parentNode); return; }
-      if (e.target.closest('.pgcp-canvas')) { closeSheet(); PGCanvasEditor.open('current'); return; }   // step 77d: starts from the Hub the wedding has now
-      if (e.target.closest('.pgcp-grided')) { closeSheet(); PGHubEditor.open(); return; }   // the card editor stays (header and logo places live there for now)
+      if (e.target.closest('.pgcp-canvas')) { fromPanel(); closeSheet(); PGCanvasEditor.open('current'); return; }   // step 77d: starts from the Hub the wedding has now
+      if (e.target.closest('.pgcp-grided')) { fromPanel(); closeSheet(); PGHubEditor.open(); return; }   // the card editor stays (header and logo places live there for now)
       const st = e.target.closest('.pgcp-style'); if (st) { preview({ pages: { [st.dataset.pagekey]: st.dataset.style } }, p.parentNode); return; }
       const l = e.target.closest('.pgcp-layout'); if (l) { if (!designLayout(l.dataset.layout)) preview({ layout: l.dataset.layout }, p.parentNode); }
     });
@@ -503,5 +506,7 @@
     box.tabIndex = -1; box.focus({ preventScroll: true });   // the panel itself, so no ring appears on a button straight away
   }
   // the Hub editor (23-editor.js) publishes through the same saving as the panel (couple link, login, or this phone in a demo)
+  // called by an editor after its ✕ / back closed it (not after Apply)
+  window.pgBackToPanel = () => { const f = window.pgEditorBack; window.pgEditorBack = null; if (f) setTimeout(f, 0); };
   window.PGControl = { designLayout, role: () => ROLE, checked: () => checked, open, go: k => (document.querySelector('.pgcp-sheet') ? goTo(k) : open(k)), refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
 })();
