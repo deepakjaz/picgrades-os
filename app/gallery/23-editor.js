@@ -137,7 +137,7 @@
     from.innerHTML = '<option value="">Start again from a layout…</option>' + startList.map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + (l.story ? ' · story' : '') + '</option>').join('');
     from.addEventListener('change', () => { const l = PGLayout.find(from.value); from.value = ''; if (!l) return; if (!confirmBox('Start again from “' + l.name + '”? Your changes so far are replaced (Undo brings them back).')) return; snapshot();
       E.d = Object.assign(l.story ? storyDraft(l.story, l.id) : fromLayout(l), { header: E.d.header, modeside: E.d.modeside }); E.sel = -1; E.info = null; commit(); });
-    el.querySelector('.pged-x').addEventListener('click', close);
+    el.querySelector('.pged-x').addEventListener('click', () => { close(); if (!E && window.pgBackToPanel) pgBackToPanel(); });   // clean-up #1: back to where it was opened from
     el.querySelector('.pged-pal').addEventListener('click', paletteSheet);
     el.querySelector('.pged-undo').addEventListener('click', () => { if (!E.undo.length) return; E.redo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.undo.pop()); E.sel = -1; paintUndo(); commit(); });
     el.querySelector('.pged-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.redo.pop()); E.sel = -1; paintUndo(); commit(); });
@@ -390,7 +390,7 @@
     const btn = E ? E.el.querySelector('.pged-pub') : null; if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
     PGControl.save(body).then(r => {
       GALLERY.layout = r.layout; GALLERY.custom = r.custom; GALLERY.pages = r.pages || GALLERY.pages; if (r.theme != null) GALLERY.theme = r.theme; if (r.versions) GALLERY.versions = r.versions;
-      store(null); close(); endPreview(true); previewing = false; PGLayout.refresh(); applyHeader(); switchViewFromNav('hub');
+      store(null); window.pgEditorBack = null; close(); endPreview(true); previewing = false; PGLayout.refresh(); applyHeader(); switchViewFromNav('hub');
       showToast(PGControl.role() === 'demo' ? 'Published on this phone (demo)' : 'Published — every guest sees your Hub now');
     }).catch(err => { showToast(err.message); if (btn) { btn.disabled = false; btn.textContent = 'Publish'; } });
   }
