@@ -1,4 +1,4 @@
-// Browser test (step 32): the Hub drawn from the 10 layouts — every block shows real wedding data and opens the same function as before; original Hub when none.
+// Browser test (step 32): the Hub drawn from the registered layouts — every block shows real wedding data and opens the same function as before; original Hub when none.
 const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');

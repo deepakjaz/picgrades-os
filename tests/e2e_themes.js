@@ -1,4 +1,4 @@
-// Browser test (step 31): themes — 10 themes from /app/themes/themes.json switch the whole app (light and dark), the test menu, back to the original look.
+// Browser test (step 31): themes — 24 themes from /app/themes/themes.json switch the whole app (light and dark), the test menu, back to the original look.
 const RE = require('./reel_helper');
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
