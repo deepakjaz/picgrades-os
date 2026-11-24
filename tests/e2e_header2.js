@@ -54,7 +54,7 @@ const srv = http.createServer((req, res) => {
   console.log('Control Panel numbers:', (await p.locator('.pgcp-stat').allTextContents()).join(' · ')); await p.click('.pgcp-statlist summary'); await p.waitForTimeout(200);
   await p.screenshot({ path: '/tmp/s49_panel.png' });
   await p.evaluate(() => { PGControl.go('look'); }); await p.waitForTimeout(300);
-  await p.click('.pgcp-grided'); await p.waitForSelector('.pged');
+  await p.waitForSelector('.pgcp-grided', { state: 'attached' }); await p.evaluate(() => document.querySelector('.pgcp-grided').click());   // layouts screen (clean-up #8): these staff-only buttons are hidden for couples; the test still uses them await p.waitForSelector('.pged');
   await p.click('.pged-page-settings'); await p.waitForSelector('.pged-settings:not([hidden])'); await p.click('.pged-logo [data-logo=left]'); await p.waitForTimeout(200);
   console.log('editor: logo left, light/dark still right:', await p.evaluate(() => [document.querySelector('.pged-logo .on').dataset.logo, document.querySelector('.pged-mode .on').dataset.mode].join('/')));
   await p.screenshot({ path: '/tmp/s49_editor.png' });

@@ -61,8 +61,8 @@ const srv=http.createServer((req,res)=>{
   };
   await viaPanel('free editor ('+canvasId+')', ()=>pg.evaluate(id=>PGControl.designLayout(id),canvasId));
   if(storyId) await viaPanel('story layout ('+storyId+')', ()=>pg.evaluate(id=>PGControl.designLayout(id),storyId));
-  await viaPanel('"Design your own Hub"', ()=>pg.locator('.pgcp-canvas').first().click());
-  await viaPanel('card editor', ()=>pg.locator('.pgcp-grided').first().click());
+  await viaPanel('"Design your own Hub"', ()=>pg.evaluate(()=>document.querySelector('.pgcp-canvas').click()));
+  await viaPanel('card editor', ()=>pg.evaluate(()=>document.querySelector('.pgcp-grided').click()));
   // clean-up #5: tapping a layout shows its preview first, with Use this and Edit; Edit → editor → ✕ comes back to that preview
   await pg.evaluate(()=>PGControl.go('layout')); await pg.waitForSelector('.pgcp-sheet .pgcp-layouts',{timeout:15000}); await pg.waitForTimeout(300);
   const shown=await pg.evaluate(()=>{ const b=[...document.querySelectorAll('.pgcp-layout')].find(x=>x.dataset.layout&&x.dataset.layout!=='custom'&&!/^cv-/.test(x.dataset.layout)); b.scrollIntoView({block:'center'}); b.click(); return b.dataset.layout; }); await pg.waitForTimeout(800);
