@@ -3196,3 +3196,9 @@ body.pgv-on .pgst-pop,body.pgm-on .pgst-pop,body.pged-on .pgst-pop,body.pgte-on 
 .pce-zoom{position:relative;bottom:auto;z-index:400;display:flex;align-items:center;gap:2px;width:max-content;margin:0;padding:0;border-radius:12px;background:none;box-shadow:none}
 .pce-zoom-menu{position:absolute;top:48px;left:50%;translate:-50% 0;display:flex;align-items:center;gap:2px;padding:5px;border-radius:12px;background:#292321;box-shadow:0 8px 24px #0008;white-space:nowrap}
 .pce-zoom-menu[hidden]{display:none}
+
+
+/* F2 touch targets and readable labels inside both editor drawers */
+.pce-pane button,.pgte-pane button{min-height:44px}
+.pce-pane small,.pgte-pane small{font-size:11px!important}
+@media (max-width:699px){.pce-panel-tools .pce-mode button{height:44px;min-height:44px}}
