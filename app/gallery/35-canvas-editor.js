@@ -95,7 +95,21 @@
     }
     start(starter(), {});
   }
-  function setDrawer(open) { if (!E) return; E.drawerOpen = !!open; E.el.classList.toggle('pce-drawer-open', E.drawerOpen); const b = E.el.querySelector('.pce-drawer-toggle'); b.textContent = E.drawerOpen ? '⌄' : '⌃'; b.setAttribute('aria-expanded', String(E.drawerOpen)); b.setAttribute('aria-label', E.drawerOpen ? 'Close tools' : 'Open tools'); }
+  function setDrawer(open) {
+    if (!E) return;
+    E.drawerOpen = !!open;
+    E.el.classList.toggle('pce-drawer-open', E.drawerOpen);
+    const b = E.el.querySelector('.pce-drawer-toggle');
+    b.textContent = E.drawerOpen ? '⌄' : '⌃';
+    b.setAttribute('aria-expanded', String(E.drawerOpen));
+    b.setAttribute('aria-label', E.drawerOpen ? 'Close tools' : 'Open tools');
+    if (E.drawerOpen && E.sel) requestAnimationFrame(() => {
+      if (!E || !E.drawerOpen || !E.sel) return;
+      const stage = E.el.querySelector('.pce-stage');
+      const node = E.el.querySelector('.pce-page .pgc-el[data-el="' + CSS.escape(E.sel) + '"]');
+      if (stage && node) node.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+  }
   function close(force) {
     if (!E) return;
     if (!force && E.doc && JSON.stringify(E.doc) !== E.saved && !window.confirm('Leave without saving your changes?')) return;

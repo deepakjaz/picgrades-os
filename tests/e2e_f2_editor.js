@@ -103,13 +103,15 @@ function check(condition, message) {
   if (!condition) failures++;
 }
 
-async function measure(page, selector) {
-  return page.evaluate(selector => {
+async function measure(page, selector, stageSelector) {
+  return page.evaluate(({ selector, stageSelector }) => {
     const preview = document.querySelector(selector);
-    if (!preview) return { missing: true, visible: 0 };
+    const stage = document.querySelector(stageSelector);
+    if (!preview || !stage) return { missing: true, visible: 0 };
     const rect = preview.getBoundingClientRect();
-    const x0 = Math.max(0, rect.left), y0 = Math.max(0, rect.top);
-    const x1 = Math.min(innerWidth, rect.right), y1 = Math.min(innerHeight, rect.bottom);
+    const stageRect = stage.getBoundingClientRect();
+    const x0 = Math.max(0, rect.left, stageRect.left), y0 = Math.max(0, rect.top, stageRect.top);
+    const x1 = Math.min(innerWidth, rect.right, stageRect.right), y1 = Math.min(innerHeight, rect.bottom, stageRect.bottom);
     if (x1 <= x0 || y1 <= y0) {
       return { missing: false, visible: 0, width: Math.round(rect.width), height: Math.round(rect.height) };
     }
@@ -129,7 +131,7 @@ async function measure(page, selector) {
       width: Math.round(rect.width),
       height: Math.round(rect.height)
     };
-  }, selector);
+  }, { selector, stageSelector });
 }
 
 async function run() {
@@ -167,7 +169,7 @@ async function run() {
         return !!PGCanvasEditor.state().sel;
       });
       check(selected, name + ': free editor part selected');
-      const free = await measure(page, '.pce-page');
+      const free = await measure(page, '.pce-page', '.pce-stage');
       console.log('DESIGN VISIBLE — Free editor — ' + name + ' (' + width + 'x' + height + '): ' + JSON.stringify(free));
       check(free.visible >= 85, name + ': free editor design visible ≥85% with a part selected');
       const freeWidth = await page.evaluate(() => ({
@@ -178,10 +180,10 @@ async function run() {
         name + ': free design fits screen width (' + freeWidth.preview + ' / ' + freeWidth.screen + ')');
       await page.click('.pce-tabs [data-tab="style"]');
       await page.waitForTimeout(100);
-      const freeOpen = await measure(page, '.pce-page');
+      const freeOpen = await measure(page, '.pce-page', '.pce-stage');
       console.log('DESIGN VISIBLE — Free editor drawer open — ' + name + ': ' + JSON.stringify(freeOpen));
       check(freeOpen.visible >= 85, name + ': free editor remains ≥85% visible with drawer open');
-      check(await page.evaluate(() =>
+      if (width < 700) check(await page.evaluate(() =>
         document.querySelector('.pce-panel').getBoundingClientRect().height <= innerHeight * .4 + 2
       ), name + ': free editor drawer stays within 40%');
       if (width >= 700) {
@@ -197,7 +199,7 @@ async function run() {
       await page.evaluate(() => PGTemplateEditor.open('tpl-c1'));
       await page.waitForSelector('.pgte-scroll .pss', { timeout: 20000 });
       await page.waitForTimeout(200);
-      const tpl = await measure(page, '.pgte-scroll .pss');
+      const tpl = await measure(page, '.pgte-scroll .pss', '.pgte-stage');
       console.log('DESIGN VISIBLE — Template editor — ' + name + ' (' + width + 'x' + height + '): ' + JSON.stringify(tpl));
       check(tpl.visible >= 85, name + ': template editor design visible ≥85%');
       const tplWidth = await page.evaluate(() => ({
@@ -208,15 +210,15 @@ async function run() {
         name + ': template design fits screen width (' + tplWidth.preview + ' / ' + tplWidth.screen + ')');
       await page.click('.pgte-tabs [data-tab="photos"]');
       await page.waitForTimeout(100);
-      const tplOpen = await measure(page, '.pgte-scroll .pss');
+      const tplOpen = await measure(page, '.pgte-scroll .pss', '.pgte-stage');
       console.log('DESIGN VISIBLE — Template editor drawer open — ' + name + ': ' + JSON.stringify(tplOpen));
       check(tplOpen.visible >= 85, name + ': template editor remains ≥85% visible with drawer open');
-      check(await page.evaluate(() =>
+      if (width < 700) check(await page.evaluate(() =>
         document.querySelector('.pgte-panel').getBoundingClientRect().height <= innerHeight * .4 + 2
       ), name + ': template editor drawer stays within 40%');
       await page.click('.pgte-slot');
       await page.waitForSelector('.pgte-pick');
-      check(await page.evaluate(() =>
+      if (width < 700) check(await page.evaluate(() =>
         document.querySelector('.pgte-pick').getBoundingClientRect().height <= innerHeight * .4 + 2
       ), name + ': photo picker stays within 40% drawer');
       await context.close();

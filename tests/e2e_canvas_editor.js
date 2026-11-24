@@ -122,9 +122,9 @@ const srv = http.createServer((req, res) => {
   ok(await mp.evaluate(() => PGCanvasEditor.state().mode === 'p' && !!PGCanvasEditor.state().sel), 'phone: tap selects (phone placement)');
   await mp.screenshot({ path: '/tmp/ce_phone_sel.png' });
   // ---- phase 3: zoom-out, Play, motion, stay, header, typing on the page, drag between sections
-  await mp.tap('.pce-zoom [data-z="-"]'); await mp.tap('.pce-zoom [data-z="-"]'); await mp.waitForTimeout(200);
+  await mp.tap('.pce-zoom-toggle'); await mp.tap('.pce-zoom-menu [data-z="-"]'); await mp.tap('.pce-zoom-toggle'); await mp.tap('.pce-zoom-menu [data-z="-"]'); await mp.waitForTimeout(200);
   ok(await mp.evaluate(() => PGCanvasEditor.state().zoom < 1 && document.querySelector('.pce-page').getBoundingClientRect().width < 380), 'zoom out: the page draws smaller');
-  await mp.tap('.pce-zoom [data-z="1"]'); await mp.waitForTimeout(150);
+  await mp.tap('.pce-zoom-toggle'); await mp.tap('.pce-zoom-menu [data-z="1"]'); await mp.waitForTimeout(150);
   // motion on the selected element
   await mp.tap('[data-tab=item]').catch(() => {}); await mp.waitForTimeout(150);
   const hasM = await mp.evaluate(() => !!document.querySelector('.pce [data-f="m"]'));
