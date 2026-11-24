@@ -12,6 +12,7 @@ for (const f of unit.concat(browser)) {
   const e2e = f.startsWith('e2e_');
   const ok = r.status === 0 && !/^FAIL|\bFAIL\b/m.test(out) && !/Error: (Timeout|page\.)|TypeError|ReferenceError/.test(out) && (!e2e || /page errors: \[\]/.test(out));
   console.log((ok ? 'PASS ' : 'FAIL ') + f + '  (' + Math.round((Date.now() - t0) / 1000) + ' s)');
+  if (f === 'e2e_f2_editor.js') console.log(out);
   if (!ok) { failed.push(f); console.log(out.split('\n').filter(l => /FAIL|Error|page errors/.test(l)).slice(0, 8).map(l => '     ' + l).join('\n')); }
 }
 console.log(failed.length ? '\n' + failed.length + ' test file(s) failed: ' + failed.join(', ') : '\nAll ' + (unit.length + browser.length) + ' test files passed.');
