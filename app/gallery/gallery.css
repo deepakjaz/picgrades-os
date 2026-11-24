@@ -3205,3 +3205,15 @@ body.pgv-on .pgst-pop,body.pgm-on .pgst-pop,body.pged-on .pgst-pop,body.pgte-on 
 
 /* F2: the zoom chip in the top bar is a 44px tap target on every screen */
 .pce-top .pce-zoom-toggle{min-height:44px;min-width:48px}
+
+
+/* F3 touch targets: 44px hit areas with slim 28–32px visible controls */
+.pged-top .pged-x,.pged-top .pged-ic,.pged-top .pged-btn{position:relative;height:44px;min-height:44px;padding:6px 10px;border:0;background:transparent;isolation:isolate}
+.pged-top .pged-x:before,.pged-top .pged-ic:before,.pged-top .pged-btn:before{content:"";position:absolute;inset:6px 0;z-index:-1;border:1px solid rgba(255,255,255,.22);border-radius:16px;background:rgba(255,255,255,.035)}
+.pged-top .pged-pub:before{background:var(--cta-peach);border-color:var(--cta-peach)}
+.pged-dock button{position:relative;height:44px;min-height:44px;padding:6px 14px;border:0;background:transparent;isolation:isolate}
+.pged-dock button:before{content:"";position:absolute;inset:6px 0;z-index:-1;border:1px solid rgba(255,255,255,.22);border-radius:16px;background:rgba(255,255,255,.035)}
+.pged-dock .pged-add:before{background:var(--cta-peach);border-color:var(--cta-peach)}
+.pged-settings-close{position:relative;height:44px;min-height:44px;padding:6px 12px;border:0;background:transparent;color:#fff;isolation:isolate}
+.pged-settings-close:before{content:"";position:absolute;inset:8px 0;z-index:-1;border-radius:14px;background:#fff}
+.pged-settings-close{color:#141110}
