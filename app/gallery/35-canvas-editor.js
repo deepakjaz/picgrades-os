@@ -126,7 +126,7 @@
       '<button type="button" class="pce-ic pce-undo" aria-label="Undo">↶</button><button type="button" class="pce-ic pce-redo" aria-label="Redo">↷</button>' +
       '<div class="pce-zoom"><button type="button" class="pce-zoom-toggle" aria-label="Zoom">100%</button><div class="pce-zoom-menu" hidden><button type="button" data-z="-">−</button><b>100%</b><button type="button" data-z="+">+</button><button type="button" data-z="1">Fit</button></div></div>' +
       '<button type="button" class="pce-btn pce-play" aria-label="Play" aria-pressed="false">▶</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
-      '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-panel-tools"><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '">' + n + '</button>').join('') + '<button type="button" class="pce-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pce-pane"></div></div></div>';
+      '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '">' + n + '</button>').join('') + '<button type="button" class="pce-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pce-panel-tools"><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div><div class="pce-pane"></div></div></div>';
     el.querySelector('.pce-x').addEventListener('click', () => close());
     el.querySelector('.pce-undo').addEventListener('click', undo);
     el.querySelector('.pce-redo').addEventListener('click', redo);
@@ -420,7 +420,7 @@
   }
   function layersPane() {
     const icon = { photo: '▣', names: 'Aa', date: '◷', text: 'T', events: '▤', strip: '⋯', action: '●', blessings: '❝', credit: '©', shape: '◆', card: '▦' };
-    return '<p class="pce-note">Everything on the page, front first. ' + (E.mode === 'l' ? 'Hiding here hides on laptop only.' : 'Hiding here hides on phone only.') + '</p>' + E.doc.sections.map((s, si) =>
+    return '<p class="pce-note">Everything on the page, front first. ' + (E.mode === 'l' ? 'Hiding here hides on laptop only.' : 'Hiding here hides on phone only.') + '</p><div class="pce-lsec"><b>Guest actions</b><div class="pce-layer pce-global-layer"><span><i>◎</i>Find me</span><small>Floating guest action</small></div></div>' + E.doc.sections.map((s, si) =>
       '<div class="pce-lsec"><b>Section ' + (si + 1) + '</b>' + (s.els || []).slice().sort((a, b) => num(spot(b).z, 1) - num(spot(a).z, 1)).map(e => { const sp = spot(e);
         return '<div class="pce-layer' + (e.id === E.sel ? ' on' : '') + (sp.hide ? ' off' : '') + '"><button type="button" data-sel="' + e.id + '"><i>' + icon[e.t] + '</i>' + esc(TYPE[e.t]) + (e.text ? ' · ' + esc(String(e.text).slice(0, 18)) : e.act ? ' · ' + esc(PGCanvas.LABEL[e.act]) : '') + '</button><button type="button" class="pce-eye" data-eye="' + e.id + '" aria-label="' + (sp.hide ? 'Show' : 'Hide') + '">' + (sp.hide ? 'Hidden' : 'Shown') + '</button></div>'; }).join('') + '</div>').join('');
   }

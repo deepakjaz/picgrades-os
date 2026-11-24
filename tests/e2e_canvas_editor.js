@@ -57,7 +57,7 @@ const srv = http.createServer((req, res) => {
   const n4 = (await S()).doc.sections[0].els.find(e => e.id === names.id);
   ok((n4.sl && n4.sl.size === 90) || (n4.s && n4.s.size === 90), 'the size slider changes the text size');
   // phone mode: phone placement kept
-  await pg.click('.pce-mode [data-mode=p]'); await pg.waitForTimeout(300);
+  await pg.click('.pce [data-tab=page]'); await pg.click('.pce-mode [data-mode=p]');   // F2b: the Phone/Laptop switch lives in the Page tab await pg.waitForTimeout(300);
   ok((await S()).mode === 'p' && await pg.evaluate(() => document.querySelector('.pce-page').offsetWidth === 390), 'Phone shows the 390-wide phone page');
   // add a Find me button
   const before = new Set((await S()).doc.sections.flatMap(s => s.els).map(e => e.id));
