@@ -19,6 +19,6 @@ jobs:
       - name: Install test browser
         run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
       - name: Check F2 JavaScript syntax
-        run: node --check app/gallery/32-story-studio.js && node --check app/gallery/33-template-editor.js && node --check app/gallery/35-canvas-editor.js && node --check tests/e2e_f2_editor.js
+        run: node --check app/gallery/32-story-studio.js && node --check app/gallery/33-template-editor.js && node --check app/gallery/35-canvas-editor.js && node --check tests/e2e_f2_editor.js && node --check tests/run.js
       - name: Run all tests
         run: npm test
