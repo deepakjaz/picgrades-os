@@ -79,6 +79,25 @@ const srv=http.createServer((req,res)=>{
     await pg.screenshot({path:'/tmp/tap_select_phone.png'});
     await ctx.close(); }
 
+  // ---- clean-up #3: Change photo straight from a selected photo ----
+  { const {ctx,pg}=await open({width:390,height:844},true);
+    const pid=await pg.evaluate(()=>{ const s=PGCanvasEditor.state(); for(const sec of s.doc.sections) for(const e of sec.els) if(e.t==='photo'&&!(e.p&&e.p.hide)){ document.querySelector('.pce-page .pgc-el[data-el="'+e.id+'"]').scrollIntoView({block:'center'}); return e.id; } return null; });
+    await pg.waitForTimeout(300);
+    await pg.tap('.pce-page .pgc-el[data-el="'+pid+'"]'); await pg.waitForTimeout(300);
+    const chg=await pg.$('.pce-sel .pce-chg');
+    ok(!!chg, 'phone: a selected photo shows "Change photo" next to ✥ Move');
+    if(chg){ const b=await chg.boundingBox(); ok(b.height>=44&&b.width>=44,'phone: "Change photo" is a 44px tap target ('+Math.round(b.width)+'×'+Math.round(b.height)+')');
+      await pg.tap('.pce-sel .pce-chg'); await pg.waitForSelector('.pce-pick',{timeout:5000}); await pg.waitForTimeout(400);
+      await pg.screenshot({path:'/tmp/change_photo_picker.png'});
+      const want=await pg.evaluate(()=>document.querySelector('.pce-pick [data-id]').dataset.id);
+      await pg.tap('.pce-pick [data-id]'); await pg.waitForTimeout(400);
+      ok(await pg.evaluate(([id,want])=>{ const s=PGCanvasEditor.state(); for(const sec of s.doc.sections) for(const e of sec.els) if(e.id===id) return !!(e.src&&e.src.k==='id'&&e.src.id===want); return false; },[pid,want]), 'phone: picking a photo puts it in that photo part');
+      ok(!(await pg.$('.pce-pick')), 'phone: the picker closes after choosing'); }
+    const txt=await pg.evaluate(()=>{ const s=PGCanvasEditor.state(); for(const sec of s.doc.sections) for(const e of sec.els) if(e.t==='names') return e.id; });
+    await pg.tap('.pce-page .pgc-el[data-el="'+txt+'"]').catch(()=>{}); await pg.waitForTimeout(300);
+    ok(!(await pg.$('.pce-sel .pce-chg')), 'phone: words have no "Change photo" button');
+    await ctx.close(); }
+
   console.log('page errors: '+JSON.stringify(errors)); ok(errors.length===0,'no page errors');
   await browser.close(); srv.close();
   console.log(fails?fails+' FAILED':'all passed'); process.exitCode=fails?1:0;
