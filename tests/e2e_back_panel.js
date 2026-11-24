@@ -63,6 +63,20 @@ const srv=http.createServer((req,res)=>{
   if(storyId) await viaPanel('story layout ('+storyId+')', ()=>pg.evaluate(id=>PGControl.designLayout(id),storyId));
   await viaPanel('"Design your own Hub"', ()=>pg.locator('.pgcp-canvas').first().click());
   await viaPanel('card editor', ()=>pg.locator('.pgcp-grided').first().click());
+  // clean-up #5: tapping a layout shows its preview first, with Use this and Edit; Edit → editor → ✕ comes back to that preview
+  await pg.evaluate(()=>PGControl.go('layout')); await pg.waitForSelector('.pgcp-sheet .pgcp-layouts',{timeout:15000}); await pg.waitForTimeout(300);
+  const shown=await pg.evaluate(()=>{ const b=[...document.querySelectorAll('.pgcp-layout')].find(x=>x.dataset.layout&&x.dataset.layout!=='custom'&&!/^cv-/.test(x.dataset.layout)); b.scrollIntoView({block:'center'}); b.click(); return b.dataset.layout; }); await pg.waitForTimeout(800);
+  console.log('layout tried: '+shown);
+  ok(!(await editorOpen()) && !!(await pg.$('.pgcp-pv')), 'tapping a layout opens its preview, not the editor');
+  ok(/Use this/.test(await pg.textContent('.pgcp-pv-apply')) && await pg.isVisible('.pgcp-pv-edit'), 'the preview offers "Use this" and "Edit"');
+  await pg.screenshot({path:'/tmp/preview_first.png'});
+  await pg.click('.pgcp-pv-edit'); await pg.waitForTimeout(900);
+  ok(await editorOpen(), 'Edit opens the editor');
+  await closeEditor(); await pg.waitForTimeout(300);
+  ok(!(await editorOpen()) && !!(await pg.$('.pgcp-pv')) && await panelAtLayouts(), '✕ in the editor comes back to that layout\'s preview');
+  await pg.click('.pgcp-pv-back'); await pg.waitForTimeout(300);
+  ok(!(await pg.$('.pgcp-pv')) && await panelAtLayouts(), 'Back in the preview goes to the layouts list');
+  await pg.evaluate(()=>{const x=document.querySelector('.pgcp-x'); if(x) x.click();}); await pg.waitForTimeout(400);
   // an editor opened from somewhere else closes to where it was (no Control Panel popping up)
   await pg.evaluate(()=>PGCanvasEditor.open('current')); await pg.waitForTimeout(900);
   await closeEditor();

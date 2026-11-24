@@ -204,17 +204,22 @@
     return b;
   }
   // clean-up #1: an editor opened from the Control Panel goes back there (Hub layout) when closed with ✕ / back — never straight to the Hub
-  const fromPanel = () => { window.pgEditorBack = () => open('layout'); };
-  function designLayout(id) {
-    if (!id) return false;
-    fromPanel();
-    if (id === 'custom') { closeSheet(); PGHubEditor.open(); return true; }
-    if (/^cv-/.test(id) && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }   // step 77: a layout from a collection
-    const l = window.PGLayout && PGLayout.find(id); if (!l) return false;
-    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) { closeSheet(); PGCanvasEditor.open(id); return true; }   // step 77d: card layouts open in the free editor too
-    if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) { closeSheet(); PGTemplateEditor.open(id); return true; }
-    if (window.PGHubEditor) { closeSheet(); PGHubEditor.open({ from: id }); return true; }
-    return false;
+  // clean-up #5: ✕ in the editor comes back to the layout's preview (if it was opened from one), else to the layouts list
+  const fromPanel = (pvId) => { window.pgEditorBack = () => { open('layout'); if (pvId) setTimeout(() => { const pn = document.querySelector('.pgcp-sheet .pgcp-layouts'); if (pn) preview({ layout: pvId }, pn.closest('.pgcp-pane').parentNode); }, 60); }; };
+  // which editor designs this layout (null = none)
+  function designer(id) {
+    if (!id) return null;
+    if (id === 'custom') return () => PGHubEditor.open();
+    if (/^cv-/.test(id) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77: a layout from a collection
+    const l = window.PGLayout && PGLayout.find(id); if (!l) return null;
+    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor too
+    if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);
+    if (window.PGHubEditor) return () => PGHubEditor.open({ from: id });
+    return null;
+  }
+  function designLayout(id, pvId) {
+    const go = designer(id); if (!go) return false;
+    fromPanel(pvId); closeSheet(); go(); return true;
   }
   function lookPane(part) {
     part = part || 'all';
@@ -228,7 +233,7 @@
       if (e.target.closest('.pgcp-canvas')) { fromPanel(); closeSheet(); PGCanvasEditor.open('current'); return; }   // step 77d: starts from the Hub the wedding has now
       if (e.target.closest('.pgcp-grided')) { fromPanel(); closeSheet(); PGHubEditor.open(); return; }   // the card editor stays (header and logo places live there for now)
       const st = e.target.closest('.pgcp-style'); if (st) { preview({ pages: { [st.dataset.pagekey]: st.dataset.style } }, p.parentNode); return; }
-      const l = e.target.closest('.pgcp-layout'); if (l) { if (!designLayout(l.dataset.layout)) preview({ layout: l.dataset.layout }, p.parentNode); }
+      const l = e.target.closest('.pgcp-layout'); if (l) { const id = l.dataset.layout; if (id === 'custom' || /^cv-/.test(id)) { if (!designLayout(id)) preview({ layout: id }, p.parentNode); } else preview({ layout: id }, p.parentNode); }   // clean-up #5: preview first, then Use this / Edit
     });
     return p;
   }
@@ -256,7 +261,7 @@
       '<div class="pgcp-pv-stage"><div class="pgcp-pv-phone"><iframe title="Preview" loading="eager"></iframe><div class="pgcp-pv-wait">Opening preview…</div></div></div>' +
       '<div class="pgcp-pv-pages" role="tablist"></div>' +
       '<div class="pgcp-pv-foot"><label class="pgcp-pv-keep" hidden><input type="checkbox"> Keep my current theme</label>' +
-      '<p class="pgcp-pv-note">Only you can see this preview.</p><button type="button" class="mk-btn-peach ios-wide pgcp-pv-apply">' + (ROLE === 'demo' ? 'Apply on this phone' : 'Apply to the wedding') + '</button></div>';
+      '<p class="pgcp-pv-note">Only you can see this preview.</p><div class="pgcp-pv-acts"><button type="button" class="pgcp-pv-edit" hidden>Edit</button><button type="button" class="mk-btn-peach ios-wide pgcp-pv-apply">' + (ROLE === 'demo' ? 'Apply on this phone' : 'Apply to the wedding') + '</button></div></div>';
     const fr = wrap.querySelector('iframe'), pages = wrap.querySelector('.pgcp-pv-pages'), wait = wrap.querySelector('.pgcp-pv-wait');
     const post = m => { try { fr.contentWindow.postMessage(Object.assign({ pg: 'preview' }, m), location.origin); } catch (e) {} };
     const load = () => {
@@ -281,8 +286,12 @@
     }
     const close = () => { window.removeEventListener('message', onMsg); wrap.remove(); };
     wrap.querySelector('.pgcp-pv-back').addEventListener('click', close);
+    // clean-up #5: a layout preview offers Edit (opens its editor; ✕ there comes back to this preview) next to Use this
+    const ed = wrap.querySelector('.pgcp-pv-edit');
+    if ('layout' in want && !pk && state.layout && designer(state.layout)) { ed.hidden = false; ed.addEventListener('click', () => { const id = state.layout; close(); designLayout(id, id); }); }
     const same = pk ? state.styles[pk] === curStyle(pk) : state.theme === (GALLERY.theme || '') && state.layout === (GALLERY.layout || '');
     const ap = wrap.querySelector('.pgcp-pv-apply');
+    if ('layout' in want && !pk) ap.textContent = ROLE === 'demo' ? 'Use this on this phone' : 'Use this';
     if (same) { ap.textContent = 'This is in use now'; ap.disabled = true; }
     ap.addEventListener('click', () => {
       const part = pk ? { pages: JSON.stringify({ [pk]: state.styles[pk] }) } : 'layout' in want ? { layout: state.layout, theme: state.theme } : { theme: state.theme };
