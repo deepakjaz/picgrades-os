@@ -3288,3 +3288,11 @@ body.pgv-on .pgst-pop,body.pgm-on .pgst-pop,body.pged-on .pgst-pop,body.pgte-on 
  .pce-tabs{padding:0 6px;gap:2px}
  .pce-tabs button[data-tab]{padding:0 5px;font-size:12px}
 }
+
+
+/* F2b follow-up — keep the global Find me action out of the canvas; represent it in Layers. */
+body.pce-on .pgs-findme{display:none!important}
+.pce-global-layer{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px;padding:0 8px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(245,240,232,.88)}
+.pce-global-layer>span{display:flex;align-items:center;gap:8px;font:500 13px var(--font-sans)}
+.pce-global-layer i{width:22px;text-align:center;font-style:normal;opacity:.75}
+.pce-global-layer small{font:500 10px var(--font-sans);opacity:.55}
