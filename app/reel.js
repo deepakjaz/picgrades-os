@@ -1200,8 +1200,10 @@
     S.playBtn.innerHTML = '&#10074;&#10074;'; msg('');
     var ac = audioCtx(); if (ac.state === 'suspended') ac.resume();
     loadTrack(S.track).then(function (buf) {
+      if (!S) return;   // the editor was closed while the music loaded
       S.aud = startAudio(buf, ac.destination, P.dur, at); var now = clock(S.aud), p0 = performance.now(), ctx = S.canvas.getContext('2d');
       (function loop() {
+        if (!S) return;
         var t = S.aud ? now() : at + (performance.now() - p0) / 1000;
         if (t >= P.dur) { stopPreview(); seek(P.dur - 0.01); return; }
         draw(ctx, P, Math.max(0, t)); S.t = t; S.tl.scrollLeft = t * PX; S.progLeft = S.tl.scrollLeft; S.timeEl.firstChild.textContent = fmt(t);
@@ -1320,7 +1322,7 @@
     S.timeEl = el('div', { class: 're-time' }, [el('b', { text: '00:00' }), el('span', { text: '00:00' })]);
     S.tl = el('div', { class: 're-tl' }); S.tlIn = el('div', { class: 're-tl-in' }, [el('div', { class: 're-row re-r-fx' }), el('div', { class: 're-row re-r-txt' }), el('div', { class: 're-row re-r-stk' }), el('div', { class: 're-row re-r-aud' }), el('div', { class: 're-row re-r-clip' })]);
     S.tl.appendChild(S.tlIn);
-    S.tl.addEventListener('scroll', function () { if (Math.abs(S.tl.scrollLeft - (S.progLeft == null ? -9 : S.progLeft)) < 1.5) return; S.progLeft = null; if (S.raf) stopPreview(); seek(S.tl.scrollLeft / PX, true); }, { passive: true });
+    S.tl.addEventListener('scroll', function () { if (!S || !S.tl) return; if (Math.abs(S.tl.scrollLeft - (S.progLeft == null ? -9 : S.progLeft)) < 1.5) return; S.progLeft = null; if (S.raf) stopPreview(); seek(S.tl.scrollLeft / PX, true); }, { passive: true });
     var tools = el('div', { class: 're-tools' });
     [['audio', 'Audio', toolAudio], ['text', 'Text', function () { toolText(); }], ['sticker', 'Drawings', function () { toolSticker(); }], ['filters', 'Filters', toolFilters], ['adjust', 'Adjust', toolAdjust],
       ['style', 'Style', toolStyle], ['length', 'Length', toolLength], ['title', 'Title', toolTitle], ['add', 'Add clip', function () { openPicker({ add: true }); }]].forEach(function (t) {
