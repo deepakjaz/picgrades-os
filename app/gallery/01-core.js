@@ -692,9 +692,10 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
     GALLERY.guestPosts = res.gallery.guestPosts || [];
     if (newPosts && !document.getElementById('view-moments').classList.contains('active')) { ROOT_SET = buildRootSet(); renderMoments(); }
-    // step 63b: what this phone may see can change (the couple switched guest photos, Find me found them, a request was approved)
-    const sees = x => JSON.stringify([x.guestPhotos || '', !!x.gated, !!x.found, (x.events || []).filter(e => !e.isHighlights).map(e => [e.name, (e.teaserOnly ? [] : e.photos).length, !!e.full]), (x.pool || []).length]);
-    if (sees(res.gallery) !== sees(GALLERY)) { ['events', 'root', 'pool', 'highlights', 'gated', 'found', 'guestPhotos'].forEach(k => { GALLERY[k] = res.gallery[k]; }); pgGatePrep(); pgRenderHub(); }
+    // step 63b: what this phone may see can change (the couple switched guest photos, Find me found them, a request was approved,
+    // or — step 89 — they joined with an invite link)
+    const sees = x => JSON.stringify([x.guestPhotos || '', !!x.gated, !!x.found, JSON.stringify(x.invite || null), (x.events || []).filter(e => !e.isHighlights).map(e => [e.name, (e.teaserOnly ? [] : e.photos).length, !!e.full]), (x.pool || []).length]);
+    if (sees(res.gallery) !== sees(GALLERY)) { ['events', 'root', 'pool', 'highlights', 'gated', 'found', 'guestPhotos', 'invite'].forEach(k => { GALLERY[k] = res.gallery[k]; }); pgGatePrep(); pgRenderHub(); }
     renderGalleries();
   }).catch(err => {
     if (err && err.draft) { try { localStorage.removeItem(CK); } catch (e) {} return pgDraftScreen(err.res && err.res.title); }

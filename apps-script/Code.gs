@@ -86,7 +86,13 @@ var PUBLIC_ROUTES = {
   publishGallery: publishGallery_,
   dlRequests: dlRequests_,
   dlDecide: dlDecide_,
-  dlGrant: dlGrant_
+  dlGrant: dlGrant_,
+  inviteList: inviteList_,     // step 89: invite links (couple link or photographer only)
+  inviteSave: inviteSave_,
+  inviteState: inviteState_,
+  inviteRemove: inviteRemove_,
+  inviteUndo: inviteUndo_,
+  inviteJoin: inviteJoin_     // a guest who already gave their name opens an invite link
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -1459,6 +1465,7 @@ function getGallery_(p) {
   m.guestGate = String(getSettings_().guestGate || 'open').toLowerCase() === 'on' ? 'on' : 'open';
   m.guestPhotos = guestPhotosOf_(g);
   if (gatedFor_(g, p)) gateManifest_(g, m, p);
+  else if (!privileged_(g, p)) { var gi = null; try { gi = inviteOf_(g, guestFor_(g, p)); } catch (e) {} if (gi) m.invite = { name: gi.name, download: gi.download === 'on' ? 'on' : 'off' }; }   // step 89
   if (g.plan && privileged_(g, p)) { m.plan = planOf_(g); m.plan.upgrade = upgradeLink_(); }
   if (g.hubVersions && privileged_(g, p)) m.versions = versionsOf_(g.hubVersions);   // step 76: the couple's saved version of each layout   // step 65d: only the couple / photographer see the plan
   m.address = shareAddress_(g);   // step 67: the link guests share — their own domain, or anika-rohan.picgrades.in once that is switched on
@@ -1470,7 +1477,12 @@ function getGallery_(p) {
 // photos the couple chose for the Hub's look (cover, bride, groom). After Find me: also each event's highlights and their own photos,
 // and every photo of an event the couple opened for them (a 'more' request). Root Moment (the couple's posts) stays open.
 function guestPhotosOf_(g) { return String(g && g.guestPhotos || '') === 'findme' ? 'findme' : 'open'; }
-function gatedFor_(g, p) { return guestPhotosOf_(g) === 'findme' && !isDemo_(g) && !privileged_(g, p || REQ_P || {}); }
+function gatedFor_(g, p) {
+  p = p || REQ_P || {};
+  if (guestPhotosOf_(g) !== 'findme' || isDemo_(g) || privileged_(g, p)) return false;
+  var guest = null; try { guest = guestFor_(g, p); } catch (e) {}
+  return !inviteOf_(g, guest);   // step 89: a guest on an invite link that is on sees every photo
+}
 function photoMap_(m) { var o = {}; (m.root || []).forEach(function (x) { o[x.id] = x; }); (m.events || []).forEach(function (e) { (e.photos || []).forEach(function (x) { if (!o[x.id]) o[x.id] = x; }); }); return o; }
 /** What this guest may see: { found, ids (set), events (event name → true for events opened in full) }. */
 function guestSees_(g, m, p) {
@@ -1784,7 +1796,7 @@ function facesProxy_(p, user) {
 // =====================================================================
 // 6c. Guests: name + phone (OTP later), saved "Find me" collections, Root Moment uploads with couple approval
 // =====================================================================
-var GUEST_COLUMNS = ['at', 'galleryId', 'guestId', 'keyHash', 'name', 'phone', 'device', 'status', 'side', 'attended'];   // side / attended: the guest welcome (step 63c)
+var GUEST_COLUMNS = ['at', 'galleryId', 'guestId', 'keyHash', 'name', 'phone', 'device', 'status', 'side', 'attended', 'inviteId'];   // side / attended: the guest welcome (step 63c); inviteId: the invite link they joined with (step 89)
 var SET_COLUMNS = ['at', 'galleryId', 'code', 'name', 'guestId', 'device', 'ids'];
 var POST_COLUMNS = ['at', 'galleryId', 'postId', 'guestId', 'name', 'phone', 'caption', 'fileId', 'mime', 'type', 'status', 'reviewedAt'];
 var MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // same as TKG Moments: Apps Script request bodies stay well under ~50 MB
@@ -1838,11 +1850,122 @@ function guestJoin_(p) {
   if (phone.replace(/\D/g, '').length < 10 || phone.replace(/\D/g, '').length > 13) return { ok: false, error: 'Please write a valid mobile number.' };
   if (!limitOk_('gj:' + String(p.device || phone).slice(0, 40), 5, 3600) || !limitOk_('gjg:' + g.galleryId, 600, 3600)) return { ok: false, error: 'Too many sign-ins for now. Please try again later.' };
   ensureTab_('Guests', GUEST_COLUMNS);
+  var inv = inviteForJoin_(g, p.inv, phone);   // step 89: joined with an invite link? (full or off → a normal guest)
   var key = randomId_(24), id = 'gst_' + randomId_(10);
-  appendRow_('Guests', { at: fmt_(new Date()), galleryId: g.galleryId, guestId: id, keyHash: hash_(key), name: name, phone: phone, device: String(p.device || '').slice(0, 40), status: 'ok', side: sideOf_(p.side), attended: p.attended === 'yes' || p.attended === 'no' ? p.attended : '' });
+  appendRow_('Guests', { at: fmt_(new Date()), galleryId: g.galleryId, guestId: id, keyHash: hash_(key), name: name, phone: phone, device: String(p.device || '').slice(0, 40), status: 'ok', side: sideOf_(p.side), attended: p.attended === 'yes' || p.attended === 'no' ? p.attended : '', inviteId: inv.link ? inv.link.linkId : '' });
   var out = { guestId: id, guestKey: key, name: name }, done = foundRow_(g, phone);
+  if (inv.full) out.inviteFull = true;
+  if (inv.link) out.invited = true;   // the app reloads so the guest gets every photo
   if (done) out.found = foundOut_(done, true);   // same number on a new phone: their photos come back, no second search
   return out;
+}
+
+// ---------- Invite links (step 89) ----------
+// The couple (or photographer) makes links like "Family" with a people limit (10/25/50/100) and a download switch.
+// A guest who joins with a link sees every photo without Find me while the link is on. The server checks this on
+// every request from the guest's own record (guestId + guestKey) — the phone never says "I am invited".
+// One person = one mobile number: the same number on a second phone shares the same place on the link.
+var INVITE_COLUMNS = ['at', 'galleryId', 'linkId', 'code', 'name', 'size', 'download', 'status', 'updatedAt'];
+var INVITE_SIZES = [10, 25, 50, 100], INVITE_MAX = 20;
+function inviteGallery_(p) {
+  var g = findGallery_(p.g);
+  if (!g || !privileged_(g, p)) throw new Error('Only the couple or the photographer can change this.');
+  return g;
+}
+function inviteRows_(g) {
+  ensureTab_('InviteLinks', INVITE_COLUMNS);
+  return readTable_('InviteLinks').filter(function (x) { return x.galleryId === g.galleryId; });
+}
+function inviteLink_(g, linkId) { return inviteRows_(g).filter(function (x) { return x.linkId === String(linkId || ''); })[0] || null; }
+/** Guest rows on one link (removed people carry 'x:' + linkId so Undo can bring them back). */
+function inviteGuests_(g, inviteId) {
+  ensureTab_('Guests', GUEST_COLUMNS);
+  return readTable_('Guests').filter(function (x) { return x.galleryId === g.galleryId && String(x.inviteId || '') === inviteId && x.status !== 'blocked'; });
+}
+/** People on a link = different mobile numbers. */
+function invitePeople_(g, linkId) {
+  var seen = {}, out = [];
+  inviteGuests_(g, linkId).sort(function (a, b) { return String(b.at || '').localeCompare(String(a.at || '')); }).forEach(function (x) {
+    var d = digits_(x.phone); if (!d || seen[d]) return; seen[d] = true; out.push({ guestId: x.guestId, name: x.name, d: d });
+  });
+  return out;
+}
+function inviteForJoin_(g, code, phone) {
+  code = String(code || '').trim(); if (!code) return {};
+  var link = inviteRows_(g).filter(function (x) { return x.code === code && x.status === 'on'; })[0];
+  if (!link) return {};
+  var d = digits_(phone), people = invitePeople_(g, link.linkId);
+  if (people.some(function (x) { return x.d === d; })) return { link: link };   // already on this link: no new place used
+  return people.length >= Number(link.size) ? { full: true } : { link: link };
+}
+/** The guest's invite link, only while it is on (null for everyone else). */
+function inviteOf_(g, guest) {
+  if (!guest || !guest.inviteId || /^x:/.test(String(guest.inviteId))) return null;
+  var link = inviteLink_(g, guest.inviteId);
+  return link && link.status === 'on' ? link : null;
+}
+function inviteOut_(g, link) {
+  var people = invitePeople_(g, link.linkId);
+  return { linkId: link.linkId, code: link.code, name: link.name, size: Number(link.size), download: link.download === 'on' ? 'on' : 'off', status: link.status === 'on' ? 'on' : 'off', used: people.length, at: link.at,
+    people: people.map(function (x) { return { guestId: x.guestId, name: x.name }; }) };   // never phone numbers
+}
+/** Guest who already gave their name on this phone opens an invite link: put them on it (same checks as joining). */
+function inviteJoin_(p) {
+  var g = publishedGallery_(p.g), guest = guestFor_(g, p);
+  if (inviteOf_(g, guest)) return { invited: true, already: true };
+  var inv = inviteForJoin_(g, p.inv, guest.phone);
+  if (inv.full) return { inviteFull: true };
+  if (!inv.link) return { ok: false, error: 'This invite link is not active.' };
+  updateRowByNumber_('Guests', guest._row, { inviteId: inv.link.linkId });
+  return { invited: true };
+}
+/** Couple/photographer: every link of this wedding, oldest first. */
+function inviteList_(p) {
+  var g = inviteGallery_(p);
+  return { links: inviteRows_(g).map(function (l) { return inviteOut_(g, l); }) };
+}
+/** Couple/photographer: make a link (no linkId) or change one. */
+function inviteSave_(p) {
+  var g = inviteGallery_(p);
+  if (!limitOk_('inv:' + g.galleryId, 30, 3600)) return { ok: false, error: 'Too many changes for now. Please try again later.' };
+  var name = String(p.name || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(), size = Number(p.size), download = p.download === 'on' ? 'on' : 'off';
+  if (name.length < 2 || name.length > 40) return { ok: false, error: 'Give the link a name (2 to 40 letters).' };
+  if (INVITE_SIZES.indexOf(size) < 0) return { ok: false, error: 'Pick a limit: 10, 25, 50 or 100.' };
+  var now = fmt_(new Date()), link = p.linkId ? inviteLink_(g, p.linkId) : null;
+  if (p.linkId && !link) return { ok: false, error: 'This link was not found.' };
+  if (link) {
+    var used = invitePeople_(g, link.linkId).length;
+    if (size < used) return { ok: false, error: used + ' people already joined. Pick ' + (INVITE_SIZES.filter(function (n) { return n >= used; })[0] || 100) + ' or more.' };
+    updateRowByNumber_('InviteLinks', link._row, { name: name, size: size, download: download, updatedAt: now });
+    return { link: inviteOut_(g, inviteLink_(g, link.linkId)) };
+  }
+  if (inviteRows_(g).length >= INVITE_MAX) return { ok: false, error: 'A wedding can have up to ' + INVITE_MAX + ' links.' };
+  var linkId = 'inv_' + randomId_(10);
+  appendRow_('InviteLinks', { at: now, galleryId: g.galleryId, linkId: linkId, code: randomId_(12), name: name, size: size, download: download, status: 'on', updatedAt: now });
+  return { link: inviteOut_(g, inviteLink_(g, linkId)) };
+}
+/** Couple/photographer: turn a link on or off. Off = its people go back to normal guest rules. */
+function inviteState_(p) {
+  var g = inviteGallery_(p), link = inviteLink_(g, p.linkId);
+  if (!link) return { ok: false, error: 'This link was not found.' };
+  var status = p.status === 'on' ? 'on' : 'off';
+  updateRowByNumber_('InviteLinks', link._row, { status: status, updatedAt: fmt_(new Date()) });
+  return { linkId: link.linkId, status: status };
+}
+/** Couple/photographer: take one person (every phone with their number) off a link. */
+function inviteRemove_(p) { return inviteMove_(p, false); }
+/** Couple/photographer: Undo a Remove, if the link is still on and has room. */
+function inviteUndo_(p) { return inviteMove_(p, true); }
+function inviteMove_(p, back) {
+  var g = inviteGallery_(p), link = inviteLink_(g, p.linkId);
+  if (!link) return { ok: false, error: 'This link was not found.' };
+  var from = back ? 'x:' + link.linkId : link.linkId, to = back ? link.linkId : 'x:' + link.linkId;
+  var rows = inviteGuests_(g, from), one = rows.filter(function (x) { return x.guestId === String(p.guestId || ''); })[0];
+  if (!one) return { ok: false, error: back ? 'This person can no longer be brought back.' : 'This person is not on this link.' };
+  if (back && (link.status !== 'on' || invitePeople_(g, link.linkId).length >= Number(link.size))) return { ok: false, error: link.status !== 'on' ? 'This link is off.' : 'This link is full.' };
+  var d = digits_(one.phone);
+  rows.filter(function (x) { return digits_(x.phone) === d; }).forEach(function (x) { updateRowByNumber_('Guests', x._row, { inviteId: to }); });
+  return { guestId: one.guestId };
 }
 
 /** Public: save a "Find me" result with a name → short code for a link that opens it on any phone. */
@@ -2045,8 +2168,10 @@ function askDownload_(p) {
   if (!ids.length) return { ok: false, error: 'No photos to ask for.' };
   ensureTab_('DownloadRequests', DLREQ_COLUMNS);
   var reqId = 'dl_' + randomId_(10);
-  appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: ids.join(','), status: 'waiting', grant: '', decidedAt: '', decidedBy: '' });
-  return { reqId: reqId, count: ids.length };
+  // step 89: a guest on an invite link with downloads on is approved straight away (still saved, so the couple sees it)
+  var inv = inviteOf_(g, guest), auto = !!(inv && inv.download === 'on'), grant = auto ? randomId_(24) : '';
+  appendRow_('DownloadRequests', { at: fmt_(new Date()), galleryId: g.galleryId, reqId: reqId, guestId: guest.guestId, name: guest.name, phone: "'" + guest.phone, email: email, ids: ids.join(','), status: auto ? 'approved' : 'waiting', grant: grant, decidedAt: auto ? fmt_(new Date()) : '', decidedBy: auto ? 'invite:' + inv.linkId : '' });
+  return auto ? { reqId: reqId, count: ids.length, status: 'approved', grant: grant } : { reqId: reqId, count: ids.length };
 }
 /** Public (guest, step 60): after a close match, ask the couple to let them see their photos. The photos come from the
  *  server's own close-match record, never from the phone. */

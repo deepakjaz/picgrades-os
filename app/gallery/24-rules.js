@@ -19,6 +19,7 @@
   const granted = () => pgStore('granted') || [];
   function canDownload(id) {
     if (free()) return true;
+    if (GALLERY && GALLERY.invite && GALLERY.invite.download === 'on') return true;   // step 89: invite link with downloads on
     const m = mine();
     return !!((m && (m.sure || []).indexOf(id) > -1) || granted().indexOf(id) > -1);
   }
@@ -126,9 +127,10 @@
       const email = em.value.trim(), st = box.querySelector('.pgr-status');
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { st.textContent = 'Please write a valid email address.'; em.focus(); return; }
       send.disabled = true; send.textContent = 'Sending…'; st.textContent = '';
-      pgApi('askDownload', Object.assign({ ids: [m.id], email }, pgGuestBody())).then(() => {
+      pgApi('askDownload', Object.assign({ ids: [m.id], email }, pgGuestBody())).then(r => {
         pgStore('email', email); pgStore('asked', (pgStore('asked') || []).concat([m.id]).slice(-200));
-        box.querySelector('.pgr-how').textContent = 'Request sent ✓ We’ll email ' + email + ' as soon as it is approved.';
+        if (r.status === 'approved') pgStore('granted', Array.from(new Set(granted().concat([m.id]))));   // step 89: approved at once (invite link)
+        box.querySelector('.pgr-how').textContent = r.status === 'approved' ? 'Approved ✓ You can download this photo now.' : 'Request sent ✓ We’ll email ' + email + ' as soon as it is approved.';
         box.querySelector('.pgr-lab').remove(); send.remove(); box.querySelector('.pgr-close').textContent = 'Done';
       }).catch(err => { st.textContent = err.message; send.disabled = false; send.textContent = 'Ask for this photo'; });
     });
