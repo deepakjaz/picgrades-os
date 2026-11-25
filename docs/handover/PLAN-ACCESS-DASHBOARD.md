@@ -87,9 +87,8 @@ Dashboard
 ### 4b. Glance strip — on the couple's / photographer's own Hub (guests never see it)
 A thin line at the top: **"3 to approve · 42 visits today · Cinema Chapters live"** → tap → the Dashboard.
 
-### To decide later
-- "Who visited": names only exist for people who signed in or typed a name. Should a link ask for a **name on the first visit**
-  ("Who are you? — Priya, Mama's side")? Friendlier for the couple, one more step for guests.
+### Decided (25 Nov)
+- An invited link asks for a **name on the first visit** ("Who are you? — Priya, Mama's side") — harmless, and the Dashboard can show names.
 
 ---
 
@@ -101,7 +100,7 @@ A thin line at the top: **"3 to approve · 42 visits today · Cinema Chapters li
 - Videos are made from **real screens of the app** + a voice-over, like the Reel how-to Claude made.
 - **Who:** Gemini writes the story / script for each video → Claude captures the app's screens automatically and joins them
   → voice-over by Gemini or a voice tool (Deepak chooses) → Claude builds the player, Skip, once-only, and the Guide menu.
-- Open questions: voice-over language (English only, or Hindi / Gujarati too)?
+- Voice-over: **English and Hindi** for now (decided 25 Nov).
 
 ## 6. The Journey — later (from Deepak's idea, kept as he said it)
 
@@ -110,7 +109,11 @@ A cinematic scroll section for some templates: "an image gets selected from the 
 from one image to a carousel of 10 images, and those 10 images go to a reel, a random template video is made —
 this makes a whole journey". Like the "What couples get" screen on the photographer page, using videos while scrolling.
 Idea to consider: build it from **the couple's own photos** so it feels personal.
-Where it shows (wedding Hubs, or photographer page / demo only): **to decide**.
+Where it shows: **make it first, then decide** (decided 25 Nov). It is marketing, so it can sit in both places, or one at a time — like an on/off part of the system.
+
+### The "TV" (from TKG Day Cycle TV — Deepak, 25 Nov)
+"Like our TKG — whether it becomes a TV and a video plays — the same feature here too", for the photographer, guests / family / friends and couples.
+A TV block where the how-to videos, the Journey and other clips play. Which templates and which part of the page it sits in: **decide later**.
 
 ---
 
@@ -124,8 +127,31 @@ Where it shows (wedding Hubs, or photographer page / demo only): **to decide**.
 6. Videos for Post, Album, Add a moment (Gemini scripts → Claude).
 7. **Journey** scroll section (after the videos exist).
 
-## 8. Deepak to approve / answer
-- [ ] This plan, as written.
-- [ ] Name on first visit for invited links: yes / no.
-- [ ] Voice-over language(s).
-- [ ] Journey: wedding Hubs, or photographer page / demo only.
+## 8. Deepak's answers (25 Nov)
+- [x] Name on first visit for invited links: **yes**.
+- [x] Voice-over: **English and Hindi**.
+- [x] Journey: **make first, decide placement later**; a TKG-style **TV** block to play videos — placement later.
+- [ ] This plan, as written — approve.
+
+## 9. Who builds what — the outside-help workflow (Deepak, 25 Nov)
+
+ChatGPT and Gemini **help from outside GitHub**: they write files in their own chat and **do not push**.
+Deepak pastes their work here → **Claude checks it tightly against AGENTS.md** ("nothing messy — less, but clean") → Claude fixes or sends it back →
+Deepak approves → Claude puts it in a PR with tests → Deepak merges.
+
+| Part | Gemini (design) | ChatGPT (code, outside GitHub) | Claude |
+|---|---|---|---|
+| "Who can see" screen | HTML mockup (flat v2 style) | — | backend + build |
+| Dashboard + glance strip | HTML mockup | screen code from the mockup, on a data contract Claude writes | data + rights + integrate |
+| How-to player + Guide menu | look of the player | **`app/gallery/49-guide.js`** on Claude's contract | review, tests, menu hook |
+| How-to videos | story + script, **English and Hindi** | — | capture app screens, join video |
+| QR code for a link | — | small QR maker, no libraries, with test values | review + tests |
+| Journey + TV block | storyboard + TV look | — | build (core template work) |
+| Backend (Code.gs), access rights, security | — | — | **Claude only** |
+
+### Claude's check before anything goes in (every file from outside)
+1. Follows AGENTS.md: no libraries, no relay, no secrets, no real client photos, plain-English comments, one feature per file.
+2. Only the files the card asked for; nothing else touched.
+3. Phone 375 / 390 / 430 and laptop 1200, light and dark; text ≥ 11 px; tap areas ≥ 44 px; nothing covers the design.
+4. Works with the real app: runs in the test server, `page errors: []`, all existing tests still pass.
+5. Clean: no dead code, no copy-paste duplicates, CSS with its own prefix, no `!important` war.
