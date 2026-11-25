@@ -32,7 +32,7 @@
   setInterval(() => live.forEach(m => { if (!m.root.isConnected) { live.delete(m); return; } if (!reduce() && !document.hidden && onScreen(m.root)) m.next(); }), 1800);   // plays only while on screen
 
   window.pgReelMock = function (box, ids, o) {
-    o = o || {}; ids = (ids || []).filter(Boolean).slice(0, 8);
+    o = o || {}; ids = (ids || []).filter(Boolean).slice(0, 8);   // o.still: show one calm frame (Hub function cards, clean-up #9)
     const root = document.createElement('div'); root.className = 'pgrm'; root.setAttribute('aria-hidden', 'true');
     const scr = document.createElement('div'); scr.className = 'pgrm-scr'; root.appendChild(scr);
     const bars = document.createElement('div'); bars.className = 'pgrm-bars';
@@ -54,7 +54,7 @@
       imgs.forEach((im, k) => im.classList.toggle('on', k === i));
       [...bars.children].forEach((b, k) => { b.className = k < i ? 'done' : k === i ? 'now' : ''; });
     } };
-    root._pgrm = m; m.next(); live.add(m);
+    root._pgrm = m; m.next(); if (!o.still) live.add(m);
     return root;
   };
 })();

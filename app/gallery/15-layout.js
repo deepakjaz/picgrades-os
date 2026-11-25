@@ -129,7 +129,7 @@
     // step 71: function cards never carry wedding photos (photos belong to reels); Find me is only a small pill
     if (k === 'findme') el.classList.add('pgl-fm-pill');
     else if (k === 'reel' && ['M', 'L', 'XL', 'XXL'].indexOf(b._letter) > -1 && window.pgReelMock && D.all.length) {   // tall enough for a phone   // step 72: wedding photos only as a reel, in a phone
-      el.classList.add('pgl-reelcard'); const m = h('div', 'pgl-rm'); pgReelMock(m, picks(D, 6).map(p => p.id), { label: D.names, sub: 'Reel Edits' }); el.appendChild(m);
+      el.classList.add('pgl-reelcard'); const m = h('div', 'pgl-rm'); pgReelMock(m, picks(D, 6).map(p => p.id), { label: D.names, sub: 'Reel Edits', still: true }); el.appendChild(m);   // clean-up #9: function cards stay still
     }
     else if (b.variant === 'photo' || b.variant === 'slideshow') el.classList.add('pgl-act-center');
     const small = b._letter === 'S';
