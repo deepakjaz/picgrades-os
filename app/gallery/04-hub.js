@@ -6,6 +6,8 @@ function pgPick(list) { return list[Math.floor(Math.random() * list.length)]; }
 function pgShuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function pgRotCover(cover, photos, w) {
   w = w || 720;
+  photos = (photos || []).filter(p => p && p.id);   // a guest before Find me may have no photos yet (no Wedding Highlights picked): leave the cover empty
+  if (!photos.length) return;
   const a = document.createElement('img'), b = document.createElement('img');
   a.className = 'pg-rot is-on'; b.className = 'pg-rot'; a.alt = b.alt = '';
   const first = pgPick(photos);
