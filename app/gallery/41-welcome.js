@@ -10,7 +10,7 @@
 (function pgWelcome() {
   let shown = false;
   const seen = () => !!pgStore('welcome');
-  const want = () => typeof GALLERY !== 'undefined' && GALLERY && GALLERY.gated && !GALLERY.found && PG_AS === 'guest' && !GALLERY.isStudio && !seen();
+  const want = () => typeof GALLERY !== 'undefined' && GALLERY && GALLERY.gated && !GALLERY.found && PG_AS === 'guest' && !GALLERY.isStudio && !seen() && !/[?&]inv=/.test(location.search);   // step 89: an invite link asks for the name itself
   function photoId() {
     const st = GALLERY.story || {};
     return st.welcome || (st.cover || [])[0] || ((GALLERY.highlights || [])[0] || {}).id || '';

@@ -27,9 +27,11 @@ function pgNeedGuest(next, why) {
   $('idClose').addEventListener('click', () => { pgIdNext = null; close(); }); $('idBackdrop').addEventListener('click', () => { pgIdNext = null; close(); });
   $('idGo').addEventListener('click', () => {
     const b = $('idGo'); b.disabled = true; $('idStatus').textContent = 'Saving…';
-    pgApi('guestJoin', Object.assign({ name: $('idName').value, phone: $('idPhone').value }, pgStore('welcome') || {})).then(r => {   // step 63c: side + attended from the welcome
+    const inv = new URLSearchParams(location.search).get('inv');   // step 89: joined with an invite link (only sent here, never later)
+    pgApi('guestJoin', Object.assign({ name: $('idName').value, phone: $('idPhone').value }, pgStore('welcome') || {}, inv ? { inv: inv } : {})).then(r => {   // step 63c: side + attended from the welcome
       pgStore('guest', { guestId: r.guestId, guestKey: r.guestKey, name: r.name }); close();
-      const n = pgIdNext; pgIdNext = null; showToast('Welcome, ' + r.name.split(' ')[0]); if (n) setTimeout(n, 280);
+      if (r.invited) { showToast('Welcome, ' + r.name.split(' ')[0] + ' · opening all the photos'); setTimeout(() => location.reload(), 900); return; }
+      const n = pgIdNext; pgIdNext = null; showToast(r.inviteFull ? 'This link is full. Ask the couple for a new link.' : 'Welcome, ' + r.name.split(' ')[0]); if (n) setTimeout(n, 280);
     }).catch(e => { $('idStatus').textContent = e.message; }).finally(() => { b.disabled = false; });
   });
 })();

@@ -436,6 +436,7 @@
     guests: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
     functions: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
     requests: '<path d="M4 6.5h16v11H4z"/><path d="M4 7l8 6 8-6"/>',
+    access: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     found: '<circle cx="12" cy="9" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/><path d="M16.5 4.5l1.3 1.3 2.6-2.6"/>',
     photographer: '<path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4z"/><circle cx="12" cy="13.3" r="3.3"/>'
   };
@@ -453,7 +454,8 @@
     ];
     // step 65a: Guests — who Find me found (the couple, and PicGrades for support; not the photographer) and the requests
     const guestRows = (window.PGFound && (ROLE === 'couple' || ROLE === 'picgrades') ? [['found', 'Found with Find me', PGFound.summary(), '#0891b2']] : [])
-      .concat(window.PGRules ? [['requests', 'Requests', 'Downloads and Find me', '#db2777']] : []);
+      .concat(window.PGRules ? [['requests', 'Requests', 'Downloads and Find me', '#db2777']] : [])
+      .concat(window.PGAccess && ROLE !== 'guest' && ROLE !== 'demo' && !GALLERY.isStudio ? [['access', 'Who can see', 'Invite links for family and friends', '#0f766e']] : []);   // step 89
     if (guestRows.length) groups.splice(2, 0, ['Guests', guestRows]);
     if (STAFF) groups.push(['Studio', [['photographer', 'Photographer', GALLERY.photographer && GALLERY.photographer.name ? GALLERY.photographer.name : 'Name, Instagram, website', '#57534e']]]);
     return groups;
@@ -494,7 +496,7 @@
         list.appendChild(card);
       });
       wrap.appendChild(list);
-      list.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) goTo(b.dataset.tab); });
+      list.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; if (b.dataset.tab === 'access' && window.PGAccess) return PGAccess.open(); goTo(b.dataset.tab); });   // step 89: Who can see opens full screen
       const rs = wrap.querySelector('.pgcp-reset');
       if (rs) rs.addEventListener('click', () => { try { localStorage.removeItem(pgDemoKey()); } catch (e) {} showToast('Back to the demo as it was'); setTimeout(() => location.reload(), 500); });
       return wrap;

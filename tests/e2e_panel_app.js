@@ -39,6 +39,13 @@ const srv = http.createServer((req, res) => {
   await shot(pg, '1-home');
   for (const k of st.rows) {
     await pg.click('.pgcp-item[data-tab="' + k + '"]'); await pg.waitForTimeout(500);
+    if (k === 'access') {   // step 89: "Who can see" opens its own full screen above the panel, and ‹ Back returns to the panel
+      const ac = await pg.evaluate(() => { const r = document.querySelector('.pgac'), b = r && r.getBoundingClientRect(); return { open: !!r, w: b && b.width, back: !!(r && r.querySelector('[data-close]')), doc: document.documentElement.scrollWidth }; });
+      check(ac.open && ac.w === 390 && ac.back && ac.doc === 390, 'access: Who can see opens full screen with ‹ Back, nothing wider than the phone ' + JSON.stringify(ac));
+      await pg.click('.pgac [data-close]'); await pg.waitForTimeout(300);
+      check(!(await pg.$('.pgac')) && !!(await pg.$('.pgcp-sheet.at-home')), 'access: ‹ Back returns to the Control Panel');
+      continue;
+    }
     const t = await pg.evaluate(() => ({ title: document.querySelector('.pgcp-bar-title').textContent, back: getComputedStyle(document.querySelector('.pgcp-nav-back')).visibility, tab: document.querySelector('.pgcp-body').dataset.tab }));
     const w = await wide();
     check(t.tab === k && t.back === 'visible' && t.title && w.doc === 390 && w.inner <= 390, k + ': opens full screen with ‹ Back, title "' + t.title + '", nothing wider than the phone ' + JSON.stringify(w));
