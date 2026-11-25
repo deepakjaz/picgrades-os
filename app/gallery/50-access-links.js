@@ -66,10 +66,17 @@
   const shut = () => { if (root) q('.pgac-wrap').innerHTML = ''; editing = null; };
   const repaintJoined = () => { const j = q('.pgac-joined'); if (j) j.outerHTML = joined(); };
 
-  function load() {
-    q('.pgac-list').innerHTML = '<p class="pgac-empty">Loading links…</p>';
+  // The first time after a new Code.gs, the server is slow (it makes the InviteLinks tab), so try once more on its own,
+  // then show Try again instead of a dead end.
+  function load(again) {
+    if (!root) return Promise.resolve();
+    if (!links.length) q('.pgac-list').innerHTML = '<p class="pgac-empty">Loading links…</p>';
     return pgApi('inviteList').then(r => { links = r.links || []; render(); })
-      .catch(e => { q('.pgac-list').innerHTML = '<p class="pgac-empty">Could not load the links. ' + esc(e.message) + '</p>'; });
+      .catch(e => {
+        if (!root) return;
+        if (!again) return load(true);
+        q('.pgac-list').innerHTML = '<p class="pgac-empty">Could not load the links. ' + esc(e.message) + '</p><button class="pgac-btn" data-retry>Try again</button>';
+      });
   }
   function save() {
     const name = q('.pgac-name').value.trim(), err = q('.pgac-err'), btn = q('.pgac-save');
@@ -110,6 +117,7 @@
     const t = e.target.closest('button'); if (!t || !root.contains(t)) { if (e.target.closest('[data-shut]')) shut(); return; }
     const d = t.dataset, find = id => links.find(x => x.linkId === id);
     if ('close' in d) return close();
+    if ('retry' in d) return load();
     if ('add' in d) return openSheet(null);
     if (d.edit) return find(d.edit) && openSheet(find(d.edit));
     if (d.ask) { confirmId = d.ask; return render(); }
