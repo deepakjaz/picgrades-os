@@ -94,6 +94,17 @@ const srv = http.createServer((req, res) => {
     await pg.close();
   }
 
+  // 2b. the server is slow / fails twice → Try again shows and works
+  pg = await browser.newPage({ viewport: { width: 390, height: 844 } }); pg.on('pageerror', e => errors.push(e.message));
+  await pg.goto(COUPLE); await boot(pg);
+  let fail = 2;
+  await pg.route('**/api', r => { const b = r.request().postData() || ''; if (fail > 0 && /inviteList/.test(b)) { fail--; return r.abort(); } return r.continue(); });
+  await pg.evaluate(() => PGAccess.open()); await pg.waitForSelector('[data-retry]', { timeout: 10000 });
+  ok(fail === 0, 'it tries once more on its own before showing Try again');
+  await pg.click('[data-retry]'); await pg.waitForSelector('.pgac-card');
+  ok(true, 'Try again loads the links');
+  await pg.close();
+
   // 3. a guest opens the invite link → asked for name once → every photo
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   pg = await ctx.newPage(); pg.on('pageerror', e => errors.push(e.message));
