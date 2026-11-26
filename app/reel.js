@@ -107,7 +107,7 @@
     '.rl-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:6px}.rl-bar i{display:block;height:100%;width:0;background:#FAC646}' +
     // photo picker
     '.rl-picker{position:absolute;inset:0;z-index:7;background:#0b0908;display:flex;flex-direction:column}' +
-    '.rl-pcount{margin-left:auto;font:500 .75rem/1 "IBM Plex Mono",monospace;color:rgba(255,255,255,.7)}' +
+    '.rl-pcount{margin-left:auto;font:600 .8rem/1 inherit;white-space:nowrap;flex:none;color:rgba(255,255,255,.75)}' +
     '.rl-pgrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 10px);align-content:start}' +
     '.rl-pick{position:relative;aspect-ratio:3/4;border:0;padding:0;background:#222;cursor:pointer}.rl-pick img{width:100%;height:100%;object-fit:cover;display:block}' +
     '.rl-pick i{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:12px;border:2px solid #fff;background:rgba(0,0,0,.25);font:800 12px/20px inherit;font-style:normal;text-align:center;color:#111}' +
@@ -563,6 +563,17 @@
     return fetch(tr.file).then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
       return new Promise(function (res, rej) { audioCtx().decodeAudioData(ab, res, rej); });
     }).then(function (buf) { S.buffers[tr.id] = buf; return buf; });
+  }
+  // step 98: the template list plays a short preview (about 100 KB, from the song's first beat) — the whole song (about 1 MB)
+  // took 10–15 seconds on a slow phone network before any sound. The editor and the video still use the whole song.
+  function loadPreview(tr) {
+    if (!tr) return Promise.resolve(null);
+    if (!tr.preview) return loadTrack(tr);
+    var key = 'pv:' + tr.id;
+    if (S.buffers[key]) return Promise.resolve(S.buffers[key]);
+    return fetch(tr.preview).then(function (r) { if (!r.ok) throw new Error('no preview'); return r.arrayBuffer(); }).then(function (ab) {
+      return new Promise(function (res, rej) { audioCtx().decodeAudioData(ab, res, rej); });
+    }).then(function (buf) { S.buffers[key] = buf; return buf; }, function () { return loadTrack(tr); });
   }
   function startAudio(buf, dest, dur, at) {   // at = where in the reel to start (seconds)
     var ac = audioCtx(); if (!buf) return null; at = at || 0;
@@ -1066,7 +1077,7 @@
         el('div', { class: 're-ins-info' }, [
           el('b', { text: label(T) }),
           el('span', { text: '0:' + (S.length < 10 ? '0' : '') + S.length + ' · ' + (tr ? '♪ ' + tr.title : '') }),
-          el('button', { type: 'button', class: 're-use', text: 'Use template', onclick: function () { pickStyle(k); showPick(); } })])]);
+          el('button', { type: 'button', class: 're-use', text: 'Use template', onclick: function () { pickStyle(k); showPick(); var tr = S.tracks.filter(function (t) { return t.id === TEMPLATES[k].music; })[0]; if (tr) loadTrack(tr).catch(function () {}); } })])]);   // step 98: the whole song downloads while you choose photos
       feed.appendChild(card);
     });
     if (S.io) S.io.disconnect();
@@ -1086,10 +1097,11 @@
     var clockNow = function () { return (performance.now() - t0) / 1000; };
     if (S.inspoSound) {
       var tr = S.tracks.filter(function (t) { return t.id === TEMPLATES[k].music; })[0];
-      loadTrack(tr).then(function (buf) {
+      loadPreview(tr).then(function (buf) {
         if (!buf || !S || S.inspoRun !== my || !S.inspoSound || S.view !== 'inspo') return;
         var ac = audioCtx(); if (ac.resume) ac.resume();
-        var src = ac.createBufferSource(), g = ac.createGain(), at = ac.currentTime + 0.05, from = Math.min(tr.beat0 || 0, Math.max(0, buf.duration - L));
+        var pv = buf === S.buffers['pv:' + tr.id];   // the preview already starts on the first beat
+        var src = ac.createBufferSource(), g = ac.createGain(), at = ac.currentTime + 0.05, from = pv ? 0 : Math.min(tr.beat0 || 0, Math.max(0, buf.duration - L));
         src.buffer = buf; src.loop = true; src.loopStart = from; src.loopEnd = Math.min(buf.duration, from + L);
         src.connect(g); g.connect(ac.destination); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(1, at + 0.25);
         src.start(at, from); S.inspoAud = { src: src, g: g };
@@ -1159,7 +1171,7 @@
     });
     var box = el('div', { class: 'rl-picker', role: 'dialog', 'aria-label': 'Choose photos' }, [
       el('div', { class: 're-bar' }, [el('button', { type: 'button', class: 're-ib', 'aria-label': 'Back', html: ic('left'), onclick: function () { box.remove(); if (!S.P) showInspo(); } }), sel, count, next]), phoneRow, grid]);
-    function upd() { count.textContent = o.single ? 'Choose one' : order.length ? order.length + ' chosen' : 'Choose up to 80'; grid.querySelectorAll('.rl-pick').forEach(function (t) { var n = order.indexOf(t.dataset.id); t.classList.toggle('on', n > -1); t.querySelector('i').textContent = n > -1 ? String(n + 1) : ''; }); next.disabled = !order.length; }
+    function upd() { count.textContent = o.single ? 'Choose one' : order.length ? order.length + ' of 80' : 'Up to 80'; grid.querySelectorAll('.rl-pick').forEach(function (t) { var n = order.indexOf(t.dataset.id); t.classList.toggle('on', n > -1); t.querySelector('i').textContent = n > -1 ? String(n + 1) : ''; }); next.disabled = !order.length; }
     function show(i) {
       grid.innerHTML = '';
       (cols[i].photos || []).forEach(function (p) {
@@ -1189,7 +1201,8 @@
       });
     });
     S.wrap.appendChild(box);
-    var start = 0; if (!o.single && order.length) { cols.some(function (c, i) { if (c.photos.some(function (p) { return p.id === order[0]; })) { start = i; return true; } }); }
+    var start = 0; if (!order.length && S.opt.start) cols.some(function (c, i) { if (c.name === S.opt.start) { start = i; return true; } });   // step 98: open on 'Your photos' / the guest's set
+    if (!o.single && order.length) { cols.some(function (c, i) { if (c.photos.some(function (p) { return p.id === order[0]; })) { start = i; return true; } }); }
     sel.value = String(start); show(start);
   }
   function showPick() { openPicker({}); }

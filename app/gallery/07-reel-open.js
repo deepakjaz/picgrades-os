@@ -1,11 +1,11 @@
 // Opens the reel maker (app/reel.js).
 // Part of the wedding gallery (app/gallery.html). Files load in number order; features hook into the core with pgAfter / pgBefore.
 let pgReelLoad = null;
-function pgOpenReel(photos, choose) {
+function pgOpenReel(photos, choose, start) {   // start (step 98): the collection the photo picker opens on, e.g. 'Your photos'
   photos = (photos || []).filter(Boolean);
   if (!photos.length) { showToast('No photos to make a reel'); return; }
   if (!pgReelLoad) pgReelLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/reel.js'; s.onload = res; s.onerror = () => { pgReelLoad = null; rej(new Error('Could not open the reel maker. Check the internet.')); }; document.head.appendChild(s); });
-  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), choose: !!choose, demo: !!GALLERY.demo, title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi,
+  pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), choose: !!choose, start: start || '', demo: !!GALLERY.demo, title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi,
     collections: (GALLERY.personal || []).concat(GALLERY.events || []).concat((GALLERY.root || []).length ? [{ name: 'Root Moment', photos: GALLERY.root }] : []).map(c => ({ name: c.name, photos: c.photos.map(p => ({ id: p.id })) })) }))
     .then(() => {
       // step 83: the faces we already read keep people in view when a photo is framed in the reel (same as Post Edits).
@@ -20,7 +20,7 @@ function pgOpenReel(photos, choose) {
 document.getElementById('fmReel').addEventListener('click', () => {
   const set = (GALLERY.personal || []).find(e => e.name === 'Your photos') || (GALLERY.personal || [])[0];
   document.getElementById('fmClose').click();
-  pgOpenReel(set ? set.photos : []);
+  pgOpenReel(set ? set.photos : [], true, set ? set.name : '');   // step 98: you choose the reel's photos (up to 80) — none are picked for you
 });
 document.getElementById('fmPost').addEventListener('click', () => {
   const set = (GALLERY.personal || []).find(e => e.name === 'Your photos') || (GALLERY.personal || [])[0];
