@@ -212,9 +212,37 @@
         return '<section class="pgc-sec' + (stay && !opts.editing ? ' stay' : '') + '" data-sec="' + esc(sec.id || '') + '" style="height:' + (h + stay).toFixed(1) + 'px;background:' + col(bg.c, 'transparent') + '"><div class="pgc-stick" style="height:' + h.toFixed(1) + 'px">' + bgHtml + '<div class="pgc-in" style="left:' + off.toFixed(1) + 'px;width:' + inW.toFixed(1) + 'px">' + els + '</div></div>' + (stay && opts.editing ? '<div class="pgc-staynote" style="height:' + stay.toFixed(1) + 'px">stays here while guests scroll</div>' : '') + '</section>';
       }).join('');
       // the app's own cards draw themselves into their boxes (a card with nothing to show for this person leaves its box empty)
+      const hiddenCards = [];
       root.querySelectorAll('[data-card]').forEach(host => { const c = ctx.cards[+host.dataset.card]; if (!c || !window.PGLayout || !PGLayout.card) return;
         const ok = PGLayout.card(host, { block: c.el.block, variant: c.el.variant, set: c.el.set || undefined }, host.clientWidth, host.clientHeight, mode === 'p' ? 'phone' : 'wide');
-        if (!ok) { if (opts.editing) host.innerHTML = '<div class="pgc-cardnone">' + esc(c.el.block) + ' · nothing to show yet</div>'; else host.parentElement.style.display = 'none'; } });
+        if (!ok) { if (opts.editing) host.innerHTML = '<div class="pgc-cardnone">' + esc(c.el.block) + ' · nothing to show yet</div>'; else {
+          const el = host.parentElement, top = parseFloat(el.style.top) || 0, height = parseFloat(el.style.height) || el.offsetHeight;   // its set size, not the box an entrance motion may be shrinking
+          el.style.display = 'none';
+          if (height > 0) hiddenCards.push({ section: el.parentElement, top, height });
+        } }
+      });
+      // A guest can have cards that are unavailable until Find me (or another feature is enabled).
+      // Collapse only the space below those cards, and only among elements in the same section.
+      if (hiddenCards.length) {
+        const sections = new Map();
+        hiddenCards.forEach(card => { if (!sections.has(card.section)) sections.set(card.section, []); sections.get(card.section).push(card); });
+        sections.forEach((cards, section) => {
+          const siblings = [...section.children].filter(el => el.classList.contains('pgc-el') && el.style.display !== 'none');
+          const bottom = () => siblings.reduce((m, el) => Math.max(m, (parseFloat(el.style.top) || 0) + (parseFloat(el.style.height) || el.offsetHeight)), 0);
+          const before = bottom();
+          siblings.forEach(el => {
+            const top = parseFloat(el.style.top) || 0;
+            const lift = cards.reduce((sum, card) => sum + (top >= card.top + card.height ? card.height : 0), 0);
+            if (lift) el.style.top = Math.max(0, top - lift).toFixed(1) + 'px';
+          });
+          // the section gets shorter by as much as its lowest part moved up, so the gap doesn't just move to the bottom
+          const shrink = siblings.length ? before - bottom() : 0, sec = section.closest('.pgc-sec'), stick = section.closest('.pgc-stick');
+          if (shrink > 0 && sec && stick) {
+            stick.style.height = Math.max(40, parseFloat(stick.style.height) - shrink).toFixed(1) + 'px';
+            sec.style.height = Math.max(40, parseFloat(sec.style.height) - shrink).toFixed(1) + 'px';
+          }
+        });
+      }
       if (opts.still) root.classList.add('pgc-still');
       if (io) io.disconnect();
       io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: opts.scroller || null, threshold: .15 }) : null;

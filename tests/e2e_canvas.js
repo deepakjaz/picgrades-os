@@ -66,6 +66,42 @@ const srv = http.createServer((req, res) => {
     ok(shown.length === 3 && shown.every(Boolean), 'parts with wipe / iris / unfold motion appear and their photos load ' + JSON.stringify(shown));
     await ctx.close(); call('coupleLook', { g: pub.galleryId, coupleKey: ck, layout: '' });
   }
+  { // step 85: a guest who has not done Find me should not see a blank space where the Reel card was
+    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), pg = await ctx.newPage();
+    pg.on('pageerror', e => errors.push(e.message));
+    await pg.goto(URL); await pg.waitForSelector('#pgBoot.hide', { state: 'attached' }); await pg.waitForFunction(() => window.PGCanvas && window.PGLayout, null, { timeout: 10000 });
+    const result = await pg.evaluate(() => {
+      const original = PGLayout.card;
+      PGLayout.card = (host, card) => card.block !== 'reel'; // Reel is unavailable to this guest before Find me.
+      const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px;overflow:auto;z-index:99999;background:#fff'; document.body.appendChild(box);
+      const doc = { v: 1, sections: [
+        { id: 'first', h: { p: 500 }, els: [
+          { id: 'hidden-reel', t: 'card', block: 'reel', p: { x: 20, y: 40, w: 300, h: 100 } },
+          { id: 'below', t: 'text', text: 'Below card', p: { x: 20, y: 190, w: 300, h: 40 } },
+          { id: 'further', t: 'text', text: 'Further down', p: { x: 20, y: 320, w: 300, h: 40 } }
+        ] },
+        { id: 'second', h: { p: 500 }, els: [
+          { id: 'other-section', t: 'text', text: 'Other section', p: { x: 20, y: 200, w: 300, h: 40 } }
+        ] }
+      ] };
+      const data = { can: { findme: false }, events: [], pool: [] };
+      const inst = PGCanvas.render(box, doc, data, () => {}, { mode: 'p', width: () => 390 });
+      const first = box.querySelector('[data-sec="first"]'), second = box.querySelector('[data-sec="second"]');
+      const top = id => parseFloat(first.querySelector('[data-el="' + id + '"]').style.top);
+      const answer = {
+        guestHasNotFoundSelf: data.can.findme === false,
+        hidden: first.querySelector('[data-el="hidden-reel"]').style.display === 'none',
+        below: top('below'), further: top('further'),
+        otherSection: parseFloat(second.querySelector('[data-el="other-section"]').style.top),
+        firstHeight: Math.round(first.getBoundingClientRect().height), secondHeight: Math.round(second.getBoundingClientRect().height)
+      };
+      inst.destroy(); box.remove(); PGLayout.card = original;
+      return answer;
+    });
+    ok(result.guestHasNotFoundSelf && result.hidden && result.below === 90 && result.further === 220 && result.otherSection === 200 && result.firstHeight === 400 && result.secondHeight === 500,
+      'hidden Reel card collapses its 100px gap; lower elements move up only in that section, and that section is 100px shorter ' + JSON.stringify(result));
+    await ctx.close();
+  }
   console.log('page errors: ' + JSON.stringify(errors));
   ok(!errors.length, 'no page errors');
   await b.close(); srv.close(); process.exit(fails ? 1 : 0);
