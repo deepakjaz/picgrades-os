@@ -92,7 +92,8 @@ var PUBLIC_ROUTES = {
   inviteState: inviteState_,
   inviteRemove: inviteRemove_,
   inviteUndo: inviteUndo_,
-  inviteJoin: inviteJoin_     // a guest who already gave their name opens an invite link
+  inviteJoin: inviteJoin_,    // a guest who already gave their name opens an invite link
+  nameTimeGroups: nameTimeGroups_ // step 80: couple link or authorised staff only
 };
 
 // Actions that need a logged-in user: handler(params, user)
@@ -1286,7 +1287,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions'];   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions', 'timeGroups'];   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1320,14 +1321,97 @@ function eventRank_(name) {
 
 function isImage_(f) { return /^image\/(jpeg|png|webp|gif)$/i.test(f.getMimeType()); }
 
-function listImages_(folder) {
-  var out = [], it = folder.getFiles();
-  while (it.hasNext()) { var f = it.next(); if (isImage_(f) && !f.isTrashed()) out.push({ id: f.getId(), name: f.getName() }); }
+// Drive's imageMediaMetadata.time is the camera capture time. createdTime is requested for
+// diagnostics only: an upload time is not a trustworthy substitute for when a photo was taken.
+function driveCaptureTimes_(folderId) {
+  var out = {}, page = '', url, response, data;
+  try {
+    var headers = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
+    do {
+      url = 'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent("'" + folderId + "' in parents and trashed=false") +
+        '&fields=' + encodeURIComponent('nextPageToken,files(id,imageMediaMetadata/time,createdTime)') +
+        '&pageSize=1000' + (page ? '&pageToken=' + encodeURIComponent(page) : '');
+      response = UrlFetchApp.fetch(url, { method: 'get', headers: headers, muteHttpExceptions: true });
+      if (!response || response.getResponseCode() < 200 || response.getResponseCode() >= 300) break;
+      data = JSON.parse(response.getContentText() || '{}');
+      (data.files || []).forEach(function (f) {
+        var t = f.imageMediaMetadata && f.imageMediaMetadata.time;
+        var m = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2})/.exec(String(t || ''));
+        if (m) out[f.id] = m[1] + '-' + m[2] + '-' + m[3] + ' ' + m[4] + ':' + m[5];
+      });
+      page = data.nextPageToken || '';
+    } while (page);
+  } catch (e) { /* capture-time metadata is optional; never fail a wedding scan */ }
+  return out;
+}
+
+function listImages_(folder, withTimes) {   // withTimes (step 80): only the main folder needs photo times — one Drive call, not one per event folder
+  var out = [], it = folder.getFiles(), times = withTimes ? driveCaptureTimes_(folder.getId()) : {};
+  while (it.hasNext()) {
+    var f = it.next();
+    if (isImage_(f) && !f.isTrashed()) {
+      var photo = { id: f.getId(), name: f.getName() };
+      if (times[photo.id]) photo.t = times[photo.id];
+      out.push(photo);
+    }
+  }
   return out.sort(function (a, b) { return a.name.localeCompare(b.name, 'en', { numeric: true }); });
 }
 
+function photoTimeParts_(value) {
+  var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(String(value || ''));
+  if (!m) return null;
+  var y = +m[1], mo = +m[2], d = +m[3], h = +m[4], mi = +m[5];
+  if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59) return null;
+  return { date: m[1] + '-' + m[2] + '-' + m[3], hour: h, minute: mi,
+    stamp: Date.UTC(y, mo - 1, d, h, mi) / 60000, weekday: new Date(Date.UTC(y, mo - 1, d)).getUTCDay() };
+}
+function timeGroupDefaultName_(parts) {
+  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var part = parts.hour < 5 ? 'night' : parts.hour < 12 ? 'morning' : parts.hour < 17 ? 'afternoon' : parts.hour < 21 ? 'evening' : 'night';
+  return days[parts.weekday] + ' ' + part;
+}
+/** Make chronological groups from loose photos only. A date change or >3 h gap starts a group;
+ * groups under five photos are folded into their nearest neighbour. */
+function makeTimeGroups_(photos, savedNames) {
+  var timed = (photos || []).map(function (p) { var x = photoTimeParts_(p.t); return x ? { photo: p, parts: x } : null; }).filter(Boolean);
+  timed.sort(function (a, b) { return a.parts.stamp - b.parts.stamp || String(a.photo.name).localeCompare(String(b.photo.name)); });
+  var groups = [];
+  timed.forEach(function (x) {
+    var g = groups.length ? groups[groups.length - 1] : null;
+    if (!g || g.date !== x.parts.date || x.parts.stamp - g.lastStamp > 180) {
+      g = { date: x.parts.date, first: x.parts, firstStamp: x.parts.stamp, lastStamp: x.parts.stamp, photos: [] };
+      groups.push(g);
+    }
+    g.photos.push(x.photo); g.lastStamp = x.parts.stamp;
+  });
+  // Merge the smallest short group first. Neighbour distance is measured between capture times.
+  while (groups.length > 1) {
+    var ix = -1, size = 5;
+    groups.forEach(function (g, i) { if (g.photos.length < size) { size = g.photos.length; ix = i; } });
+    if (ix < 0) break;
+    var left = ix > 0 ? groups[ix - 1] : null, right = ix < groups.length - 1 ? groups[ix + 1] : null;
+    var ld = left ? groups[ix].firstStamp - left.lastStamp : Infinity;
+    var rd = right ? right.firstStamp - groups[ix].lastStamp : Infinity;
+    var target = !left ? ix + 1 : !right ? ix - 1 : (ld <= rd ? ix - 1 : ix + 1);
+    var keep = groups[target], take = groups[ix];
+    keep.photos = keep.photos.concat(take.photos).sort(function (a, b) { return photoTimeParts_(a.t).stamp - photoTimeParts_(b.t).stamp; });
+    keep.first = photoTimeParts_(keep.photos[0].t); keep.firstStamp = photoTimeParts_(keep.photos[0].t).stamp;
+    keep.lastStamp = photoTimeParts_(keep.photos[keep.photos.length - 1].t).stamp;
+    keep.date = keep.first.date;
+    groups.splice(ix, 1);
+  }
+  return groups.map(function (g) {
+    var first = photoTimeParts_(g.photos[0].t), last = photoTimeParts_(g.photos[g.photos.length - 1].t);
+    var key = 'g' + first.date + '-' + String(first.hour).padStart(2, '0');
+    var fallback = timeGroupDefaultName_(first), saved = savedNames && savedNames[key];
+    return { key: key, name: String(saved || fallback).slice(0, 40), defaultName: fallback,
+      start: g.photos[0].t, end: g.photos[g.photos.length - 1].t, count: g.photos.length, photos: g.photos };
+  });
+}
+
 /** Read a wedding folder: subfolders = events, 00_Root_Moment = Root Moment. */
-function scanWeddingFolder_(folderId) {
+function scanWeddingFolder_(folderId, savedNames) {
   var folder;
   try { folder = DriveApp.getFolderById(folderId); } catch (err) {
     throw new Error('Cannot open this Drive folder. Share it as "Anyone with the link – Viewer" and try again.');
@@ -1345,13 +1429,24 @@ function scanWeddingFolder_(folderId) {
     if (PORTFOLIO_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { portfolio = photos; continue; }   // the photographer's picks for their portfolio
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
   }
-  var loose = listImages_(folder);
-  if (loose.length) events.push({ name: 'Highlights', folder: '', photos: loose });
-  var rank = function (e) { return e.folder ? eventRank_(e.folder) : 1000; };
-  events.sort(function (a, b) { return rank(a) - rank(b) || a.folder.localeCompare(b.folder, 'en', { numeric: true }); });
+  // step 80: loose photos are grouped by photo time only when the photographer made no event folders;
+  // otherwise the loose photos stay one 'Highlights' event, exactly as before
+  var noFolders = !events.length, loose = listImages_(folder, noFolders), timeGroups = noFolders ? makeTimeGroups_(loose, savedNames || {}) : [];
+  var timed = {};
+  timeGroups.forEach(function (g) {
+    g.photos.forEach(function (ph) { timed[ph.id] = true; });
+    events.push({ name: g.name, folder: '', timeGroupKey: g.key, sortTime: g.start, photos: g.photos });
+  });
+  var untimed = loose.filter(function (ph) { return !timed[ph.id]; });
+  if (untimed.length) events.push({ name: 'Highlights', folder: '', photos: untimed });
+  var rank = function (e) { return e.folder ? eventRank_(e.folder) : e.timeGroupKey ? 900 : 1000; };
+  events.sort(function (a, b) {
+    var ra = rank(a), rb = rank(b);
+    return ra - rb || (a.timeGroupKey && b.timeGroupKey ? String(a.sortTime).localeCompare(String(b.sortTime)) : String(a.folder || '').localeCompare(String(b.folder || ''), 'en', { numeric: true }));
+  });
   var count = events.reduce(function (t, e) { return t + e.photos.length; }, 0) + root.length;
   if (!count) throw new Error('No photos found. Put JPG/PNG photos in event folders (Haldi, Wedding…) inside the shared folder.');
-  return { folderName: folder.getName(), events: events, root: root, portfolio: portfolio, photoCount: count };
+  return { folderName: folder.getName(), events: events, timeGroups: timeGroups, root: root, portfolio: portfolio, photoCount: count };
 }
 
 function manifestFolder_() {
@@ -1386,7 +1481,7 @@ function makeGallery_(p, user, opts) {
     var existing = readTable_('Galleries').filter(function (g) { return String(g.orderId) === String(o.orderId); })[0];
     var folderId = folderIdFromUrl_(p.folderUrl) || (existing && existing.folderId);
     if (!folderId) return { ok: false, error: 'Paste the Google Drive folder link (it contains /folders/).' };
-    var scan = scanWeddingFolder_(folderId);
+    var scan = scanWeddingFolder_(folderId, existing ? jsonObj_(existing.timeGroups) : {});
     var lim = opts.limit || (existing && existing.plan === 'trial' && !isStaff_(user) ? TRIAL_PHOTOS : 0);   // trial weddings stay within 500 photos, also when refreshed
     if (lim && scan.photoCount > lim) return { ok: false, tooMany: true, photoCount: scan.photoCount,
       error: 'The free trial is for weddings up to ' + lim + ' photos. This folder has ' + scan.photoCount + '. Please share a folder with your best ' + lim + ' photos, or contact PicGrades for more.' };
@@ -1394,7 +1489,7 @@ function makeGallery_(p, user, opts) {
     var eventDate = /^\d{4}-\d{2}-\d{2}$/.test(String(p.eventDate || '')) ? p.eventDate : (existing ? existing.eventDate : '');
     var manifest = {
       v: 1, title: title, eventDate: eventDate, studio: o.companyName, folderName: scan.folderName,
-      root: scan.root, events: scan.events, portfolio: scan.portfolio || [], updatedAt: fmt_(new Date())
+      root: scan.root, events: scan.events, timeGroups: (scan.timeGroups || []).map(function (g) { return { key: g.key, name: g.name, defaultName: g.defaultName, start: g.start, end: g.end, count: g.count, photos: g.photos.slice(0, 4) }; }), portfolio: scan.portfolio || [], updatedAt: fmt_(new Date())
     };
     var json = JSON.stringify(manifest);
   }
@@ -1451,6 +1546,7 @@ function getGallery_(p) {
   var m = loadManifest_(g), sum = gallerySummary_(g);
   m.status = g.status === 'Draft' ? 'Draft' : 'Published';   // step 62b
   m.galleryId = g.galleryId;
+  if (!privileged_(g, p)) m.timeGroups = []; // step 80: group thumbnails and keys are Control Panel data, never guest data
   m.likes = sum.likes; m.notes = sum.noteCount; m.recentNotes = sum.recent; m.guestPosts = sum.posts;
   m.mine = {};   // each phone remembers its own hearts (no per-phone scan on the server)
   m.faceSearch = g.facesStatus === 'Ready' || g.facesStatus === 'Needs update';
@@ -2086,6 +2182,28 @@ function coupleGallery_(p) {
   var g = publishedGallery_(p.g);
   if (!p.coupleKey || !g.coupleKey || String(p.coupleKey) !== String(g.coupleKey)) throw new Error('This couple link is not valid.');
   return g;
+}
+/** Step 80: save event names for capture-time groups. Couple key or this studio's authorised staff only. */
+function nameTimeGroups_(p) {
+  var g = findGallery_(p.g);
+  if (!g || !privileged_(g, p)) return { ok: false, error: 'Only the couple, photographer or PicGrades can name these events.' };
+  var input = typeof p.names === 'string' ? jsonObj_(p.names) : (p.names || {});
+  var manifest = loadManifest_(g), groups = manifest.timeGroups || [], saved = jsonObj_(g.timeGroups);
+  var known = {};
+  groups.forEach(function (group) { known[group.key] = group; });
+  Object.keys(input).forEach(function (key) {
+    if (!known[key]) return;
+    var name = String(input[key] == null ? '' : input[key]).replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '').replace(/<[^>]*>/g, '').replace(/[<>]/g, '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 40);
+    if (name) saved[key] = name; else delete saved[key];
+  });
+  groups.forEach(function (group) { group.name = saved[group.key] || group.defaultName || group.name; });
+  (manifest.events || []).forEach(function (event) {
+    if (event.timeGroupKey && known[event.timeGroupKey]) event.name = known[event.timeGroupKey].name;
+  });
+  updateRowByNumber_('Galleries', g._row, { timeGroups: JSON.stringify(saved), updatedAt: fmt_(new Date()) });
+  DriveApp.getFileById(g.manifestFileId).setContent(JSON.stringify(manifest));
+  cacheRemoveBig_('gal:' + g.galleryId); dropSummary_(g.galleryId);
+  return { timeGroups: groups, events: manifest.events || [] };
 }
 /** Couple link: posts waiting for approval (and recent decisions). */
 function coupleQueue_(p) {

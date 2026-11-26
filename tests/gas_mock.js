@@ -49,15 +49,33 @@ global.Utilities = {
   base64Decode: (s) => Array.from(Buffer.from(s, 'base64')),
   newBlob: (bytes, mime, name) => ({ bytes, mime, name })
 };
-global.UrlFetchApp = { fetch: (url) => { const id = (/\/d\/([^=]+)/.exec(url) || [])[1]; if (global.__fetchFail) throw new Error('blocked'); return { getResponseCode: () => 200, getBlob: () => ({ getContentType: () => 'image/jpeg', getBytes: () => Array.from(global.__fetchBytes ? global.__fetchBytes(id) : Buffer.from('img:' + id)) }) }; } };
+global.UrlFetchApp = { fetch: (url, options) => {
+  if (String(url).indexOf('www.googleapis.com/drive/v3/files') > -1) {
+    if (global.__driveApiFail) return { getResponseCode: () => 403, getContentText: () => '{"error":"blocked"}' };
+    const q = decodeURIComponent((/\bq=([^&]+)/.exec(url) || [,''])[1]), parent = (/['"]([^'"]+)['"]\s+in parents/.exec(q) || [,''])[1];
+    const page = Number((/pageToken=([^&]+)/.exec(url) || [,'0'])[1]) || 0;
+    const asked = Number((/pageSize=(\d+)/.exec(url) || [,'1000'])[1]) || 1000;
+    const size = Math.min(asked, Number(global.__drivePageSize || asked));
+    const rows = Object.keys(DRIVE.files).filter(id => DRIVE.files[id].parent === parent && !DRIVE.files[id].trashed).sort().map(id => {
+      const f = DRIVE.files[id], row = { id: id, createdTime: f.createdTime || '2026-11-20T12:00:00.000Z' };
+      if (f.time) row.imageMediaMetadata = { time: f.time };
+      return row;
+    });
+    const slice = rows.slice(page * size, (page + 1) * size), body = { files: slice };
+    if ((page + 1) * size < rows.length) body.nextPageToken = String(page + 1);
+    return { getResponseCode: () => 200, getContentText: () => JSON.stringify(body) };
+  }
+  const id = (/\/d\/([^=]+)/.exec(url) || [])[1]; if (global.__fetchFail) throw new Error('blocked');
+  return { getResponseCode: () => 200, getBlob: () => ({ getContentType: () => 'image/jpeg', getBytes: () => Array.from(global.__fetchBytes ? global.__fetchBytes(id) : Buffer.from('img:' + id)) }) };
+} };
 const props = {}; global.PropertiesService = { getScriptProperties: () => ({ getProperty: k => props[k], setProperty: (k, v) => { props[k] = v; } }) };
 global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
 global.MailApp = { sendEmail: m => mail.push(m) };
 global.ScriptApp = { __t: [], getProjectTriggers() { return this.__t; }, deleteTrigger(t) { this.__t = this.__t.filter(x => x !== t); },
-  newTrigger(fn) { const self = this, t = { fn, getHandlerFunction: () => fn }; const b = { timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { self.__t.push(t); return t; } }; return b; } };
+  getOAuthToken: () => 'mock-oauth-token', newTrigger(fn) { const self = this, t = { fn, getHandlerFunction: () => fn }; const b = { timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { self.__t.push(t); return t; } }; return b; } };
 global.Logger = { log: () => {} };
 global.console = console;
-eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;global.__nightly=nightlyCleanup;global.__setupNightly=setupNightly;');
+eval(fs.readFileSync(__dirname + '/../apps-script/Code.gs', 'utf8') + '\n;global.__route=route_;global.__nightly=nightlyCleanup;global.__setupNightly=setupNightly;global.__makeTimeGroups=makeTimeGroups_;global.__scanWeddingFolder=scanWeddingFolder_;');
 global.__clock = 0; const RealDate = Date;
 global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(RealDate.now() + global.__clock); } static now() { return RealDate.now() + global.__clock; } };
 module.exports = { DRIVE, advance: h => { global.__clock += h * 3600000; }, call: (action, p) => {
