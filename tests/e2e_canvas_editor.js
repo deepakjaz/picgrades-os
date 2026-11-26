@@ -183,7 +183,24 @@ const srv = http.createServer((req, res) => {
   const fs1 = await lp.evaluate(id => { for (const sec of PGCanvasEditor.state().doc.sections) for (const e of sec.els) if (e.id === id) return { s: Object.assign({}, e.s, e.sl || {}), sp: JSON.stringify(e.p) + JSON.stringify(e.l || {}) }; }, ph);
   ok(fs1.s.fx < 50 && +fs1.s.zm === 1.8 && fs1.sp === sp0, 'dragging moves the photo inside its frame (the frame stays put) and zoom goes closer ' + JSON.stringify({ fx: fs1.s.fx, fy: fs1.s.fy, zm: fs1.s.zm }));
   ok(await lp.evaluate(id => document.querySelector('.pce-page .pgc-el[data-el="' + id + '"] img').style.scale === '1.8', ph), '…the page shows it zoomed');
-  await lp.screenshot({ path: '/tmp/ce_frame.png' }); await lp.close();
+  await lp.screenshot({ path: '/tmp/ce_frame.png' });
+  // Step 84: both Gemini story documents open in the free editor at laptop width.
+  for (const [id, shot] of [['canvas-living', '/tmp/ce_step84_living_laptop.png'], ['canvas-editorial', '/tmp/ce_step84_editorial_laptop.png']]) {
+    await lp.evaluate(() => PGCanvasEditor.close(true)); await lp.waitForFunction(() => !PGCanvasEditor.state());   // the editor ignores open() while another layout is open
+    await lp.evaluate(id => PGCanvasEditor.open(id), id); await lp.waitForSelector('.pce .pgc-sec'); await lp.waitForTimeout(500);
+    const state = await lp.evaluate(() => ({ name: PGCanvasEditor.state().doc.name, sections: PGCanvasEditor.state().doc.sections.length, pageWidth: document.querySelector('.pce-page').getBoundingClientRect().width }));
+    ok(state.name === (id === 'canvas-living' ? 'Living Story (editor)' : 'Editorial Album (editor)') && state.sections > 0 && state.pageWidth > 390, 'step 84 laptop: ' + id + ' opens in the free editor ' + JSON.stringify(state));
+    await lp.screenshot({ path: shot, fullPage: true }); await lp.evaluate(() => PGCanvasEditor.close(true)); await lp.waitForTimeout(150);
+  }
+  await lp.close();
+  // Step 84: phone width also opens both story documents without a page error.
+  for (const [id, shot] of [['canvas-living', '/tmp/ce_step84_living_phone.png'], ['canvas-editorial', '/tmp/ce_step84_editorial_phone.png']]) {
+    await mp.evaluate(() => PGCanvasEditor.close(true)); await mp.waitForFunction(() => !PGCanvasEditor.state());   // the editor ignores open() while another layout is open
+    await mp.evaluate(id => PGCanvasEditor.open(id), id); await mp.waitForSelector('.pce .pgc-sec'); await mp.waitForTimeout(450);
+    const state = await mp.evaluate(() => ({ name: PGCanvasEditor.state().doc.name, sections: PGCanvasEditor.state().doc.sections.length, viewport: document.documentElement.clientWidth, pageWidth: document.querySelector('.pce-page').getBoundingClientRect().width }));
+    ok(state.name === (id === 'canvas-living' ? 'Living Story (editor)' : 'Editorial Album (editor)') && state.sections > 0 && state.viewport <= 430 && state.pageWidth <= 390, 'step 84 phone: ' + id + ' opens in the free editor ' + JSON.stringify(state));
+    await mp.screenshot({ path: shot, fullPage: true }); await mp.evaluate(() => PGCanvasEditor.close(true)); await mp.waitForTimeout(150);
+  }
   console.log('page errors: ' + JSON.stringify(errors));
   ok(!errors.length, 'no page errors');
   await b.close(); srv.close(); process.exit(fails ? 1 : 0);
