@@ -449,6 +449,7 @@
     const groups = [
       ['Look', [['theme', 'Theme', th ? th.name : 'Original', '#c2410c'], ['layout', 'Hub layout', GALLERY.layout === 'custom' ? 'Our own Hub' : la ? la.name : 'Original', '#7c3aed'], ['pages', 'Page styles', 'Events, photos, notes', '#0e7490']]],
       ['Photos', [['story', 'Story & highlights', (st.wh || []).length ? (st.wh || []).length + ' Wedding Highlights' : 'Choose what guests see first', '#d97706']].concat(
+        (ROLE !== 'guest' && ROLE !== 'demo' && (GALLERY.timeGroups || []).length ? [['timeGroups', 'Events from photo time', (GALLERY.timeGroups || []).length + ' groups to name', '#b45309']] : []),
         window.PGGate && ROLE !== 'demo' && !GALLERY.isStudio ? [['guests', 'Guest photos', GALLERY.guestPhotos === 'findme' ? 'Only after Find me' : 'Open to everyone', '#15803d']] : [])],
       ['App', [['functions', 'Functions', feats.length ? onN + ' of ' + feats.length + ' on' : '', '#2563eb']]]
     ];
@@ -460,13 +461,71 @@
     if (STAFF) groups.push(['Studio', [['photographer', 'Photographer', GALLERY.photographer && GALLERY.photographer.name ? GALLERY.photographer.name : 'Name, Instagram, website', '#57534e']]]);
     return groups;
   }
-  const TITLE = { theme: 'Theme', layout: 'Hub layout', pages: 'Page styles', look: 'Look', story: 'Story & highlights', guests: 'Guest photos', functions: 'Functions', requests: 'Requests', photographer: 'Photographer', found: 'Found with Find me' };
+  const TITLE = { theme: 'Theme', layout: 'Hub layout', pages: 'Page styles', look: 'Look', story: 'Story & highlights', guests: 'Guest photos', functions: 'Functions', requests: 'Requests', photographer: 'Photographer', found: 'Found with Find me', timeGroups: 'Events from photo time' };
   function guestsPane() {
     const p = h('div', 'pgcp-pane');
     p.appendChild(PGGate.choice());
     if (window.PGPlan && PGPlan.basic() && GALLERY.guestPhotos === 'findme') p.appendChild(PGPlan.note('Find me is off since the free trial ended, so guests see only the Wedding Highlights. Choose “Open to everyone” to show them every photo, or upgrade to keep Find me.'));
     return p;
   }
+  // Step 80: name the loose-photo groups made from camera capture times.
+  function timeGroupsPane() {
+    const groups = GALLERY.timeGroups || [], p = h('div', 'pgcp-pane pg-t1-pane');
+    if (!groups.length) { p.appendChild(h('p', 'pgcp-note', 'There are no photo-time groups to name.')); return p; }
+    const total = groups.reduce((n, g) => n + Number(g.count || (g.photos || []).length || 0), 0);
+    p.innerHTML = '<p class="pgcp-note pg-t1-intro">Grouped by photo time (3+ hour gap or new day). Name each group to create events.</p>' +
+      '<div class="pg-t1-summary"><b>' + groups.length + ' groups</b><span>' + total.toLocaleString('en-IN') + ' photos</span><span>Only you see these counts</span></div>' +
+      '<div class="pg-t1-grid"></div><div class="pg-t1-footer"><button type="button" class="pg-t1-save">Save names</button><span class="pg-t1-status" role="status" aria-live="polite"></span></div>';
+    const grid = p.querySelector('.pg-t1-grid');
+    const parseTime = value => {
+      const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(String(value || ''));
+      return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null;
+    };
+    const dateText = d => d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    const timeText = d => d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }).replace(':00', '');
+    groups.forEach(group => {
+      const card = h('article', 'pg-t1-card'); card.dataset.key = group.key;
+      const photos = (group.photos || []).slice(0, 4), thumbs = h('div', 'pg-t1-thumbs');
+      photos.forEach((photo, i) => {
+        const tile = h('div', 'pg-t1-thumb');
+        const img = document.createElement('img'); img.alt = ''; img.loading = 'lazy'; img.src = pgImg(photo.id, 200);
+        tile.appendChild(img);
+        if (i === 3 && group.count > 4) tile.appendChild(h('span', 'pg-t1-more', '+' + (group.count - 4) + ' more'));
+        thumbs.appendChild(tile);
+      });
+      for (let i = photos.length; i < 4; i++) thumbs.appendChild(h('div', 'pg-t1-thumb empty'));
+      const start = parseTime(group.start), end = parseTime(group.end);
+      const range = start && end ? (dateText(start) + ', ' + timeText(start) + ' – ' + (start.toDateString() === end.toDateString() ? timeText(end) : dateText(end) + ', ' + timeText(end))) : '';
+      const meta = h('div', 'pg-t1-meta', '<strong>' + esc(range) + '</strong><span>' + Number(group.count || photos.length).toLocaleString('en-IN') + ' photos</span>');
+      const field = h('div', 'pg-t1-field');
+      const input = document.createElement('input'); input.type = 'text'; input.maxLength = 40; input.value = group.name || group.defaultName || ''; input.placeholder = 'Name this event'; input.setAttribute('aria-label', 'Name this event for ' + (range || group.key)); input.dataset.timeName = group.key;
+      const clear = h('button', 'pg-t1-clear', '×'); clear.type = 'button'; clear.setAttribute('aria-label', 'Clear event name'); clear.hidden = !input.value;
+      input.addEventListener('input', () => { clear.hidden = !input.value; });
+      clear.addEventListener('click', () => { input.value = ''; clear.hidden = true; input.focus(); });
+      field.append(input, clear);
+      const chips = h('div', 'pg-t1-chips');
+      ['Haldi', 'Mehndi', 'Sangeet', 'Wedding', 'Reception', 'Mayra', 'Cocktail', 'Other'].forEach(name => {
+        const b = h('button', 'pg-t1-chip', name); b.type = 'button'; b.dataset.name = name;
+        b.addEventListener('click', () => { if (name === 'Other') { input.focus(); return; } input.value = name; clear.hidden = false; input.focus(); });
+        chips.appendChild(b);
+      });
+      card.append(meta, thumbs, field, chips); grid.appendChild(card);
+    });
+    p.querySelector('.pg-t1-save').addEventListener('click', () => {
+      const button = p.querySelector('.pg-t1-save'), status = p.querySelector('.pg-t1-status'), names = {};
+      p.querySelectorAll('[data-time-name]').forEach(input => { names[input.dataset.timeName] = input.value; });
+      button.disabled = true; button.textContent = 'Saving…'; status.textContent = '';
+      pgApi('nameTimeGroups', { names: JSON.stringify(names) }).then(r => {
+        GALLERY.timeGroups = r.timeGroups || []; GALLERY.events = r.events || GALLERY.events || [];
+        if (window.renderGalleries) renderGalleries(); if (window.PGEvents) PGEvents.paint();
+        button.textContent = 'Saved'; status.textContent = 'Your event names are saved.';
+        showToast('Event names saved');
+      }).catch(err => { button.textContent = 'Save names'; status.textContent = err.message; })
+        .finally(() => { button.disabled = false; });
+    });
+    return p;
+  }
+
   let tab = 'home', repaint = () => {}, goTo = () => {};
   function open(start) {
     if (document.querySelector('.pgcp-sheet')) { if (start) goTo(start); return; }   // step 59: a double tap on the gear opened two panels
@@ -503,6 +562,7 @@
     }
     function pane(k) {
       if (k === 'theme' || k === 'layout' || k === 'pages' || k === 'look') return lookPane(k === 'look' ? 'all' : k);
+      if (k === 'timeGroups') return timeGroupsPane();
       if (k === 'photographer') return photogPane();
       if (k === 'story' && window.PGStoryPicks) return PGStoryPicks.pane();
       if (k === 'requests' && window.PGRules) return PGRules.pane();
@@ -519,13 +579,13 @@
       if (['theme', 'layout', 'pages', 'look'].indexOf(tab) > -1) { paintLook(body); Promise.all([window.PGTheme && PGTheme.ready, window.PGLayout && PGLayout.ready]).then(() => paintLook(body)); }
     };
     goTo = (k, backwards) => {
-      const was = tab; tab = k || 'home'; repaint(); scroll.scrollTop = 0;
+      const was = tab; tab = k || 'home'; box.classList.toggle('pgcp-t1-open', tab === 'timeGroups'); repaint(); scroll.scrollTop = 0;
       body.classList.remove('slide-in', 'slide-back'); void body.offsetWidth; if (was !== tab) body.classList.add(backwards ? 'slide-back' : 'slide-in');
       const f = tab === 'home' ? box.querySelector('[data-tab="' + was + '"]') : box.querySelector('.pgcp-nav-back'); if (f) f.focus({ preventScroll: true });
     };
     document.body.append(back, box); document.documentElement.classList.add('pgcp-open');
     requestAnimationFrame(() => box.classList.add('in'));
-    tab = start || 'home'; repaint();
+    tab = start || 'home'; box.classList.toggle('pgcp-t1-open', tab === 'timeGroups'); repaint();
     box.tabIndex = -1; box.focus({ preventScroll: true });   // the panel itself, so no ring appears on a button straight away
   }
   // the Hub editor (23-editor.js) publishes through the same saving as the panel (couple link, login, or this phone in a demo)
