@@ -7,7 +7,8 @@ const W = 'SAMETIMEWEDDING89020';
 DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' };
 [['tH', 'Ceremony'], ['tR', 'Reception']].forEach(([id, name], k) => {
   DRIVE.folders[id] = { name, parent: W };
-  for (let i = 0; i < 8; i++) DRIVE.files['ST' + k + i] = { name: 'photo' + i + '.jpg', parent: id, mime: 'image/jpeg' };
+  // camera times as Drive gives them (step 81): Ceremony early morning, Reception in the evening (away from the times the checks below set by hand)
+  for (let i = 0; i < 8; i++) DRIVE.files['ST' + k + i] = { name: 'photo' + i + '.jpg', parent: id, mime: 'image/jpeg', time: '2026:11:24 ' + (k ? '19' : '06') + ':' + String(10 + i * 5) + ':00' };
 });
 function login(email) {
   call('requestCode', { email });
@@ -55,6 +56,8 @@ const srv = http.createServer((req, res) => {
     await pg.goto('http://localhost:8902/g/' + pub.galleryId);
     await pg.waitForSelector('#pgBoot.hide', { state: 'attached' });
     await pg.waitForFunction(() => window.PGSameTime && typeof GALLERY !== 'undefined' && GALLERY && Array.isArray(GALLERY.events));
+    ok(await pg.evaluate(() => GALLERY.events.length === 2 && GALLERY.events.every(e => e.photos.length && e.photos.every(p => /^2026-11-24 \d\d:\d\d$/.test(p.t)))),
+      'a wedding with event folders gets each photo\'s camera time from the scan');
     await pg.evaluate(() => {
       const photos = GALLERY.events.flatMap(e => e.photos || []);
       if (photos.length < 3) throw new Error('The test wedding needs at least three made-up photos');

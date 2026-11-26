@@ -48,7 +48,8 @@ for (let i = 0; i < 6; i++) {
 const withFolders = global.__scanWeddingFolder(F);
 assert(withFolders.timeGroups.length === 0, 'a wedding with event folders gets no time groups');
 assert(withFolders.events.some(e => e.name === 'Highlights' && e.photos.length === 12), 'its loose photos stay one Highlights event, as before');
-assert(withFolders.events.some(e => e.name === 'Haldi' && e.photos.length === 6 && e.photos.every(p => !p.t)), 'photographer-created Haldi folder stays a normal event (no extra Drive time call)');
+assert(withFolders.events.some(e => e.name === 'Haldi' && e.photos.length === 6 && e.photos.every(p => /^2026-11-20 12:/.test(p.t))), 'photographer-created Haldi folder stays a normal event, and its photos carry their time (for T2)');
+assert(withFolders.events.find(e => e.name === 'Highlights').photos.every(p => !!p.t), 'loose Highlights photos carry their time too');
 const admin = login('adcmediaa@gmail.com');
 const order = call('queue', { token: admin }).recentDone[0];
 const made = call('setGallery', { token: admin, orderId: order.orderId, folderUrl: W, title: 'Anika & Rohan' });

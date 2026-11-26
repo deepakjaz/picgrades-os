@@ -1345,7 +1345,7 @@ function driveCaptureTimes_(folderId) {
   return out;
 }
 
-function listImages_(folder, withTimes) {   // withTimes (step 80): only the main folder needs photo times — one Drive call, not one per event folder
+function listImages_(folder, withTimes) {   // withTimes (step 80): read each photo's capture time (one Drive call per folder) — used by T1 groups and T2 'at this time'
   var out = [], it = folder.getFiles(), times = withTimes ? driveCaptureTimes_(folder.getId()) : {};
   while (it.hasNext()) {
     var f = it.next();
@@ -1424,14 +1424,14 @@ function scanWeddingFolder_(folderId, savedNames) {
   while (subs.hasNext()) {
     var sf = subs.next();
     if (sf.isTrashed() || sf.getName() === GUEST_FOLDER_NAME || sf.getName() === POSTS_FOLDER_NAME) continue; // guest uploads are shown only after approval
-    var photos = listImages_(sf);
+    var photos = listImages_(sf, !PORTFOLIO_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_')));   // step 81: every event photo carries its time (not the portfolio)
     if (ROOT_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { root = photos; continue; }
     if (PORTFOLIO_FOLDER_RE.test(sf.getName().replace(/\s+/g, '_'))) { portfolio = photos; continue; }   // the photographer's picks for their portfolio
     if (photos.length) events.push({ name: cleanEventName_(sf.getName()), folder: sf.getName(), photos: photos });
   }
   // step 80: loose photos are grouped by photo time only when the photographer made no event folders;
   // otherwise the loose photos stay one 'Highlights' event, exactly as before
-  var noFolders = !events.length, loose = listImages_(folder, noFolders), timeGroups = noFolders ? makeTimeGroups_(loose, savedNames || {}) : [];
+  var noFolders = !events.length, loose = listImages_(folder, true), timeGroups = noFolders ? makeTimeGroups_(loose, savedNames || {}) : [];
   var timed = {};
   timeGroups.forEach(function (g) {
     g.photos.forEach(function (ph) { timed[ph.id] = true; });
