@@ -760,10 +760,10 @@
       row.appendChild(b);
     });
   }
-  function slider(label, min, max, val, onInput) {
+  function slider(label, min, max, val, onInput, unit) {   // unit (step 82): e.g. ' s' after the number
     var r = el('input', { type: 'range', min: String(min), max: String(max), value: String(val), class: 're-range', 'aria-label': label });
-    var v = el('span', { text: String(val) });
-    r.addEventListener('input', function () { v.textContent = r.value; onInput(+r.value); });
+    var v = el('span', { text: String(val) + (unit || '') });
+    r.addEventListener('input', function () { v.textContent = r.value + (unit || ''); onInput(+r.value); });
     return el('label', { class: 're-sl' }, [el('span', { text: label }), r, v]);
   }
   function toolAudio() {
@@ -778,7 +778,7 @@
     });
   }
   function toolText(item) {
-    var x = item || { text: '', style: 'box', color: '#FFFFFF', size: 84, y: 0.3, start: Math.min(S.t, Math.max(0, S.P.dur - 3)), dur: 3 };
+    var x = item || { text: '', style: 'box', color: '#FFFFFF', size: 84, y: 0.3, start: Math.min(S.t, Math.max(0, S.P.dur - 0.1)), dur: Math.max(0.1, S.P.dur - Math.min(S.t, Math.max(0, S.P.dur - 0.1))) };
     var isNew = !item;
     sheet(isNew ? 'Add text' : 'Edit text', function (b) {
       var inp = el('textarea', { class: 'rl-in re-ta', rows: '2', placeholder: 'Type here', maxlength: '120' }); inp.value = x.text;
@@ -789,7 +789,12 @@
       b.append(inp, st, co,
         slider('Size', 40, 160, x.size, function (v) { x.size = v; seek(S.t); }),
         slider('Up / down', 8, 92, Math.round(x.y * 100), function (v) { x.y = v / 100; seek(S.t); }),
-        slider('Seconds', 1, Math.max(2, Math.floor(S.P.dur)), Math.round(x.dur), function (v) { x.dur = v; renderTimeline(); }));
+        slider('Show from', 0, Math.max(0, Math.floor(S.P.dur - 1)), Math.round(x.start), function (v) {
+          x.start = Math.min(v, S.P.dur - 0.1); x.dur = Math.max(0.1, Math.min(S.P.dur - x.start, x.end != null ? x.end - x.start : x.dur)); x.end = x.start + x.dur; renderTimeline(); seek(S.t);
+        }, ' s'),
+        slider('Show to', 1, Math.max(1, Math.ceil(S.P.dur)), Math.round(x.end != null ? x.end : x.start + x.dur), function (v) {
+          x.end = Math.max(x.start + 0.1, Math.min(S.P.dur, v)); x.dur = x.end - x.start; renderTimeline(); seek(S.t);
+        }, ' s'));
       if (!isNew) b.appendChild(el('button', { type: 'button', class: 'rl-sub re-del', html: ic('trash') + ' Delete text', onclick: function () { S.texts = S.texts.filter(function (y) { return y !== x; }); closeSheet(); changed(); } }));
       setTimeout(function () { inp.focus(); }, 50);
     }, function () { if (isNew && x.text && S.texts.indexOf(x) < 0) S.texts.push(x); S.texts = S.texts.filter(function (y) { return String(y.text).trim(); }); changed(); });
@@ -803,7 +808,12 @@
           b.append(co, slider('Size', 80, 600, item.size, function (v) { item.size = v; seek(S.t); }),
             slider('Left / right', 5, 95, Math.round(item.x * 100), function (v) { item.x = v / 100; seek(S.t); }),
             slider('Up / down', 5, 95, Math.round(item.y * 100), function (v) { item.y = v / 100; seek(S.t); }),
-            slider('Seconds', 1, Math.max(2, Math.floor(S.P.dur)), Math.round(item.dur), function (v) { item.dur = v; renderTimeline(); }),
+            slider('Show from', 0, Math.max(0, Math.floor(S.P.dur - 1)), Math.round(item.start), function (v) {
+              item.start = Math.min(v, S.P.dur - 0.1); item.dur = Math.max(0.1, Math.min(S.P.dur - item.start, item.end != null ? item.end - item.start : item.dur)); item.end = item.start + item.dur; renderTimeline(); seek(S.t);
+            }, ' s'),
+            slider('Show to', 1, Math.max(1, Math.ceil(S.P.dur)), Math.round(item.end != null ? item.end : item.start + item.dur), function (v) {
+              item.end = Math.max(item.start + 0.1, Math.min(S.P.dur, v)); item.dur = item.end - item.start; renderTimeline(); seek(S.t);
+            }, ' s'),
             el('button', { type: 'button', class: 'rl-sub re-del', html: ic('trash') + ' Delete drawing', onclick: function () { S.stks = S.stks.filter(function (y) { return y !== item; }); closeSheet(); changed(); } }));
         }, changed);
         return;
@@ -815,7 +825,8 @@
           grid.innerHTML = '';
           window.PG_STICKERS.filter(function (x) { return x.c === c; }).forEach(function (x) {
             grid.appendChild(el('button', { type: 'button', class: 're-stk', title: x.n, 'aria-label': x.n, html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="' + x.d + '"/></svg>', onclick: function () {
-              var it = { k: x.k, start: Math.min(S.t, Math.max(0, S.P.dur - 3)), dur: 3, x: 0.5, y: 0.7, size: 260, color: '#FFFFFF' };
+              var itStart = Math.min(S.t, Math.max(0, S.P.dur - 0.1));
+              var it = { k: x.k, start: itStart, dur: Math.max(0.1, S.P.dur - itStart), x: 0.5, y: 0.7, size: 260, color: '#FFFFFF' };
               S.stks.push(it); closeSheet(); changed(); seek(it.start + 0.4); toolSticker(it);
             } }));
           });
@@ -1390,5 +1401,5 @@
   window.PGReel = { setFaces: function (f) { if (S) { S.opt.faces = f; seek(S.t || 0); } }, back: back, open: open, close: close, styles: ORDER, addStyle: addStyle,
     frame: function (t) { if (S) draw(S.canvas.getContext('2d'), curPlan(), t); return S ? curPlan().dur : 0; },  // used by tests
     setStyle: function (k) { if (S && TEMPLATES[k]) { if (S.view === 'edit' && S.P) applyStyle(k); else pickStyle(k); } },
-    state: function () { return S ? { frame: JSON.parse(JSON.stringify(S.frame || {})), frameSel: S.frameSel || null, tx: S.tx || {}, names: S.names, date: S.date, textHits: (S.textHits || []).slice(), t: S.t, fxOff: S.fxOff || {}, sound: !!S.inspoSound, soundPlaying: !!S.inspoAud, segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, filter: S.filter, undo: (S.undo || []).length } : null; } };
+    state: function () { return S ? { frame: JSON.parse(JSON.stringify(S.frame || {})), frameSel: S.frameSel || null, tx: S.tx || {}, names: S.names, date: S.date, textHits: (S.textHits || []).slice(), t: S.t, fxOff: S.fxOff || {}, sound: !!S.inspoSound, soundPlaying: !!S.inspoAud, segs: S.P ? S.P.segs.map(function (g) { return { type: g.type, layout: g.layout, ids: (g.ids || []).slice(), start: g.start, dur: g.dur }; }) : [], view: S.view, style: S.tid, track: S.track, own: !!(S.buffers && S.buffers.own), dur: S.P ? S.P.dur : 0, shots: S.P ? S.P.shots : 0, texts: (S.texts || []).length, stks: (S.stks || []).length, textItems: JSON.parse(JSON.stringify(S.texts || [])), stickerItems: JSON.parse(JSON.stringify(S.stks || [])), filter: S.filter, undo: (S.undo || []).length } : null; } };
 })();
