@@ -142,7 +142,8 @@ var ADMIN_ROUTES = {
   addCredits: addCredits_,
   updateCompany: updateCompany_,
   setAllowed: setAllowed_,
-  setPlan: setPlan_
+  setPlan: setPlan_,
+  adminMakeWedding: adminMakeWedding_   // step 99: make a gallery for a client from a Drive link (no order needed)
 };
 
 function route_(action, params) {
@@ -318,12 +319,7 @@ function signUp_(p) {
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     if (!findUser_(email)) {
-      var base = kind === 'photographer' ? studio : name, company = base, n = 2;
-      while (findCompany_(company)) company = base + ' (' + n++ + ')';
-      var ids = readTable_('Companies').map(function (c) { return +(String(c.companyId || '').replace(/\D/g, '')) || 0; });
-      appendRow_('Companies', { companyId: 'C' + String(Math.max.apply(null, ids.concat([0])) + 1).padStart(3, '0'), companyName: company, adminEmail: email, contactName: name,
-        phone: phone, packageType: '', currency: 'INR', status: 'Active', createdAt: fmt_(new Date()) });
-      appendRow_('Users', { email: email, name: name, companyName: company, role: 'client', profession: kind, phone: phone, status: 'Active', joinedAt: fmt_(new Date()) });
+      var company = makeAccount_(email, name, kind, studio, phone);
       var adm = String(getSettings_().adminNotifyEmail || '').trim();
       if (adm) sendEmail_(adm, 'New sign-up: ' + name + ' (' + kind + ')', 'New sign-up',
         [esc_(name) + ' signed up as a <b>' + kind + '</b>.', 'Email: ' + esc_(email) + (phone ? ' · Mobile: ' + esc_(phone) : ''), kind === 'photographer' ? 'Studio: ' + esc_(company) : ''], 'signup', email);
@@ -331,6 +327,51 @@ function signUp_(p) {
   } finally { lock.releaseLock(); }
   return requestCode_({ email: email });
 }
+/** One account for a couple or photographer: a "company" row with no editing package, and one user (sign-up, step 65b; admin form, step 99). */
+function makeAccount_(email, name, kind, studio, phone) {
+  var base = kind === 'photographer' ? studio : name, company = base, n = 2;
+  while (findCompany_(company)) company = base + ' (' + n++ + ')';
+  var ids = readTable_('Companies').map(function (c) { return +(String(c.companyId || '').replace(/\D/g, '')) || 0; });
+  appendRow_('Companies', { companyId: 'C' + String(Math.max.apply(null, ids.concat([0])) + 1).padStart(3, '0'), companyName: company, adminEmail: email, contactName: name,
+    phone: phone, packageType: '', currency: 'INR', status: 'Active', createdAt: fmt_(new Date()) });
+  appendRow_('Users', { email: email, name: name, companyName: company, role: 'client', profession: kind, phone: phone, status: 'Active', joinedAt: fmt_(new Date()) });
+  return company;
+}
+
+/** Step 99 — PicGrades (admin) makes a wedding gallery FOR a client from a Drive link, without an order from the old order
+ * system. The wedding belongs to the client exactly as if they had made it themselves (30-day trial, no photo limit), and
+ * the client is emailed the links. A new email gets an account first. The admin needs no code from the client. */
+function adminMakeWedding_(p, user) {
+  var email = normEmail_(p.email), kind = p.kind === 'photographer' ? 'photographer' : 'couple';
+  var name = String(p.name || '').replace(/[<>]/g, '').trim().slice(0, 60), studio = String(p.studio || '').replace(/[<>]/g, '').trim().slice(0, 60);
+  var phone = String(p.phone || '').replace(/[^\d+ ]/g, '').slice(0, 20);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: 'Enter the client\'s email.' };
+  if (!String(p.title || '').trim()) return { ok: false, error: 'Write the wedding name.' };
+  if (!/\/folders\//.test(String(p.folderUrl || ''))) return { ok: false, error: 'Paste the Google Drive folder link (it contains /folders/).' };
+  var lock = LockService.getScriptLock(), isNew = false; lock.waitLock(20000);
+  try {
+    if (!findUser_(email)) {
+      if (name.length < 2) return { ok: false, error: 'This email has no account yet. Write the client\'s name too.' };
+      if (kind === 'photographer' && studio.length < 2) return { ok: false, error: 'Write the studio name for a photographer.' };
+      makeAccount_(email, name, kind, studio, phone); isNew = true;
+    }
+  } finally { lock.releaseLock(); }
+  var client = findUser_(email);
+  if (String(client.role || 'client').toLowerCase() !== 'client') return { ok: false, error: 'That email is a PicGrades staff account. Use a client\'s email.' };
+  var now = new Date(), ends = new Date(now.getTime() + TRIAL_DAYS * 86400000);
+  var r = makeGallery_({ orderId: 'W' + randomId_(10), folderUrl: p.folderUrl, title: String(p.title).trim(), eventDate: p.eventDate }, client,
+    { made: true, limit: 0, extra: { plan: 'trial', trialEnds: fmt_(ends), features: '{}' } });
+  if (r.ok === false || !r.galleryId) return r;
+  var g = findGallery_(r.galleryId), card = weddingCard_(g);
+  var site = String(getSettings_().siteUrl || 'https://picgrades-os.vercel.app').replace(/\/+$/, '');
+  sendEmail_(email, 'Your wedding gallery is ready: ' + g.title, 'Your wedding gallery is ready',
+    ['PicGrades made <b>' + esc_(g.title) + '</b> for you, with ' + r.photoCount + ' photos. It is a draft: only you can see it until you publish it.',
+     'Open it and design it (your private link — keep it to yourself): <a href="' + card.coupleLink + '">' + card.coupleLink + '</a>',
+     'To see all your weddings, sign in at <a href="' + site + '">' + site + '</a> with this email (' + esc_(email) + ').',
+     'Your free trial ends on ' + esc_(fmt_(ends).slice(0, 10)) + '.'], 'wedding-new', g.galleryId);
+  return Object.assign(r, card, { clientEmail: email, newAccount: isNew, mailed: true });
+}
+
 /** A signed-in couple or photographer makes a wedding gallery from their Drive folder: a Draft with a 30-day trial. */
 function createWedding_(p, user) {
   var keys = p.functions && typeof p.functions === 'object' ? p.functions : null, features = {};
