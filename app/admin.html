@@ -27,6 +27,10 @@ header .wrap{display:flex;justify-content:space-between;align-items:center;gap:1
 .ghost{background:transparent;color:var(--text);border:1px solid #3A3A40;border-radius:999px;padding:8px 16px;cursor:pointer;min-height:40px}
 .mini{background:var(--chip);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:8px 12px;cursor:pointer;min-height:40px;font-size:13px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}
+/* step 99: make a gallery for a client */
+.mk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.mk-wide{grid-column:1/-1}
+#mk input,#mk select{width:100%;box-sizing:border-box;min-height:44px}
+#mkDone a{word-break:break-all}
 .warmcard{background:var(--warm);border:1px solid var(--warmline);border-radius:20px;padding:20px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}.tile p{margin:0}.tile .v{font-size:24px;font-weight:600;margin-top:4px}
@@ -80,6 +84,22 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
       <p class="eyebrow" style="margin:0">Images received per month</p>
       <div id="bars" class="bars" role="img" aria-label="Images received per month, last 12 months"></div>
     </div>
+    <!-- step 99: make a gallery for a client from a Drive link (no order from the old order system needed) -->
+    <form id="mk" class="card" style="margin-bottom:22px" autocomplete="off">
+      <h2 style="font-size:18px;margin:0 0 4px">Make a gallery for a client</h2>
+      <p class="muted" style="margin:0 0 14px;font-size:13px">No order needed. The gallery belongs to the client and they get an email with its link. A new email gets an account.</p>
+      <div class="mk-grid">
+        <div><label for="mkEmail">Client's email</label><input id="mkEmail" type="email" required placeholder="name@example.com"></div>
+        <div><label for="mkName">Client's name <span class="muted">(only for a new client)</span></label><input id="mkName" placeholder="Riya Shah"></div>
+        <div><label for="mkKind">They are</label><select id="mkKind"><option value="couple">The couple</option><option value="photographer">A photographer</option></select></div>
+        <div id="mkStudioBox" class="hidden"><label for="mkStudio">Studio name</label><input id="mkStudio" placeholder="Studio name"></div>
+        <div><label for="mkTitle">Wedding name</label><input id="mkTitle" required placeholder="Aarav &amp; Kavya"></div>
+        <div><label for="mkDate">Wedding date</label><input id="mkDate" type="date"></div>
+        <div class="mk-wide"><label for="mkFolder">Google Drive folder link</label><input id="mkFolder" required placeholder="Shared as Anyone with the link – Viewer"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px"><button id="mkGo" class="btn" type="submit">Make the gallery</button><span id="mkMsg" class="muted" role="status" aria-live="polite"></span></div>
+      <div id="mkDone" class="hidden" style="margin-top:14px"></div>
+    </form>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
       <h2 style="font-size:18px;margin:0">Studios</h2>
       <input id="filter" placeholder="Search studio…" style="max-width:260px">
@@ -324,6 +344,20 @@ nav.dock button[aria-current=page]{background:var(--gold);color:#141413}
     box.appendChild(inner);
     return box;
   }
+  // step 99: make a gallery for a client (the wedding is theirs; they are emailed the link)
+  $('mkKind').addEventListener('change', function () { show('mkStudioBox', $('mkKind').value === 'photographer'); });
+  $('mk').addEventListener('submit', function (e) {
+    e.preventDefault(); show('mkDone', false); $('mkMsg').textContent = 'Reading the Drive folder… (a big wedding can take a minute)';
+    busy($('mkGo'), api('adminMakeWedding', { email: $('mkEmail').value.trim(), name: $('mkName').value.trim(), kind: $('mkKind').value, studio: $('mkStudio').value.trim(),
+      title: $('mkTitle').value.trim(), eventDate: $('mkDate').value, folderUrl: $('mkFolder').value.trim() })).then(function (r) {
+      $('mkMsg').textContent = '';
+      var link = function (label, u) { return el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px' }, [el('b', { style: 'font-size:12px;min-width:150px', text: label }), el('a', { href: u, target: '_blank', rel: 'noopener', text: u })]); };
+      fill('mkDone', [el('p', { style: 'margin:0', text: '“' + r.title + '” is ready with ' + r.photoCount + ' photos, as a draft with a 30-day trial. ' + (r.newAccount ? 'A new account was made for ' : 'It was added to the account of ') + r.clientEmail + ', and they were emailed the link.' }),
+        link('Couple (private)', r.coupleLink), link('Guests (after publishing)', r.guestLink),
+        el('a', { href: '/app/faces.html?g=' + encodeURIComponent(r.galleryId), target: '_blank', rel: 'noopener', class: 'mini', style: 'display:inline-block;margin-top:10px;text-decoration:none', text: 'Read faces (Find me)' })]);
+      show('mkDone', true); $('mkFolder').value = ''; $('mkTitle').value = ''; $('mkDate').value = '';
+    }).catch(function (x) { $('mkMsg').textContent = x.message; });
+  });
   function renderQueue(res) {
     // step 65e: human editing enquiries from people who signed up themselves — reply with a price, then make an editing order
     fill('qEnq', (res.enquiries || []).length ? res.enquiries.map(function (e) {
