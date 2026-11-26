@@ -7,6 +7,14 @@ function pgOpenReel(photos, choose) {
   if (!pgReelLoad) pgReelLoad = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/app/reel.js'; s.onload = res; s.onerror = () => { pgReelLoad = null; rej(new Error('Could not open the reel maker. Check the internet.')); }; document.head.appendChild(s); });
   pgReelLoad.then(() => PGReel.open({ photos: photos.map(p => ({ id: p.id })), choose: !!choose, demo: !!GALLERY.demo, title: GALLERY.title, date: pgDate(GALLERY.eventDate), studio: GALLERY.studio, api: pgApi,
     collections: (GALLERY.personal || []).concat(GALLERY.events || []).concat((GALLERY.root || []).length ? [{ name: 'Root Moment', photos: GALLERY.root }] : []).map(c => ({ name: c.name, photos: c.photos.map(p => ({ id: p.id })) })) }))
+    .then(() => {
+      // step 83: the faces we already read keep people in view when a photo is framed in the reel (same as Post Edits).
+      // The reel opens at once; the faces arrive a moment later. All photos, so ones chosen later in the picker get them too.
+      if (!GALLERY.faceSearch) return;
+      (window.pgFaceBoxes ? Promise.resolve(window.pgFaceBoxes) : pgApi('faceBoxes').then(r => {
+        const m = {}; Object.keys(r.boxes || {}).forEach(id => { m[id] = r.boxes[id].map(b => b.map(v => v / 1000)); }); return (window.pgFaceBoxes = m);
+      })).then(m => PGReel.setFaces(m)).catch(() => {});   // no faces: the reel works as before
+    })
     .catch(e => showToast(e.message));
 }
 document.getElementById('fmReel').addEventListener('click', () => {
