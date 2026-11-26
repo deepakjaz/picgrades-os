@@ -31,8 +31,10 @@
     const list = (photos && photos.length ? photos : set.photos) || []; if (!list.length) return;
     bar = h('div', 'pgcr-bar', '<span>Make something with your photos</span><button type="button" data-k="reel">' + REEL + 'Make a Reel</button><button type="button" data-k="post">' + POST + 'Make a Post</button>');
     bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Create with your photos');
-    bar.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; if (b.dataset.k === 'reel') pgOpenReel(list); else pgOpenPost(list.slice(0, 1)); });
-    document.body.appendChild(bar); document.body.classList.add('pg-crbar');
+    bar.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; if (b.dataset.k === 'reel') pgOpenReel(list, true, set.name); else pgOpenPost(list.slice(0, 1)); });
+    // step 98: the buttons sit in the page, under the title and "Photographed by" — a floating bar ran into the nav bar
+    const head = document.querySelector('.pgx-head');
+    if (head) { bar.classList.add('pgcr-inline'); head.after(bar); } else { document.body.appendChild(bar); document.body.classList.add('pg-crbar'); }
   }
   function hide() { if (bar) { bar.remove(); bar = null; } document.body.classList.remove('pg-crbar'); }
   const open0 = window.pgOpenEvent;

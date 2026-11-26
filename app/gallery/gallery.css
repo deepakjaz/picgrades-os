@@ -3494,3 +3494,12 @@ html[data-tkg-theme="dark"] .pgac-badge.is-on { color: #5ec28b; }
   .pg-t1-thumb{border-radius:9px}
 }
 @media(prefers-reduced-motion:reduce){.pg-t1-chip,.pg-t1-save{transition:none}}
+
+/* step 98: Make a Reel / Make a Post sit in the page under the title (the floating bar ran into the nav bar) */
+.pgcr-bar.pgcr-inline{position:static;transform:none;z-index:auto;max-width:none;margin:6px 16px 12px;padding:0;gap:10px;flex-wrap:wrap;
+  background:none;color:inherit;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;animation:none}
+.pgcr-bar.pgcr-inline span{display:none}
+.pgcr-bar.pgcr-inline button{min-height:44px;padding:0 18px;font-size:14px;background:transparent;color:var(--ink);border:1px solid var(--border-hairline)}
+.pgcr-bar.pgcr-inline button+button{background:var(--cta-peach,#f2b98a);color:var(--cta-peach-ink,#16120f);border-color:transparent}
+@media (min-width:600px){.pgcr-bar.pgcr-inline{margin:8px 28px 12px}}
+@media (min-width:1100px){.pgcr-bar.pgcr-inline{margin:10px 40px 14px}}

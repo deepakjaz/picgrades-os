@@ -9,7 +9,8 @@
    "seconds": 64,
    "region": "any",
    "credit": "",
-   "licence": "PicGrades original (made in-house)"
+   "licence": "PicGrades original (made in-house)",
+   "preview": "/app/music/preview/cocktail-night.mp3"
   },
   {
    "id": "dhol-festival",
@@ -20,7 +21,8 @@
    "seconds": 64,
    "region": "any",
    "credit": "",
-   "licence": "PicGrades original (made in-house)"
+   "licence": "PicGrades original (made in-house)",
+   "preview": "/app/music/preview/dhol-festival.mp3"
   },
   {
    "id": "road-trip",
@@ -31,7 +33,8 @@
    "seconds": 64,
    "region": "any",
    "credit": "",
-   "licence": "PicGrades original (made in-house)"
+   "licence": "PicGrades original (made in-house)",
+   "preview": "/app/music/preview/road-trip.mp3"
   },
   {
    "id": "renegade",
@@ -43,7 +46,8 @@
    "region": "any",
    "mood": "lively",
    "credit": "80selectricmusicandlyrics (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/renegade.mp3"
   },
   {
    "id": "tere-sang",
@@ -55,7 +59,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "80selectricmusicandlyrics (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/tere-sang.mp3"
   },
   {
    "id": "morgan-groove",
@@ -67,7 +72,8 @@
    "region": "any",
    "mood": "mid",
    "credit": "Alex Morgan (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/morgan-groove.mp3"
   },
   {
    "id": "sitar-instrumental",
@@ -79,7 +85,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "Alex Morgan (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/sitar-instrumental.mp3"
   },
   {
    "id": "zara-zara",
@@ -91,7 +98,8 @@
    "region": "any",
    "mood": "lively",
    "credit": "DKFilms (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/zara-zara.mp3"
   },
   {
    "id": "happiness",
@@ -103,7 +111,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "HappinessInMusic (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/happiness.mp3"
   },
   {
    "id": "bollywood-bg",
@@ -115,7 +124,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "Ikoliks (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/bollywood-bg.mp3"
   },
   {
    "id": "indian-classical",
@@ -127,7 +137,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "Kiravale (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/indian-classical.mp3"
   },
   {
    "id": "bollywood-song",
@@ -139,7 +150,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "Krasnoshchok (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/bollywood-song.mp3"
   },
   {
    "id": "indian-trap",
@@ -151,7 +163,8 @@
    "region": "any",
    "mood": "lively",
    "credit": "Kulakovka (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/indian-trap.mp3"
   },
   {
    "id": "kulakovka-beat",
@@ -163,7 +176,8 @@
    "region": "any",
    "mood": "lively",
    "credit": "Kulakovka (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/kulakovka-beat.mp3"
   },
   {
    "id": "bright-pulse",
@@ -175,7 +189,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "LiteSaturation (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/bright-pulse.mp3"
   },
   {
    "id": "ocean-bollywood",
@@ -187,7 +202,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "OceanFrameMusic (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/ocean-bollywood.mp3"
   },
   {
    "id": "ocean-bollywood-2",
@@ -199,7 +215,8 @@
    "region": "any",
    "mood": "mid",
    "credit": "OceanFrameMusic (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/ocean-bollywood-2.mp3"
   },
   {
    "id": "ocean-indian",
@@ -211,7 +228,8 @@
    "region": "any",
    "mood": "slow",
    "credit": "OceanFrameMusic (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/ocean-indian.mp3"
   },
   {
    "id": "sigma-energy",
@@ -223,7 +241,8 @@
    "region": "any",
    "mood": "lively",
    "credit": "SigmaMusicArt (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/sigma-energy.mp3"
   },
   {
    "id": "sub-clair-indian",
@@ -235,7 +254,8 @@
    "region": "any",
    "mood": "lively",
    "credit": "Sub_Clair (Pixabay)",
-   "licence": "Pixabay Content License"
+   "licence": "Pixabay Content License",
+   "preview": "/app/music/preview/sub-clair-indian.mp3"
   }
  ]
 }
