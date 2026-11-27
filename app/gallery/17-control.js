@@ -181,6 +181,20 @@
       layouts.filter(l => inUse(l)).forEach(l => { shownIds[l.id] = 1; yours.push(layoutRow(l, true, !!V[l.id])); });
       layouts.filter(l => V[l.id] && !shownIds[l.id]).forEach(l => { shownIds[l.id] = 1; yours.push(layoutRow(l, false, true)); });
       group('Yours', 'In use now, and the layouts you have made your own.', yours);
+      // step 104: Start fresh — this wedding's saved designs go (template choices, own Hub, Advanced-editor copies); photos, events, words and theme stay
+      if (ROLE !== 'demo' && ROLE !== 'guest' && (Object.keys(V).length || GALLERY.layout === 'custom' || /^cv-/.test(GALLERY.layout || ''))) {
+        const fb = h('button', 'pgcp-fresh', 'Start fresh: remove our saved designs'); fb.type = 'button'; la.appendChild(fb);
+        fb.addEventListener('click', () => {
+          if (!window.confirm('Start fresh?\n\nThis removes the photo choices you made in templates, your own Hub and the layouts made in the Advanced editor, for this wedding only. Photos, events, words and the theme stay.')) return;
+          fb.disabled = true; fb.textContent = 'Removing…';
+          call('coupleFreshStart', 'freshStart', {}).then(r => {
+            GALLERY.layout = ''; GALLERY.custom = r.custom || { blocks: [] }; GALLERY.versions = {}; GALLERY.canvas = null;
+            try { localStorage.removeItem('pg_hubdraft_' + GALLERY_ID); } catch (e) {}
+            if (window.pgKeepCopy) pgKeepCopy({ layout: '', custom: GALLERY.custom, versions: {}, canvas: null });
+            if (window.PGLayout) PGLayout.refresh(); paintLook(box); showToast('A fresh start — the templates are as they were made');
+          }).catch(e => { fb.disabled = false; fb.textContent = 'Start fresh: remove our saved designs'; showToast(e.message || 'Could not do that'); });
+        });
+      }
       const copies = new Set(layouts.map(l => l.editor).filter(Boolean));   // step 101: the canvas copies of the story templates are not offered (one version of each template)
       const rest = f => layouts.filter(l => !shownIds[l.id] && !copies.has(l.id) && f(l)).map(l => layoutRow(l, false, false));
       group('Stories', 'One long page that tells the wedding as a story while guests scroll.', rest(story));

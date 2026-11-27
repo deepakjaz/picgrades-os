@@ -24,10 +24,24 @@
   const editable = () => OWNERS.indexOf(role()) > -1 && !!current();
   function find(doc, elId) { for (const s of doc.sections || []) { const e = (s.els || []).find(x => x.id === elId); if (e) return e; } return null; }
 
+  // step 104: taps change photos only after the owner switches on "Change photos" — otherwise the Hub works like a guest's
+  let on = false;
+  function bar() {
+    let b = document.getElementById('pghpBar');
+    const hub = document.querySelector('#pgStory .pgc'), show = editable() && hub && hub.offsetParent !== null;
+    if (!show) { if (b) b.remove(); document.body.classList.remove('pghp-on'); on = false; return; }
+    if (document.querySelector('.pce, .pgte, .pgcp-sheet, .pghp.in')) { if (b) b.hidden = true; return; }   // a sheet or editor is open: wait (stay on)
+    if (!b) { b = document.createElement('div'); b.id = 'pghpBar'; b.className = 'pghp-bar'; document.body.appendChild(b);
+      b.addEventListener('click', ev => { if (ev.target.closest('[data-x]')) setOn(!on); }); }
+    b.innerHTML = on ? '<span>Tap a photo to change it. Guests do not see this.</span><button type="button" data-x class="pghp-done">Done</button>'
+                     : '<button type="button" data-x class="pghp-go" aria-label="Change photos on this Hub"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>Change photos</button>';
+    b.hidden = false; b.classList.toggle('on', on);
+  }
+  function setOn(v) { on = !!v; document.body.classList.toggle('pghp-on', on); bar(); }
   // a tap on a photo of the Hub (capture: before anything else reacts)
   document.addEventListener('click', ev => {
     const root = ev.target.closest && ev.target.closest('.pgc');
-    if (!root || ev.target.closest('.pce, .pgcp-sheet, .pgcp-pv, [data-ev], [data-act], .pgc-vid, button, a') || !editable()) return;
+    if (!on || !root || ev.target.closest('.pce, .pgcp-sheet, .pgcp-pv, [data-ev], [data-act], .pgc-vid, button, a') || !editable()) return;
     const el = ev.target.closest('.pgc-el.pgc-t-photo'), sec = ev.target.closest('.pgc-sec');
     let what = null;
     if (el && el.dataset.el) what = { kind: 'el', id: el.dataset.el, node: el, img: el.querySelector('img') };
@@ -112,12 +126,8 @@
       .catch(err => showToast((err && err.message) || 'Could not save'))
       .then(() => { busy = false; });
   }
-  // once, for an owner on a canvas Hub: say it can be done
-  function hint() {
-    if (!editable()) return;
-    try { if (localStorage.getItem('pghp_hint')) return; localStorage.setItem('pghp_hint', '1'); } catch (e) { return; }
-    showToast('Tip: tap any photo on your Hub to change it or move it in its frame');
-  }
-  if (window.pgAfter) pgAfter('pgRenderHub', () => setTimeout(hint, 1500));
-  window.PGHubPhoto = { editable, open: (kind, id, mode) => { const n = kind === 'bg' ? document.querySelector('.pgc-sec[data-sec="' + CSS.escape(id) + '"] > .pgc-stick') : document.querySelector('.pgc-el[data-el="' + CSS.escape(id) + '"]'); if (n) sheet({ kind, id, node: n, img: n.querySelector(kind === 'bg' ? '.pgc-bgimg' : 'img'), mode: mode || 'p' }); } };
+  if (window.pgAfter) pgAfter('pgRenderHub', () => setTimeout(bar, 300));
+  ['popstate', 'hashchange'].forEach(n => window.addEventListener(n, () => setTimeout(bar, 60)));
+  document.addEventListener('click', () => setTimeout(bar, 80));   // a view or an editor may have opened or closed
+  window.PGHubPhoto = { editable, setOn, isOn: () => on, bar, open: (kind, id, mode) => { const n = kind === 'bg' ? document.querySelector('.pgc-sec[data-sec="' + CSS.escape(id) + '"] > .pgc-stick') : document.querySelector('.pgc-el[data-el="' + CSS.escape(id) + '"]'); if (n) sheet({ kind, id, node: n, img: n.querySelector(kind === 'bg' ? '.pgc-bgimg' : 'img'), mode: mode || 'p' }); } };
 })();
