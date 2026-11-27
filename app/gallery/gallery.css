@@ -3666,3 +3666,10 @@ body.pg-logo-center .pg-role-badge{top:calc(env(safe-area-inset-top,0px) + 64px)
 .pgcp-pv-clip{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;background:#f4f0ea}
 .pgcp-pv.clip .pgcp-pv-pages,.pgcp-pv.clip .pgcp-pv-dark,.pgcp-pv.clip .pgcp-pv-keep{display:none!important}
 .pgcp-pv-acts.own{flex-wrap:wrap}.pgcp-pv-acts.own .pgcp-pv-edit{flex:1 1 100%}.pgcp-pv-acts.own .pgcp-pv-own,.pgcp-pv-acts.own .pgcp-pv-apply{flex:1 1 0;min-height:48px}   /* step 101: Edit on its own row, then our version / the original */
+/* step 101b: a photo's panel shows thumbnails of the wedding's photos (no dropdown) */
+.pce-thumbs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.pce-thumbs button{flex:0 0 auto;width:64px;height:64px;padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background:var(--border-hairline);cursor:pointer;scroll-snap-align:start}
+.pce-thumbs button.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg-cream) inset}
+.pce-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.pce-tlabel{font-size:11.5px;color:var(--ink-soft);margin:4px 0 2px}
+.pce-follow{margin-top:8px}.pce-follow summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:var(--ink-soft)}

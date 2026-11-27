@@ -471,7 +471,7 @@
   function connectPane(e) {
     const t = e.t, lap = E.mode === 'l'; let c = '';
     if (t === 'names' || t === 'date' || t === 'text' || t === 'credit') c += row(t === 'text' ? 'Words' : t === 'credit' ? 'Words before the name' : 'Words (empty = the wedding’s own)', '<textarea data-f="text" rows="2" maxlength="400" placeholder="' + (t === 'names' ? esc(PGLayout.storyData().names) : t === 'credit' ? 'Photographed by' : '') + '">' + esc(e.text || '') + '</textarea>');
-    if (t === 'photo') c += row('Photo', srcSelect(e.src)) + '<button type="button" class="pce-mini" data-pick="el">Choose a photo…</button>';
+    if (t === 'photo') c += row('Follow the story', srcSelect(e.src)) + '<p class="pce-note">To pick one photo, use the thumbnails in Design.</p>';
     if (t === 'action') c += row('Button', '<select data-f="act">' + Object.keys(PGCanvas.LABEL).map(k => opt(k, PGCanvas.LABEL[k], e.act)).join('') + '</select>') + row('Label (empty = usual)', '<input type="text" data-f="text" maxlength="40" value="' + esc(e.text || '') + '">') + seg('v', e.v || 'pill', [['pill', 'With icon'], ['circle', 'Icon only'], ['text', 'Words only']]);
     if (t === 'events') c += seg('v', e.v || 'row', [['row', 'Cards'], ['circles', 'Circles'], ['list', 'List']]) + (e.v === 'list' ? '' : row('Cards showing at once (' + (lap ? 'laptop' : 'phone') + ')', '<input type="number" step="0.1" min="1" max="8" data-f="per" value="' + num(e.per && typeof e.per === 'object' ? e.per[E.mode] : e.per, lap ? 3.5 : 2.2) + '">'));
     if (t === 'strip') c += row('Photos from', srcSelect(e.src));
@@ -488,7 +488,7 @@
   function designPane(f) {
     const e = f.e, lap = E.mode === 'l', own = lap && !!e.sl, s = Object.assign({}, e.s, lap && e.sl ? e.sl : {}), sp = spot(e), t = e.t;
     let c = '';
-    if (t === 'photo') c += '<div class="pce-acts"><button type="button" data-pick="el">Change photo</button><button type="button" data-do="frame" class="' + (E.frame === e.id ? 'on' : '') + '">' + (E.frame === e.id ? 'Done framing' : 'Move & zoom') + '</button><button type="button" data-do="frameReset">Reset</button></div>' +
+    if (t === 'photo') c += thumbs(e.src) + '<div class="pce-acts"><button type="button" data-do="frame" class="' + (E.frame === e.id ? 'on' : '') + '">' + (E.frame === e.id ? 'Done framing' : 'Move & zoom') + '</button><button type="button" data-do="frameReset">Reset</button></div>' +
       '<p class="pce-note">' + (E.frame === e.id ? 'Drag the photo on the page to move it inside its frame.' : 'Move & zoom moves the photo inside its frame, like in Photo Edits.') + '</p>' + row('Zoom', '<input type="range" min="1" max="3" step="0.05" data-s="zm" value="' + num(s.zm, 1) + '"><output>' + num(s.zm, 1) + '</output>');
     if (lap) c += '<label class="pce-check"><input type="checkbox" data-f="ownstyle"' + (own ? ' checked' : '') + '> Laptop has its own look (changes below stay on laptop)</label>';
     const textual = ['names', 'date', 'text', 'credit', 'action', 'blessings', 'events'].indexOf(t) > -1;
@@ -602,12 +602,25 @@
     if (JSON.stringify(E.doc) !== E.saved && !window.confirm('Open another layout? Changes you have not saved are lost.')) return;
     const keep = { mode: E.mode, snap: E.snap }; close(true); open(id); if (E) { E.snap = keep.snap; if (E.mode !== keep.mode) { E.mode = keep.mode; draw(); panel(); } }
   }
-  // Media: the wedding's photos and the elements library — tap to use
-  function mediaPane() {
+  // the wedding's photos, in groups (cover, highlights, each event)
+  function photoGroups() {
     const st = GALLERY.story || {}, groups = [];
     if ((st.cover || []).length) groups.push(['Cover photos', st.cover]);
     if ((st.wh || []).length) groups.push(['Wedding highlights', st.wh]);
     (GALLERY.events || []).forEach(e => { const ids = (e.photos || []).map(p => p.id); if (ids.length) groups.push([e.name, ids]); });
+    return groups;
+  }
+  // step 101b: a selected photo shows the wedding's photos as thumbnails right in its panel — tap one to put it in
+  function thumbs(src) {
+    const cur = src && src.k === 'id' ? src.id : '', gs = photoGroups();
+    if (!gs.length) return '<p class="pce-note">No photos yet.</p>';
+    return '<div class="pce-sub">Tap a photo to put it here</div>' + gs.map(([n, ids]) => '<div class="pce-tlabel">' + esc(n) + '</div><div class="pce-thumbs">' +
+      ids.slice(0, 40).map(id => '<button type="button" data-photo="' + esc(id) + '" class="' + (id === cur ? 'on' : '') + '" aria-label="Use this photo"><img loading="lazy" alt="" src="' + pgImg(id, 200) + '"></button>').join('') + '</div>').join('') +
+      '<button type="button" class="pce-mini" data-pick="el">See all photos…</button>';
+  }
+  // Media: the wedding's photos and the elements library — tap to use
+  function mediaPane() {
+    const groups = photoGroups();
     const f = E.sel && find(E.sel), photoSel = f && f.e.t === 'photo';
     return '<p class="pce-note">' + (photoSel ? 'Tap a photo to put it in the selected photo.' : 'Tap a photo to add it to the page.') + '</p>' +
       groups.map(([n, ids]) => '<div class="pce-sub">' + esc(n) + '</div><div class="pce-mrow">' + ids.slice(0, 30).map(id => '<button type="button" data-photo="' + esc(id) + '"><img loading="lazy" alt="" src="' + pgImg(id, 200) + '"></button>').join('') + '</div>').join('') +

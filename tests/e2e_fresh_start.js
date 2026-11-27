@@ -58,6 +58,18 @@ const srv = http.createServer((req, res) => {
     await mp.evaluate(() => document.querySelector('.pce-more, [data-menu-open], .pce-menu-btn') && 0);
     await mp.evaluate(() => document.querySelector('[data-menu=original]').click()); await mp.waitForTimeout(400);
     ok(await mp.evaluate(() => JSON.stringify(PGCanvasEditor.state().doc) === JSON.stringify(PGLayout.find('canvas-quiet').canvas)), 'Back to original puts the template back as it was made');
+    // step 101b: tapping a photo in the design shows the wedding's photos as thumbnails (no dropdown); the photo stays in sight
+    const pe = await mp.evaluate(() => PGCanvasEditor.state().doc.sections[0].els.find(e => e.t === 'photo').id);
+    await mp.evaluate(id => document.querySelector('.pce-page .pgc-el[data-el="' + id + '"]').scrollIntoView({ block: 'center' }), pe); await mp.waitForTimeout(300);
+    await mp.tap('.pce-page .pgc-el[data-el="' + pe + '"]'); await mp.waitForSelector('.pce .pce-thumbs button', { timeout: 6000 }); await mp.waitForTimeout(500);
+    ok(await mp.evaluate(() => !document.querySelector('.pce-pane select[data-f=src]') && document.querySelector('.pce-pane .pce-thumbs') === document.querySelector('.pce-pane').querySelector('.pce-thumbs')), 'tapping a photo opens its Design with thumbnails first (the follow-the-story list moved to Connect)');
+    const thumbOk = await mp.evaluate(() => [...document.querySelectorAll('.pce-thumbs button')].slice(0, 4).every(b => { const r = b.getBoundingClientRect(); return r.width >= 44 && r.height >= 44 && b.querySelector('img'); }));
+    ok(thumbOk, 'thumbnails are real pictures, at least 44 px');
+    const pick = await mp.evaluate(() => document.querySelectorAll('.pce-thumbs button')[2].dataset.photo);
+    await mp.tap('.pce-thumbs button >> nth=2'); await mp.waitForTimeout(500);
+    ok(await mp.evaluate(([id, p]) => { const e = PGCanvasEditor.state().doc.sections[0].els.find(x => x.id === id); return e.src.k === 'id' && e.src.id === p; }, [pe, pick]), 'tapping a thumbnail puts that photo in the spot');
+    ok(await mp.evaluate(id => { const el = document.querySelector('.pce-page .pgc-el[data-el="' + id + '"]').getBoundingClientRect(), dr = document.querySelector('.pce-panel, .pce-drawer, .pce-side'); const top = dr ? dr.getBoundingClientRect().top : innerHeight; return el.bottom > 60 && el.top < top - 40; }, pe), 'the photo being changed stays visible above the panel');
+    await mp.screenshot({ path: '/tmp/s101b_thumbs.png' });
     await mp.evaluate(() => PGCanvasEditor.close(true));
     // a new copy only when asked
     const c2 = call('canvasSave', { g: G, coupleKey: ck, item: { kind: 'layout', name: 'Second', scope: 'wedding', base: 'canvas-quiet', copy: 1, doc: { name: 'x', sections: [] } } });
