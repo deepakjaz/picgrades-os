@@ -3610,3 +3610,6 @@ html[data-tkg-theme="dark"] .pgac-badge.is-on { color: #5ec28b; }
  .pce97 .pce-mrow{display:grid;grid-template-columns:repeat(5,1fr);overflow:visible}.pce97 .pce-mrow button{flex:none;width:auto;height:auto;aspect-ratio:1}
 }
 @media (prefers-reduced-motion:reduce){.pce97 .pce-mtile .pce-mg{animation:none!important}}
+/* step 97b: the video link box */
+.pce97 .pce-pane input[data-vlink]{flex:1 1 100%;width:100%;min-width:0;box-sizing:border-box;height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.06);color:#f5f0e8;font:500 14px var(--font-sans)}
+.pce97 .pce-pane .pce-row:has(input[data-vlink]){flex-wrap:wrap;gap:6px}
