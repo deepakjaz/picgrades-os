@@ -2636,14 +2636,16 @@ var TPL_COLOURS = ['bg', 'ink', 'acc', 'acc2', 'card', 'sea'];
 function tplTune_(st, out) {
   if (out.kind === 'canvas' && st.doc) out.doc = canvasDoc_(st.doc);   // step 77 (step 103: a ready canvas template keeps only the couple's choices, no doc)
   // step 103: "Try your photos" — every template keeps the couple's choices: photos per spot, colours, hidden parts, motion, framing, names, date
-  var SLOT = /^[A-Za-z0-9_-]{1,40}$/;
+  // each kind has its own spot names: Template Studio s12 / e3; Living Story & Editorial cover-0 / ev-1-2 / bride / groom; canvas part ids (bg-<section> for a background)
+  var SLOT = /^[cg]\d$/.test(out.kind) ? /^[se]\d{1,3}$/ : out.kind === 'canvas' ? /^[A-Za-z0-9_-]{1,40}$/ : /^(cover-\d{1,2}|ev-\d{1,2}-\d{1,2}|bride|groom)$/;
+  var PART = out.kind === 'canvas' ? /^[A-Za-z0-9_-]{1,40}$/ : /^[a-z0-9-]{1,40}$/;
   var photos = {}, n = 0;
   Object.keys(st.photos || {}).forEach(function (k) { var id = String(st.photos[k] || ''); if (SLOT.test(k) && /^[A-Za-z0-9_-]{2,120}$/.test(id) && n < 80) { photos[k] = id; n++; } });
   if (n) out.photos = photos;
   var colors = {};
   ['light', 'dark'].forEach(function (m) { var c = (st.colors || {})[m] || {}, o = {}; TPL_COLOURS.forEach(function (k) { if (/^#[0-9a-fA-F]{3,8}$/.test(String(c[k] || ''))) o[k] = String(c[k]); }); if (Object.keys(o).length) colors[m] = o; });
   if (Object.keys(colors).length) out.colors = colors;
-  var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return SLOT.test(k); }).slice(0, 80);
+  var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return PART.test(k); }).slice(0, 80);
   if (hide.length) out.hide = hide;
   if (st.motion === 'off') out.motion = 'off';
   var frame = {}, fn = 0;   // step 79: photos moved inside their holder / zoomed { slot: { fx, fy, z } }
