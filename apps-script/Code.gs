@@ -74,6 +74,7 @@ var PUBLIC_ROUTES = {
   coupleThanks: coupleThanks_,
   coupleFeatures: coupleFeatures_,
   coupleLook: coupleLook_,
+  coupleFreshStart: coupleFreshStart_,   // step 104: remove this wedding's saved designs (couple link)
   canvasList: canvasList_,     // step 77: collections and free-canvas layouts (couple link, or logged in)
   canvasGet: canvasGet_,
   canvasSave: canvasSave_,
@@ -121,6 +122,7 @@ var USER_ROUTES = {
   sendGallery: sendGallery_,
   setFeatures: setFeatures_,
   setLook: setLook_,
+  freshStart: freshStart_,   // step 104: the same, for its photographer or PicGrades
   myRole: myRole_,
   setDemo: setDemo_,
   setPhotographer: setPhotographer_
@@ -2680,6 +2682,16 @@ function pagesOf_(v) {
 }
 /** Couple link: change the wedding's look. */
 function coupleLook_(p) { return saveLook_(coupleGallery_(p), p); }
+/** Step 104: "Start fresh" — this wedding's saved designs go: template choices, its own Hub, Advanced-editor copies (marked deleted, not erased).
+ *  The theme, photos, events, words and everything else stay. Only for the couple link, its photographer or PicGrades. */
+function coupleFreshStart_(p) { return freshStartOf_(coupleGallery_(p)); }
+function freshStart_(p, user) { return freshStartOf_(staffGallery_(p.g, user).g); }
+function freshStartOf_(g) {
+  updateRowByNumber_('Galleries', g._row, { layout: '', custom: '', hubVersions: '' });
+  var n = 0, now = fmt_(new Date());
+  canvasRows_().forEach(function (r) { if (r.kind === 'layout' && r.scope === 'wedding' && String(r.galleryId) === String(g.galleryId) && String(r.status) !== 'deleted') { updateRowByNumber_('Canvas', r._row, { status: 'deleted', updatedAt: now }); n++; } });
+  return { ok: true, layout: '', custom: customOf_(''), versions: {}, removed: n };
+}
 /** Photographer (own studio only) or PicGrades staff: change the wedding's look. */
 function setLook_(p, user) { var x = staffGallery_(p.g, user); return saveLook_(x.g, p); }
 /** Logged in: who you are for this wedding — 'picgrades' (staff) or 'photographer' (its own studio). Anyone else gets an error. */
@@ -3400,6 +3412,7 @@ function canvasList_(p) {
   var who = canvasWho_(p), out = { collections: [], layouts: [] };
   canvasRows_().forEach(function (r) {
     if (!canvasSees_(r, who)) return;
+    if (r.kind === 'layout' && r.scope === 'wedding' && !(who.g && String(r.galleryId) === String(who.g.galleryId))) return;   // step 104: another wedding's copy (with its photos) is never listed here
     var m = canvasMeta_(r); m.mine = r.owner === who.owner || who.role === 'staff';
     (r.kind === 'collection' ? out.collections : out.layouts).push(m);
   });

@@ -3675,3 +3675,11 @@ body.pg-logo-center .pg-role-badge{top:calc(env(safe-area-inset-top,0px) + 64px)
 .pce-follow{margin-top:8px}.pce-follow summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:var(--ink-soft)}
 /* step 103: a story template drawn in a box (preview, Try your photos) hides its extra icon bar like the Hub does */
 .pgs-inbox:not(.pgs-bar-on) .psh-rail,.pgs-inbox:not(.pgs-bar-on) .pse-quickbar{display:none!important}
+/* step 104: "Change photos" on the Hub — off by default, so owners browse like guests */
+.pghp-bar{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:90;display:flex;align-items:center;gap:8px;font-family:var(--font-sans)}
+.pghp-bar .pghp-go,.pghp-bar .pghp-done{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--border-hairline);background:var(--bg-cream);color:var(--ink);font:500 13px var(--font-sans);display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);cursor:pointer}
+.pghp-bar.on{left:12px;right:12px;justify-content:space-between;background:var(--ink);color:var(--bg-cream);border-radius:22px;padding:4px 4px 4px 16px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.pghp-bar.on .pghp-done{background:var(--bg-cream);color:var(--ink);border-color:transparent}
+body.pghp-on #pgStory .pgc-t-photo{outline:2px dashed color-mix(in srgb,var(--ink) 55%,transparent);outline-offset:-4px;cursor:pointer}
+@media (min-width:700px){.pghp-bar{bottom:24px}.pghp-bar.on{left:auto;right:24px;max-width:460px}}
+.pgcp-fresh{display:block;width:100%;min-height:44px;margin:4px 0 14px;border:1px dashed var(--border-hairline);border-radius:14px;background:transparent;color:var(--ink-soft);font:500 13px var(--font-sans);cursor:pointer}   /* step 104 */

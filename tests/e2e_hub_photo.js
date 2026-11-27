@@ -42,6 +42,15 @@ const srv = http.createServer((req, res) => {
     await mp.waitForFunction(() => window.PGControl && PGControl.role() === 'couple' && PGHubPhoto.editable(), null, { timeout: 10000 });
     const elId = await mp.evaluate(() => document.querySelector('#pgStory .pgc .pgc-t-photo').dataset.el);
     await mp.evaluate(id => document.querySelector('#pgStory .pgc-el[data-el="' + id + '"]').scrollIntoView({ block: 'center' }), elId);
+    // step 104: owners browse like guests until they switch on "Change photos"
+    await mp.waitForSelector('.pghp-go', { timeout: 6000 });
+    ok(await mp.isVisible('.pghp-go'), 'a Change photos button shows on the Hub for the couple'); await mp.screenshot({ path: '/tmp/s104_off.png' });
+    await mp.evaluate(id => document.querySelector('#pgStory .pgc-el[data-el="' + id + '"]').click(), elId); await mp.waitForTimeout(400);
+    ok(!(await mp.$('.pghp.in')), 'a tap on a photo does not open the change sheet while Change photos is off');
+    await mp.evaluate(() => { const v = document.querySelector('.pv-close, .viewer-close, [data-close]'); if (v && v.offsetParent) v.click(); });
+    await mp.tap('.pghp-go'); await mp.waitForSelector('.pghp-bar.on .pghp-done'); await mp.screenshot({ path: '/tmp/s104_on.png' });
+    ok(await mp.evaluate(() => /Guests do not see this/.test(document.querySelector('.pghp-bar').textContent) && document.body.classList.contains('pghp-on')), 'Change photos on: a bar says guests do not see this, with Done');
+    await mp.evaluate(id => document.querySelector('#pgStory .pgc-el[data-el="' + id + '"]').scrollIntoView({ block: 'center' }), elId);
     await mp.tap('#pgStory .pgc-el[data-el="' + elId + '"]'); await mp.waitForSelector('.pghp.in');
     ok(await mp.isVisible('.pghp [data-a=change]') && await mp.isVisible('.pghp [data-a=frame]') && await mp.isVisible('.pghp [data-a=reset]'), 'the couple taps a photo on the Hub: Change photo · Move & zoom · Reset');
     await mp.waitForTimeout(500); await mp.screenshot({ path: '/tmp/s98b_sheet.png' });
@@ -76,6 +85,7 @@ const srv = http.createServer((req, res) => {
     const lctx = await b.newContext({ viewport: { width: 1280, height: 860 } }), lp = await lctx.newPage(); lp.on('pageerror', e => errors.push(e.message));
     await lp.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
     await open(lp, '?couple=' + ck); await lp.waitForFunction(() => window.PGHubPhoto && PGHubPhoto.editable(), null, { timeout: 10000 });
+    await lp.waitForSelector('.pghp-go'); await lp.click('.pghp-go');   // step 104
     await lp.click('#pgStory .pgc-el[data-el="' + elId + '"]'); await lp.waitForSelector('.pghp.in'); await lp.waitForTimeout(300);
     ok(await lp.evaluate(() => { const r = document.querySelector('.pghp').getBoundingClientRect(); return r.width <= 440 && r.left > 300; }), 'laptop: the sheet sits in the middle');
     await lp.screenshot({ path: '/tmp/s98b_laptop.png' });

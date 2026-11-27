@@ -88,6 +88,13 @@ const srv = http.createServer((req, res) => {
     await mp.waitForTimeout(800); await mp.screenshot({ path: '/tmp/s101_choice.png' });
     await mp.tap('.pgcp-pv-own'); await mp.waitForFunction(() => /^cv-/.test(GALLERY.layout), null, { timeout: 10000 });
     ok(call('getGallery', { g: G }).gallery.layout === c2.id || call('getGallery', { g: G }).gallery.layout === first, 'Use our version applies their copy');
+    // step 104: Start fresh — this wedding's saved designs go, the templates are as they were made
+    await mp.evaluate(() => PGControl.go('layout')); await mp.waitForSelector('.pgcp-fresh', { timeout: 8000 });
+    await mp.locator('.pgcp-fresh').scrollIntoViewIfNeeded(); await mp.screenshot({ path: '/tmp/s104_fresh.png' });
+    await mp.tap('.pgcp-fresh'); await mp.waitForFunction(() => GALLERY.layout === '' && !Object.keys(GALLERY.versions || {}).length, null, { timeout: 10000 }); await mp.waitForTimeout(500);
+    const after = call('getGallery', { g: G }).gallery;
+    ok(after.layout === '' && !Object.keys(after.versions || {}).length && mine().length === 0, 'Start fresh removes the template choices and this wedding\'s copies');
+    ok(!(await mp.$('.pgcp-fresh')), 'nothing left to remove: the button goes');
     // step 103: story templates open "Try your photos" (no Advanced editor)
     const ed = await mp.evaluate(() => { const r = {}; const o1 = PGCanvasEditor.open, o2 = window.PGTemplateEditor && PGTemplateEditor.open, o3 = PGHubEditor.open; let who = '';
       PGCanvasEditor.open = () => { who = 'canvas'; }; if (o2) PGTemplateEditor.open = () => { who = 'template'; }; PGHubEditor.open = () => { who = 'hub'; };
