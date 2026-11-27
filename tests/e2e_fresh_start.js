@@ -1,5 +1,5 @@
 // Browser test (step 101): a fresh start — one version of each template. A wedding has ONE copy of a template (photo change,
-// Save, Apply all update it), Back to original, Use our version / Use the original; every template opens in the one editor.
+// Save, Apply all update it), Back to original, Use our version / Use the original; story templates open "Try your photos" only.
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
@@ -35,15 +35,16 @@ const srv = http.createServer((req, res) => {
     await require('./fonts_local').install(mp);
     const boot = async () => { await mp.goto(URL + '?couple=' + ck); await mp.waitForSelector('#pgBoot.hide', { state: 'attached' }); await mp.waitForFunction(() => window.PGControl && PGControl.role() === 'couple' && window.PGHubPhoto && PGHubPhoto.editable(), null, { timeout: 10000 }); await mp.waitForTimeout(400); };
     await boot();
-    // two photo changes on the Hub → one copy
-    const change = async n => { const el = await mp.evaluate(() => document.querySelector('#pgStory .pgc .pgc-t-photo').dataset.el);
-      await mp.evaluate(id => document.querySelector('#pgStory .pgc-el[data-el="' + id + '"]').scrollIntoView({ block: 'center' }), el);
-      await mp.tap('#pgStory .pgc-el[data-el="' + el + '"]'); await mp.waitForSelector('.pghp.in'); await mp.tap('.pghp [data-a=change]'); await mp.waitForSelector('.pghp-pick [data-id]');
-      await mp.tap('.pghp-pick [data-id] >> nth=' + n); await mp.waitForFunction(() => /^cv-/.test(GALLERY.layout), null, { timeout: 10000 }); await mp.waitForTimeout(900); };
-    await change(3); const first = await mp.evaluate(() => GALLERY.layout);
-    ok(mine().length === 1 && mine()[0].id === first, 'changing a photo makes the wedding\'s copy, linked to its template');
-    await boot(); await change(5);
-    ok(mine().length === 1 && await mp.evaluate(() => GALLERY.layout) === first, 'a second photo change updates the same copy (no new version)');
+    // step 103 (changed): a Hub photo change keeps only the choice (e2e_hub_photo.js); the Advanced editor makes the wedding's one copy
+    const advSave = async () => { await mp.evaluate(() => { PGCanvasEditor.close(true); GALLERY.layout = 'canvas-quiet'; PGCanvasEditor.open('canvas-quiet'); }); await mp.waitForSelector('.pce .pce-page .pgc-sec');
+      await mp.waitForTimeout(600); await mp.evaluate(() => { const d = PGCanvasEditor.state().doc; const e = d.sections[0].els.find(x => x.t === 'photo'); PGCanvasEditor.select(e.id); });
+      await mp.evaluate(() => { const i = document.querySelector('.pce-pane [data-sp="y"]'); if (i) { i.value = String(+i.value + 10); i.dispatchEvent(new Event('change')); } });
+      await mp.evaluate(() => document.querySelector('.pce-save').click()); await mp.waitForFunction(() => PGCanvasEditor.state().src.id, null, { timeout: 8000 }); await mp.waitForTimeout(500); };
+    await advSave(); const first = await mp.evaluate(() => PGCanvasEditor.state().src.id);
+    ok(mine().length === 1 && mine()[0].id === first, 'the Advanced editor\'s first save makes the wedding\'s copy, linked to its template');
+    await advSave();
+    ok(mine().length === 1 && await mp.evaluate(() => PGCanvasEditor.state().src.id) === first, 'saving again updates the same copy (no new version)');
+    await mp.evaluate(() => PGCanvasEditor.close(true));
     // opening the template in the editor opens their copy
     await mp.evaluate(() => { GALLERY.layout = 'canvas-quiet'; PGCanvasEditor.open('canvas-quiet'); }); await mp.waitForSelector('.pce .pce-page .pgc-sec');
     await mp.waitForFunction(() => PGCanvasEditor.state().src.id, null, { timeout: 8000 });
@@ -87,12 +88,12 @@ const srv = http.createServer((req, res) => {
     await mp.waitForTimeout(800); await mp.screenshot({ path: '/tmp/s101_choice.png' });
     await mp.tap('.pgcp-pv-own'); await mp.waitForFunction(() => /^cv-/.test(GALLERY.layout), null, { timeout: 10000 });
     ok(call('getGallery', { g: G }).gallery.layout === c2.id || call('getGallery', { g: G }).gallery.layout === first, 'Use our version applies their copy');
-    // every template opens in the one editor
+    // step 103: story templates open "Try your photos" (no Advanced editor)
     const ed = await mp.evaluate(() => { const r = {}; const o1 = PGCanvasEditor.open, o2 = window.PGTemplateEditor && PGTemplateEditor.open, o3 = PGHubEditor.open; let who = '';
       PGCanvasEditor.open = () => { who = 'canvas'; }; if (o2) PGTemplateEditor.open = () => { who = 'template'; }; PGHubEditor.open = () => { who = 'hub'; };
       ['story-living', 'tpl-c3', 'tpl-g1'].forEach(id => { who = ''; PGControl.designLayout(id); r[id] = who; });
       PGCanvasEditor.open = o1; if (o2) PGTemplateEditor.open = o2; PGHubEditor.open = o3; return r; });
-    ok(Object.values(ed).every(x => x === 'canvas'), 'every template, story ones too, opens in the ONE editor (' + JSON.stringify(ed) + ')');
+    ok(Object.values(ed).every(x => x === 'template'), 'step 103: story templates open "Try your photos" only — the real template (' + JSON.stringify(ed) + ')');
   } catch (e) { console.error(e); fails++; }
   console.log('page errors: ' + JSON.stringify(errors));
   ok(!errors.length, 'no page errors');

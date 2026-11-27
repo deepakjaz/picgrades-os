@@ -34,8 +34,10 @@ const srv = http.createServer((req, res) => {
     ok(await pg.evaluate(() => { const l = PGLayout.find('story-living'); return !!(l && l.story && l.editor === 'canvas-living'); }), 'Living Story is linked to its editor version');
     await pg.evaluate(() => PGCanvasEditor.open('story-living')); await pg.waitForSelector('.pce .pce-page .pgc-sec');
     ok((await S()).doc.name === 'Living Story (editor)' && (await S()).src.builtin === 'canvas-living', 'the story layout opens in the one editor');
-    await pg.evaluate(() => { PGCanvasEditor.close(true); PGControl.designLayout('tpl-g3'); }); await pg.waitForSelector('.pce .pce-page .pgc-sec');
-    ok((await S()).src.builtin === 'canvas-alabaster', 'a rebuilt story template (Alabaster Gallery) opens in the one editor from the Control Panel');
+    // step 103 (changed, Deepak's decision): from the Control Panel a story template opens "Try your photos" only; its editor version stays reachable directly (above)
+    await pg.evaluate(() => { PGCanvasEditor.close(true); PGControl.designLayout('tpl-g3'); }); await pg.waitForSelector('.pgte', { timeout: 8000 });
+    ok(await pg.evaluate(() => !document.querySelector('.pce') && PGTemplateEditor.state().id === 'tpl-g3'), 'a story template (Alabaster Gallery) opens "Try your photos" from the Control Panel');
+    await pg.evaluate(() => { PGTemplateEditor.close(true); window.pgEditorBack = null; });
     await pg.evaluate(() => { PGCanvasEditor.close(true); window.pgEditorBack = null; PGCanvasEditor.open('story-living'); }); await pg.waitForSelector('.pce .pce-page .pgc-sec');
     ok(await pg.evaluate(() => [...document.querySelectorAll('.pce-tabs [data-tab]')].map(b => b.dataset.tab).join() === 'add,layers,page,collections,theme,media' && document.querySelectorAll('.pce-tabs [data-tab] svg').length === 6), 'six tools with line icons: Add, Layers, Pages, Collections, Theme, Media');
     // tap a photo: its Design opens

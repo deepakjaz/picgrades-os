@@ -3673,3 +3673,5 @@ body.pg-logo-center .pg-role-badge{top:calc(env(safe-area-inset-top,0px) + 64px)
 .pce-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .pce-tlabel{font-size:11.5px;color:var(--ink-soft);margin:4px 0 2px}
 .pce-follow{margin-top:8px}.pce-follow summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:var(--ink-soft)}
+/* step 103: a story template drawn in a box (preview, Try your photos) hides its extra icon bar like the Hub does */
+.pgs-inbox:not(.pgs-bar-on) .psh-rail,.pgs-inbox:not(.pgs-bar-on) .pse-quickbar{display:none!important}

@@ -2634,19 +2634,20 @@ function customOf_(v) {
 var STORY_KINDS = ['living', 'editorial', 'c1', 'c2', 'c3', 'c4', 'c5', 'g1', 'g2', 'g3', 'canvas'];
 var TPL_COLOURS = ['bg', 'ink', 'acc', 'acc2', 'card', 'sea'];
 function tplTune_(st, out) {
-  if (out.kind === 'canvas') { out.doc = canvasDoc_(st.doc); return out; }   // step 77
-  if (!/^[cg]\d$/.test(out.kind)) return out;
+  if (out.kind === 'canvas' && st.doc) out.doc = canvasDoc_(st.doc);   // step 77 (step 103: a ready canvas template keeps only the couple's choices, no doc)
+  // step 103: "Try your photos" — every template keeps the couple's choices: photos per spot, colours, hidden parts, motion, framing, names, date
+  var SLOT = /^[A-Za-z0-9_-]{1,40}$/;
   var photos = {}, n = 0;
-  Object.keys(st.photos || {}).forEach(function (k) { var id = String(st.photos[k] || ''); if (/^[se]\d{1,3}$/.test(k) && /^[A-Za-z0-9_-]{2,120}$/.test(id) && n < 80) { photos[k] = id; n++; } });
+  Object.keys(st.photos || {}).forEach(function (k) { var id = String(st.photos[k] || ''); if (SLOT.test(k) && /^[A-Za-z0-9_-]{2,120}$/.test(id) && n < 80) { photos[k] = id; n++; } });
   if (n) out.photos = photos;
   var colors = {};
   ['light', 'dark'].forEach(function (m) { var c = (st.colors || {})[m] || {}, o = {}; TPL_COLOURS.forEach(function (k) { if (/^#[0-9a-fA-F]{3,8}$/.test(String(c[k] || ''))) o[k] = String(c[k]); }); if (Object.keys(o).length) colors[m] = o; });
   if (Object.keys(colors).length) out.colors = colors;
-  var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return /^[a-z0-9-]{1,40}$/.test(k); }).slice(0, 80);
+  var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return SLOT.test(k); }).slice(0, 80);
   if (hide.length) out.hide = hide;
   if (st.motion === 'off') out.motion = 'off';
   var frame = {}, fn = 0;   // step 79: photos moved inside their holder / zoomed { slot: { fx, fy, z } }
-  Object.keys(st.frame || {}).forEach(function (k) { var f = (st.frame || {})[k]; if (!/^[se]\d{1,3}$/.test(k) || !f || typeof f !== 'object' || fn >= 80) return;
+  Object.keys(st.frame || {}).forEach(function (k) { var f = (st.frame || {})[k]; if (!SLOT.test(k) || !f || typeof f !== 'object' || fn >= 80) return;
     frame[k] = { fx: Math.max(0, Math.min(100, Math.round(+f.fx || 0))), fy: Math.max(0, Math.min(100, Math.round(+f.fy || 0))), z: Math.max(1, Math.min(3, Math.round((+f.z || 1) * 100) / 100)) }; fn++; });
   if (fn) out.frame = frame;
   ['names', 'date'].forEach(function (k) { var v = String(st[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, k === 'names' ? 60 : 80); if (v) out[k] = v; });

@@ -44,7 +44,7 @@ const srv = http.createServer((req, res) => {
     ok(await mp.evaluate(() => !document.querySelector('.pgcp-pv video') && !!document.querySelector('.pgcp-pv-live .pgc-sec')), 'the template itself is drawn (no video)');
     ok(await mp.evaluate(() => { const im = [...document.querySelectorAll('.pgcp-pv-live img')].filter(i => i.src); return im.length > 0 && im.every(i => /\/app\/demo-wedding\//.test(i.src)); }), 'its photos are PicGrades\' demo wedding photos, not the couple\'s or test pictures');
     ok(await mp.evaluate(() => /Anika/.test(document.querySelector('.pgcp-pv-live').textContent)), 'the demo couple\'s names show');
-    ok(await mp.evaluate(() => document.querySelector('.pgcp-pv-edit').textContent === 'Try with our photos' && !document.querySelector('.pgcp-pv-edit').hidden), '"Try with our photos" is offered next to Use this');
+    ok(await mp.evaluate(() => document.querySelector('.pgcp-pv-edit').textContent === 'Try your photos' && !document.querySelector('.pgcp-pv-edit').hidden), '"Try your photos" is offered next to Use this');
     ok(await mp.evaluate(() => [...document.querySelectorAll('.pgcp-pv-acts button,.pgcp-pv-top button')].filter(x => x.offsetParent).every(x => x.getBoundingClientRect().height >= 44)), 'the buttons are at least 44 px');
     const sc0 = await mp.evaluate(() => { const v = document.querySelector('.pgcp-pv-live'); v.scrollTop = 600; return v.scrollTop; }); await mp.waitForTimeout(900);
     ok(sc0 > 0, 'the preview scrolls like the real page');
@@ -53,10 +53,10 @@ const srv = http.createServer((req, res) => {
     ok(await mp.evaluate(() => document.querySelector('.pgcp-pv-livein').style.width === '1200px' && document.querySelector('.pgcp-pv-livein').getBoundingClientRect().width <= document.querySelector('.pgcp-pv-phone').getBoundingClientRect().width + 2), 'Laptop draws the laptop design, fitted into the preview');
     await mp.screenshot({ path: '/tmp/s102_live_laptop.png' });
     // a story template previews too (through its one-editor version)
-    await mp.tap('.pgcp-pv-edit'); await mp.waitForSelector('.pce .pce-page .pgc-t-photo img', { timeout: 10000 }); await mp.waitForTimeout(600);
-    const own = await mp.evaluate(() => [...document.querySelectorAll('.pce .pce-page .pgc-t-photo img')].map(i => i.dataset.photo).filter(Boolean));
+    await mp.tap('.pgcp-pv-edit'); await mp.waitForSelector('.pgte .pgte-scroll .pgc-t-photo img', { timeout: 10000 }); await mp.waitForTimeout(600);
+    const own = await mp.evaluate(() => [...document.querySelectorAll('.pgte .pgte-scroll .pgc-t-photo img')].map(i => i.dataset.photo).filter(Boolean));
     const ids = new Set(Object.keys(DRIVE.files));
-    ok(own.length > 0 && own.every(id => ids.has(id)), 'Try with our photos: the layout opens in the editor filled with the wedding\'s own photos');
+    ok(own.length > 0 && own.every(id => ids.has(id)), 'Try your photos: the real template opens with the wedding\'s own photos (step 103)');
     ok(!frames.length, 'still no app-in-a-frame');
     await mp.screenshot({ path: '/tmp/s102_try.png' });
   } catch (e) { console.error(e); fails++; }

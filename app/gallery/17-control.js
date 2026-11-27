@@ -224,12 +224,15 @@
   // which editor designs this layout (null = none)
   function designer(id) {
     if (!id) return null;
+    const cb = GALLERY.custom && GALLERY.custom.base, cl = cb && window.PGLayout && PGLayout.find(cb);
+    if (id === 'custom' && cl && cl.story && window.PGTemplateEditor && PGTemplateEditor.handles(cl.story)) return () => PGTemplateEditor.open(cb);   // step 103: a template with the couple's choices
     if (id === 'custom') return GALLERY.layout === 'custom' && window.PGCanvasEditor ? () => PGCanvasEditor.open('current') : () => PGHubEditor.open();   // step 97: "Our own Hub" opens in the one editor too
     if (/^cv-/.test(id) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77: a layout from a collection
     const l = window.PGLayout && PGLayout.find(id); if (!l) return null;
-    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor too
-    if (l.story && l.editor && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 97: every template opens in the ONE editor (a story template through its editor version)
-    if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);   // story layouts without an editor version yet (staff-only ones)
+    // step 103: story and canvas templates open "Try your photos" (the real template; only the couple's choices are kept).
+    // Canvas templates reach the Advanced editor from there (More); story templates have only this.
+    if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);
+    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor
     if (window.PGHubEditor) return () => PGHubEditor.open({ from: id });
     return null;
   }
@@ -259,7 +262,8 @@
   // "Try with our photos" then opens it in the editor with the wedding's own photos.
   let CVLIST = [];
   const ownCopy = id => CVLIST.find(x => x.base === id && x.scope === 'wedding' && x.galleryId === String(GALLERY.galleryId || ''));
-  const liveDoc = id => { const l = PGLayout.find(id); if (!l) return null; if (l.canvas) return l.canvas; const e = l.editor && PGLayout.find(l.editor); return e && e.canvas ? e.canvas : null; };
+  // step 103: every story and canvas template is drawn as itself (a story template no longer through its editor version)
+  const liveDoc = id => { const l = PGLayout.find(id); return l && l.story && window.PGTune && PGTune.handles(l.story) ? l : null; };
   const DEMO = (() => { const d = n => 'demo:' + n, r = (k, n) => Array.from({ length: n }, (_, i) => d(k + '-' + (i + 1)));
     const ev = (name, k, n) => ({ name, photos: r(k, n).map(id => ({ id })), teaser: r(k, n), featured: r(k, n).slice(0, 2) });
     return { names: 'Anika & Rohan', date: '14 December 2026', place: 'Udaipur', studio: '', cover: r('cover', 3), pool: r('hl', 6), loved: [], notes: [], couple: undefined, demo: true,
@@ -317,7 +321,7 @@
     const ed = wrap.querySelector('.pgcp-pv-edit');
     if ('layout' in want && !pk && state.layout && designer(state.layout)) { ed.hidden = false; ed.addEventListener('click', () => { const id = state.layout; close(); designLayout(id, id); }); }
     if (clip) {   // step 102: the live template shows the demo wedding; their own photos are one tap away
-      if (!ed.hidden) ed.textContent = 'Try with our photos';
+      if (!ed.hidden) ed.textContent = 'Try your photos';
       else { ed.hidden = false; ed.textContent = 'See it with our photos'; ed.addEventListener('click', () => { clip = false; wrap.classList.remove('clip'); if (live && live.destroy) live.destroy(); if (vid) vid.remove(); vid = null; live = null; ed.hidden = true; load(); fit(); }, { once: true }); }
       wrap.classList.add('clip'); wrap.querySelector('.pgcp-pv-note').textContent = 'Shown with sample wedding photos. Your own photos show when you use it.';
     }
@@ -348,7 +352,9 @@
       if (!vid) { vid = document.createElement('div'); vid.className = 'pgcp-pv-live'; vid.setAttribute('aria-label', 'Preview of ' + nameOf()); phone.appendChild(vid); }
       vid.innerHTML = '<div class="pgcp-pv-livein"></div>'; const inner = vid.firstChild; wait.hidden = true;
       inner.style.width = W + 'px'; inner.style.zoom = String((phone.clientWidth || W) / W);
-      live = PGCanvas.render(inner, JSON.parse(JSON.stringify(liveDoc(state.layout))), DEMO, () => {}, { mode: dev === 'phone' ? 'p' : 'l', width: () => W, scroller: vid });
+      const l = liveDoc(state.layout);
+      try { live = PGTune.mount(l.story, inner, DEMO, () => {}, { mode: dev === 'phone' ? 'p' : 'l', width: () => W, scroller: vid, doc: l.canvas, tune: {} }); }
+      catch (e) { console.warn('preview', e); }
     }
     const CLIPDEV = { phone: [390, 844], laptop: [1200, 760] };
     const fit = () => { if (!wrap.isConnected) return window.removeEventListener('resize', fit);
