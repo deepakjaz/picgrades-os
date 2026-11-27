@@ -34,8 +34,9 @@ const srv = http.createServer((req, res) => {
     ok(await pg.evaluate(() => { const l = PGLayout.find('story-living'); return !!(l && l.story && l.editor === 'canvas-living'); }), 'Living Story is linked to its editor version');
     await pg.evaluate(() => PGCanvasEditor.open('story-living')); await pg.waitForSelector('.pce .pce-page .pgc-sec');
     ok((await S()).doc.name === 'Living Story (editor)' && (await S()).src.builtin === 'canvas-living', 'the story layout opens in the one editor');
-    await pg.evaluate(() => { PGCanvasEditor.close(true); PGControl.designLayout('tpl-g3'); }); await pg.waitForSelector('.pce .pce-page .pgc-sec');
-    ok((await S()).src.builtin === 'canvas-alabaster', 'a rebuilt story template (Alabaster Gallery) opens in the one editor from the Control Panel');
+    await pg.evaluate(() => { PGCanvasEditor.close(true); PGControl.designLayout('tpl-g3'); }); await pg.waitForSelector('.pgte', { timeout: 8000 });   // step 101 (changed): its own template editor
+    ok(await pg.evaluate(() => !document.querySelector('.pce') && PGTemplateEditor.state().id === 'tpl-g3'), 'a story template (Alabaster Gallery) opens in its own template editor from the Control Panel (no canvas copy)');
+    await pg.evaluate(() => { PGTemplateEditor.close(true); window.pgEditorBack = null; });
     await pg.evaluate(() => { PGCanvasEditor.close(true); window.pgEditorBack = null; PGCanvasEditor.open('story-living'); }); await pg.waitForSelector('.pce .pce-page .pgc-sec');
     ok(await pg.evaluate(() => [...document.querySelectorAll('.pce-tabs [data-tab]')].map(b => b.dataset.tab).join() === 'add,layers,page,collections,theme,media' && document.querySelectorAll('.pce-tabs [data-tab] svg').length === 6), 'six tools with line icons: Add, Layers, Pages, Collections, Theme, Media');
     // tap a photo: its Design opens
@@ -90,7 +91,7 @@ const srv = http.createServer((req, res) => {
     await pg.click('[data-tab=collections]'); await pg.waitForSelector('.pce-cols [data-open]');
     ok(await pg.locator('.pce-cols [data-open="story-living"]').count() === 1 && await pg.locator('.pce-cols [data-open="magazine-cover"]').count() === 1, 'Collections lists ready layouts (story and card layouts too)');
     // Save keeps the new parts (the backend cleaner lets them through)
-    await pg.click('.pce-save'); await pg.waitForSelector('.pce-sgo'); await pg.fill('.pce-sname', 'Our story'); await pg.click('.pce-sgo'); await pg.waitForFunction(() => PGCanvasEditor.state().src.id, null, { timeout: 8000 });
+    await pg.click('.pce-save'); /* step 101: no name / collection question — saved as the wedding's copy */ await pg.waitForFunction(() => PGCanvasEditor.state().src.id, null, { timeout: 8000 });
     const saved = call('canvasGet', { g: pub.galleryId, coupleKey: ck, id: (await S()).src.id });
     const sEls = (saved.doc || { sections: [] }).sections.flatMap(s => s.els);
     ok(sEls.some(e => e.t === 'art' && e.src.id === 'bs-teddy-brown' && e.m === 'swing') && sEls.some(e => e.id === ph.id && e.m === 'spin') && saved.doc.sections.some(s => s.grid && s.grid.c === 3), 'saved: the element, the new motions and the grid all kept ' + (saved.error || ''));
@@ -103,7 +104,8 @@ const srv = http.createServer((req, res) => {
       await mp.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
       await require('./fonts_local').install(mp);
       await mp.goto(URL + '?couple=' + ck); await mp.waitForSelector('#pgBoot.hide', { state: 'attached' }); await mp.waitForFunction(() => window.PGControl && PGControl.role() === 'couple', null, { timeout: 10000 });
-      await mp.evaluate(() => PGCanvasEditor.open('story-living')); await mp.waitForSelector('.pce .pce-page .pgc-sec'); await mp.waitForTimeout(400);
+      // step 101: opening the template now opens the wedding's saved copy (made above); this part checks the phone toolbar, so it opens the untouched template
+      await mp.evaluate(() => PGCanvasEditor.open({ doc: PGLayout.find('canvas-living').canvas })); await mp.waitForSelector('.pce .pce-page .pgc-sec'); await mp.waitForTimeout(400);
       const top = await mp.evaluate(() => { const t = document.querySelector('.pce-top'), bs = [...t.querySelectorAll(':scope > button, :scope > .pce-more > button')].filter(x => x.offsetParent); return { h: t.getBoundingClientRect().height, one: new Set(bs.map(x => Math.round(x.getBoundingClientRect().top))).size === 1, inside: bs.every(x => x.getBoundingClientRect().right <= innerWidth + 0.5), tall: bs.every(x => x.getBoundingClientRect().height >= 44), n: bs.length }; });
       ok(top.one && top.inside && top.tall, w + ' px: ‹ undo redo ⋯ ▶ Apply fit one row, 44 px each ' + JSON.stringify(top));
       if (w === 390) await mp.screenshot({ path: '/tmp/s97_phone_closed.png' });

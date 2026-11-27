@@ -11,9 +11,9 @@
   // the canvas doc the Hub shows now: the wedding's own (cv-…) or a ready canvas layout
   function current() {
     const id = GALLERY.layout || '';
-    if (/^cv-/.test(id) && GALLERY.canvas && GALLERY.canvas.doc) return { id, mine: true, doc: clone(GALLERY.canvas.doc), name: GALLERY.canvas.name };
+    if (/^cv-/.test(id) && GALLERY.canvas && GALLERY.canvas.doc) return { id, mine: true, doc: clone(GALLERY.canvas.doc), name: GALLERY.canvas.name, base: GALLERY.canvas.base || '' };
     const l = id && window.PGLayout && PGLayout.find(id);
-    return l && l.canvas ? { id, mine: false, doc: clone(l.canvas), name: l.name } : null;
+    return l && l.canvas ? { id, mine: false, doc: clone(l.canvas), name: l.name, base: l.id } : null;   // step 101: base = the template it comes from
   }
   const editable = () => OWNERS.indexOf(role()) > -1 && !!current();
   function find(doc, elId) { for (const s of doc.sections || []) { const e = (s.els || []).find(x => x.id === elId); if (e) return e; } return null; }
@@ -78,11 +78,11 @@
     if (w.kind === 'bg') { const s = doc.sections.find(x => x.id === w.id); if (!s || !s.bg) return; fn(s.bg, s.bg); }
     else { const e = find(doc, w.id); if (!e) return; const t = w.mode === 'l' && e.sl ? e.sl : (e.s = e.s || {}); fn(t, e); }
     busy = true; showToast('Saving…');
-    const item = { kind: 'layout', name: cur.name || doc.name || 'Our Hub', scope: 'wedding', doc };
+    const item = { kind: 'layout', name: cur.name || doc.name || 'Our Hub', scope: 'wedding', doc, base: cur.base || undefined };   // step 101: the wedding's one copy of this template
     const put = id => pgApi('canvasSave', { item: Object.assign({}, item, id ? { id } : {}) });
     (cur.mine ? put(GALLERY.layout).catch(() => put(null)) : put(null))   // a ready layout (or someone else's) becomes this wedding's own copy
       .then(res => (res.id === GALLERY.layout ? Promise.resolve({ layout: res.id }) : PGControl.save({ layout: res.id })).then(r => {
-        GALLERY.layout = r.layout || res.id; GALLERY.canvas = { id: res.id, name: item.name, doc: res.doc || doc };
+        GALLERY.layout = r.layout || res.id; GALLERY.canvas = { id: res.id, name: item.name, doc: res.doc || doc, base: cur.base || '' };
         if (window.PGLayout) PGLayout.refresh(); showToast(done + ' — every guest sees it now');
       }))
       .catch(err => showToast((err && err.message) || 'Could not save'))

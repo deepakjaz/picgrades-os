@@ -3665,3 +3665,4 @@ body.pg-logo-center .pg-role-badge{top:calc(env(safe-area-inset-top,0px) + 64px)
 /* ---------- step 100: a layout preview plays a light clip (no app inside a frame) ---------- */
 .pgcp-pv-clip{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;background:#f4f0ea}
 .pgcp-pv.clip .pgcp-pv-pages,.pgcp-pv.clip .pgcp-pv-dark,.pgcp-pv.clip .pgcp-pv-keep{display:none!important}
+.pgcp-pv-acts.own{flex-wrap:wrap}.pgcp-pv-acts.own .pgcp-pv-edit{flex:1 1 100%}.pgcp-pv-acts.own .pgcp-pv-own,.pgcp-pv-acts.own .pgcp-pv-apply{flex:1 1 0;min-height:48px}   /* step 101: Edit on its own row, then our version / the original */

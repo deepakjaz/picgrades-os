@@ -54,10 +54,10 @@ const srv = http.createServer((req, res) => {
   ok(inGroup[0] === 'Original Hub' && /^Living Story,Editorial Album,/.test(inGroup[1]) && /Cinema Chapters/.test(inGroup[1]) && /Horizon/.test(inGroup[2]), 'Yours = the Hub in use; Stories and Free canvas list the templates: ' + inGroup.join(' | '));
   ok(!/Magazine Cover|Royal Journey|Widget Home/.test(inGroup.join()), 'Minimal and the old card layouts are hidden from the couple');
   await pg.evaluate(() => document.querySelector('.pgcp-lgroup').scrollIntoView()); await pg.screenshot({ path: '/tmp/tpl_panel.png' });
-  // step 97: the Control Panel now opens Darbar Invitation in the ONE editor (through its editor version)
-  await pg.evaluate(() => PGControl.designLayout('tpl-c1')); await pg.waitForSelector('.pce .pce-page .pgc-sec', { timeout: 8000 });
-  ok(await pg.evaluate(() => PGCanvasEditor.state().src.builtin === 'darbar-invitation'), 'Darbar Invitation opens in the one editor (its editor version)');
-  await pg.evaluate(() => { PGCanvasEditor.close(true); window.pgEditorBack = null; });   // opened from the Control Panel: forget its way back
+  // step 101 (changed from step 97): the Control Panel opens Darbar Invitation in ITS OWN template editor again — not a canvas copy
+  await pg.evaluate(() => PGControl.designLayout('tpl-c1')); await pg.waitForSelector('.pgte .pss-c1', { timeout: 8000 });
+  ok(await pg.evaluate(() => !document.querySelector('.pce') && PGTemplateEditor.state().id === 'tpl-c1'), 'Darbar Invitation opens in its own template editor (one version, scroll effects kept)');
+  await pg.evaluate(() => { PGTemplateEditor.close(true); window.pgEditorBack = null; });   // opened from the Control Panel: forget its way back
   // the template editor still serves story layouts without an editor version yet — its own checks, opened directly
   await pg.evaluate(() => PGTemplateEditor.open('tpl-c1'));
   await pg.waitForSelector('.pgte .pss-c1', { timeout: 8000 });

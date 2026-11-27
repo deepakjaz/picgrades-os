@@ -104,7 +104,7 @@ const srv = http.createServer((req, res) => {
   const c0 = await pg.evaluate(() => PGCanvasEditor.state().doc.sections[0].els[0].id);
   await pg.evaluate(id => PGCanvasEditor.select(id), c0); await pg.waitForSelector('.pce-sel');
   await pg.evaluate(() => { const i = document.querySelector('.pce-pane [data-sp="y"]'); i.value = String(+i.value + 30); i.dispatchEvent(new Event('change')); });
-  await pg.click('.pce-apply'); await pg.waitForSelector('.pce-sgo'); await pg.fill('.pce-sname', 'Our magazine'); await pg.click('.pce-sgo');
+  await pg.click('.pce-apply');   // step 101: a changed ready template saves as the wedding's own copy without asking a name or collection
   await pg.waitForSelector('.pce', { state: 'detached' }); await pg.waitForTimeout(800);
   ok(await pg.evaluate(() => /^cv-/.test(GALLERY.layout) && document.querySelectorAll('#pgStory .pgc-cardhost .pgl-b').length >= 3), 'Apply: the changed Magazine Cover is the couple\'s own layout; the Hub shows its cards');
   const gp = await ctx.newPage(); gp.on('pageerror', e => errors.push(e.message)); await gp.route('https://lh3.googleusercontent.com/**', r => r.fulfill({ contentType: 'image/jpeg', body: bytesOf('4') }));

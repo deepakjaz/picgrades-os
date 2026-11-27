@@ -1596,7 +1596,7 @@ function getGallery_(p) {
   m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
   m.custom = customOf_(g.custom);
   m.logoUrl = logoUrlOf_(g.pages, g.logo);   // step 99d: the couple's own logo (only when they chose 'Our logo')
-  if (/^cv-/.test(m.layout)) { var cvx = canvasFor_(g, m.layout); if (cvx) m.canvas = { id: cvx.id, name: cvx.name, doc: cvx.doc }; else m.layout = ''; }   // step 77: a free-canvas layout from a collection
+  if (/^cv-/.test(m.layout)) { var cvx = canvasFor_(g, m.layout); if (cvx) m.canvas = { id: cvx.id, name: cvx.name, doc: cvx.doc, base: cvx.base }; else m.layout = ''; }   // step 77: a free-canvas layout from a collection
   m.story = picksOf_(g.storyPicks);
   m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
   // Demo period: 'open' = reels and Find me for everyone without name/phone. Set Settings › guestGate = on to require them.
@@ -3263,7 +3263,7 @@ function getStudio_(p) {
 // Anyone can make them — PicGrades staff, photographers, couples — and each decides who sees it (scope):
 //   me (only who made it) · wedding (this wedding) · studio (all of a photographer's weddings) · all (every wedding: PicGrades only).
 // The layout format is drawn by app/gallery/34-canvas.js; canvasDoc_() keeps only what it knows.
-var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status'];
+var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status', 'base'];   // base (step 101): the template a wedding's copy came from — one copy per template per wedding
 var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card', 'art', 'video'];   // art (step 97): a picture from the elements library; video (step 97b): YouTube or Drive   // card (step 77d): one of the app's own Hub cards
 var CANVAS_ACTS = ['findme', 'reel', 'post', 'memory', 'moments', 'notes'];
 var CANVAS_MOTIONS = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine', 'zoom', 'float',
@@ -3385,13 +3385,13 @@ function canvasSees_(row, who) {
   return false;
 }
 function canvasRows_() { ensureTab_('Canvas', CANVAS_COLUMNS); return readTable_('Canvas'); }
-function canvasMeta_(r) { return { id: r.id, kind: r.kind, collection: r.collection || '', name: r.name, note: r.note || '', scope: r.scope, mine: false, order: Number(r.order) || 0, updatedAt: r.updatedAt }; }
+function canvasMeta_(r) { return { id: r.id, kind: r.kind, collection: r.collection || '', name: r.name, note: r.note || '', scope: r.scope, mine: false, order: Number(r.order) || 0, updatedAt: r.updatedAt, base: r.base || '', galleryId: r.scope === 'wedding' ? String(r.galleryId || '') : '' }; }
 /** The free-canvas layout a wedding uses (or null when it can't see it any more). */
 function canvasFor_(g, id) {
   var r = canvasRows_().filter(function (x) { return x.id === id && x.kind === 'layout'; })[0];
   if (!r || String(r.status) === 'deleted') return null;
   var ok = r.scope === 'all' || (r.scope === 'wedding' && String(r.galleryId) === String(g.galleryId)) || (r.scope === 'studio' && String(r.companyName).trim().toLowerCase() === String(g.companyName).trim().toLowerCase()) || (r.owner === 'couple:' + g.galleryId);
-  return ok ? { id: r.id, name: r.name, doc: canvasDoc_(r.doc) } : null;
+  return ok ? { id: r.id, name: r.name, doc: canvasDoc_(r.doc), base: r.base || '' } : null;
 }
 function canvasList_(p) {
   var who = canvasWho_(p), out = { collections: [], layouts: [] };
@@ -3420,7 +3420,11 @@ function canvasSave_(p) {
   if (scope === 'wedding' && !who.g) return { ok: false, error: 'Choose the wedding first.' };
   var name = cvTxt_(it.name, 60).trim(); if (!name) return { ok: false, error: 'Give it a name.' };
   var rows = canvasRows_(), old = it.id ? rows.filter(function (x) { return x.id === it.id; })[0] : null;
-  if (old && !(old.owner === who.owner || who.role === 'staff')) return { ok: false, error: 'Only the person who made it can change it. Save a copy instead.' };
+  var base = kind === 'layout' ? lookId_(it.base) : '';
+  // step 101: one copy of each template per wedding — saving a template the wedding already has a copy of updates that copy
+  if (!old && base && scope === 'wedding' && who.g && !it.copy) old = rows.filter(function (x) { return x.kind === 'layout' && x.scope === 'wedding' && String(x.galleryId) === String(who.g.galleryId) && x.base === base && String(x.status) !== 'deleted'; })[0] || null;
+  var sameWedding = old && old.scope === 'wedding' && who.g && String(old.galleryId) === String(who.g.galleryId);   // the couple, its photographer and PicGrades share the wedding's copy
+  if (old && !(old.owner === who.owner || who.role === 'staff' || sameWedding)) return { ok: false, error: 'Only the person who made it can change it. Save a copy instead.' };
   var coll = '';
   if (kind === 'layout' && it.collection) {
     var c = rows.filter(function (x) { return x.id === it.collection && x.kind === 'collection'; })[0];
@@ -3430,7 +3434,7 @@ function canvasSave_(p) {
   var doc = '';
   if (kind === 'layout') { doc = JSON.stringify(canvasDoc_(it.doc)); if (doc.length > CANVAS_MAX_DOC) return { ok: false, error: 'This layout is too big to save. Remove a few parts.' }; }
   var row = { kind: kind, collection: coll, name: name, note: cvTxt_(it.note, 200), scope: scope, galleryId: scope === 'wedding' || who.role === 'couple' ? (who.g ? who.g.galleryId : '') : '',
-    companyName: who.companyName || '', doc: doc, order: cvNum_(it.order, -999, 999, 0), updatedAt: fmt_(new Date()), status: 'live' };
+    companyName: who.companyName || '', doc: doc, order: cvNum_(it.order, -999, 999, 0), updatedAt: fmt_(new Date()), status: 'live', base: base || (old ? old.base || '' : '') };
   if (old) { updateRowByNumber_('Canvas', old._row, row); row.id = old.id; }
   else {
     if (rows.filter(function (x) { return x.owner === who.owner && String(x.status) !== 'deleted'; }).length >= CANVAS_MAX_PER_OWNER) return { ok: false, error: 'You have too many saved layouts. Delete a few first.' };

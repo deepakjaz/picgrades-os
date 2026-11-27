@@ -181,7 +181,8 @@
       layouts.filter(l => inUse(l)).forEach(l => { shownIds[l.id] = 1; yours.push(layoutRow(l, true, !!V[l.id])); });
       layouts.filter(l => V[l.id] && !shownIds[l.id]).forEach(l => { shownIds[l.id] = 1; yours.push(layoutRow(l, false, true)); });
       group('Yours', 'In use now, and the layouts you have made your own.', yours);
-      const rest = f => layouts.filter(l => !shownIds[l.id] && f(l)).map(l => layoutRow(l, false, false));
+      const copies = new Set(layouts.map(l => l.editor).filter(Boolean));   // step 101: the canvas copies of the story templates are not offered (one version of each template)
+      const rest = f => layouts.filter(l => !shownIds[l.id] && !copies.has(l.id) && f(l)).map(l => layoutRow(l, false, false));
       group('Stories', 'One long page that tells the wedding as a story while guests scroll.', rest(story));
       const storyNames = {}; layouts.filter(story).forEach(l => { storyNames[l.name] = 1; });
       group('Free canvas', 'Every part placed by hand, separately for phone and laptop.', rest(canvas).map(r => { const n = r.querySelector('b'); if (n && storyNames[n.textContent]) n.textContent += ' · canvas'; return r; }));   // same name as a story: tell them apart
@@ -202,6 +203,7 @@
       if (!la.isConnected) return;
       la.querySelectorAll('.pgcp-lgroup.cv').forEach(x => x.remove());
       const anchor = la.firstChild, newest = (a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+      CVLIST = r.layouts || [];   // step 101: remembered so a template's preview knows the wedding's own copy
       const L = (r.layouts || []).slice().sort(newest), used = {}, made = [];
       const add = (t, n, cards) => { const before = la.children.length; group(t, n, cards); if (la.children.length > before) { const g = la.lastElementChild; g.classList.add('cv'); made.push(g); } };
       const mine = L.filter(l => !l.collection && l.mine);
@@ -226,7 +228,7 @@
     if (/^cv-/.test(id) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77: a layout from a collection
     const l = window.PGLayout && PGLayout.find(id); if (!l) return null;
     if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor too
-    if (l.story && l.editor && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 97: a story layout with an editor version opens in the one editor
+    // step 101: a story template opens its own editor again (photos, words, colours, parts) — not the canvas copy, which lost the scroll effects
     if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);   // story layouts without an editor version yet (staff-only ones)
     if (window.PGHubEditor) return () => PGHubEditor.open({ from: id });
     return null;
@@ -255,6 +257,8 @@
   // ---- the preview window ----
   // step 100: each Hub layout has a short ready-made clip (tools/make-layout-previews.js), so choosing one plays a light
   // video instead of opening the whole app in a frame. "Try with our photos" then opens it in the editor with the wedding's own photos.
+  let CVLIST = [];
+  const ownCopy = id => CVLIST.find(x => x.base === id && x.scope === 'wedding' && x.galleryId === String(GALLERY.galleryId || ''));
   let CLIPS = {}; fetch('/app/themes/preview/index.json').then(r => (r.ok ? r.json() : {})).then(j => { CLIPS = j || {}; }).catch(() => {});
   const PAGES = [['hub', 'Hub'], ['gallery', 'Events'], ['event', 'Event'], ['photo', 'Photo'], ['moments', 'Moments'], ['rooms', 'Notes']];
   function preview(want, box) {
@@ -317,6 +321,13 @@
     const ap = wrap.querySelector('.pgcp-pv-apply');
     if ('layout' in want && !pk) ap.textContent = ROLE === 'demo' ? 'Use this on this phone' : 'Use this';
     if (same) { ap.textContent = 'This is in use now'; ap.disabled = true; }
+    const copy = 'layout' in want && !pk && state.layout && ROLE !== 'demo' ? ownCopy(state.layout) : null;
+    if (copy) {   // step 101: this wedding changed this template before — choose their version or the original, never by accident
+      const ub = h('button', 'mk-btn-peach ios-wide pgcp-pv-own', GALLERY.layout === copy.id ? 'Our version is in use' : 'Use our version'); ub.type = 'button'; ub.disabled = GALLERY.layout === copy.id;
+      ap.parentNode.insertBefore(ub, ap); if (!same) ap.textContent = 'Use the original'; ap.parentNode.classList.add('own'); if (!ed.hidden) ed.textContent = 'Edit our version';
+      ub.addEventListener('click', () => { ub.disabled = true; ub.textContent = 'Applying…'; const fail = () => { ub.disabled = false; ub.textContent = 'Use our version'; };
+        pgApi('canvasGet', { id: copy.id }).then(g => { GALLERY.canvas = { id: g.id, name: g.name, doc: g.doc, base: g.base || '' }; saveLook({ layout: copy.id }, box, ok => { if (ok) close(); else fail(); }); }).catch(e => { showToast(e.message || 'Could not open it'); fail(); }); });
+    }
     ap.addEventListener('click', () => {
       const part = pk ? { pages: JSON.stringify({ [pk]: state.styles[pk] }) } : 'layout' in want ? { layout: state.layout, theme: state.theme } : { theme: state.theme };
       ap.disabled = true; ap.textContent = 'Applying…';
