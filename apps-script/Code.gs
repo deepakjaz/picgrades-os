@@ -3254,9 +3254,10 @@ function getStudio_(p) {
 //   me (only who made it) · wedding (this wedding) · studio (all of a photographer's weddings) · all (every wedding: PicGrades only).
 // The layout format is drawn by app/gallery/34-canvas.js; canvasDoc_() keeps only what it knows.
 var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status'];
-var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card'];   // card (step 77d): one of the app's own Hub cards
+var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card', 'art'];   // art (step 97): a picture from the elements library   // card (step 77d): one of the app's own Hub cards
 var CANVAS_ACTS = ['findme', 'reel', 'post', 'memory', 'moments', 'notes'];
-var CANVAS_MOTIONS = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine', 'zoom', 'float'];
+var CANVAS_MOTIONS = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine', 'zoom', 'float',
+  'spin', 'flip-x', 'flip-y', 'turn', 'bounce', 'zoom-out', 'glide', 'arc', 'reveal', 'shutters', 'pulse', 'swing', 'wobble', 'spin-slow', 'breathe', 'fade-on-scroll', 'grow-on-scroll'];   // step 97: the motion library
 var CANVAS_FONTS = ['Cormorant Garamond', 'Pinyon Script', 'Marcellus', 'Jost', 'Instrument Serif', 'Parisienne', 'Bodoni Moda', 'Playfair Display', 'Great Vibes', 'Montserrat'];
 var CANVAS_MAX_DOC = 45000, CANVAS_MAX_PER_OWNER = 200;
 
@@ -3285,6 +3286,10 @@ function cvStyle_(o) {
 }
 function cvSrc_(o) {
   if (!o || typeof o !== 'object') return null;
+  if (o.k === 'art') {   // step 97: a picture from the elements library (app/elements/<occasion>/<id>.webp)
+    var aid = String(o.id || ''), occ = String(o.o || '');
+    return /^[a-z0-9-]{1,40}$/.test(aid) && /^[a-z0-9-]{1,30}$/.test(occ) ? { k: 'art', id: aid, o: occ } : null;
+  }
   var k = ['cover', 'hl', 'ev', 'id', 'auto'].indexOf(o.k) > -1 ? o.k : 'auto', out = { k: k };
   if (o.n != null) out.n = cvNum_(o.n, 0, 999, 0);
   if (o.i != null) out.i = cvNum_(o.i, 0, 99, 0);
@@ -3302,6 +3307,7 @@ function canvasDoc_(d) {
     var o = { id: cvId_(sec.id) || ('s' + si), h: { p: cvNum_((sec.h || {}).p, 40, 4000, 600) }, els: [] };
     if ((sec.h || {}).l != null) o.h.l = cvNum_(sec.h.l, 40, 4000, 600);
     if (sec.stay) o.stay = cvNum_(sec.stay, 0, 3000, 0);   // step 78: holds still while scrolling
+    if (sec.grid && typeof sec.grid === 'object') o.grid = { r: cvNum_(sec.grid.r, 1, 24, 6), c: cvNum_(sec.grid.c, 1, 12, 2), g: cvNum_(sec.grid.g, 0, 80, 16) };   // step 97: Simple mode's rows, columns and gap
     var bg = sec.bg || {}, ob = {};
     if (cvCol_(bg.c)) ob.c = cvCol_(bg.c);
     var bs = cvSrc_(bg.src); if (bs) ob.src = bs;
@@ -3316,10 +3322,11 @@ function canvasDoc_(d) {
       var st = cvStyle_(el.s); if (st) e.s = st;
       var sl = cvStyle_(el.sl); if (sl) e.sl = sl;
       if (CANVAS_MOTIONS.indexOf(el.m) > -1) e.m = el.m;   // step 78: more motion, with delay / speed / scroll depth
-      if (e.m && el.mo && typeof el.mo === 'object') { var mo = {}; if (el.mo.d) mo.d = cvNum_(el.mo.d, 0, 5000, 0); if (el.mo.t) mo.t = cvNum_(el.mo.t, 100, 6000, 900); if (el.mo.p) mo.p = cvNum_(el.mo.p, -0.6, 0.6, 0); if (Object.keys(mo).length) e.mo = mo; }
+      if (e.m && el.mo && typeof el.mo === 'object') { var mo = {}; if (el.mo.d) mo.d = cvNum_(el.mo.d, 0, 5000, 0); if (el.mo.t) mo.t = cvNum_(el.mo.t, 100, 6000, 900); if (el.mo.p) mo.p = cvNum_(el.mo.p, -0.6, 0.6, 0); if (el.mo.str != null) mo.str = cvNum_(el.mo.str, 0, 100, 50); if (['bottom', 'top', 'left', 'right'].indexOf(el.mo.dir) > -1) mo.dir = el.mo.dir; if (Object.keys(mo).length) e.mo = mo; }   // step 97: strength, direction
       else if (el.mo && el.mo.p) e.mo = { p: cvNum_(el.mo.p, -0.6, 0.6, 0) };
       if (el.text != null && el.text !== '') e.text = cvTxt_(el.text, 400);
-      var src = cvSrc_(el.src); if (src) e.src = src;
+      var src = cvSrc_(el.src); if (src && (src.k === 'art') === (el.t === 'art')) e.src = src;
+      if (el.t === 'art' && !e.src) return;   // step 97: an element needs its picture
       if (CANVAS_ACTS.indexOf(el.act) > -1) e.act = el.act;
       if (['row', 'circles', 'list', 'pill', 'circle', 'text', 'line'].indexOf(el.v) > -1) e.v = el.v;
       if (el.per != null) e.per = typeof el.per === 'object' ? { p: cvNum_(el.per.p, 1, 8, 2.2), l: cvNum_(el.per.l, 1, 8, 3.5) } : cvNum_(el.per, 1, 8, 2.2);

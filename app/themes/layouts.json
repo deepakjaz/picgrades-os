@@ -7,7 +7,8 @@
       "idea": "A cinematic scroll: full-screen cover with Next moment that shrinks away, photos glancing in, events one by one, the varmala moment, live Reel and Post preview.",
       "by": "G",
       "blocks": [],
-      "group": "story"
+      "group": "story",
+      "editor": "canvas-living"
     },
     {
       "id": "story-editorial",
@@ -16,7 +17,8 @@
       "idea": "A calm, premium magazine: big names, numbered event chapters, small icons, notes and a closing invitation to add a moment.",
       "by": "C",
       "blocks": [],
-      "group": "story"
+      "group": "story",
+      "editor": "canvas-editorial"
     },
     {
       "id": "magazine-cover",
@@ -383,7 +385,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Palace, haveli or fort",
-      "by": "C"
+      "by": "C",
+      "editor": "darbar-invitation"
     },
     {
       "id": "tpl-c2",
@@ -392,7 +395,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Beach wedding",
-      "by": "C"
+      "by": "C",
+      "editor": "tide-journey"
     },
     {
       "id": "tpl-c3",
@@ -6919,6 +6923,1733 @@
                 },
                 "s": {
                   "radius": 10
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "bs-oh-baby-scroll",
+      "name": "Oh Baby · Scroll",
+      "group": "progress",
+      "occasion": "babyshower",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Oh Baby · Scroll",
+        "colors": {
+          "bg": "#FAF5EE",
+          "ink": "#4A342B",
+          "acc": "#7F9B82",
+          "acc2": "#C8A464",
+          "card": "#FFFDF9"
+        },
+        "fonts": {
+          "head": "Pinyon Script",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "sec-bs-stage",
+            "stay": 300,
+            "h": {
+              "p": 844,
+              "l": 760
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-s1-backdrop-off",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-backdrop-off",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 65,
+                  "y": 76,
+                  "w": 260,
+                  "h": 390,
+                  "z": 1
+                },
+                "l": {
+                  "x": 110,
+                  "y": 60,
+                  "w": 380,
+                  "h": 570,
+                  "z": 1
+                },
+                "m": "fade",
+                "mo": {
+                  "t": 600,
+                  "str": 60
+                }
+              },
+              {
+                "id": "bs-s1-backdrop-on",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-backdrop-on",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 65,
+                  "y": 76,
+                  "w": 260,
+                  "h": 390,
+                  "z": 2
+                },
+                "l": {
+                  "x": 110,
+                  "y": 60,
+                  "w": 380,
+                  "h": 570,
+                  "z": 2
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 600,
+                  "t": 650,
+                  "str": 85
+                }
+              },
+              {
+                "id": "bs-s1-balloon-l",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-balloon-left",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": -14,
+                  "y": 14,
+                  "w": 145,
+                  "h": 195,
+                  "z": 5
+                },
+                "l": {
+                  "x": 14,
+                  "y": 50,
+                  "w": 160,
+                  "h": 215,
+                  "z": 5
+                },
+                "m": "grow",
+                "mo": {
+                  "d": 150,
+                  "t": 800,
+                  "str": 80,
+                  "p": -0.15
+                }
+              },
+              {
+                "id": "bs-s1-balloon-r",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-balloon-right",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 259,
+                  "y": 14,
+                  "w": 145,
+                  "h": 195,
+                  "z": 5
+                },
+                "l": {
+                  "x": 426,
+                  "y": 50,
+                  "w": 160,
+                  "h": 215,
+                  "z": 5
+                },
+                "m": "grow",
+                "mo": {
+                  "d": 150,
+                  "t": 800,
+                  "str": 80,
+                  "p": -0.15
+                }
+              },
+              {
+                "id": "bs-s1-cover",
+                "t": "photo",
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "p": {
+                  "x": 120,
+                  "y": 256,
+                  "w": 150,
+                  "h": 182,
+                  "z": 3
+                },
+                "l": {
+                  "x": 215,
+                  "y": 318,
+                  "w": 170,
+                  "h": 225,
+                  "z": 3
+                },
+                "s": {
+                  "shape": "arch",
+                  "radius": 10,
+                  "fy": 28
+                },
+                "m": "grow",
+                "mo": {
+                  "d": 400,
+                  "t": 750,
+                  "str": 70
+                }
+              },
+              {
+                "id": "bs-s1-teddy",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-teddy-brown",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 18,
+                  "y": 482,
+                  "w": 96,
+                  "h": 96,
+                  "z": 6
+                },
+                "l": {
+                  "x": 40,
+                  "y": 535,
+                  "w": 112,
+                  "h": 112,
+                  "z": 6
+                },
+                "m": "bounce",
+                "mo": {
+                  "d": 220,
+                  "t": 750,
+                  "str": 75,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-s1-elephant",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-elephant-blue",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 276,
+                  "y": 482,
+                  "w": 96,
+                  "h": 96,
+                  "z": 6
+                },
+                "l": {
+                  "x": 448,
+                  "y": 535,
+                  "w": 112,
+                  "h": 112,
+                  "z": 6
+                },
+                "m": "bounce",
+                "mo": {
+                  "d": 260,
+                  "t": 750,
+                  "str": 75,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-s1-blocks",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-blocks-baby",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 124,
+                  "y": 496,
+                  "w": 142,
+                  "h": 106,
+                  "z": 7
+                },
+                "l": {
+                  "x": 230,
+                  "y": 556,
+                  "w": 140,
+                  "h": 105,
+                  "z": 7
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 420,
+                  "t": 700,
+                  "str": 65,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-s1-names",
+                "t": "names",
+                "text": "Anika & Rohan",
+                "p": {
+                  "x": 20,
+                  "y": 620,
+                  "w": 350,
+                  "h": 54,
+                  "z": 8
+                },
+                "l": {
+                  "x": 640,
+                  "y": 262,
+                  "w": 500,
+                  "h": 72,
+                  "z": 8
+                },
+                "s": {
+                  "font": "Pinyon Script",
+                  "size": 42,
+                  "align": "center",
+                  "color": "#4A342B"
+                },
+                "sl": {
+                  "align": "left",
+                  "size": 58
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 120,
+                  "t": 650,
+                  "str": 70
+                }
+              },
+              {
+                "id": "bs-s1-date",
+                "t": "date",
+                "text": "Baby Shower · Godh Bharai · 14.12.26 · Surat",
+                "p": {
+                  "x": 20,
+                  "y": 680,
+                  "w": 350,
+                  "h": 28,
+                  "z": 8
+                },
+                "l": {
+                  "x": 640,
+                  "y": 344,
+                  "w": 500,
+                  "h": 30,
+                  "z": 8
+                },
+                "s": {
+                  "font": "Jost",
+                  "size": 12,
+                  "ls": 0.14,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#7F9B82"
+                },
+                "sl": {
+                  "align": "left",
+                  "size": 13
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 180,
+                  "t": 600,
+                  "str": 60
+                }
+              },
+              {
+                "id": "bs-s1-findme",
+                "t": "action",
+                "act": "findme",
+                "text": "Find me",
+                "p": {
+                  "x": 125,
+                  "y": 718,
+                  "w": 140,
+                  "h": 44,
+                  "z": 9
+                },
+                "l": {
+                  "x": 640,
+                  "y": 390,
+                  "w": 150,
+                  "h": 44,
+                  "z": 9
+                },
+                "s": {
+                  "bg": "#7F9B82",
+                  "color": "#FFFFFF",
+                  "radius": 22,
+                  "size": 13,
+                  "weight": 600
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 220,
+                  "t": 600,
+                  "str": 50
+                }
+              }
+            ]
+          },
+          {
+            "id": "sec-bs-activities",
+            "h": {
+              "p": 860,
+              "l": 680
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-s2-vote-board",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-vote-board",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 20,
+                  "y": 24,
+                  "w": 210,
+                  "h": 280,
+                  "z": 2
+                },
+                "l": {
+                  "x": 60,
+                  "y": 40,
+                  "w": 250,
+                  "h": 334,
+                  "z": 2
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 750,
+                  "str": 70,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-s2-heart-blue",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-heart-blue",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 254,
+                  "y": 56,
+                  "w": 96,
+                  "h": 96,
+                  "z": 3
+                },
+                "l": {
+                  "x": 338,
+                  "y": 76,
+                  "w": 110,
+                  "h": 110,
+                  "z": 3
+                },
+                "m": "pulse",
+                "mo": {
+                  "d": 120,
+                  "t": 1200,
+                  "str": 65
+                }
+              },
+              {
+                "id": "bs-s2-heart-pink",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-heart-pink",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 254,
+                  "y": 172,
+                  "w": 96,
+                  "h": 96,
+                  "z": 3
+                },
+                "l": {
+                  "x": 338,
+                  "y": 206,
+                  "w": 110,
+                  "h": 110,
+                  "z": 3
+                },
+                "m": "pulse",
+                "mo": {
+                  "d": 220,
+                  "t": 1200,
+                  "str": 65
+                }
+              },
+              {
+                "id": "bs-s2-vote-btn",
+                "t": "action",
+                "act": "notes",
+                "text": "Cast your vote",
+                "p": {
+                  "x": 20,
+                  "y": 318,
+                  "w": 168,
+                  "h": 44,
+                  "z": 4
+                },
+                "l": {
+                  "x": 60,
+                  "y": 392,
+                  "w": 176,
+                  "h": 44,
+                  "z": 4
+                },
+                "s": {
+                  "bg": "#5C4033",
+                  "color": "#FAF5EE",
+                  "radius": 22,
+                  "size": 12,
+                  "weight": 600
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 180,
+                  "t": 600,
+                  "str": 50
+                }
+              },
+              {
+                "id": "bs-s2-due-date",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-due-date",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 24,
+                  "y": 380,
+                  "w": 342,
+                  "h": 258,
+                  "z": 2
+                },
+                "l": {
+                  "x": 490,
+                  "y": 40,
+                  "w": 370,
+                  "h": 280,
+                  "z": 2
+                },
+                "m": "fade-on-scroll",
+                "mo": {
+                  "d": 100,
+                  "t": 700,
+                  "str": 70,
+                  "p": 0.1
+                }
+              },
+              {
+                "id": "bs-s2-cake-base",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-cake-base",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 117,
+                  "y": 686,
+                  "w": 156,
+                  "h": 138,
+                  "z": 2
+                },
+                "l": {
+                  "x": 910,
+                  "y": 146,
+                  "w": 220,
+                  "h": 194,
+                  "z": 2
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 100,
+                  "t": 800,
+                  "str": 75,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-s2-cake-topper",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-cake-topper",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 155,
+                  "y": 612,
+                  "w": 80,
+                  "h": 84,
+                  "z": 4
+                },
+                "l": {
+                  "x": 970,
+                  "y": 46,
+                  "w": 100,
+                  "h": 108,
+                  "z": 4
+                },
+                "m": "drop",
+                "mo": {
+                  "d": 350,
+                  "t": 750,
+                  "str": 85
+                }
+              }
+            ]
+          },
+          {
+            "id": "sec-bs-events-moments",
+            "h": {
+              "p": 760,
+              "l": 660
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-s3-events-label",
+                "t": "text",
+                "text": "Blessings & rituals · आशीर्वाद और रस्में · Parents-to-be · होने वाले माता-पिता",
+                "p": {
+                  "x": 20,
+                  "y": 24,
+                  "w": 350,
+                  "h": 42,
+                  "z": 2
+                },
+                "l": {
+                  "x": 60,
+                  "y": 32,
+                  "w": 1080,
+                  "h": 38,
+                  "z": 2
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 22,
+                  "align": "left",
+                  "color": "#4A342B"
+                },
+                "m": "fade",
+                "mo": {
+                  "t": 650,
+                  "str": 60
+                }
+              },
+              {
+                "id": "bs-s3-events",
+                "t": "events",
+                "v": "row",
+                "per": {
+                  "p": 2.2,
+                  "l": 3.5
+                },
+                "src": {
+                  "k": "ev",
+                  "i": 0,
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 78,
+                  "w": 350,
+                  "h": 240,
+                  "z": 2
+                },
+                "l": {
+                  "x": 60,
+                  "y": 82,
+                  "w": 1080,
+                  "h": 270,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 14,
+                  "size": 13,
+                  "color": "#4A342B"
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 120,
+                  "t": 700,
+                  "str": 65,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-s3-moments-label",
+                "t": "text",
+                "text": "Sweet moments · प्यारे पल",
+                "p": {
+                  "x": 20,
+                  "y": 338,
+                  "w": 350,
+                  "h": 34,
+                  "z": 2
+                },
+                "l": {
+                  "x": 60,
+                  "y": 380,
+                  "w": 520,
+                  "h": 34,
+                  "z": 2
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 22,
+                  "align": "left",
+                  "color": "#4A342B"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 150,
+                  "t": 650,
+                  "str": 60
+                }
+              },
+              {
+                "id": "bs-s3-hl-1",
+                "t": "photo",
+                "src": {
+                  "k": "hl",
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 382,
+                  "w": 168,
+                  "h": 180,
+                  "z": 2
+                },
+                "l": {
+                  "x": 60,
+                  "y": 424,
+                  "w": 240,
+                  "h": 170,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 14,
+                  "fy": 30
+                },
+                "m": "grow-on-scroll",
+                "mo": {
+                  "d": 100,
+                  "t": 700,
+                  "str": 65,
+                  "p": 0.12
+                }
+              },
+              {
+                "id": "bs-s3-hl-2",
+                "t": "photo",
+                "src": {
+                  "k": "hl",
+                  "n": 1
+                },
+                "p": {
+                  "x": 202,
+                  "y": 382,
+                  "w": 168,
+                  "h": 180,
+                  "z": 2
+                },
+                "l": {
+                  "x": 316,
+                  "y": 424,
+                  "w": 240,
+                  "h": 170,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 14,
+                  "fy": 30
+                },
+                "m": "grow-on-scroll",
+                "mo": {
+                  "d": 180,
+                  "t": 700,
+                  "str": 65,
+                  "p": 0.12
+                }
+              },
+              {
+                "id": "bs-s3-hampers",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-gift-hampers",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 115,
+                  "y": 584,
+                  "w": 160,
+                  "h": 120,
+                  "z": 3
+                },
+                "l": {
+                  "x": 860,
+                  "y": 420,
+                  "w": 220,
+                  "h": 164,
+                  "z": 3
+                },
+                "m": "float",
+                "mo": {
+                  "d": 200,
+                  "t": 3600,
+                  "str": 50
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "bs-oh-baby-story",
+      "name": "Oh Baby · Story",
+      "group": "progress",
+      "occasion": "babyshower",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Oh Baby · Story",
+        "colors": {
+          "bg": "#FAF5EE",
+          "ink": "#4A342B",
+          "acc": "#7F9B82",
+          "acc2": "#C8A464",
+          "card": "#FFFDF9"
+        },
+        "fonts": {
+          "head": "Parisienne",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "sec-bs-story-p1",
+            "h": {
+              "p": 600,
+              "l": 600
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-st1-photo",
+                "t": "photo",
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 84,
+                  "w": 172,
+                  "h": 250,
+                  "z": 1
+                },
+                "l": {
+                  "x": 80,
+                  "y": 90,
+                  "w": 460,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 16,
+                  "fy": 30
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 300,
+                  "str": 65,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-st1-sign",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-welcome-sign",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 202,
+                  "y": 84,
+                  "w": 168,
+                  "h": 250,
+                  "z": 2
+                },
+                "l": {
+                  "x": 580,
+                  "y": 90,
+                  "w": 315,
+                  "h": 420,
+                  "z": 2
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 80,
+                  "t": 300,
+                  "str": 70,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-st1-names",
+                "t": "names",
+                "text": "Anika & Rohan",
+                "p": {
+                  "x": 20,
+                  "y": 350,
+                  "w": 350,
+                  "h": 52,
+                  "z": 3
+                },
+                "l": {
+                  "x": 580,
+                  "y": 524,
+                  "w": 360,
+                  "h": 56,
+                  "z": 3
+                },
+                "s": {
+                  "font": "Parisienne",
+                  "size": 38,
+                  "align": "center",
+                  "color": "#4A342B"
+                },
+                "sl": {
+                  "align": "left",
+                  "size": 46
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 120,
+                  "t": 300,
+                  "str": 60
+                }
+              },
+              {
+                "id": "bs-st1-findme",
+                "t": "action",
+                "act": "findme",
+                "text": "Find me",
+                "p": {
+                  "x": 125,
+                  "y": 416,
+                  "w": 140,
+                  "h": 44,
+                  "z": 4
+                },
+                "l": {
+                  "x": 960,
+                  "y": 526,
+                  "w": 140,
+                  "h": 44,
+                  "z": 4
+                },
+                "s": {
+                  "bg": "#7F9B82",
+                  "color": "#FFFFFF",
+                  "radius": 22,
+                  "size": 12,
+                  "weight": 600
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 160,
+                  "t": 300,
+                  "str": 50
+                }
+              }
+            ]
+          },
+          {
+            "id": "sec-bs-story-p2",
+            "h": {
+              "p": 600,
+              "l": 600
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-st2-photo",
+                "t": "photo",
+                "src": {
+                  "k": "hl",
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 84,
+                  "w": 172,
+                  "h": 260,
+                  "z": 1
+                },
+                "l": {
+                  "x": 80,
+                  "y": 90,
+                  "w": 460,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 16,
+                  "fy": 30
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 300,
+                  "str": 65,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-st2-vote",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-vote-board",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 202,
+                  "y": 84,
+                  "w": 168,
+                  "h": 260,
+                  "z": 2
+                },
+                "l": {
+                  "x": 580,
+                  "y": 90,
+                  "w": 315,
+                  "h": 420,
+                  "z": 2
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 80,
+                  "t": 300,
+                  "str": 70,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-st2-heart-b",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-heart-blue",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 76,
+                  "y": 366,
+                  "w": 84,
+                  "h": 84,
+                  "z": 3
+                },
+                "l": {
+                  "x": 950,
+                  "y": 140,
+                  "w": 96,
+                  "h": 96,
+                  "z": 3
+                },
+                "m": "pulse",
+                "mo": {
+                  "d": 120,
+                  "t": 1200,
+                  "str": 65
+                }
+              },
+              {
+                "id": "bs-st2-heart-p",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-heart-pink",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 230,
+                  "y": 366,
+                  "w": 84,
+                  "h": 84,
+                  "z": 3
+                },
+                "l": {
+                  "x": 950,
+                  "y": 264,
+                  "w": 96,
+                  "h": 96,
+                  "z": 3
+                },
+                "m": "pulse",
+                "mo": {
+                  "d": 180,
+                  "t": 1200,
+                  "str": 65
+                }
+              }
+            ]
+          },
+          {
+            "id": "sec-bs-story-p3",
+            "h": {
+              "p": 600,
+              "l": 600
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-st3-photo",
+                "t": "photo",
+                "src": {
+                  "k": "hl",
+                  "n": 1
+                },
+                "p": {
+                  "x": 20,
+                  "y": 84,
+                  "w": 172,
+                  "h": 240,
+                  "z": 1
+                },
+                "l": {
+                  "x": 80,
+                  "y": 90,
+                  "w": 460,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 16,
+                  "fy": 30
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 300,
+                  "str": 65,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-st3-due",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-due-date",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 202,
+                  "y": 84,
+                  "w": 168,
+                  "h": 240,
+                  "z": 2
+                },
+                "l": {
+                  "x": 580,
+                  "y": 130,
+                  "w": 520,
+                  "h": 392,
+                  "z": 2
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 80,
+                  "t": 300,
+                  "str": 70,
+                  "dir": "up"
+                }
+              }
+            ]
+          },
+          {
+            "id": "sec-bs-story-p4",
+            "h": {
+              "p": 600,
+              "l": 600
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-st4-photo",
+                "t": "photo",
+                "src": {
+                  "k": "ev",
+                  "i": 0,
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 84,
+                  "w": 172,
+                  "h": 250,
+                  "z": 1
+                },
+                "l": {
+                  "x": 80,
+                  "y": 90,
+                  "w": 460,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 16,
+                  "fy": 30
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 300,
+                  "str": 65,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-st4-cake",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-cake-full",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 202,
+                  "y": 84,
+                  "w": 168,
+                  "h": 250,
+                  "z": 2
+                },
+                "l": {
+                  "x": 620,
+                  "y": 90,
+                  "w": 324,
+                  "h": 420,
+                  "z": 2
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 80,
+                  "t": 300,
+                  "str": 70,
+                  "dir": "up"
+                }
+              }
+            ]
+          },
+          {
+            "id": "sec-bs-story-p5",
+            "h": {
+              "p": 600,
+              "l": 600
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-st5-photo",
+                "t": "photo",
+                "src": {
+                  "k": "hl",
+                  "n": 2
+                },
+                "p": {
+                  "x": 20,
+                  "y": 84,
+                  "w": 172,
+                  "h": 240,
+                  "z": 1
+                },
+                "l": {
+                  "x": 80,
+                  "y": 90,
+                  "w": 460,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 16,
+                  "fy": 30
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 300,
+                  "str": 65,
+                  "dir": "up"
+                }
+              },
+              {
+                "id": "bs-st5-hampers",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-gift-hampers",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 202,
+                  "y": 84,
+                  "w": 168,
+                  "h": 240,
+                  "z": 2
+                },
+                "l": {
+                  "x": 580,
+                  "y": 120,
+                  "w": 520,
+                  "h": 390,
+                  "z": 2
+                },
+                "m": "rise",
+                "mo": {
+                  "d": 80,
+                  "t": 300,
+                  "str": 70,
+                  "dir": "up"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "bs-oh-baby-minimal",
+      "name": "Oh Baby · Minimal",
+      "group": "progress",
+      "occasion": "babyshower",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Oh Baby · Minimal",
+        "colors": {
+          "bg": "#FAF5EE",
+          "ink": "#4A342B",
+          "acc": "#7F9B82",
+          "acc2": "#C8A464",
+          "card": "#FFFDF9"
+        },
+        "fonts": {
+          "head": "Pinyon Script",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "sec-bs-min-top",
+            "h": {
+              "p": 844,
+              "l": 760
+            },
+            "bg": {
+              "c": "#FAF5EE"
+            },
+            "els": [
+              {
+                "id": "bs-m-balloon-corner",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-balloon-right",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 304,
+                  "y": 14,
+                  "w": 72,
+                  "h": 96,
+                  "z": 2
+                },
+                "l": {
+                  "x": 1084,
+                  "y": 18,
+                  "w": 88,
+                  "h": 118,
+                  "z": 2
+                },
+                "m": "fade",
+                "mo": {
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-names",
+                "t": "names",
+                "text": "Anika & Rohan",
+                "p": {
+                  "x": 20,
+                  "y": 46,
+                  "w": 276,
+                  "h": 52,
+                  "z": 3
+                },
+                "l": {
+                  "x": 560,
+                  "y": 60,
+                  "w": 480,
+                  "h": 66,
+                  "z": 3
+                },
+                "s": {
+                  "font": "Pinyon Script",
+                  "size": 38,
+                  "align": "left",
+                  "color": "#4A342B"
+                },
+                "sl": {
+                  "align": "left",
+                  "size": 52
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 60,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-date",
+                "t": "date",
+                "text": "Baby Shower · Godh Bharai · 14.12.26 · Surat",
+                "p": {
+                  "x": 20,
+                  "y": 104,
+                  "w": 350,
+                  "h": 26,
+                  "z": 3
+                },
+                "l": {
+                  "x": 560,
+                  "y": 134,
+                  "w": 560,
+                  "h": 28,
+                  "z": 3
+                },
+                "s": {
+                  "font": "Jost",
+                  "size": 12,
+                  "ls": 0.14,
+                  "upper": true,
+                  "align": "left",
+                  "color": "#7A6459"
+                },
+                "sl": {
+                  "align": "left",
+                  "size": 13
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 100,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-cover",
+                "t": "photo",
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 138,
+                  "w": 350,
+                  "h": 172,
+                  "z": 2
+                },
+                "l": {
+                  "x": 50,
+                  "y": 60,
+                  "w": 470,
+                  "h": 640,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 18,
+                  "fy": 30
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 140,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-findme",
+                "t": "action",
+                "act": "findme",
+                "text": "Find me",
+                "p": {
+                  "x": 20,
+                  "y": 320,
+                  "w": 140,
+                  "h": 44,
+                  "z": 4
+                },
+                "l": {
+                  "x": 560,
+                  "y": 172,
+                  "w": 150,
+                  "h": 44,
+                  "z": 4
+                },
+                "s": {
+                  "bg": "#7F9B82",
+                  "color": "#FFFFFF",
+                  "radius": 22,
+                  "size": 12,
+                  "weight": 600
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 180,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-events-card",
+                "t": "text",
+                "text": "Blessings & rituals · आशीर्वाद और रस्में · Parents-to-be · होने वाले माता-पिता",
+                "p": {
+                  "x": 20,
+                  "y": 374,
+                  "w": 350,
+                  "h": 34,
+                  "z": 3
+                },
+                "l": {
+                  "x": 560,
+                  "y": 228,
+                  "w": 580,
+                  "h": 34,
+                  "z": 3
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 20,
+                  "align": "left",
+                  "color": "#4A342B"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 200,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-events",
+                "t": "events",
+                "v": "row",
+                "per": {
+                  "p": 2.2,
+                  "l": 3.2
+                },
+                "src": {
+                  "k": "ev",
+                  "i": 0,
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 416,
+                  "w": 350,
+                  "h": 172,
+                  "z": 3
+                },
+                "l": {
+                  "x": 560,
+                  "y": 270,
+                  "w": 580,
+                  "h": 184,
+                  "z": 3
+                },
+                "s": {
+                  "radius": 14,
+                  "size": 12,
+                  "color": "#4A342B"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 240,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-moments-label",
+                "t": "text",
+                "text": "Sweet moments · प्यारे पल",
+                "p": {
+                  "x": 20,
+                  "y": 598,
+                  "w": 284,
+                  "h": 32,
+                  "z": 3
+                },
+                "l": {
+                  "x": 560,
+                  "y": 468,
+                  "w": 480,
+                  "h": 32,
+                  "z": 3
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 20,
+                  "align": "left",
+                  "color": "#4A342B"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 260,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-teddy-tiny",
+                "t": "art",
+                "src": {
+                  "k": "art",
+                  "id": "bs-teddy-brown",
+                  "o": "babyshower"
+                },
+                "p": {
+                  "x": 322,
+                  "y": 592,
+                  "w": 48,
+                  "h": 48,
+                  "z": 4
+                },
+                "l": {
+                  "x": 1090,
+                  "y": 462,
+                  "w": 50,
+                  "h": 50,
+                  "z": 4
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 280,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-hl-1",
+                "t": "photo",
+                "src": {
+                  "k": "hl",
+                  "n": 0
+                },
+                "p": {
+                  "x": 20,
+                  "y": 644,
+                  "w": 166,
+                  "h": 168,
+                  "z": 2
+                },
+                "l": {
+                  "x": 560,
+                  "y": 514,
+                  "w": 270,
+                  "h": 180,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 12,
+                  "fy": 30
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 300,
+                  "t": 600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "bs-m-hl-2",
+                "t": "photo",
+                "src": {
+                  "k": "hl",
+                  "n": 1
+                },
+                "p": {
+                  "x": 204,
+                  "y": 644,
+                  "w": 166,
+                  "h": 168,
+                  "z": 2
+                },
+                "l": {
+                  "x": 850,
+                  "y": 514,
+                  "w": 270,
+                  "h": 180,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 12,
+                  "fy": 30
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 320,
+                  "t": 600,
+                  "str": 40
                 }
               }
             ]

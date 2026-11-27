@@ -1,0 +1,391 @@
+{
+ "occasions": {
+  "babyshower": "Baby shower"
+ },
+ "items": [
+  {
+   "id": "bs-backdrop-off",
+   "name": "Blush Backdrop (Neon Off)",
+   "occasion": "babyshower",
+   "tags": [
+    "backdrop",
+    "arch",
+    "blush",
+    "oh baby",
+    "off"
+   ],
+   "file": "/app/elements/babyshower/bs-backdrop-off.webp",
+   "w": 344,
+   "h": 529
+  },
+  {
+   "id": "bs-backdrop-on",
+   "name": "Blush Backdrop (Neon On)",
+   "occasion": "babyshower",
+   "tags": [
+    "backdrop",
+    "arch",
+    "blush",
+    "oh baby",
+    "neon",
+    "glow"
+   ],
+   "file": "/app/elements/babyshower/bs-backdrop-on.webp",
+   "w": 385,
+   "h": 582
+  },
+  {
+   "id": "bs-balloon-column",
+   "name": "Balloon Column Pillar",
+   "occasion": "babyshower",
+   "tags": [
+    "balloon",
+    "pillar",
+    "column",
+    "sage",
+    "gold",
+    "peach"
+   ],
+   "file": "/app/elements/babyshower/bs-balloon-column.webp",
+   "w": 175,
+   "h": 549
+  },
+  {
+   "id": "bs-balloon-left",
+   "name": "Balloon Garland Left",
+   "occasion": "babyshower",
+   "tags": [
+    "balloon",
+    "garland",
+    "left",
+    "arch",
+    "sage",
+    "gold",
+    "peach",
+    "cocoa"
+   ],
+   "file": "/app/elements/babyshower/bs-balloon-left.webp",
+   "w": 361,
+   "h": 550
+  },
+  {
+   "id": "bs-balloon-right",
+   "name": "Balloon Garland Right",
+   "occasion": "babyshower",
+   "tags": [
+    "balloon",
+    "garland",
+    "right",
+    "arch",
+    "sage",
+    "gold",
+    "peach",
+    "cocoa"
+   ],
+   "file": "/app/elements/babyshower/bs-balloon-right.webp",
+   "w": 484,
+   "h": 377
+  },
+  {
+   "id": "bs-bangles",
+   "name": "Choodiyan Bangles",
+   "occasion": "babyshower",
+   "tags": [
+    "bangles",
+    "choodiyan",
+    "ritual",
+    "godh bharai"
+   ],
+   "file": "/app/elements/babyshower/bs-bangles.webp",
+   "w": 720,
+   "h": 720
+  },
+  {
+   "id": "bs-blocks-baby",
+   "name": "Gold BABY Blocks",
+   "occasion": "babyshower",
+   "tags": [
+    "blocks",
+    "baby",
+    "gold",
+    "letters",
+    "cubes"
+   ],
+   "file": "/app/elements/babyshower/bs-blocks-baby.webp",
+   "w": 470,
+   "h": 417
+  },
+  {
+   "id": "bs-cake-base",
+   "name": "Cake (Without Topper)",
+   "occasion": "babyshower",
+   "tags": [
+    "cake",
+    "gold drip",
+    "roses",
+    "pearls",
+    "mother"
+   ],
+   "file": "/app/elements/babyshower/bs-cake-base.webp",
+   "w": 354,
+   "h": 453
+  },
+  {
+   "id": "bs-cake-full",
+   "name": "Cake (With Oh Baby Topper)",
+   "occasion": "babyshower",
+   "tags": [
+    "cake",
+    "topper",
+    "oh baby",
+    "gold drip",
+    "roses"
+   ],
+   "file": "/app/elements/babyshower/bs-cake-full.webp",
+   "w": 350,
+   "h": 508
+  },
+  {
+   "id": "bs-cake-topper",
+   "name": "Oh Baby Cake Topper",
+   "occasion": "babyshower",
+   "tags": [
+    "topper",
+    "oh baby",
+    "red",
+    "gold",
+    "script"
+   ],
+   "file": "/app/elements/babyshower/bs-cake-topper.webp",
+   "w": 393,
+   "h": 506
+  },
+  {
+   "id": "bs-cradle",
+   "name": "Baby Cradle",
+   "occasion": "babyshower",
+   "tags": [
+    "cradle",
+    "palna",
+    "baby",
+    "nursery"
+   ],
+   "file": "/app/elements/babyshower/bs-cradle.webp",
+   "w": 720,
+   "h": 720
+  },
+  {
+   "id": "bs-due-date",
+   "name": "Guess the Due Date Board",
+   "occasion": "babyshower",
+   "tags": [
+    "due date",
+    "calendar",
+    "game",
+    "baby clothes"
+   ],
+   "file": "/app/elements/babyshower/bs-due-date.webp",
+   "w": 449,
+   "h": 341
+  },
+  {
+   "id": "bs-elephant-blue",
+   "name": "Baby Elephant Cutout (Blue)",
+   "occasion": "babyshower",
+   "tags": [
+    "elephant",
+    "blue",
+    "cutout",
+    "baby"
+   ],
+   "file": "/app/elements/babyshower/bs-elephant-blue.webp",
+   "w": 347,
+   "h": 376
+  },
+  {
+   "id": "bs-floral-arch",
+   "name": "Floral Arch",
+   "occasion": "babyshower",
+   "tags": [
+    "floral",
+    "arch",
+    "flowers",
+    "leaves"
+   ],
+   "file": "/app/elements/babyshower/bs-floral-arch.webp",
+   "w": 538,
+   "h": 720
+  },
+  {
+   "id": "bs-footprints",
+   "name": "Baby Footprints",
+   "occasion": "babyshower",
+   "tags": [
+    "footprints",
+    "feet",
+    "baby",
+    "cute"
+   ],
+   "file": "/app/elements/babyshower/bs-footprints.webp",
+   "w": 720,
+   "h": 720
+  },
+  {
+   "id": "bs-garland",
+   "name": "Floral Garland",
+   "occasion": "babyshower",
+   "tags": [
+    "garland",
+    "flowers",
+    "sage",
+    "peach"
+   ],
+   "file": "/app/elements/babyshower/bs-garland.webp",
+   "w": 720,
+   "h": 538
+  },
+  {
+   "id": "bs-gift-hampers",
+   "name": "Lilac Tulle Gift Hampers",
+   "occasion": "babyshower",
+   "tags": [
+    "hampers",
+    "gifts",
+    "lilac",
+    "tulle",
+    "tray"
+   ],
+   "file": "/app/elements/babyshower/bs-gift-hampers.webp",
+   "w": 580,
+   "h": 379
+  },
+  {
+   "id": "bs-haldi-kumkum",
+   "name": "Haldi & Kumkum Set",
+   "occasion": "babyshower",
+   "tags": [
+    "haldi",
+    "kumkum",
+    "ritual",
+    "blessing"
+   ],
+   "file": "/app/elements/babyshower/bs-haldi-kumkum.webp",
+   "w": 720,
+   "h": 720
+  },
+  {
+   "id": "bs-heart-blue",
+   "name": "Blue Heart Sticker",
+   "occasion": "babyshower",
+   "tags": [
+    "heart",
+    "blue",
+    "sticker",
+    "vote",
+    "boy"
+   ],
+   "file": "/app/elements/babyshower/bs-heart-blue.webp",
+   "w": 271,
+   "h": 240
+  },
+  {
+   "id": "bs-heart-pink",
+   "name": "Pink Heart Sticker",
+   "occasion": "babyshower",
+   "tags": [
+    "heart",
+    "pink",
+    "sticker",
+    "vote",
+    "girl"
+   ],
+   "file": "/app/elements/babyshower/bs-heart-pink.webp",
+   "w": 266,
+   "h": 214
+  },
+  {
+   "id": "bs-jhula",
+   "name": "Decorative Jhula",
+   "occasion": "babyshower",
+   "tags": [
+    "jhula",
+    "swing",
+    "decor"
+   ],
+   "file": "/app/elements/babyshower/bs-jhula.webp",
+   "w": 538,
+   "h": 720
+  },
+  {
+   "id": "bs-rattle-toy",
+   "name": "Baby Rattle Toy",
+   "occasion": "babyshower",
+   "tags": [
+    "rattle",
+    "toy",
+    "baby"
+   ],
+   "file": "/app/elements/babyshower/bs-rattle-toy.webp",
+   "w": 720,
+   "h": 720
+  },
+  {
+   "id": "bs-teddy-brown",
+   "name": "Brown Teddy Bear Cutout",
+   "occasion": "babyshower",
+   "tags": [
+    "teddy",
+    "bear",
+    "brown",
+    "cutout",
+    "bow"
+   ],
+   "file": "/app/elements/babyshower/bs-teddy-brown.webp",
+   "w": 448,
+   "h": 506
+  },
+  {
+   "id": "bs-thali",
+   "name": "Ritual Thali",
+   "occasion": "babyshower",
+   "tags": [
+    "thali",
+    "plate",
+    "ritual",
+    "godh bharai"
+   ],
+   "file": "/app/elements/babyshower/bs-thali.webp",
+   "w": 720,
+   "h": 720
+  },
+  {
+   "id": "bs-vote-board",
+   "name": "Boy or Girl? Vote Board",
+   "occasion": "babyshower",
+   "tags": [
+    "vote",
+    "boy or girl",
+    "hearts",
+    "game"
+   ],
+   "file": "/app/elements/babyshower/bs-vote-board.webp",
+   "w": 404,
+   "h": 540
+  },
+  {
+   "id": "bs-welcome-sign",
+   "name": "Welcome Sign on Easel",
+   "occasion": "babyshower",
+   "tags": [
+    "welcome",
+    "easel",
+    "sign",
+    "anika",
+    "rohan"
+   ],
+   "file": "/app/elements/babyshower/bs-welcome-sign.webp",
+   "w": 282,
+   "h": 567
+  }
+ ]
+}

@@ -12,8 +12,13 @@
 //       p: { x, y, w, h, r, z, hide }, l: { … } | null,                       // phone / laptop spot (design units)
 //       s: { font, size, weight, italic, color, bg, align, ls, lh, radius, border, bcolor, shadow, opacity, fx, fy, upper, shape: 'arch'|'circle', pad },
 //       sl: { …the laptop's own style changes }, per: { p, l } (event cards showing at once),
-//       m: motion — comes in once: fade|rise|drop|left|right|grow|blur|wipe|iris|unfold|shine, keeps moving: zoom|float
-//       mo: { d: delay ms, t: speed ms, p: scroll depth -0.6…0.6 },   section.stay: how long it holds still while scrolling
+//       m: motion — comes in once: fade|rise|drop|left|right|grow|blur|wipe|iris|unfold|shine
+//                    (step 97) + spin|flip-x|flip-y|turn|bounce|zoom-out|glide|arc|reveal|shutters
+//          keeps moving: zoom|float (step 97) + pulse|swing|wobble|spin-slow|breathe
+//          follows the scroll (step 97): fade-on-scroll|grow-on-scroll
+//       mo: { d: delay ms, t: speed ms, p: scroll depth -0.6…0.6, str: strength 0–100 (50 = normal), dir: 'bottom'|'top'|'left'|'right' (bounce, glide, arc) },
+//       section.stay: how long it holds still while scrolling; section.grid: { r, c, g } rows, columns, gap for the editor's Simple mode
+//     t: 'art' (step 97) — a ready-made picture from the elements library: src: { k: 'art', id: 'bs-teddy-brown', o: 'babyshower' }
 //       text, src: { k: 'cover'|'hl'|'ev'|'id'|'auto', n, i, id }, act: 'findme'|'reel'|'post'|'memory'|'moments'|'notes', v: variant } ] } ] }
 (function pgCanvas() {
   'use strict';
@@ -26,7 +31,11 @@
     moments: '<svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>', notes: '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>' };
   const LABEL = { findme: 'Find me', reel: 'Make a reel', post: 'Make a post', memory: 'Add a moment', moments: 'Root Moment', notes: 'Leave a blessing' };
   // motion (step 78): one per element. Comes in once (when it scrolls into view) or keeps moving gently; plus a delay, a speed and a scroll depth
-  const ENTER = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine'], LOOP = ['zoom', 'float'];
+  const ENTER = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine',
+    'spin', 'flip-x', 'flip-y', 'turn', 'bounce', 'zoom-out', 'glide', 'arc', 'reveal', 'shutters'];   // step 97: the motion library (transform and opacity only)
+  const LOOP = ['zoom', 'float', 'pulse', 'swing', 'wobble', 'spin-slow', 'breathe'], SCROLLM = ['fade-on-scroll', 'grow-on-scroll'];
+  const DIRS = { bottom: [0, 1], top: [0, -1], left: [-1, 0], right: [1, 0] };   // where bounce / glide / arc come in from
+  const artUrl = (src) => { const id = String((src && src.id) || ''), o = String((src && src.o) || ''); return /^[a-z0-9-]{1,40}$/.test(id) && /^[a-z0-9-]{1,30}$/.test(o) ? '/app/elements/' + o + '/' + id + '.webp' : ''; };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);
   const col = (v, d) => (/^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? v : d);
@@ -62,23 +71,43 @@
 .pgc-bl{display:flex;flex-direction:column;justify-content:center;gap:.6em}.pgc-bl q{quotes:'“' '”'}.pgc-bl small{opacity:.75;font-size:.72em;letter-spacing:.06em}
 .pgc-stick{position:relative;width:100%;overflow:hidden}
 .pgc-sec.stay>.pgc-stick{position:sticky;top:0}
-.pgc-e,.pgc-e>.pgc-body{transition-property:opacity,translate,scale,filter,clip-path;transition-duration:var(--t,900ms);transition-delay:var(--d,0ms);transition-timing-function:cubic-bezier(.2,.8,.2,1)}
+.pgc-e,.pgc-e>.pgc-body{transition-property:opacity,translate,scale,filter,clip-path,transform;transition-duration:var(--t,900ms);transition-delay:var(--d,0ms);transition-timing-function:cubic-bezier(.2,.8,.2,1)}
 .pgc-m-fade{opacity:0}.pgc-m-rise{opacity:0;translate:0 40px}.pgc-m-drop{opacity:0;translate:0 -40px}.pgc-m-left{opacity:0;translate:-60px 0}.pgc-m-right{opacity:0;translate:60px 0}
 .pgc-m-grow{opacity:0;scale:.86}.pgc-m-blur{opacity:0;filter:blur(14px)}/* step 93: wipe / iris / unfold clip the part's inside, not the part itself — a fully clipped part never counted as "on screen", so it never appeared (and its photo never loaded) */
 .pgc-m-wipe>.pgc-body{clip-path:inset(0 100% 0 0)}.pgc-m-iris>.pgc-body{clip-path:circle(0% at 50% 50%)}.pgc-m-unfold>.pgc-body{clip-path:inset(50% 0 50% 0)}
-.pgc-e.in{opacity:1;translate:0 0;scale:1;filter:none}.pgc-e.in>.pgc-body{clip-path:inset(0 0 0 0)}.pgc-m-iris.in>.pgc-body{clip-path:circle(150% at 50% 50%)}
+.pgc-e.in{opacity:1;translate:0 0;scale:1;filter:none;transform:none}.pgc-e.in>.pgc-body{clip-path:inset(0 0 0 0)}.pgc-m-iris.in>.pgc-body{clip-path:circle(150% at 50% 50%)}
 .pgc-m-shine>.pgc-body::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%);transform:translateX(-130%)}
 .pgc-m-shine.in>.pgc-body::after{animation:pgc-shine var(--t,1400ms) var(--d,0ms) ease-out 1 forwards}@keyframes pgc-shine{to{transform:translateX(130%)}}
 .pgc-stg .pgc-ev>button{opacity:0;translate:0 24px;transition:opacity var(--t,700ms) ease,translate var(--t,700ms) cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--d,0ms) + var(--i,0) * 140ms)}
 .pgc-stg.in .pgc-ev>button{opacity:1;translate:0 0}
 .pgc-m-zoom img{animation:pgc-kb 14s ease-in-out infinite alternate}@keyframes pgc-kb{to{transform:scale(1.12)}}
 .pgc-m-float{animation:pgc-float 5s ease-in-out infinite}@keyframes pgc-float{50%{translate:0 -8px}}
+/* step 97: the motion library. Strength (--str, 1 = normal) and direction (--mx, --my) come from the part's settings. Only transform and opacity move. */
+.pgc-m-spin{opacity:0;transform:rotate(calc(-180deg * var(--str,1))) scale(.85)}
+.pgc-m-flip-x{opacity:0;transform:perspective(700px) rotateX(calc(75deg * var(--str,1)))}
+.pgc-m-flip-y{opacity:0;transform:perspective(700px) rotateY(calc(75deg * var(--str,1)))}
+.pgc-m-turn{opacity:0;transform:rotate(calc(24deg * var(--str,1))) scale(.92)}
+.pgc-m-bounce{opacity:0;transform:translate(calc(var(--mx,0) * 40px * var(--str,1)),calc(var(--my,1) * 40px * var(--str,1)))}
+.pgc-e.pgc-m-bounce{transition-timing-function:cubic-bezier(.34,1.56,.64,1)}
+.pgc-m-zoom-out{opacity:0;transform:scale(calc(1 + .2 * var(--str,1)))}
+.pgc-m-glide{opacity:0;transform:translate(calc(var(--mx,-1) * 70px * var(--str,1)),calc(var(--my,0) * 70px * var(--str,1)))}
+.pgc-e.pgc-m-glide{transition-timing-function:cubic-bezier(.16,1,.3,1)}
+.pgc-m-arc{opacity:0;transform:translate(calc(var(--mx,0) * 36px * var(--str,1)),calc(var(--my,1) * 36px * var(--str,1))) rotate(calc(-10deg * var(--str,1)))}
+.pgc-m-reveal{opacity:0;transform:translateY(calc(16px * var(--str,1))) scale(.97)}
+.pgc-m-shutters{opacity:0;transform:scaleY(.08);transform-origin:50% 0}
+.pgc-m-pulse{animation:pgc-pulse 2.4s ease-in-out infinite}@keyframes pgc-pulse{50%{transform:scale(calc(1 + .05 * var(--str,1)))}}
+.pgc-m-swing{transform-origin:50% 0;animation:pgc-swing 3s ease-in-out infinite}@keyframes pgc-swing{0%,100%{transform:rotate(calc(-4deg * var(--str,1)))}50%{transform:rotate(calc(4deg * var(--str,1)))}}
+.pgc-m-wobble{animation:pgc-wobble 2.6s ease-in-out infinite}@keyframes pgc-wobble{0%,100%{transform:none}25%{transform:translateX(calc(-4px * var(--str,1))) rotate(calc(-1.5deg * var(--str,1)))}75%{transform:translateX(calc(4px * var(--str,1))) rotate(calc(1.5deg * var(--str,1)))}}
+.pgc-m-spin-slow{animation:pgc-spin 14s linear infinite}@keyframes pgc-spin{to{transform:rotate(360deg)}}
+.pgc-m-breathe{animation:pgc-breathe 4s ease-in-out infinite}@keyframes pgc-breathe{0%,100%{transform:scale(calc(1 - .03 * var(--str,1)));opacity:.92}50%{transform:scale(calc(1 + .03 * var(--str,1)));opacity:1}}
+.pgc-art img{width:100%;height:100%;object-fit:contain;display:block}
+html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse,html.pg-lite .pgc-m-swing,html.pg-lite .pgc-m-wobble,html.pg-lite .pgc-m-spin-slow,html.pg-lite .pgc-m-breathe,html.pg-lite .pgc-strip{animation:none!important}
 .pgc .pgc-cardhost.pgl-grid{display:block;padding:0;margin:0;max-width:none;grid-template-columns:none;gap:0;--u:86px;overflow:visible}
 .pgc .pgc-cardhost>.pgl-b{width:100%;height:100%}
 .pgc-staynote{display:grid;place-items:center;font:600 12px var(--font-sans,system-ui);color:#3d8bff;background:repeating-linear-gradient(45deg,rgba(61,139,255,.07) 0 10px,transparent 10px 20px);border-top:1px dashed rgba(61,139,255,.5)}
 .pgc-cardnone{width:100%;height:100%;display:grid;place-items:center;border:1.5px dashed rgba(127,127,127,.5);border-radius:14px;font:600 12px var(--font-sans,system-ui);opacity:.7;text-align:center;padding:6px}
-.pgc-still *,.pgc-still{animation:none!important;transition:none!important}.pgc-still .pgc-e,.pgc-still .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none}
-@media (prefers-reduced-motion:reduce){.pgc *{animation:none!important;transition:none!important}.pgc .pgc-e,.pgc .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none}}`;
+.pgc-still *,.pgc-still{animation:none!important;transition:none!important}.pgc-still .pgc-e,.pgc-still .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none;transform:none}
+@media (prefers-reduced-motion:reduce){.pgc *{animation:none!important;transition:none!important}.pgc .pgc-e,.pgc .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none;transform:none}}`;
 
   // ---- photos: the element's own choice, else cover → couple → highlights → event highlights → event photos ----
   function photos(data) {
@@ -146,6 +175,7 @@
     if (t === 'text') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || '') + '</div>';
     if (t === 'credit') { const stu = data.studio && data.studio !== 'Your photographer' && !(window.GALLERY && GALLERY.credit === false) ? data.studio : ''; return stu ? '<div class="pgc-body pgc-txt" style="' + st + '">' + esc((el.text || 'Photographed by') + ' ' + stu) + '</div>' : null; }
     if (t === 'shape') return '<div class="pgc-body" style="' + (st || 'background:currentColor') + '"></div>';
+    if (t === 'art') { const u = artUrl(el.src); return u ? '<div class="pgc-body pgc-art" style="' + st + '"><img alt="" loading="lazy" decoding="async" draggable="false" src="' + u + '"></div>' : null; }   // step 97: a picture from the elements library
     if (t === 'card') { ctx.cards.push({ el, i: ctx.cards.length }); return '<div class="pgc-body pgl-grid pgc-cardhost" data-card="' + (ctx.cards.length - 1) + '" style="' + st + '"></div>'; }   // step 77d: one of the app's own Hub cards
     if (t === 'events') {
       const v = ['row', 'circles', 'list'].indexOf(el.v) > -1 ? el.v : 'row', r = s.radius ? (num(s.radius, 0) * k).toFixed(1) + 'px' : '0';
@@ -180,9 +210,13 @@
     // scroll depth (parallax): an element drifts a little slower or faster than the page
     const sc = opts.scroller || window;
     function onScroll() {
-      if (sraf || !pars.length || opts.still) return;
+      if (sraf || !pars.length || opts.still || document.documentElement.classList.contains('pg-lite')) return;   // step 97: light mode keeps the page still
       sraf = requestAnimationFrame(() => { sraf = 0; const vh = opts.scroller ? opts.scroller.clientHeight : window.innerHeight, top0 = opts.scroller ? opts.scroller.getBoundingClientRect().top : 0;
-        pars.forEach(x => { const r = x.getBoundingClientRect(), c = r.top - top0 + r.height / 2 - vh / 2, b = x.firstElementChild; if (b) b.style.translate = '0 ' + Math.max(-240, Math.min(240, -c * (+x.dataset.par || 0))).toFixed(1) + 'px'; }); });
+        pars.forEach(x => { const r = x.getBoundingClientRect(), c = r.top - top0 + r.height / 2 - vh / 2, b = x.firstElementChild; if (!b) return;
+          const sm = x.dataset.sm, prog = Math.max(0, Math.min(1, (vh - (r.top - top0)) / (vh * 0.75)));   // step 97: 0 when it comes in at the bottom, 1 once it is well on screen
+          if (sm === 'fade-on-scroll') { b.style.opacity = (0.1 + 0.9 * prog).toFixed(2); return; }
+          if (sm === 'grow-on-scroll') { b.style.scale = (0.82 + 0.18 * prog).toFixed(3); return; }
+          b.style.translate = '0 ' + Math.max(-240, Math.min(240, -c * (+x.dataset.par || 0))).toFixed(1) + 'px'; }); });
     }
     sc.addEventListener('scroll', onScroll, { passive: true });
     const C = doc.colors || {};
@@ -205,8 +239,9 @@
           const inner = body(el, k, doc, data, P, ctx, sp); if (inner == null) return '';
           const mo = el.mo || {}, enter = ENTER.indexOf(el.m) > -1, stag = enter && el.t === 'events' && el.v !== 'list' && el.m !== 'shine';
           const m = stag ? ' pgc-stg' : enter ? ' pgc-e pgc-m-' + el.m : LOOP.indexOf(el.m) > -1 ? ' pgc-m-' + el.m : '';
-          const tim = (mo.d ? ';--d:' + num(mo.d, 0) + 'ms' : '') + (mo.t ? ';--t:' + num(mo.t, 900) + 'ms' : '');
-          return '<div class="pgc-el pgc-t-' + el.t + m + '" data-el="' + esc(el.id || '') + '"' + (mo.p ? ' data-par="' + num(mo.p, 0) + '"' : '') + ' style="left:' + (num(sp.x, 0) * k).toFixed(1) + 'px;top:' + (num(sp.y, 0) * k).toFixed(1) + 'px;width:' + (num(sp.w, 100) * k).toFixed(1) + 'px;height:' + (num(sp.h, 40) * k).toFixed(1) + 'px;z-index:' + num(sp.z, 1) + (sp.r ? ';rotate:' + num(sp.r, 0) + 'deg' : '') + tim + '">' + inner + '</div>';
+          const dir = DIRS[mo.dir], sm = SCROLLM.indexOf(el.m) > -1;
+          const tim = (mo.d ? ';--d:' + num(mo.d, 0) + 'ms' : '') + (mo.t ? ';--t:' + num(mo.t, 900) + 'ms' : '') + (mo.str != null ? ';--str:' + (Math.max(0, Math.min(100, num(mo.str, 50))) / 50).toFixed(2) : '') + (dir ? ';--mx:' + dir[0] + ';--my:' + dir[1] : '');
+          return '<div class="pgc-el pgc-t-' + el.t + m + '" data-el="' + esc(el.id || '') + '"' + (mo.p || sm ? ' data-par="' + num(mo.p, 0) + '"' : '') + (sm ? ' data-sm="' + el.m + '"' : '') + ' style="left:' + (num(sp.x, 0) * k).toFixed(1) + 'px;top:' + (num(sp.y, 0) * k).toFixed(1) + 'px;width:' + (num(sp.w, 100) * k).toFixed(1) + 'px;height:' + (num(sp.h, 40) * k).toFixed(1) + 'px;z-index:' + num(sp.z, 1) + (sp.r ? ';rotate:' + num(sp.r, 0) + 'deg' : '') + tim + '">' + inner + '</div>';
         }).join('');
         const stay = Math.max(0, num(sec.stay, 0)) * k;   // "stays while scrolling": the section holds still for this much scrolling
         return '<section class="pgc-sec' + (stay && !opts.editing ? ' stay' : '') + '" data-sec="' + esc(sec.id || '') + '" style="height:' + (h + stay).toFixed(1) + 'px;background:' + col(bg.c, 'transparent') + '"><div class="pgc-stick" style="height:' + h.toFixed(1) + 'px">' + bgHtml + '<div class="pgc-in" style="left:' + off.toFixed(1) + 'px;width:' + inW.toFixed(1) + 'px">' + els + '</div></div>' + (stay && opts.editing ? '<div class="pgc-staynote" style="height:' + stay.toFixed(1) + 'px">stays here while guests scroll</div>' : '') + '</section>';
@@ -270,5 +305,5 @@
     render(box, data, act, opts) { if (live) live.destroy(); const doc = (opts && opts.tune && (opts.tune.doc || opts.tune)) || { sections: [] }; live = render(box, doc, data, act || (() => {}), opts); return live; },
     destroy() { if (live) live.destroy(); live = null; }
   };
-  window.PGCanvas = { render, mod, FONTS, PW, LW, LAPTOP_AT, spotOf, secH, LABEL };
+  window.PGCanvas = { render, mod, FONTS, PW, LW, LAPTOP_AT, spotOf, secH, LABEL, ENTER, LOOP, SCROLLM, artUrl };
 })();

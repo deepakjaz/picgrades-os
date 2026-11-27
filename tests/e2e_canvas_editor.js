@@ -57,7 +57,7 @@ const srv = http.createServer((req, res) => {
   const n4 = (await S()).doc.sections[0].els.find(e => e.id === names.id);
   ok((n4.sl && n4.sl.size === 90) || (n4.s && n4.s.size === 90), 'the size slider changes the text size');
   // phone mode: phone placement kept
-  await pg.click('.pce [data-tab=page]'); await pg.click('.pce-mode [data-mode=p]');   // F2b: the Phone/Laptop switch lives in the Page tab await pg.waitForTimeout(300);
+  await pg.click('.pce-more-btn'); await pg.click('.pce-mode [data-mode=p]');   // step 97: the Phone/Laptop switch lives in the ⋯ menu (approved mockup) await pg.waitForTimeout(300);
   ok((await S()).mode === 'p' && await pg.evaluate(() => document.querySelector('.pce-page').offsetWidth === 390), 'Phone shows the 390-wide phone page');
   // add a Find me button
   const before = new Set((await S()).doc.sections.flatMap(s => s.els).map(e => e.id));
@@ -122,13 +122,13 @@ const srv = http.createServer((req, res) => {
   ok(await mp.evaluate(() => PGCanvasEditor.state().mode === 'p' && !!PGCanvasEditor.state().sel), 'phone: tap selects (phone placement)');
   await mp.screenshot({ path: '/tmp/ce_phone_sel.png' });
   // ---- phase 3: zoom-out, Play, motion, stay, header, typing on the page, drag between sections
-  await mp.tap('.pce-zoom-toggle'); await mp.tap('.pce-zoom-menu [data-z="-"]'); await mp.tap('.pce-zoom-toggle'); await mp.tap('.pce-zoom-menu [data-z="-"]'); await mp.waitForTimeout(200);
+  await mp.tap('.pce-more-btn'); await mp.tap('.pce-zoom-menu [data-z="-"]'); await mp.tap('.pce-zoom-menu [data-z="-"]'); await mp.waitForTimeout(200);   // step 97: zoom is in the ⋯ menu
   ok(await mp.evaluate(() => PGCanvasEditor.state().zoom < 1 && document.querySelector('.pce-page').getBoundingClientRect().width < 380), 'zoom out: the page draws smaller');
-  await mp.tap('.pce-zoom-toggle'); await mp.tap('.pce-zoom-menu [data-z="1"]'); await mp.waitForTimeout(150);
+  await mp.tap('.pce-zoom-menu [data-z="1"]'); await mp.tap('.pce-more-btn'); await mp.waitForTimeout(150);
   // motion on the selected element
-  await mp.tap('[data-tab=style]').catch(() => {}); await mp.waitForTimeout(150);
-  const hasM = await mp.evaluate(() => !!document.querySelector('.pce [data-f="m"]'));
-  if (hasM) { await mp.selectOption('.pce [data-f="m"]', 'rise'); await mp.waitForTimeout(200); }
+  await mp.tap('.pce [data-sub=motion]').catch(() => {}); await mp.waitForTimeout(150);   // step 97: the part's Motion tab — the motion library tiles
+  const hasM = await mp.evaluate(() => !!document.querySelector('.pce [data-mt="slide"]'));
+  if (hasM) { await mp.tap('.pce [data-mt="slide"]'); await mp.waitForTimeout(200); }   // Slide, from below = "rise"
   ok(hasM && await mp.evaluate(id => PGCanvasEditor.state().doc.sections[0].els.find(e => e.id === id).m === 'rise', el0), 'motion: pick "rise" for a part');
   await mp.tap('.pce-play'); await mp.waitForTimeout(1600);
   ok(await mp.evaluate(() => PGCanvasEditor.state().play && document.querySelectorAll('.pce-page .pgc-e.in').length > 0), 'Play: the motion plays in the editor');
