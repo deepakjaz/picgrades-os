@@ -154,7 +154,7 @@
         '<div class="pce-menu" hidden><div class="pce-menu-row"><span>Screen</span><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div>' +
         '<div class="pce-menu-row"><span>Placing</span><div class="pce-seg pce-snap"><button type="button" data-snap="simple">Simple</button><button type="button" data-snap="free">Free</button></div></div>' +
         '<div class="pce-menu-row"><span>Zoom</span><div class="pce-zrow"><button type="button" class="pce-zoom-toggle" hidden>100%</button><div class="pce-zoom-menu"><button type="button" data-z="-" aria-label="Smaller">−</button><b>100%</b><button type="button" data-z="+" aria-label="Bigger">+</button><button type="button" data-z="1">Fit</button></div></div></div>' +
-        '<button type="button" class="pce-menu-item" data-menu="rename">Rename this layout</button><button type="button" class="pce-menu-item" data-menu="save">Save to a collection…</button></div></div>' +
+        '<button type="button" class="pce-menu-item" data-menu="rename">Rename this layout</button><button type="button" class="pce-menu-item" data-menu="save">Save as a copy / to a collection…</button></div></div>' +
       '<button type="button" class="pce-ic pce-play" aria-label="Play" aria-pressed="false">' + IC.play + '</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
       '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '" role="tab">' + IC[k] + '<span>' + n + '</span></button>').join('') + '<button type="button" class="pce-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pce-pane"></div></div></div>';
     el.querySelector('.pce-x').addEventListener('click', () => { close(); if (!E && window.pgBackToPanel) pgBackToPanel(); });   // clean-up #1: back to where it was opened from
@@ -171,7 +171,7 @@
     el.querySelectorAll('[data-menu]').forEach(b => b.addEventListener('click', () => { shutMenu(); if (b.dataset.menu === 'rename') rename(); else saveDialog(false); }));
     el.querySelector('.pce-drawer-toggle').addEventListener('click', () => setDrawer(!E.drawerOpen));
     el.querySelector('.pce-zoom-toggle').addEventListener('click', () => { E.zoom = 1; draw(); });
-    el.querySelector('.pce-save').addEventListener('click', () => saveDialog(false));
+    el.querySelector('.pce-save').addEventListener('click', quickSave);   // step 99e: their own layout saves straight over itself
     el.querySelector('.pce-apply').addEventListener('click', apply);
     el.querySelector('.pce-play').addEventListener('click', () => { E.play = !E.play; if (E.play) { E.sel = null; panel(); } draw(); if (E.play) { const st = el.querySelector('.pce-stage'); st.scrollTop = 0; } });   // watch the motion; any change stops it
     el.querySelector('.pce-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { const same = E.tab === b.dataset.tab; E.tab = b.dataset.tab; setDrawer(!(same && E.drawerOpen)); panel(); } });
@@ -731,6 +731,14 @@
   function scopesFor(role) {
     return role === 'picgrades' ? [['me', 'Only me'], ['wedding', 'This wedding'], ['studio', 'All my weddings'], ['all', 'Every wedding (PicGrades)']] :
       role === 'photographer' ? [['me', 'Only me'], ['wedding', 'This wedding'], ['studio', 'All my weddings']] : [['me', 'Only us'], ['wedding', 'Everyone at our wedding']];
+  }
+  // step 99e: a layout that is already this wedding's own saves in place — no name or collection question again.
+  // Only the first save of a ready layout asks (it makes the wedding's own copy). Other weddings never see it.
+  function quickSave() {
+    if (E.role === 'demo' || !(E.src.id && E.src.mine)) return saveDialog(false);
+    const btn = E.el.querySelector('.pce-save'); if (btn) btn.disabled = true;
+    return pgApi('canvasSave', { item: { id: E.src.id, kind: 'layout', name: E.doc.name || 'My layout', collection: E.src.collection || undefined, scope: E.src.scope || 'wedding', doc: E.doc } })
+      .then(() => { E.saved = JSON.stringify(E.doc); showToast('Saved'); }).catch(err => showToast(err.message || 'Could not save')).then(() => { if (btn) btn.disabled = false; });
   }
   function saveDialog(thenApply) {
     if (E.role === 'demo') { demoKeep(thenApply); return Promise.resolve(); }
