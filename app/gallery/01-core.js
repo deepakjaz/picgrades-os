@@ -313,6 +313,8 @@ function pgDemoMerge(g) {
   if (d.custom && d.custom.blocks) g.custom = d.custom;
   if (d.story) g.story = d.story;   // story photos chosen on this phone (step 56)
   if (d.versions) g.versions = Object.assign({}, g.versions || {}, d.versions);
+  if ('logo' in d) g.logoRaw = d.logo;   // step 99d: a logo tried on this phone
+  if (g.logoRaw != null) g.logoUrl = (g.pages || {}).logo === 'image' ? g.logoRaw : '';
   if (d.canvas) g.canvas = d.canvas;   // step 77: a free-canvas layout made on this phone   // step 76: each layout's version made on this phone
   if (d.features) { const f = Object.assign({}, g.features || {}); Object.keys(d.features).forEach(k => { if (f[k] !== 'locked') f[k] = d.features[k]; }); g.features = f; }
   return g;
@@ -683,11 +685,14 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate; GALLERY.status = res.gallery.status;   // step 62b: Draft / Published
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
     pgDemoMerge(res.gallery); GALLERY.demo = res.gallery.demo;
-    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}, x.story || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
+    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}, x.story || {}, x.canvas || null]), lookChanged = look(res.gallery) !== look(GALLERY);   // step 98b: the wedding's own canvas layout too (a changed photo, or a phone that kept an older copy)
     // step 59: the story photos and the photographer were never refreshed, so a restart showed the old choice
     if (!(window.PGStoryPicks && PGStoryPicks.saving())) GALLERY.story = res.gallery.story || {};
     GALLERY.photographer = res.gallery.photographer; GALLERY.studio = res.gallery.studio; GALLERY.credit = res.gallery.credit;
     GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {}; GALLERY.custom = res.gallery.custom || { blocks: [] };
+    if (!GALLERY.demo) { if ((GALLERY.logoUrl || '') !== (res.gallery.logoUrl || '')) { GALLERY.logoUrl = res.gallery.logoUrl || ''; pgMonogram(); } }   // step 99d: a new logo reaches returning guests
+    if (window.PGHeader) PGHeader.apply();   // step 99d: header choices may have changed
+    if (!GALLERY.demo) GALLERY.canvas = res.gallery.canvas || null;   // step 98b: was never refreshed, so the Hub fell back to the plain one
     if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
     GALLERY.guestPosts = res.gallery.guestPosts || [];

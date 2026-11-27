@@ -405,7 +405,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Mountain wedding",
-      "by": "C"
+      "by": "C",
+      "editor": "canvas-cloud-pages"
     },
     {
       "id": "tpl-c4",
@@ -414,7 +415,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Farmhouse or garden, by day",
-      "by": "C"
+      "by": "C",
+      "editor": "canvas-haldi-splash"
     },
     {
       "id": "tpl-c5",
@@ -423,7 +425,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Ballroom, party plot or reception",
-      "by": "C"
+      "by": "C",
+      "editor": "canvas-cinema-chapters"
     },
     {
       "id": "tpl-g1",
@@ -432,7 +435,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Haveli courtyard at dusk",
-      "by": "G"
+      "by": "G",
+      "editor": "canvas-heritage-courtyard"
     },
     {
       "id": "tpl-g2",
@@ -441,7 +445,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Hills and estates, morning",
-      "by": "G"
+      "by": "G",
+      "editor": "canvas-misty-tea"
     },
     {
       "id": "tpl-g3",
@@ -450,7 +455,8 @@
       "group": "progress",
       "blocks": [],
       "idea": "Modern hall, quiet luxury",
-      "by": "G"
+      "by": "G",
+      "editor": "canvas-alabaster"
     },
     {
       "id": "x-royal-journey",
@@ -2845,7 +2851,7 @@
           ],
           "wide": [
             3,
-            5
+            2
           ]
         },
         {
@@ -3034,7 +3040,7 @@
           ],
           "wide": [
             3,
-            4
+            2
           ]
         },
         {
@@ -3081,7 +3087,7 @@
             3
           ],
           "wide": [
-            4,
+            3,
             2
           ]
         }
@@ -8653,6 +8659,4109 @@
                 }
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "canvas-cloud-pages",
+      "name": "Cloud Pages (editor)",
+      "group": "progress",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Cloud Pages (editor)",
+        "colors": {
+          "bg": "#EEF0EB",
+          "ink": "#1E3A2C",
+          "acc": "#C9A36B",
+          "acc2": "#5D6C70",
+          "card": "#FFFFFF"
+        },
+        "fonts": {
+          "head": "Instrument Serif",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "c3-sky",
+            "h": {
+              "p": 844,
+              "l": 780
+            },
+            "els": [
+              {
+                "id": "e1",
+                "t": "art",
+                "p": {
+                  "x": -205,
+                  "y": 440,
+                  "w": 800,
+                  "h": 267,
+                  "z": 1
+                },
+                "l": {
+                  "x": 0,
+                  "y": 330,
+                  "w": 1200,
+                  "h": 400,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-mountains-far",
+                  "o": "decor"
+                }
+              },
+              {
+                "id": "e2",
+                "t": "photo",
+                "p": {
+                  "x": 30,
+                  "y": 505,
+                  "w": 330,
+                  "h": 300,
+                  "z": 2
+                },
+                "l": {
+                  "x": 330,
+                  "y": 350,
+                  "w": 540,
+                  "h": 360,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 18,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 1400
+                }
+              },
+              {
+                "id": "e3",
+                "t": "art",
+                "p": {
+                  "x": -255,
+                  "y": 640,
+                  "w": 900,
+                  "h": 285,
+                  "z": 3
+                },
+                "l": {
+                  "x": 0,
+                  "y": 560,
+                  "w": 1200,
+                  "h": 380,
+                  "z": 3
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-mountains-near",
+                  "o": "decor"
+                }
+              },
+              {
+                "id": "e4",
+                "t": "art",
+                "p": {
+                  "x": -50,
+                  "y": 96,
+                  "w": 230,
+                  "h": 130,
+                  "z": 4
+                },
+                "l": {
+                  "x": 40,
+                  "y": 60,
+                  "w": 340,
+                  "h": 192,
+                  "z": 4
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-cloud",
+                  "o": "decor"
+                },
+                "m": "float"
+              },
+              {
+                "id": "e5",
+                "t": "art",
+                "p": {
+                  "x": 210,
+                  "y": 170,
+                  "w": 230,
+                  "h": 130,
+                  "z": 4
+                },
+                "l": {
+                  "x": 820,
+                  "y": 120,
+                  "w": 360,
+                  "h": 203,
+                  "z": 4
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-cloud-soft",
+                  "o": "decor"
+                },
+                "m": "float",
+                "mo": {
+                  "d": 800
+                }
+              },
+              {
+                "id": "e6",
+                "t": "art",
+                "p": {
+                  "x": 240,
+                  "y": 400,
+                  "w": 200,
+                  "h": 113,
+                  "z": 4
+                },
+                "l": {
+                  "x": 930,
+                  "y": 330,
+                  "w": 260,
+                  "h": 147,
+                  "z": 4
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-cloud",
+                  "o": "decor"
+                },
+                "m": "float",
+                "mo": {
+                  "d": 400
+                }
+              },
+              {
+                "id": "e7",
+                "t": "names",
+                "p": {
+                  "x": 0,
+                  "y": 190,
+                  "w": 390,
+                  "h": 120,
+                  "z": 5
+                },
+                "l": {
+                  "x": 200,
+                  "y": 150,
+                  "w": 800,
+                  "h": 120,
+                  "z": 5
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 56,
+                  "align": "center",
+                  "color": "#1E3A2C",
+                  "lh": 1.0
+                },
+                "sl": {
+                  "size": 84
+                },
+                "m": "rise",
+                "mo": {
+                  "t": 1300
+                }
+              },
+              {
+                "id": "e8",
+                "t": "date",
+                "p": {
+                  "x": 0,
+                  "y": 312,
+                  "w": 390,
+                  "h": 24,
+                  "z": 5
+                },
+                "l": {
+                  "x": 200,
+                  "y": 276,
+                  "w": 800,
+                  "h": 28,
+                  "z": 5
+                },
+                "s": {
+                  "size": 12,
+                  "ls": 0.3,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#5D6C70"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 500
+                }
+              },
+              {
+                "id": "e9",
+                "t": "action",
+                "p": {
+                  "x": 125,
+                  "y": 770,
+                  "w": 140,
+                  "h": 46,
+                  "z": 6
+                },
+                "l": {
+                  "x": 520,
+                  "y": 700,
+                  "w": 160,
+                  "h": 48,
+                  "z": 6
+                },
+                "s": {
+                  "bg": "#EEF0EB",
+                  "color": "#1E3A2C",
+                  "radius": 23,
+                  "size": 14,
+                  "weight": 600
+                },
+                "act": "findme"
+              }
+            ],
+            "bg": {
+              "c": "#DCE6EA"
+            }
+          },
+          {
+            "id": "c3-pages",
+            "h": {
+              "p": 560,
+              "l": 560
+            },
+            "els": [
+              {
+                "id": "e10",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 30,
+                  "w": 342,
+                  "h": 22,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 600,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.3,
+                  "upper": true,
+                  "color": "#C9A36B"
+                },
+                "text": "Story pages"
+              },
+              {
+                "id": "e11",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 54,
+                  "w": 342,
+                  "h": 44,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 66,
+                  "w": 700,
+                  "h": 54,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 36,
+                  "color": "#1E3A2C"
+                },
+                "sl": {
+                  "size": 46
+                },
+                "text": "Our days, page by page",
+                "m": "rise"
+              },
+              {
+                "id": "e12",
+                "t": "events",
+                "p": {
+                  "x": 24,
+                  "y": 116,
+                  "w": 366,
+                  "h": 400,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 140,
+                  "w": 1000,
+                  "h": 380,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 18,
+                  "size": 16,
+                  "weight": 500,
+                  "color": "#1E3A2C"
+                },
+                "v": "row",
+                "per": {
+                  "p": 1.4,
+                  "l": 3.6
+                },
+                "m": "rise"
+              }
+            ]
+          },
+          {
+            "id": "c3-glance",
+            "h": {
+              "p": 360,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e13",
+                "t": "strip",
+                "p": {
+                  "x": 0,
+                  "y": 40,
+                  "w": 390,
+                  "h": 280,
+                  "z": 1
+                },
+                "l": {
+                  "x": 0,
+                  "y": 40,
+                  "w": 1200,
+                  "h": 280,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 14
+                }
+              }
+            ],
+            "bg": {
+              "c": "#DCE6EA"
+            }
+          },
+          {
+            "id": "c3-make",
+            "h": {
+              "p": 420,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e14",
+                "t": "shape",
+                "p": {
+                  "x": 20,
+                  "y": 30,
+                  "w": 350,
+                  "h": 350,
+                  "z": 0
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 1000,
+                  "h": 280,
+                  "z": 0
+                },
+                "s": {
+                  "bg": "#FFFFFF",
+                  "radius": 26,
+                  "shadow": 1
+                }
+              },
+              {
+                "id": "e15",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 56,
+                  "w": 310,
+                  "h": 44,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 74,
+                  "w": 480,
+                  "h": 52,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 32,
+                  "color": "#1E3A2C"
+                },
+                "sl": {
+                  "size": 40
+                },
+                "text": "Make something",
+                "m": "rise"
+              },
+              {
+                "id": "e16",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 102,
+                  "w": 310,
+                  "h": 40,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 130,
+                  "w": 460,
+                  "h": 44,
+                  "z": 1
+                },
+                "s": {
+                  "size": 13,
+                  "opacity": 0.72,
+                  "lh": 1.45,
+                  "color": "#1E3A2C"
+                },
+                "text": "From this wedding — for the guests and the couple."
+              },
+              {
+                "id": "e17",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 160,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 70,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "bg": "#1E3A2C",
+                  "color": "#EEF0EB",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "reel",
+                "m": "rise"
+              },
+              {
+                "id": "e18",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 224,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 140,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#1E3A2C",
+                  "color": "#1E3A2C",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "post",
+                "m": "rise",
+                "mo": {
+                  "d": 120
+                }
+              },
+              {
+                "id": "e19",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 288,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 210,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#1E3A2C",
+                  "color": "#1E3A2C",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "memory",
+                "m": "rise",
+                "mo": {
+                  "d": 240
+                }
+              }
+            ]
+          },
+          {
+            "id": "c3-words",
+            "h": {
+              "p": 380,
+              "l": 330
+            },
+            "els": [
+              {
+                "id": "e20",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 34,
+                  "w": 342,
+                  "h": 46,
+                  "z": 1
+                },
+                "l": {
+                  "x": 200,
+                  "y": 40,
+                  "w": 800,
+                  "h": 54,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 34,
+                  "align": "center",
+                  "color": "#1E3A2C"
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "Words for us",
+                "m": "fade"
+              },
+              {
+                "id": "e21",
+                "t": "blessings",
+                "p": {
+                  "x": 32,
+                  "y": 96,
+                  "w": 326,
+                  "h": 150,
+                  "z": 1
+                },
+                "l": {
+                  "x": 260,
+                  "y": 110,
+                  "w": 680,
+                  "h": 130,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 22,
+                  "italic": true,
+                  "align": "center",
+                  "lh": 1.35,
+                  "color": "#1E3A2C"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e22",
+                "t": "action",
+                "p": {
+                  "x": 105,
+                  "y": 262,
+                  "w": 180,
+                  "h": 46,
+                  "z": 2
+                },
+                "l": {
+                  "x": 510,
+                  "y": 250,
+                  "w": 180,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#1E3A2C",
+                  "color": "#1E3A2C",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "notes"
+              },
+              {
+                "id": "e23",
+                "t": "credit",
+                "p": {
+                  "x": 24,
+                  "y": 330,
+                  "w": 342,
+                  "h": 24,
+                  "z": 1
+                },
+                "l": {
+                  "x": 300,
+                  "y": 300,
+                  "w": 600,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.2,
+                  "upper": true,
+                  "align": "center",
+                  "opacity": 0.65,
+                  "color": "#1E3A2C"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#EEF0EB"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "canvas-haldi-splash",
+      "name": "Haldi Splash (editor)",
+      "group": "progress",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Haldi Splash (editor)",
+        "colors": {
+          "bg": "#F3EEE3",
+          "ink": "#2E2A22",
+          "acc": "#C0643B",
+          "acc2": "#55623A",
+          "card": "#FFFFFF"
+        },
+        "fonts": {
+          "head": "Parisienne",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "c4-splash",
+            "h": {
+              "p": 844,
+              "l": 780
+            },
+            "els": [
+              {
+                "id": "e24",
+                "t": "art",
+                "p": {
+                  "x": 14,
+                  "y": 150,
+                  "w": 70,
+                  "h": 70,
+                  "z": 1
+                },
+                "l": {
+                  "x": 80,
+                  "y": 120,
+                  "w": 110,
+                  "h": 110,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-drop-yellow",
+                  "o": "decor"
+                },
+                "m": "pulse"
+              },
+              {
+                "id": "e25",
+                "t": "art",
+                "p": {
+                  "x": 300,
+                  "y": 210,
+                  "w": 52,
+                  "h": 52,
+                  "z": 1
+                },
+                "l": {
+                  "x": 1040,
+                  "y": 170,
+                  "w": 90,
+                  "h": 90,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-drop-pink",
+                  "o": "decor"
+                },
+                "m": "pulse",
+                "mo": {
+                  "d": 600
+                }
+              },
+              {
+                "id": "e26",
+                "t": "art",
+                "p": {
+                  "x": 40,
+                  "y": 600,
+                  "w": 46,
+                  "h": 46,
+                  "z": 1
+                },
+                "l": {
+                  "x": 620,
+                  "y": 640,
+                  "w": 70,
+                  "h": 70,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-drop-green",
+                  "o": "decor"
+                },
+                "m": "pulse",
+                "mo": {
+                  "d": 300
+                }
+              },
+              {
+                "id": "e27",
+                "t": "art",
+                "p": {
+                  "x": 310,
+                  "y": 640,
+                  "w": 60,
+                  "h": 60,
+                  "z": 1
+                },
+                "l": {
+                  "x": 1080,
+                  "y": 600,
+                  "w": 80,
+                  "h": 80,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-drop-yellow",
+                  "o": "decor"
+                },
+                "m": "float"
+              },
+              {
+                "id": "e28",
+                "t": "art",
+                "p": {
+                  "x": 30,
+                  "y": 175,
+                  "w": 330,
+                  "h": 330,
+                  "z": 2
+                },
+                "l": {
+                  "x": 110,
+                  "y": 110,
+                  "w": 520,
+                  "h": 520,
+                  "z": 2
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-splash-ring",
+                  "o": "decor"
+                },
+                "m": "spin-slow"
+              },
+              {
+                "id": "e29",
+                "t": "photo",
+                "p": {
+                  "x": 55,
+                  "y": 200,
+                  "w": 280,
+                  "h": 280,
+                  "z": 3
+                },
+                "l": {
+                  "x": 150,
+                  "y": 150,
+                  "w": 440,
+                  "h": 440,
+                  "z": 3
+                },
+                "s": {
+                  "shape": "circle",
+                  "fy": 30
+                },
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "m": "grow",
+                "mo": {
+                  "t": 1200,
+                  "str": 80
+                }
+              },
+              {
+                "id": "e30",
+                "t": "names",
+                "p": {
+                  "x": 10,
+                  "y": 520,
+                  "w": 370,
+                  "h": 96,
+                  "z": 4
+                },
+                "l": {
+                  "x": 680,
+                  "y": 270,
+                  "w": 460,
+                  "h": 140,
+                  "z": 4
+                },
+                "s": {
+                  "font": "Parisienne",
+                  "size": 52,
+                  "align": "center",
+                  "color": "#C0643B",
+                  "lh": 1.05
+                },
+                "sl": {
+                  "size": 84,
+                  "align": "left"
+                },
+                "m": "rise"
+              },
+              {
+                "id": "e31",
+                "t": "date",
+                "p": {
+                  "x": 10,
+                  "y": 622,
+                  "w": 370,
+                  "h": 24,
+                  "z": 4
+                },
+                "l": {
+                  "x": 680,
+                  "y": 420,
+                  "w": 460,
+                  "h": 28,
+                  "z": 4
+                },
+                "s": {
+                  "size": 12,
+                  "ls": 0.3,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#55623A"
+                },
+                "sl": {
+                  "align": "left"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 400
+                }
+              },
+              {
+                "id": "e32",
+                "t": "action",
+                "p": {
+                  "x": 120,
+                  "y": 680,
+                  "w": 150,
+                  "h": 46,
+                  "z": 5
+                },
+                "l": {
+                  "x": 680,
+                  "y": 480,
+                  "w": 170,
+                  "h": 48,
+                  "z": 5
+                },
+                "s": {
+                  "bg": "#C0643B",
+                  "color": "#ffffff",
+                  "radius": 23,
+                  "size": 14,
+                  "weight": 600
+                },
+                "act": "findme",
+                "m": "bounce",
+                "mo": {
+                  "d": 600
+                }
+              }
+            ]
+          },
+          {
+            "id": "c4-events",
+            "h": {
+              "p": 420,
+              "l": 440
+            },
+            "els": [
+              {
+                "id": "e33",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 30,
+                  "w": 342,
+                  "h": 56,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 700,
+                  "h": 70,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Parisienne",
+                  "size": 40,
+                  "color": "#C0643B"
+                },
+                "sl": {
+                  "size": 52
+                },
+                "text": "The celebrations",
+                "m": "rise"
+              },
+              {
+                "id": "e34",
+                "t": "events",
+                "p": {
+                  "x": 24,
+                  "y": 110,
+                  "w": 366,
+                  "h": 190,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 140,
+                  "w": 1000,
+                  "h": 250,
+                  "z": 1
+                },
+                "s": {
+                  "size": 14,
+                  "weight": 500,
+                  "color": "#2E2A22"
+                },
+                "v": "circles",
+                "per": {
+                  "p": 3.1,
+                  "l": 6
+                },
+                "m": "rise"
+              }
+            ],
+            "bg": {
+              "c": "#FBF4DF"
+            }
+          },
+          {
+            "id": "c4-pair",
+            "h": {
+              "p": 470,
+              "l": 520
+            },
+            "els": [
+              {
+                "id": "e35",
+                "t": "photo",
+                "p": {
+                  "x": 24,
+                  "y": 30,
+                  "w": 200,
+                  "h": 280,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 500,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 120,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "hl",
+                  "n": 0
+                },
+                "m": "left"
+              },
+              {
+                "id": "e36",
+                "t": "photo",
+                "p": {
+                  "x": 190,
+                  "y": 170,
+                  "w": 176,
+                  "h": 240,
+                  "z": 2
+                },
+                "l": {
+                  "x": 640,
+                  "y": 100,
+                  "w": 460,
+                  "h": 380,
+                  "z": 2
+                },
+                "s": {
+                  "radius": 16,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "hl",
+                  "n": 1
+                },
+                "m": "right",
+                "mo": {
+                  "d": 200
+                }
+              },
+              {
+                "id": "e37",
+                "t": "art",
+                "p": {
+                  "x": 20,
+                  "y": 380,
+                  "w": 56,
+                  "h": 56,
+                  "z": 3
+                },
+                "l": {
+                  "x": 560,
+                  "y": 420,
+                  "w": 80,
+                  "h": 80,
+                  "z": 3
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-drop-pink",
+                  "o": "decor"
+                },
+                "m": "pulse"
+              }
+            ]
+          },
+          {
+            "id": "c4-make",
+            "h": {
+              "p": 420,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e38",
+                "t": "shape",
+                "p": {
+                  "x": 20,
+                  "y": 30,
+                  "w": 350,
+                  "h": 350,
+                  "z": 0
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 1000,
+                  "h": 280,
+                  "z": 0
+                },
+                "s": {
+                  "bg": "#FFFFFF",
+                  "radius": 26,
+                  "shadow": 1
+                }
+              },
+              {
+                "id": "e39",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 56,
+                  "w": 310,
+                  "h": 44,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 74,
+                  "w": 480,
+                  "h": 52,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Parisienne",
+                  "size": 32,
+                  "color": "#2E2A22"
+                },
+                "sl": {
+                  "size": 40
+                },
+                "text": "Make something",
+                "m": "rise"
+              },
+              {
+                "id": "e40",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 102,
+                  "w": 310,
+                  "h": 40,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 130,
+                  "w": 460,
+                  "h": 44,
+                  "z": 1
+                },
+                "s": {
+                  "size": 13,
+                  "opacity": 0.72,
+                  "lh": 1.45,
+                  "color": "#2E2A22"
+                },
+                "text": "Turn the day into a reel, a post or a little film."
+              },
+              {
+                "id": "e41",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 160,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 70,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "bg": "#55623A",
+                  "color": "#F3EEE3",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "reel",
+                "m": "rise"
+              },
+              {
+                "id": "e42",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 224,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 140,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#C0643B",
+                  "color": "#C0643B",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "post",
+                "m": "rise",
+                "mo": {
+                  "d": 120
+                }
+              },
+              {
+                "id": "e43",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 288,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 210,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#C0643B",
+                  "color": "#C0643B",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "memory",
+                "m": "rise",
+                "mo": {
+                  "d": 240
+                }
+              }
+            ]
+          },
+          {
+            "id": "c4-words",
+            "h": {
+              "p": 380,
+              "l": 330
+            },
+            "els": [
+              {
+                "id": "e44",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 34,
+                  "w": 342,
+                  "h": 46,
+                  "z": 1
+                },
+                "l": {
+                  "x": 200,
+                  "y": 40,
+                  "w": 800,
+                  "h": 54,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Parisienne",
+                  "size": 34,
+                  "align": "center",
+                  "color": "#2E2A22"
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "Blessings",
+                "m": "fade"
+              },
+              {
+                "id": "e45",
+                "t": "blessings",
+                "p": {
+                  "x": 32,
+                  "y": 96,
+                  "w": 326,
+                  "h": 150,
+                  "z": 1
+                },
+                "l": {
+                  "x": 260,
+                  "y": 110,
+                  "w": 680,
+                  "h": 130,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 22,
+                  "italic": true,
+                  "align": "center",
+                  "lh": 1.35,
+                  "color": "#2E2A22"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e46",
+                "t": "action",
+                "p": {
+                  "x": 105,
+                  "y": 262,
+                  "w": 180,
+                  "h": 46,
+                  "z": 2
+                },
+                "l": {
+                  "x": 510,
+                  "y": 250,
+                  "w": 180,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#C0643B",
+                  "color": "#C0643B",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "notes"
+              },
+              {
+                "id": "e47",
+                "t": "credit",
+                "p": {
+                  "x": 24,
+                  "y": 330,
+                  "w": 342,
+                  "h": 24,
+                  "z": 1
+                },
+                "l": {
+                  "x": 300,
+                  "y": 300,
+                  "w": 600,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.2,
+                  "upper": true,
+                  "align": "center",
+                  "opacity": 0.65,
+                  "color": "#2E2A22"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#FBF4DF"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "canvas-cinema-chapters",
+      "name": "Cinema Chapters (editor)",
+      "group": "progress",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Cinema Chapters (editor)",
+        "colors": {
+          "bg": "#0F0E0D",
+          "ink": "#F4EDE2",
+          "acc": "#D8C197",
+          "acc2": "#C98B7A",
+          "card": "#1C1A18"
+        },
+        "fonts": {
+          "head": "Bodoni Moda",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "c5-screen",
+            "h": {
+              "p": 844,
+              "l": 780
+            },
+            "els": [
+              {
+                "id": "e48",
+                "t": "art",
+                "p": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 390,
+                  "h": 844,
+                  "z": 1
+                },
+                "l": {
+                  "x": 0,
+                  "y": 0,
+                  "w": 1200,
+                  "h": 780,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-gold-dust",
+                  "o": "decor"
+                },
+                "m": "breathe"
+              },
+              {
+                "id": "e49",
+                "t": "art",
+                "p": {
+                  "x": -5,
+                  "y": 190,
+                  "w": 400,
+                  "h": 400,
+                  "z": 1
+                },
+                "l": {
+                  "x": 350,
+                  "y": 40,
+                  "w": 500,
+                  "h": 500,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-gold-glow",
+                  "o": "decor"
+                },
+                "m": "breathe",
+                "mo": {
+                  "d": 500
+                }
+              },
+              {
+                "id": "e50",
+                "t": "photo",
+                "p": {
+                  "x": 45,
+                  "y": 230,
+                  "w": 300,
+                  "h": 300,
+                  "z": 2
+                },
+                "l": {
+                  "x": 400,
+                  "y": 90,
+                  "w": 400,
+                  "h": 400,
+                  "z": 2
+                },
+                "s": {
+                  "shape": "circle",
+                  "fy": 30
+                },
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "m": "iris",
+                "mo": {
+                  "t": 1600
+                }
+              },
+              {
+                "id": "e51",
+                "t": "art",
+                "p": {
+                  "x": 35,
+                  "y": 220,
+                  "w": 320,
+                  "h": 320,
+                  "z": 3
+                },
+                "l": {
+                  "x": 388,
+                  "y": 78,
+                  "w": 424,
+                  "h": 424,
+                  "z": 3
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-iris-ring",
+                  "o": "decor"
+                },
+                "m": "spin-slow"
+              },
+              {
+                "id": "e52",
+                "t": "text",
+                "p": {
+                  "x": 0,
+                  "y": 560,
+                  "w": 390,
+                  "h": 22,
+                  "z": 4
+                },
+                "l": {
+                  "x": 200,
+                  "y": 520,
+                  "w": 800,
+                  "h": 24,
+                  "z": 4
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.4,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#D8C197"
+                },
+                "text": "A film in chapters",
+                "m": "fade",
+                "mo": {
+                  "d": 800
+                }
+              },
+              {
+                "id": "e53",
+                "t": "names",
+                "p": {
+                  "x": 10,
+                  "y": 590,
+                  "w": 370,
+                  "h": 80,
+                  "z": 4
+                },
+                "l": {
+                  "x": 200,
+                  "y": 548,
+                  "w": 800,
+                  "h": 90,
+                  "z": 4
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 34,
+                  "upper": true,
+                  "ls": 0.14,
+                  "align": "center",
+                  "color": "#F4EDE2"
+                },
+                "sl": {
+                  "size": 52
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 1000,
+                  "t": 1400
+                }
+              },
+              {
+                "id": "e54",
+                "t": "date",
+                "p": {
+                  "x": 10,
+                  "y": 672,
+                  "w": 370,
+                  "h": 24,
+                  "z": 4
+                },
+                "l": {
+                  "x": 200,
+                  "y": 644,
+                  "w": 800,
+                  "h": 28,
+                  "z": 4
+                },
+                "s": {
+                  "size": 12,
+                  "ls": 0.3,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#C98B7A"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 1200
+                }
+              },
+              {
+                "id": "e55",
+                "t": "action",
+                "p": {
+                  "x": 125,
+                  "y": 736,
+                  "w": 140,
+                  "h": 46,
+                  "z": 5
+                },
+                "l": {
+                  "x": 520,
+                  "y": 700,
+                  "w": 160,
+                  "h": 48,
+                  "z": 5
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#D8C197",
+                  "color": "#D8C197",
+                  "radius": 4,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "findme"
+              }
+            ],
+            "bg": {
+              "c": "#000000"
+            }
+          },
+          {
+            "id": "c5-chapters",
+            "h": {
+              "p": 560,
+              "l": 520
+            },
+            "els": [
+              {
+                "id": "e56",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 40,
+                  "w": 342,
+                  "h": 22,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 50,
+                  "w": 500,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.4,
+                  "upper": true,
+                  "color": "#D8C197"
+                },
+                "text": "Chapters"
+              },
+              {
+                "id": "e57",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 66,
+                  "w": 342,
+                  "h": 90,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 78,
+                  "w": 500,
+                  "h": 110,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 34,
+                  "italic": true,
+                  "color": "#F4EDE2",
+                  "lh": 1.15
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "The evening, scene by scene",
+                "m": "rise"
+              },
+              {
+                "id": "e58",
+                "t": "events",
+                "p": {
+                  "x": 24,
+                  "y": 170,
+                  "w": 342,
+                  "h": 360,
+                  "z": 1
+                },
+                "l": {
+                  "x": 640,
+                  "y": 50,
+                  "w": 460,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 22,
+                  "color": "#F4EDE2"
+                },
+                "v": "list",
+                "m": "fade"
+              },
+              {
+                "id": "e59",
+                "t": "photo",
+                "p": {
+                  "x": 24,
+                  "y": 0,
+                  "w": 100,
+                  "h": 60,
+                  "z": 0,
+                  "hide": true
+                },
+                "l": {
+                  "x": 100,
+                  "y": 210,
+                  "w": 480,
+                  "h": 280,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 4,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "hl",
+                  "n": 0
+                },
+                "m": "rise"
+              }
+            ]
+          },
+          {
+            "id": "c5-reel",
+            "h": {
+              "p": 340,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e60",
+                "t": "strip",
+                "p": {
+                  "x": 0,
+                  "y": 30,
+                  "w": 390,
+                  "h": 280,
+                  "z": 1
+                },
+                "l": {
+                  "x": 0,
+                  "y": 40,
+                  "w": 1200,
+                  "h": 280,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 4
+                }
+              }
+            ],
+            "bg": {
+              "c": "#000000"
+            }
+          },
+          {
+            "id": "c5-make",
+            "h": {
+              "p": 420,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e61",
+                "t": "shape",
+                "p": {
+                  "x": 20,
+                  "y": 30,
+                  "w": 350,
+                  "h": 350,
+                  "z": 0
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 1000,
+                  "h": 280,
+                  "z": 0
+                },
+                "s": {
+                  "bg": "#1C1A18",
+                  "radius": 26,
+                  "shadow": 1
+                }
+              },
+              {
+                "id": "e62",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 56,
+                  "w": 310,
+                  "h": 44,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 74,
+                  "w": 480,
+                  "h": 52,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 32,
+                  "color": "#F4EDE2"
+                },
+                "sl": {
+                  "size": 40
+                },
+                "text": "Make something",
+                "m": "rise"
+              },
+              {
+                "id": "e63",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 102,
+                  "w": 310,
+                  "h": 40,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 130,
+                  "w": 460,
+                  "h": 44,
+                  "z": 1
+                },
+                "s": {
+                  "size": 13,
+                  "opacity": 0.72,
+                  "lh": 1.45,
+                  "color": "#F4EDE2"
+                },
+                "text": "A reel to the beat, a post, or a little film."
+              },
+              {
+                "id": "e64",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 160,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 70,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "bg": "#D8C197",
+                  "color": "#0F0E0D",
+                  "radius": 4,
+                  "size": 14,
+                  "weight": 600
+                },
+                "act": "reel",
+                "m": "rise"
+              },
+              {
+                "id": "e65",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 224,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 140,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#D8C197",
+                  "color": "#D8C197",
+                  "radius": 4,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "post",
+                "m": "rise",
+                "mo": {
+                  "d": 120
+                }
+              },
+              {
+                "id": "e66",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 288,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 210,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#D8C197",
+                  "color": "#D8C197",
+                  "radius": 4,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "memory",
+                "m": "rise",
+                "mo": {
+                  "d": 240
+                }
+              }
+            ]
+          },
+          {
+            "id": "c5-words",
+            "h": {
+              "p": 380,
+              "l": 330
+            },
+            "els": [
+              {
+                "id": "e67",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 34,
+                  "w": 342,
+                  "h": 46,
+                  "z": 1
+                },
+                "l": {
+                  "x": 200,
+                  "y": 40,
+                  "w": 800,
+                  "h": 54,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 34,
+                  "align": "center",
+                  "color": "#F4EDE2"
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "Words from the audience",
+                "m": "fade"
+              },
+              {
+                "id": "e68",
+                "t": "blessings",
+                "p": {
+                  "x": 32,
+                  "y": 96,
+                  "w": 326,
+                  "h": 150,
+                  "z": 1
+                },
+                "l": {
+                  "x": 260,
+                  "y": 110,
+                  "w": 680,
+                  "h": 130,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 22,
+                  "italic": true,
+                  "align": "center",
+                  "lh": 1.35,
+                  "color": "#F4EDE2"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e69",
+                "t": "action",
+                "p": {
+                  "x": 105,
+                  "y": 262,
+                  "w": 180,
+                  "h": 46,
+                  "z": 2
+                },
+                "l": {
+                  "x": 510,
+                  "y": 250,
+                  "w": 180,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#D8C197",
+                  "color": "#D8C197",
+                  "radius": 4,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "notes"
+              },
+              {
+                "id": "e70",
+                "t": "credit",
+                "p": {
+                  "x": 24,
+                  "y": 330,
+                  "w": 342,
+                  "h": 24,
+                  "z": 1
+                },
+                "l": {
+                  "x": 300,
+                  "y": 300,
+                  "w": 600,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.2,
+                  "upper": true,
+                  "align": "center",
+                  "opacity": 0.65,
+                  "color": "#F4EDE2"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#0F0E0D"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "canvas-heritage-courtyard",
+      "name": "Heritage Courtyard (editor)",
+      "group": "progress",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Heritage Courtyard (editor)",
+        "colors": {
+          "bg": "#F6F2EC",
+          "ink": "#1E1B18",
+          "acc": "#B8925A",
+          "acc2": "#7A5A32",
+          "card": "#EFE8DC"
+        },
+        "fonts": {
+          "head": "Cormorant Garamond",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "g1-arch",
+            "h": {
+              "p": 844,
+              "l": 780
+            },
+            "els": [
+              {
+                "id": "e71",
+                "t": "art",
+                "p": {
+                  "x": 35,
+                  "y": 70,
+                  "w": 320,
+                  "h": 96,
+                  "z": 1
+                },
+                "l": {
+                  "x": 600,
+                  "y": 130,
+                  "w": 320,
+                  "h": 96,
+                  "z": 1
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-lattice",
+                  "o": "decor"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e72",
+                "t": "text",
+                "p": {
+                  "x": 0,
+                  "y": 190,
+                  "w": 390,
+                  "h": 22,
+                  "z": 2
+                },
+                "l": {
+                  "x": 600,
+                  "y": 250,
+                  "w": 500,
+                  "h": 24,
+                  "z": 2
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.35,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#B8925A"
+                },
+                "sl": {
+                  "align": "left"
+                },
+                "text": "An evening at the haveli"
+              },
+              {
+                "id": "e73",
+                "t": "names",
+                "p": {
+                  "x": 10,
+                  "y": 214,
+                  "w": 370,
+                  "h": 70,
+                  "z": 2
+                },
+                "l": {
+                  "x": 600,
+                  "y": 282,
+                  "w": 520,
+                  "h": 140,
+                  "z": 2
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 44,
+                  "italic": true,
+                  "align": "center",
+                  "color": "#1E1B18",
+                  "lh": 1.05
+                },
+                "sl": {
+                  "size": 72,
+                  "align": "left"
+                },
+                "m": "rise"
+              },
+              {
+                "id": "e74",
+                "t": "date",
+                "p": {
+                  "x": 10,
+                  "y": 286,
+                  "w": 370,
+                  "h": 24,
+                  "z": 2
+                },
+                "l": {
+                  "x": 600,
+                  "y": 430,
+                  "w": 500,
+                  "h": 28,
+                  "z": 2
+                },
+                "s": {
+                  "size": 12,
+                  "ls": 0.3,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#7A5A32"
+                },
+                "sl": {
+                  "align": "left"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e75",
+                "t": "art",
+                "p": {
+                  "x": 65,
+                  "y": 330,
+                  "w": 260,
+                  "h": 399,
+                  "z": 2
+                },
+                "l": {
+                  "x": 110,
+                  "y": 150,
+                  "w": 380,
+                  "h": 583,
+                  "z": 2
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-keyhole-arch",
+                  "o": "decor"
+                },
+                "m": "unfold",
+                "mo": {
+                  "t": 1500
+                }
+              },
+              {
+                "id": "e76",
+                "t": "photo",
+                "p": {
+                  "x": 87,
+                  "y": 365,
+                  "w": 216,
+                  "h": 354,
+                  "z": 1
+                },
+                "l": {
+                  "x": 142,
+                  "y": 200,
+                  "w": 316,
+                  "h": 522,
+                  "z": 1
+                },
+                "s": {
+                  "shape": "arch",
+                  "radius": 2,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "m": "reveal",
+                "mo": {
+                  "d": 300,
+                  "t": 1400
+                }
+              },
+              {
+                "id": "e77",
+                "t": "shape",
+                "p": {
+                  "x": 194,
+                  "y": 730,
+                  "w": 2,
+                  "h": 70,
+                  "z": 2
+                },
+                "l": {
+                  "x": 600,
+                  "y": 500,
+                  "w": 2,
+                  "h": 120,
+                  "z": 2
+                },
+                "s": {
+                  "bg": "#B8925A"
+                },
+                "m": "shutters",
+                "mo": {
+                  "d": 600
+                }
+              },
+              {
+                "id": "e78",
+                "t": "action",
+                "p": {
+                  "x": 125,
+                  "y": 770,
+                  "w": 140,
+                  "h": 46,
+                  "z": 3
+                },
+                "l": {
+                  "x": 600,
+                  "y": 640,
+                  "w": 170,
+                  "h": 48,
+                  "z": 3
+                },
+                "s": {
+                  "bg": "#171C26",
+                  "color": "#F9F7F3",
+                  "radius": 2,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "findme"
+              }
+            ]
+          },
+          {
+            "id": "g1-courtyard",
+            "h": {
+              "p": 520,
+              "l": 520
+            },
+            "els": [
+              {
+                "id": "e79",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 40,
+                  "w": 342,
+                  "h": 22,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 50,
+                  "w": 500,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.35,
+                  "upper": true,
+                  "color": "#B8925A"
+                },
+                "text": "The celebrations"
+              },
+              {
+                "id": "e80",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 64,
+                  "w": 342,
+                  "h": 50,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 78,
+                  "w": 700,
+                  "h": 60,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 38,
+                  "italic": true,
+                  "color": "#1E1B18"
+                },
+                "sl": {
+                  "size": 48
+                },
+                "text": "Courtyard by courtyard",
+                "m": "rise"
+              },
+              {
+                "id": "e81",
+                "t": "events",
+                "p": {
+                  "x": 24,
+                  "y": 136,
+                  "w": 366,
+                  "h": 340,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 160,
+                  "w": 1000,
+                  "h": 320,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 0,
+                  "size": 15,
+                  "color": "#1E1B18"
+                },
+                "v": "row",
+                "per": {
+                  "p": 2.1,
+                  "l": 4
+                },
+                "m": "rise"
+              }
+            ]
+          },
+          {
+            "id": "g1-dusk",
+            "h": {
+              "p": 420,
+              "l": 440
+            },
+            "els": [
+              {
+                "id": "e82",
+                "t": "photo",
+                "p": {
+                  "x": 24,
+                  "y": 40,
+                  "w": 342,
+                  "h": 340,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 50,
+                  "w": 1000,
+                  "h": 340,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 2,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "hl",
+                  "n": 0
+                },
+                "m": "fade",
+                "mo": {
+                  "t": 1400,
+                  "p": 0.12
+                }
+              },
+              {
+                "id": "e83",
+                "t": "art",
+                "p": {
+                  "x": 110,
+                  "y": 340,
+                  "w": 170,
+                  "h": 51,
+                  "z": 2
+                },
+                "l": {
+                  "x": 500,
+                  "y": 360,
+                  "w": 200,
+                  "h": 60,
+                  "z": 2
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-lattice",
+                  "o": "decor"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#171C26"
+            }
+          },
+          {
+            "id": "g1-make",
+            "h": {
+              "p": 420,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e84",
+                "t": "shape",
+                "p": {
+                  "x": 20,
+                  "y": 30,
+                  "w": 350,
+                  "h": 350,
+                  "z": 0
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 1000,
+                  "h": 280,
+                  "z": 0
+                },
+                "s": {
+                  "bg": "#EFE8DC",
+                  "radius": 26,
+                  "shadow": 1
+                }
+              },
+              {
+                "id": "e85",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 56,
+                  "w": 310,
+                  "h": 44,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 74,
+                  "w": 480,
+                  "h": 52,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 32,
+                  "color": "#1E1B18"
+                },
+                "sl": {
+                  "size": 40
+                },
+                "text": "Make something",
+                "m": "rise"
+              },
+              {
+                "id": "e86",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 102,
+                  "w": 310,
+                  "h": 40,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 130,
+                  "w": 460,
+                  "h": 44,
+                  "z": 1
+                },
+                "s": {
+                  "size": 13,
+                  "opacity": 0.72,
+                  "lh": 1.45,
+                  "color": "#1E1B18"
+                },
+                "text": "A reel, a post, or a little film — from this evening."
+              },
+              {
+                "id": "e87",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 160,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 70,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "bg": "#171C26",
+                  "color": "#F9F7F3",
+                  "radius": 2,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "reel",
+                "m": "rise"
+              },
+              {
+                "id": "e88",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 224,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 140,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#B8925A",
+                  "color": "#B8925A",
+                  "radius": 2,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "post",
+                "m": "rise",
+                "mo": {
+                  "d": 120
+                }
+              },
+              {
+                "id": "e89",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 288,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 210,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#B8925A",
+                  "color": "#B8925A",
+                  "radius": 2,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "memory",
+                "m": "rise",
+                "mo": {
+                  "d": 240
+                }
+              }
+            ]
+          },
+          {
+            "id": "g1-words",
+            "h": {
+              "p": 380,
+              "l": 330
+            },
+            "els": [
+              {
+                "id": "e90",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 34,
+                  "w": 342,
+                  "h": 46,
+                  "z": 1
+                },
+                "l": {
+                  "x": 200,
+                  "y": 40,
+                  "w": 800,
+                  "h": 54,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 34,
+                  "align": "center",
+                  "color": "#F9F7F3"
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "Blessings by lamplight",
+                "m": "fade"
+              },
+              {
+                "id": "e91",
+                "t": "blessings",
+                "p": {
+                  "x": 32,
+                  "y": 96,
+                  "w": 326,
+                  "h": 150,
+                  "z": 1
+                },
+                "l": {
+                  "x": 260,
+                  "y": 110,
+                  "w": 680,
+                  "h": 130,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 22,
+                  "italic": true,
+                  "align": "center",
+                  "lh": 1.35,
+                  "color": "#F9F7F3"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e92",
+                "t": "action",
+                "p": {
+                  "x": 105,
+                  "y": 262,
+                  "w": 180,
+                  "h": 46,
+                  "z": 2
+                },
+                "l": {
+                  "x": 510,
+                  "y": 250,
+                  "w": 180,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#CFA86E",
+                  "color": "#CFA86E",
+                  "radius": 2,
+                  "size": 14,
+                  "weight": 500
+                },
+                "act": "notes"
+              },
+              {
+                "id": "e93",
+                "t": "credit",
+                "p": {
+                  "x": 24,
+                  "y": 330,
+                  "w": 342,
+                  "h": 24,
+                  "z": 1
+                },
+                "l": {
+                  "x": 300,
+                  "y": 300,
+                  "w": 600,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.2,
+                  "upper": true,
+                  "align": "center",
+                  "opacity": 0.65,
+                  "color": "#F9F7F3"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#171C26"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "canvas-misty-tea",
+      "name": "Misty Tea Estate (editor)",
+      "group": "progress",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Misty Tea Estate (editor)",
+        "colors": {
+          "bg": "#F4F6F2",
+          "ink": "#18261E",
+          "acc": "#4B6B56",
+          "acc2": "#8C9E90",
+          "card": "#E8EDE6"
+        },
+        "fonts": {
+          "head": "Instrument Serif",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "g2-mist",
+            "h": {
+              "p": 844,
+              "l": 780
+            },
+            "els": [
+              {
+                "id": "e94",
+                "t": "art",
+                "p": {
+                  "x": -250,
+                  "y": 120,
+                  "w": 520,
+                  "h": 260,
+                  "z": 3
+                },
+                "l": {
+                  "x": -200,
+                  "y": 80,
+                  "w": 800,
+                  "h": 400,
+                  "z": 3
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-mist",
+                  "o": "decor"
+                },
+                "m": "glide",
+                "mo": {
+                  "dir": "right",
+                  "t": 2200,
+                  "str": 60
+                }
+              },
+              {
+                "id": "e95",
+                "t": "art",
+                "p": {
+                  "x": 130,
+                  "y": 330,
+                  "w": 520,
+                  "h": 260,
+                  "z": 3
+                },
+                "l": {
+                  "x": 620,
+                  "y": 300,
+                  "w": 800,
+                  "h": 400,
+                  "z": 3
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-mist",
+                  "o": "decor"
+                },
+                "m": "glide",
+                "mo": {
+                  "dir": "left",
+                  "t": 2200,
+                  "str": 60,
+                  "d": 200
+                }
+              },
+              {
+                "id": "e96",
+                "t": "names",
+                "p": {
+                  "x": 10,
+                  "y": 560,
+                  "w": 370,
+                  "h": 110,
+                  "z": 4
+                },
+                "l": {
+                  "x": 100,
+                  "y": 470,
+                  "w": 700,
+                  "h": 130,
+                  "z": 4
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 54,
+                  "align": "center",
+                  "color": "#ffffff",
+                  "lh": 1.0
+                },
+                "sl": {
+                  "size": 84,
+                  "align": "left"
+                },
+                "m": "fade",
+                "mo": {
+                  "t": 1600
+                }
+              },
+              {
+                "id": "e97",
+                "t": "date",
+                "p": {
+                  "x": 10,
+                  "y": 672,
+                  "w": 370,
+                  "h": 24,
+                  "z": 4
+                },
+                "l": {
+                  "x": 100,
+                  "y": 604,
+                  "w": 600,
+                  "h": 28,
+                  "z": 4
+                },
+                "s": {
+                  "size": 12,
+                  "ls": 0.3,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#E8EDE6"
+                },
+                "sl": {
+                  "align": "left"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 500
+                }
+              },
+              {
+                "id": "e98",
+                "t": "art",
+                "p": {
+                  "x": -205,
+                  "y": 690,
+                  "w": 800,
+                  "h": 240,
+                  "z": 2
+                },
+                "l": {
+                  "x": 0,
+                  "y": 560,
+                  "w": 1200,
+                  "h": 360,
+                  "z": 2
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-tea-hills",
+                  "o": "decor"
+                }
+              },
+              {
+                "id": "e99",
+                "t": "action",
+                "p": {
+                  "x": 125,
+                  "y": 770,
+                  "w": 140,
+                  "h": 46,
+                  "z": 5
+                },
+                "l": {
+                  "x": 100,
+                  "y": 660,
+                  "w": 170,
+                  "h": 48,
+                  "z": 5
+                },
+                "s": {
+                  "bg": "#F4F6F2",
+                  "color": "#18261E",
+                  "radius": 23,
+                  "size": 14,
+                  "weight": 600
+                },
+                "act": "findme"
+              }
+            ],
+            "bg": {
+              "c": "#cfd8d0",
+              "src": {
+                "k": "cover",
+                "n": 0
+              },
+              "dim": 0.22,
+              "fy": 30
+            }
+          },
+          {
+            "id": "g2-terrace",
+            "h": {
+              "p": 500,
+              "l": 520
+            },
+            "els": [
+              {
+                "id": "e100",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 40,
+                  "w": 342,
+                  "h": 22,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 50,
+                  "w": 500,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.35,
+                  "upper": true,
+                  "color": "#4B6B56"
+                },
+                "text": "The terrace path"
+              },
+              {
+                "id": "e101",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 64,
+                  "w": 342,
+                  "h": 50,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 78,
+                  "w": 700,
+                  "h": 60,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 38,
+                  "color": "#18261E"
+                },
+                "sl": {
+                  "size": 48
+                },
+                "text": "Along the hills",
+                "m": "rise"
+              },
+              {
+                "id": "e102",
+                "t": "events",
+                "p": {
+                  "x": 24,
+                  "y": 134,
+                  "w": 366,
+                  "h": 320,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 160,
+                  "w": 1100,
+                  "h": 320,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 6,
+                  "size": 15,
+                  "color": "#18261E"
+                },
+                "v": "row",
+                "per": {
+                  "p": 1.6,
+                  "l": 3.4
+                },
+                "m": "glide",
+                "mo": {
+                  "dir": "right"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#F4F6F2"
+            }
+          },
+          {
+            "id": "g2-glance",
+            "h": {
+              "p": 340,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e103",
+                "t": "strip",
+                "p": {
+                  "x": 0,
+                  "y": 30,
+                  "w": 390,
+                  "h": 280,
+                  "z": 1
+                },
+                "l": {
+                  "x": 0,
+                  "y": 40,
+                  "w": 1200,
+                  "h": 280,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 6
+                }
+              }
+            ],
+            "bg": {
+              "c": "#E8EDE6"
+            }
+          },
+          {
+            "id": "g2-make",
+            "h": {
+              "p": 420,
+              "l": 360
+            },
+            "els": [
+              {
+                "id": "e104",
+                "t": "shape",
+                "p": {
+                  "x": 20,
+                  "y": 30,
+                  "w": 350,
+                  "h": 350,
+                  "z": 0
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 1000,
+                  "h": 280,
+                  "z": 0
+                },
+                "s": {
+                  "bg": "#E8EDE6",
+                  "radius": 26,
+                  "shadow": 1
+                }
+              },
+              {
+                "id": "e105",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 56,
+                  "w": 310,
+                  "h": 44,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 74,
+                  "w": 480,
+                  "h": 52,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 32,
+                  "color": "#18261E"
+                },
+                "sl": {
+                  "size": 40
+                },
+                "text": "Make something",
+                "m": "rise"
+              },
+              {
+                "id": "e106",
+                "t": "text",
+                "p": {
+                  "x": 40,
+                  "y": 102,
+                  "w": 310,
+                  "h": 40,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 130,
+                  "w": 460,
+                  "h": 44,
+                  "z": 1
+                },
+                "s": {
+                  "size": 13,
+                  "opacity": 0.72,
+                  "lh": 1.45,
+                  "color": "#18261E"
+                },
+                "text": "A reel, a post, or a little film — slow and calm."
+              },
+              {
+                "id": "e107",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 160,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 70,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "bg": "#18261E",
+                  "color": "#F4F6F2",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "reel",
+                "m": "rise"
+              },
+              {
+                "id": "e108",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 224,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 140,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#4B6B56",
+                  "color": "#4B6B56",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "post",
+                "m": "rise",
+                "mo": {
+                  "d": 120
+                }
+              },
+              {
+                "id": "e109",
+                "t": "action",
+                "p": {
+                  "x": 40,
+                  "y": 288,
+                  "w": 310,
+                  "h": 52,
+                  "z": 2
+                },
+                "l": {
+                  "x": 680,
+                  "y": 210,
+                  "w": 380,
+                  "h": 56,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#4B6B56",
+                  "color": "#4B6B56",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "memory",
+                "m": "rise",
+                "mo": {
+                  "d": 240
+                }
+              }
+            ]
+          },
+          {
+            "id": "g2-words",
+            "h": {
+              "p": 380,
+              "l": 330
+            },
+            "els": [
+              {
+                "id": "e110",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 34,
+                  "w": 342,
+                  "h": 46,
+                  "z": 1
+                },
+                "l": {
+                  "x": 200,
+                  "y": 40,
+                  "w": 800,
+                  "h": 54,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 34,
+                  "align": "center",
+                  "color": "#18261E"
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "Words in the mist",
+                "m": "fade"
+              },
+              {
+                "id": "e111",
+                "t": "blessings",
+                "p": {
+                  "x": 32,
+                  "y": 96,
+                  "w": 326,
+                  "h": 150,
+                  "z": 1
+                },
+                "l": {
+                  "x": 260,
+                  "y": 110,
+                  "w": 680,
+                  "h": 130,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Instrument Serif",
+                  "size": 22,
+                  "italic": true,
+                  "align": "center",
+                  "lh": 1.35,
+                  "color": "#18261E"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e112",
+                "t": "action",
+                "p": {
+                  "x": 105,
+                  "y": 262,
+                  "w": 180,
+                  "h": 46,
+                  "z": 2
+                },
+                "l": {
+                  "x": 510,
+                  "y": 250,
+                  "w": 180,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#4B6B56",
+                  "color": "#4B6B56",
+                  "radius": 26,
+                  "size": 15,
+                  "weight": 500
+                },
+                "act": "notes"
+              },
+              {
+                "id": "e113",
+                "t": "credit",
+                "p": {
+                  "x": 24,
+                  "y": 330,
+                  "w": 342,
+                  "h": 24,
+                  "z": 1
+                },
+                "l": {
+                  "x": 300,
+                  "y": 300,
+                  "w": 600,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.2,
+                  "upper": true,
+                  "align": "center",
+                  "opacity": 0.65,
+                  "color": "#18261E"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#F4F6F2"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "canvas-alabaster",
+      "name": "Alabaster Gallery (editor)",
+      "group": "progress",
+      "blocks": [],
+      "canvas": {
+        "v": 1,
+        "name": "Alabaster Gallery (editor)",
+        "colors": {
+          "bg": "#FAF9F6",
+          "ink": "#141413",
+          "acc": "#8E795E",
+          "acc2": "#C5B8A5",
+          "card": "#F1EFEA"
+        },
+        "fonts": {
+          "head": "Bodoni Moda",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "g3-gallery",
+            "h": {
+              "p": 844,
+              "l": 780
+            },
+            "els": [
+              {
+                "id": "e114",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 90,
+                  "w": 342,
+                  "h": 22,
+                  "z": 1
+                },
+                "l": {
+                  "x": 640,
+                  "y": 200,
+                  "w": 480,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 10,
+                  "ls": 0.4,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#8E795E"
+                },
+                "sl": {
+                  "align": "left"
+                },
+                "text": "Monograph"
+              },
+              {
+                "id": "e115",
+                "t": "names",
+                "p": {
+                  "x": 10,
+                  "y": 114,
+                  "w": 370,
+                  "h": 64,
+                  "z": 1
+                },
+                "l": {
+                  "x": 640,
+                  "y": 228,
+                  "w": 500,
+                  "h": 150,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 38,
+                  "upper": true,
+                  "ls": 0.1,
+                  "align": "center",
+                  "color": "#141413",
+                  "lh": 1.05
+                },
+                "sl": {
+                  "size": 60,
+                  "align": "left"
+                },
+                "m": "fade",
+                "mo": {
+                  "t": 1400
+                }
+              },
+              {
+                "id": "e116",
+                "t": "date",
+                "p": {
+                  "x": 10,
+                  "y": 180,
+                  "w": 370,
+                  "h": 24,
+                  "z": 1
+                },
+                "l": {
+                  "x": 640,
+                  "y": 386,
+                  "w": 480,
+                  "h": 28,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.3,
+                  "upper": true,
+                  "align": "center",
+                  "color": "#8E795E"
+                },
+                "sl": {
+                  "align": "left"
+                },
+                "m": "fade",
+                "mo": {
+                  "d": 400
+                }
+              },
+              {
+                "id": "e117",
+                "t": "art",
+                "p": {
+                  "x": 45,
+                  "y": 230,
+                  "w": 300,
+                  "h": 390,
+                  "z": 2
+                },
+                "l": {
+                  "x": 110,
+                  "y": 90,
+                  "w": 460,
+                  "h": 598,
+                  "z": 2
+                },
+                "src": {
+                  "k": "art",
+                  "id": "dc-hairline-frame",
+                  "o": "decor"
+                },
+                "m": "reveal"
+              },
+              {
+                "id": "e118",
+                "t": "photo",
+                "p": {
+                  "x": 65,
+                  "y": 256,
+                  "w": 260,
+                  "h": 338,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 128,
+                  "w": 400,
+                  "h": 522,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 0,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "cover",
+                  "n": 0
+                },
+                "m": "zoom-out",
+                "mo": {
+                  "t": 1600,
+                  "str": 40
+                }
+              },
+              {
+                "id": "e119",
+                "t": "shape",
+                "p": {
+                  "x": 170,
+                  "y": 650,
+                  "w": 50,
+                  "h": 1,
+                  "z": 1
+                },
+                "l": {
+                  "x": 640,
+                  "y": 440,
+                  "w": 80,
+                  "h": 1,
+                  "z": 1
+                },
+                "s": {
+                  "bg": "#8E795E"
+                },
+                "m": "wipe"
+              },
+              {
+                "id": "e120",
+                "t": "action",
+                "p": {
+                  "x": 115,
+                  "y": 690,
+                  "w": 160,
+                  "h": 46,
+                  "z": 3
+                },
+                "l": {
+                  "x": 640,
+                  "y": 480,
+                  "w": 180,
+                  "h": 48,
+                  "z": 3
+                },
+                "s": {
+                  "bg": "#141413",
+                  "color": "#FAF9F6",
+                  "radius": 0,
+                  "size": 13,
+                  "weight": 500,
+                  "upper": true,
+                  "ls": 0.12
+                },
+                "act": "findme"
+              }
+            ]
+          },
+          {
+            "id": "g3-plates",
+            "h": {
+              "p": 540,
+              "l": 520
+            },
+            "els": [
+              {
+                "id": "e121",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 40,
+                  "w": 342,
+                  "h": 22,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 50,
+                  "w": 500,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 10,
+                  "ls": 0.4,
+                  "upper": true,
+                  "color": "#8E795E"
+                },
+                "text": "Plates"
+              },
+              {
+                "id": "e122",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 64,
+                  "w": 342,
+                  "h": 50,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 78,
+                  "w": 460,
+                  "h": 60,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 34,
+                  "color": "#141413"
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "Index of the day",
+                "m": "fade"
+              },
+              {
+                "id": "e123",
+                "t": "events",
+                "p": {
+                  "x": 24,
+                  "y": 136,
+                  "w": 342,
+                  "h": 360,
+                  "z": 1
+                },
+                "l": {
+                  "x": 100,
+                  "y": 160,
+                  "w": 460,
+                  "h": 320,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 20,
+                  "color": "#141413"
+                },
+                "v": "list",
+                "m": "fade"
+              },
+              {
+                "id": "e124",
+                "t": "photo",
+                "p": {
+                  "x": 24,
+                  "y": 0,
+                  "w": 100,
+                  "h": 60,
+                  "z": 0,
+                  "hide": true
+                },
+                "l": {
+                  "x": 640,
+                  "y": 60,
+                  "w": 460,
+                  "h": 420,
+                  "z": 1
+                },
+                "s": {
+                  "radius": 0,
+                  "fy": 30
+                },
+                "src": {
+                  "k": "hl",
+                  "n": 0
+                },
+                "m": "fade"
+              }
+            ],
+            "bg": {
+              "c": "#F1EFEA"
+            }
+          },
+          {
+            "id": "g3-bar",
+            "h": {
+              "p": 300,
+              "l": 260
+            },
+            "els": [
+              {
+                "id": "e125",
+                "t": "shape",
+                "p": {
+                  "x": 0,
+                  "y": 40,
+                  "w": 390,
+                  "h": 220,
+                  "z": 0
+                },
+                "l": {
+                  "x": 100,
+                  "y": 40,
+                  "w": 1000,
+                  "h": 180,
+                  "z": 0
+                },
+                "s": {
+                  "bg": "#141413"
+                }
+              },
+              {
+                "id": "e126",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 64,
+                  "w": 342,
+                  "h": 40,
+                  "z": 1
+                },
+                "l": {
+                  "x": 140,
+                  "y": 70,
+                  "w": 400,
+                  "h": 44,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 26,
+                  "color": "#FAF9F6"
+                },
+                "sl": {
+                  "size": 30
+                },
+                "text": "Make something"
+              },
+              {
+                "id": "e127",
+                "t": "action",
+                "p": {
+                  "x": 24,
+                  "y": 120,
+                  "w": 342,
+                  "h": 40,
+                  "z": 2
+                },
+                "l": {
+                  "x": 560,
+                  "y": 64,
+                  "w": 200,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#FAF9F6",
+                  "color": "#FAF9F6",
+                  "radius": 0,
+                  "size": 12,
+                  "weight": 500,
+                  "upper": true,
+                  "ls": 0.12
+                },
+                "act": "reel"
+              },
+              {
+                "id": "e128",
+                "t": "action",
+                "p": {
+                  "x": 24,
+                  "y": 168,
+                  "w": 165,
+                  "h": 40,
+                  "z": 2
+                },
+                "l": {
+                  "x": 780,
+                  "y": 64,
+                  "w": 140,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#FAF9F6",
+                  "color": "#FAF9F6",
+                  "radius": 0,
+                  "size": 12,
+                  "weight": 500,
+                  "upper": true,
+                  "ls": 0.12
+                },
+                "act": "post",
+                "v": "text"
+              },
+              {
+                "id": "e129",
+                "t": "action",
+                "p": {
+                  "x": 201,
+                  "y": 168,
+                  "w": 165,
+                  "h": 40,
+                  "z": 2
+                },
+                "l": {
+                  "x": 940,
+                  "y": 64,
+                  "w": 140,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#FAF9F6",
+                  "color": "#FAF9F6",
+                  "radius": 0,
+                  "size": 12,
+                  "weight": 500,
+                  "upper": true,
+                  "ls": 0.12
+                },
+                "act": "memory",
+                "v": "text"
+              }
+            ]
+          },
+          {
+            "id": "g3-words",
+            "h": {
+              "p": 380,
+              "l": 330
+            },
+            "els": [
+              {
+                "id": "e136",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 34,
+                  "w": 342,
+                  "h": 46,
+                  "z": 1
+                },
+                "l": {
+                  "x": 200,
+                  "y": 40,
+                  "w": 800,
+                  "h": 54,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 34,
+                  "align": "center",
+                  "color": "#141413"
+                },
+                "sl": {
+                  "size": 42
+                },
+                "text": "Notes from the guests",
+                "m": "fade"
+              },
+              {
+                "id": "e137",
+                "t": "blessings",
+                "p": {
+                  "x": 32,
+                  "y": 96,
+                  "w": 326,
+                  "h": 150,
+                  "z": 1
+                },
+                "l": {
+                  "x": 260,
+                  "y": 110,
+                  "w": 680,
+                  "h": 130,
+                  "z": 1
+                },
+                "s": {
+                  "font": "Bodoni Moda",
+                  "size": 20,
+                  "italic": true,
+                  "align": "center",
+                  "lh": 1.4,
+                  "color": "#141413"
+                },
+                "m": "fade"
+              },
+              {
+                "id": "e138",
+                "t": "action",
+                "p": {
+                  "x": 105,
+                  "y": 262,
+                  "w": 180,
+                  "h": 46,
+                  "z": 2
+                },
+                "l": {
+                  "x": 510,
+                  "y": 250,
+                  "w": 180,
+                  "h": 48,
+                  "z": 2
+                },
+                "s": {
+                  "border": 1,
+                  "bcolor": "#141413",
+                  "color": "#141413",
+                  "radius": 0,
+                  "size": 13,
+                  "weight": 500,
+                  "upper": true,
+                  "ls": 0.12
+                },
+                "act": "notes"
+              },
+              {
+                "id": "e139",
+                "t": "credit",
+                "p": {
+                  "x": 24,
+                  "y": 330,
+                  "w": 342,
+                  "h": 24,
+                  "z": 1
+                },
+                "l": {
+                  "x": 300,
+                  "y": 300,
+                  "w": 600,
+                  "h": 24,
+                  "z": 1
+                },
+                "s": {
+                  "size": 11,
+                  "ls": 0.2,
+                  "upper": true,
+                  "align": "center",
+                  "opacity": 0.65,
+                  "color": "#141413"
+                }
+              }
+            ],
+            "bg": {
+              "c": "#FAF9F6"
+            }
           }
         ]
       }

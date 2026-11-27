@@ -36,7 +36,7 @@
   // 'style' is the selected part's own panel (Design · Motion · Connect); 'page' is the Pages tool (sections + header)
   const TABS = [['add', 'Add'], ['layers', 'Layers'], ['page', 'Pages'], ['collections', 'Layouts'], ['theme', 'Theme'], ['media', 'Media']];
   const SUBTABS = [['design', 'Design'], ['motion', 'Motion'], ['connect', 'Connect']];
-  const TYPE = { photo: 'Photo', names: 'Names', date: 'Date', text: 'Text', events: 'Events', strip: 'Photo strip', action: 'Button', blessings: 'Blessing', credit: 'Credit', shape: 'Shape', card: 'App card', art: 'Element' };
+  const TYPE = { photo: 'Photo', names: 'Names', date: 'Date', text: 'Text', events: 'Events', strip: 'Photo strip', action: 'Button', blessings: 'Blessing', credit: 'Credit', shape: 'Shape', card: 'App card', art: 'Element', video: 'Video' };
   const catalog = () => (window.PGHubEditor && PGHubEditor.catalog ? PGHubEditor.catalog() : { CARDS: {}, VNAME: {} });
   const cardName = e => ((catalog().CARDS[e.block] || [])[0]) || e.block;
   const SNAP = 6;   // px
@@ -67,6 +67,7 @@
     if (t === 'credit') Object.assign(base, { p: { x: 20, y: 40, w: 350, h: 28, z: 5 }, s: { size: 11, ls: 0.2, upper: true, align: 'center', opacity: 0.7 } });
     if (t === 'card') { const C = catalog().CARDS[v] || ['', []]; Object.assign(base, { p: { x: 20, y: 40, w: 350, h: v === 'studio' || v === 'install' || v === 'review' ? 90 : 260, z: 5 }, block: v, variant: C[1][0] || undefined }); }
     if (t === 'art' && v && typeof v === 'object') { const w = 160, hh = Math.max(44, Math.min(320, Math.round(w * (v.h || 1) / (v.w || 1)))); Object.assign(base, { p: { x: (390 - w) / 2, y: 40, w, h: hh, z: 6 }, src: { k: 'art', id: v.id, o: v.occasion } }); }   // step 97: a picture from the elements library
+    if (t === 'video') Object.assign(base, { p: { x: 20, y: 40, w: 350, h: 197, z: 5 }, s: { radius: 14 }, v: 'loop' });   // step 97b: a YouTube / Drive video (16:9 to start)
     if (t === 'shape') Object.assign(base, v === 'line' ? { p: { x: 95, y: 40, w: 200, h: 2, z: 5 }, s: { bg: '#a07d4c' } } : v === 'circle' ? { p: { x: 145, y: 40, w: 100, h: 100, z: 5 }, s: { bg: '#a07d4c', shape: 'circle', opacity: 0.3 } } : { p: { x: 45, y: 40, w: 300, h: 200, z: 1 }, s: { bg: '#ffffff', radius: 16, shadow: 1 } });
     return base;
   }
@@ -96,7 +97,7 @@
     if (E) return;
     const role = window.PGControl ? PGControl.role() : 'guest';
     E = { role, mode: window.innerWidth >= 700 ? 'l' : 'p', sel: null, undo: [], redo: [], tab: 'add', sub: 'design', snap: 'free', src: {}, inst: null, zoom: 1, play: false,
-      pages: { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' } };   // step 78: zoom, Play, the app header's places
+      pages: hdrNow(), logo: undefined };   // step 99d: logo = a new logo picture (data URL), '' = remove it, undefined = unchanged   // step 78: zoom, Play, the app header's places
     build();
     const start = (doc, src) => { E.doc = doc; E.src = src; E.saved = JSON.stringify(doc); draw(); panel(); tips(); };
     if (arg && typeof arg === 'object' && arg.doc) return start(clone(arg.doc), { id: arg.id || '', mine: !!arg.mine });
@@ -153,7 +154,7 @@
         '<div class="pce-menu" hidden><div class="pce-menu-row"><span>Screen</span><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div>' +
         '<div class="pce-menu-row"><span>Placing</span><div class="pce-seg pce-snap"><button type="button" data-snap="simple">Simple</button><button type="button" data-snap="free">Free</button></div></div>' +
         '<div class="pce-menu-row"><span>Zoom</span><div class="pce-zrow"><button type="button" class="pce-zoom-toggle" hidden>100%</button><div class="pce-zoom-menu"><button type="button" data-z="-" aria-label="Smaller">−</button><b>100%</b><button type="button" data-z="+" aria-label="Bigger">+</button><button type="button" data-z="1">Fit</button></div></div></div>' +
-        '<button type="button" class="pce-menu-item" data-menu="rename">Rename this layout</button><button type="button" class="pce-menu-item" data-menu="save">Save to a collection…</button></div></div>' +
+        '<button type="button" class="pce-menu-item" data-menu="rename">Rename this layout</button><button type="button" class="pce-menu-item" data-menu="save">Save as a copy / to a collection…</button></div></div>' +
       '<button type="button" class="pce-ic pce-play" aria-label="Play" aria-pressed="false">' + IC.play + '</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
       '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '" role="tab">' + IC[k] + '<span>' + n + '</span></button>').join('') + '<button type="button" class="pce-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pce-pane"></div></div></div>';
     el.querySelector('.pce-x').addEventListener('click', () => { close(); if (!E && window.pgBackToPanel) pgBackToPanel(); });   // clean-up #1: back to where it was opened from
@@ -170,7 +171,7 @@
     el.querySelectorAll('[data-menu]').forEach(b => b.addEventListener('click', () => { shutMenu(); if (b.dataset.menu === 'rename') rename(); else saveDialog(false); }));
     el.querySelector('.pce-drawer-toggle').addEventListener('click', () => setDrawer(!E.drawerOpen));
     el.querySelector('.pce-zoom-toggle').addEventListener('click', () => { E.zoom = 1; draw(); });
-    el.querySelector('.pce-save').addEventListener('click', () => saveDialog(false));
+    el.querySelector('.pce-save').addEventListener('click', quickSave);   // step 99e: their own layout saves straight over itself
     el.querySelector('.pce-apply').addEventListener('click', apply);
     el.querySelector('.pce-play').addEventListener('click', () => { E.play = !E.play; if (E.play) { E.sel = null; panel(); } draw(); if (E.play) { const st = el.querySelector('.pce-stage'); st.scrollTop = 0; } });   // watch the motion; any change stops it
     el.querySelector('.pce-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { const same = E.tab === b.dataset.tab; E.tab = b.dataset.tab; setDrawer(!(same && E.drawerOpen)); panel(); } });
@@ -221,7 +222,7 @@
     E.pageW = Math.round((E.mode === 'p' ? Math.min(390, st.clientWidth) : Math.max(1, st.clientWidth - 40)) * E.zoom);   // zoom draws the page smaller or bigger (the spots stay the same)
     page.style.width = E.pageW + 'px';
     E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: !E.play, editing: !E.play, onTap: () => true });
-    page.insertAdjacentHTML('beforeend', '<div class="pce-hdr ' + (E.mode === 'p' ? 'p' : 'l') + '" style="--z:' + (E.pageW / (E.mode === 'p' ? 390 : 1200) * (E.mode === 'p' ? 1 : 1.6)) + '"><i class="lg ' + E.pages.header + '">A&amp;R</i><i class="md ' + E.pages.modeside + '">☾</i><i class="mn ' + E.pages.modeside + '">≡</i></div>');   // where the app header sits on top (Page › Header)
+    page.insertAdjacentHTML('beforeend', '<div class="pce-hdr ' + (E.mode === 'p' ? 'p' : 'l') + '" style="--z:' + (E.pageW / (E.mode === 'p' ? 390 : 1200) * (E.mode === 'p' ? 1 : 1.6)) + '">' + (E.pages.logo === 'none' ? '' : '<i class="lg ' + E.pages.header + '">' + (E.pages.logo === 'image' && hdrLogo() ? '<img alt="" src="' + esc(hdrLogo()) + '">' : 'A&amp;R') + '</i>') + '<i class="md ' + E.pages.modeside + '">☾</i><i class="mn ' + E.pages.modeside + '">≡</i></div>');   // where the app header sits on top (Page › Header)
     const zb = E.el.querySelector('.pce-zoom-menu');
     zb.querySelector('b').textContent = Math.round(E.zoom * 100) + '%';
     E.el.querySelector('.pce-zoom-toggle').textContent = Math.round(E.zoom * 100) + '%';
@@ -401,7 +402,7 @@
     e.p.y = Math.min(inViewY, PGCanvas.secH(s, 'p') - e.p.h - 10); if (e.p.y < 0) e.p.y = 10;
     if (E.mode === 'l') { const a = PGCanvas.spotOf(e, 'l'); e.l = { x: (PGCanvas.LW - a.w) / 2, y: Math.min(inViewY, PGCanvas.secH(s, 'l') - a.h - 10), w: a.w, h: a.h, z: a.z }; }
     if (t === 'photo' && v) e.src = { k: 'id', id: v };   // step 97: a photo chosen in Media
-    change(() => { s.els = s.els || []; s.els.push(e); E.sel = e.id; E.tab = 'style'; E.sub = 'design'; });
+    change(() => { s.els = s.els || []; s.els.push(e); E.sel = e.id; E.tab = 'style'; E.sub = t === 'video' ? 'connect' : 'design'; });   // a new video asks for its link first
   }
   function duplicate() { const f = find(E.sel); if (!f) return; const c = clone(f.e); c.id = uid('e'); ['p', 'l'].forEach(m => { if (c[m]) { c[m].x += 12; c[m].y += 12; } }); change(() => { f.s.els.push(c); E.sel = c.id; }); }
   function remove() { const f = find(E.sel); if (!f) return; change(() => { f.s.els = f.s.els.filter(x => x.id !== f.e.id); E.sel = null; }); }
@@ -413,6 +414,9 @@
 
   // ---- the panel ----
   const opt = (v, n, cur) => '<option value="' + esc(v) + '"' + (String(cur) === String(v) ? ' selected' : '') + '>' + esc(n) + '</option>';
+  // step 99d: the app header's settings as saved for the wedding
+  function hdrNow() { const g = GALLERY.pages || {}; return { header: g.header || 'right', modeside: g.modeside || 'right', hdrmode: g.hdrmode || 'scroll', logo: g.logo || 'mono' }; }
+  const hdrLogo = () => (E.logo !== undefined ? E.logo : (GALLERY.logoUrl || GALLERY.logoRaw || ''));
   const seg = (key, cur, list) => '<div class="pce-seg sm" data-k="' + key + '">' + list.map(([v, n]) => '<button type="button" data-v="' + esc(v) + '" class="' + (String(cur) === String(v) ? 'on' : '') + '">' + n + '</button>').join('') + '</div>';
   const row = (label, inner) => '<label class="pce-row"><span>' + label + '</span>' + inner + '</label>';
   function panel() {
@@ -428,7 +432,7 @@
   }
   const tile = (t, v, n, note) => '<button type="button" class="pce-add" data-add="' + t + '" data-v="' + (v || '') + '"><b>' + n + '</b>' + (note ? '<small>' + note + '</small>' : '') + '</button>';
   function addPane() {
-    return '<div class="pce-sub">Basics</div><div class="pce-adds">' + tile('photo', '', 'Photo', 'any wedding photo') + tile('names', '', 'Names') + tile('date', '', 'Date') + tile('text', '', 'Text', 'your own words') +
+    return '<div class="pce-sub">Basics</div><div class="pce-adds">' + tile('photo', '', 'Photo', 'any wedding photo') + tile('video', '', 'Video', 'YouTube or Drive') + tile('names', '', 'Names') + tile('date', '', 'Date') + tile('text', '', 'Text', 'your own words') +
       tile('shape', 'box', 'Box') + tile('shape', 'circle', 'Circle') + tile('shape', 'line', 'Line') + '</div>' +
       '<div class="pce-sub">Elements</div>' + elementsGrid('add') +
       '<div class="pce-sub">App parts</div><div class="pce-adds">' + tile('events', 'row', 'Events', 'cards') + tile('events', 'circles', 'Events', 'circles') + tile('events', 'list', 'Events', 'list') +
@@ -464,6 +468,10 @@
     if (t === 'card') { const C = catalog(), vs = (C.CARDS[e.block] || ['', []])[1]; c += '<p class="pce-note">' + esc(cardName(e)) + ' — the same card the card layouts use. It draws itself; choose its look here.</p>' + (vs.length ? row('Look', '<select data-f="variant">' + vs.map(v => opt(v, C.VNAME[v] || v, e.variant || vs[0])).join('') + '</select>') : ''); }
     if (t === 'blessings') c += row('Which blessing', '<select data-f="n">' + [0, 1, 2, 3, 4].map(i => opt(i, i ? 'Number ' + (i + 1) : 'The latest', num(e.n, 0))).join('') + '</select>');
     if (t === 'art') c += '<p class="pce-note">Tap another element to swap this one.</p>' + elementsGrid('swap');
+    if (t === 'video') { const src = e.src || {}, link = src.k === 'yt' ? (src.sh ? 'https://youtube.com/shorts/' : 'https://youtu.be/') + src.id : src.k === 'drive' ? 'https://drive.google.com/file/d/' + src.id + '/view' : '';
+      c += row('Video link', '<input type="url" data-vlink="1" inputmode="url" placeholder="Paste a YouTube, Shorts or Google Drive link" value="' + esc(link) + '">') +
+        (src.k === 'drive' ? '<p class="pce-note">Google Drive: the video must be shared as “Anyone with the link”. Drive’s player always shows its play button, so guests tap to play.</p>'
+          : seg('v', e.v === 'player' ? 'player' : 'loop', [['loop', 'Plays by itself'], ['player', 'Tap to play']]) + '<p class="pce-note">' + (e.v === 'player' ? 'Guests tap to play, with sound and controls.' : 'Plays by itself, muted, again and again — like a TV. It fills its box like a photo.') + '</p>'); }
     if (t === 'shape') c += '<p class="pce-note">A shape shows only its colour. Change it in Design.</p>';
     return c;
   }
@@ -530,7 +538,7 @@
     E.rpT = setTimeout(() => { if (E && !E.play && root.isConnected) root.classList.add('pgc-still'); }, 2600);
   }
   function layersPane() {
-    const icon = { photo: '▣', names: 'Aa', date: '◷', text: 'T', events: '▤', strip: '⋯', action: '●', blessings: '❝', credit: '©', shape: '◆', card: '▦', art: '✿' };
+    const icon = { photo: '▣', names: 'Aa', date: '◷', text: 'T', events: '▤', strip: '⋯', action: '●', blessings: '❝', credit: '©', shape: '◆', card: '▦', art: '✿', video: '▶' };
     return '<p class="pce-note">Everything on the page, front first. ' + (E.mode === 'l' ? 'Hiding here hides on laptop only.' : 'Hiding here hides on phone only.') + '</p><div class="pce-lsec"><b>Guest actions</b><div class="pce-layer pce-global-layer"><span><i>◎</i>Find me</span><small>Floating guest action</small></div></div>' + E.doc.sections.map((s, si) =>
       '<div class="pce-lsec"><b>Section ' + (si + 1) + '</b>' + (s.els || []).slice().sort((a, b) => num(spot(b).z, 1) - num(spot(a).z, 1)).map(e => { const sp = spot(e);
         return '<div class="pce-layer' + (e.id === E.sel ? ' on' : '') + (sp.hide ? ' off' : '') + '"><button type="button" data-sel="' + e.id + '"><i>' + icon[e.t] + '</i>' + esc(TYPE[e.t]) + (e.text ? ' · ' + esc(String(e.text).slice(0, 18)) : e.act ? ' · ' + esc(PGCanvas.LABEL[e.act]) : '') + '</button><button type="button" class="pce-eye" data-eye="' + e.id + '" aria-label="' + (sp.hide ? 'Show' : 'Hide') + '">' + (sp.hide ? 'Hidden' : 'Shown') + '</button></div>'; }).join('') + '</div>').join('');
@@ -550,7 +558,10 @@
       c += '<div class="pce-acts"><button type="button" data-secdo="up">Move up</button><button type="button" data-secdo="down">Move down</button><button type="button" data-secdo="dup">Duplicate</button><button type="button" data-secdo="add">Add section below</button><button type="button" data-secdo="del" class="danger">Delete section</button></div>';
     }
     c += '<div class="pce-sub">Header · the whole app</div><p class="pce-note">The app header sits on top of every page (the outline in the preview). It changes for the whole wedding when you apply.</p>' +
-      row('Logo', seg('hdr-header', E.pages.header, [['left', 'Left'], ['right', 'Right']])) + row('Light / dark and menu', seg('hdr-modeside', E.pages.modeside, [['left', 'Left'], ['right', 'Right']]));
+      row('When the page scrolls', seg('hdr-hdrmode', E.pages.hdrmode, [['scroll', 'Scrolls away'], ['fixed', 'Stays on top'], ['auto', 'Hides, comes back']])) +
+      row('Logo', seg('hdr-logo', E.pages.logo, [['mono', 'Initials'], ['image', 'Our logo'], ['none', 'No logo']])) +
+      (E.pages.logo === 'image' ? '<div class="pce-acts pce-logo"><span class="pce-logo-pv">' + (hdrLogo() ? '<img alt="Your logo" src="' + esc(hdrLogo()) + '">' : '<em>No logo yet</em>') + '</span><button type="button" data-do="logoUp">' + (hdrLogo() ? 'Change logo' : 'Upload logo') + '</button>' + (hdrLogo() ? '<button type="button" data-do="logoDel" class="danger">Remove</button>' : '') + '<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden data-logofile></div><p class="pce-note">A PNG or SVG with a see-through background looks best. It is made small (256 px) so it loads fast.</p>' : '') +
+      (E.pages.logo === 'none' ? '' : row('Logo place', seg('hdr-header', E.pages.header, [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]))) + row('Light / dark and menu', seg('hdr-modeside', E.pages.modeside, [['left', 'Left'], ['right', 'Right']]));
     if (E.mode === 'l') c += '<div class="pce-acts"><button type="button" data-do="lapreset">Laptop: start again from the phone</button></div>';
     return c;
   }
@@ -610,6 +621,10 @@
     on('[data-add]', 'click', ev => add(ev.currentTarget.dataset.add, ev.currentTarget.dataset.v));
     // step 97: the part's three tabs, the motion library, the elements, the wedding's photos, sections, grid, colour sets
     on('[data-sub]', 'click', ev => { E.sub = ev.currentTarget.dataset.sub; panel(); });
+    on('[data-vlink]', 'change', ev => { const g = find(E.sel); if (!g) return; const v = PGCanvas.videoFromLink(ev.currentTarget.value);   // step 97b
+      if (!v) { if (ev.currentTarget.value.trim()) showToast('That link isn’t a YouTube or Google Drive video'); return; }
+      change(() => { g.e.src = v; const sp = spot(g.e); if (v.sh && sp.w > sp.h) setSpot(g.e, Object.assign({}, sp, { h: Math.round(sp.w * 16 / 9) })); });   // a Short stands up
+      showToast(v.k === 'drive' ? 'Drive video added' : v.sh ? 'Short added' : 'YouTube video added'); });
     on('[data-mt]', 'click', ev => { const v = ev.currentTarget.dataset.mt, g = find(E.sel); if (!g) return; change(() => setMotion(g.e, v)); replay(); });
     on('.pce-elq', 'input', ev => { const x = ev.currentTarget, at = x.selectionStart; E.elQ = x.value; panel(); const n = E.el.querySelector('.pce-elq'); if (n) { n.focus(); try { n.setSelectionRange(at, at); } catch (er) {} } });
     on('[data-occ]', 'click', ev => { E.elOcc = ev.currentTarget.dataset.occ; panel(); });
@@ -652,8 +667,12 @@
     on('[data-mo]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.mo; change(() => { const mo = Object.assign({}, e.mo); const v = parseFloat(x.value) || 0;
       if (k === 'p') { if (v) mo.p = v; else delete mo.p; } else if (k === 'str') mo.str = Math.round(v); else mo[k] = Math.round(v * 1000); if (k === 'd' && !mo.d) delete mo.d; if (Object.keys(mo).length) e.mo = mo; else delete e.mo; }); if (k !== 'p') replay(); });
     on('[data-sp]', 'change', ev => { const x = ev.currentTarget; change(() => { const sp = Object.assign({}, spot(e)); sp[x.dataset.sp] = parseFloat(x.value) || 0; setSpot(e, sp); }, true); });
+    on('[data-logofile]', 'change', ev => { const f = ev.currentTarget.files && ev.currentTarget.files[0]; if (!f || !window.PGHeader) return;
+      PGHeader.shrink(f).then(u => { E.logo = u; draw(); panel(); }).catch(err => showToast(err.message || 'Could not use that picture')); });
     on('[data-do]', 'click', ev => { const d = ev.currentTarget.dataset.do;
       if (d === 'deselect') { E.sel = null; E.frame = null; E.tab = 'add'; draw(); panel(); return; }
+      if (d === 'logoUp') { const f = E.el.querySelector('[data-logofile]'); if (f) f.click(); return; }   // step 99d: the couple's own logo
+      if (d === 'logoDel') { E.logo = ''; draw(); panel(); return; }
       if (d === 'dup') duplicate(); if (d === 'del') remove(); if (d === 'front') order(1); if (d === 'back') order(-1); if (d === 'hide') toggleHide(E.sel);
       if (d === 'rename') E.el.querySelector('.pce-title').click();
       if (d === 'frame') { E.frame = E.frame === E.sel ? null : E.sel; draw(); panel(); }
@@ -713,6 +732,14 @@
     return role === 'picgrades' ? [['me', 'Only me'], ['wedding', 'This wedding'], ['studio', 'All my weddings'], ['all', 'Every wedding (PicGrades)']] :
       role === 'photographer' ? [['me', 'Only me'], ['wedding', 'This wedding'], ['studio', 'All my weddings']] : [['me', 'Only us'], ['wedding', 'Everyone at our wedding']];
   }
+  // step 99e: a layout that is already this wedding's own saves in place — no name or collection question again.
+  // Only the first save of a ready layout asks (it makes the wedding's own copy). Other weddings never see it.
+  function quickSave() {
+    if (E.role === 'demo' || !(E.src.id && E.src.mine)) return saveDialog(false);
+    const btn = E.el.querySelector('.pce-save'); if (btn) btn.disabled = true;
+    return pgApi('canvasSave', { item: { id: E.src.id, kind: 'layout', name: E.doc.name || 'My layout', collection: E.src.collection || undefined, scope: E.src.scope || 'wedding', doc: E.doc } })
+      .then(() => { E.saved = JSON.stringify(E.doc); showToast('Saved'); }).catch(err => showToast(err.message || 'Could not save')).then(() => { if (btn) btn.disabled = false; });
+  }
   function saveDialog(thenApply) {
     if (E.role === 'demo') { demoKeep(thenApply); return Promise.resolve(); }
     const back = h('div', 'pce-back'), sh = h('div', 'pce-pick pce-savebox');
@@ -765,8 +792,9 @@
   function applyId(id, canvas) {
     const btn = E.el.querySelector('.pce-apply'); btn.disabled = true; btn.textContent = 'Applying…';
     const gp = GALLERY.pages || {}, body = { layout: id };
-    if ((gp.header || 'right') !== E.pages.header || (gp.modeside || 'right') !== E.pages.modeside) body.pages = JSON.stringify(E.pages);
-    return PGControl.save(body).then(r => { if (r.pages) GALLERY.pages = r.pages;
+    const was = hdrNow(); if (Object.keys(E.pages).some(k => was[k] !== E.pages[k])) body.pages = JSON.stringify(E.pages);   // step 99d: the header too
+    if (E.logo !== undefined) body.logo = E.logo;
+    return PGControl.save(body).then(r => { if (r.pages) GALLERY.pages = r.pages; if ('logoUrl' in r) GALLERY.logoUrl = r.logoUrl; if (window.PGHeader) PGHeader.apply();
       GALLERY.layout = r.layout; if (canvas) GALLERY.canvas = canvas; if (r.custom) GALLERY.custom = r.custom;
       E.saved = JSON.stringify(E.doc); window.pgEditorBack = null; close(true); if (window.switchViewFromNav) switchViewFromNav('hub'); window.scrollTo(0, 0);
       showToast('Applied — every guest sees this Hub now');

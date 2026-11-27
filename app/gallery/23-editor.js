@@ -126,8 +126,9 @@
       '<div class="pged-story" hidden></div>' +
       '<div class="pged-canvas"><div class="pged-frame"><div class="pgl-grid pged-grid"></div></div><p class="pged-hint">Tap a card to choose it. Drag ✥ to move it, drag the corner to change its size.</p></div>' +
       '<div class="pged-drawer"><div class="pged-dock"><button type="button" class="pged-add">+ Add card</button><button type="button" class="pged-page-settings" aria-expanded="false">Page settings</button></div><div class="pged-drawer-content"><div class="pged-settings" hidden><div class="pged-settings-head"><b>Page settings</b><button type="button" class="pged-settings-close" aria-label="Close page settings">Done</button></div>' +
-      '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="right">Right</button></div>' +
+      '<div class="pged-seg pged-logo" aria-label="Logo"><span>Logo</span><button type="button" data-logo="left">Left</button><button type="button" data-logo="center">Centre</button><button type="button" data-logo="right">Right</button></div>' +
       '<div class="pged-seg pged-mode" aria-label="Light / dark button"><span>Light/dark</span><button type="button" data-mode="left">Left</button><button type="button" data-mode="right">Right</button></div>' +
+      '<button type="button" class="pged-hdrmore">Header: scrolling and logo…</button>' +
       '<div class="pged-settings-actions"><button type="button" class="pged-btn pged-pal">Colours</button><select class="pged-from" aria-label="Start from a layout"></select></div></div>' +
       '<div class="pged-tools" hidden></div></div></div>';
     const bl = E.d.base && PGLayout.find(E.d.base); if (bl) el.querySelector('.pged-title').textContent = bl.name;   // step 76: the layout being designed
@@ -143,6 +144,7 @@
     el.querySelector('.pged-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.d)); E.d = JSON.parse(E.redo.pop()); E.sel = -1; paintUndo(); commit(); });
     el.querySelector('.pged-screens').addEventListener('click', e => { const b = e.target.closest('[data-scr]'); if (b) { E.scr = b.dataset.scr; E.sel = -1; draw(); } });
     el.querySelector('.pged-logo').addEventListener('click', e => { const b = e.target.closest('[data-logo]'); if (!b) return; snapshot(); E.d.header = b.dataset.logo; commit(); });
+    el.querySelector('.pged-hdrmore').addEventListener('click', () => { if (window.PGHeader) PGHeader.sheet(); });   // step 99d
     el.querySelector('.pged-mode').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (!b) return; snapshot(); E.d.modeside = b.dataset.mode; commit(); });   // step 49: the light/dark button moves on its own
     el.querySelector('.pged-add').addEventListener('click', addSheet);
     el.querySelector('.pged-page-settings').addEventListener('click', () => { const panel = el.querySelector('.pged-settings'), open = panel.hidden; if (open && E.sel >= 0) { E.sel = -1; draw(); } panel.hidden = !open; el.querySelector('.pged-page-settings').setAttribute('aria-expanded', String(open)); el.classList.toggle('pged-settings-open', open); });
@@ -367,6 +369,7 @@
   function applyHeader() {
     const d = previewing ? loadDraft() : null, pg = (typeof GALLERY !== 'undefined' && GALLERY && GALLERY.pages) || {};
     const side = (d && d.header) || pg.header || 'right', mode = (d && d.modeside) || pg.modeside || 'right';
+    if (window.PGHeader) return PGHeader.apply({ header: side, modeside: mode });   // step 99d: one place for the header
     document.body.classList.toggle('pg-logo-left', side === 'left');
     document.body.classList.toggle('pg-mode-left', mode === 'left');
   }

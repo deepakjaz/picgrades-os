@@ -3610,3 +3610,54 @@ html[data-tkg-theme="dark"] .pgac-badge.is-on { color: #5ec28b; }
  .pce97 .pce-mrow{display:grid;grid-template-columns:repeat(5,1fr);overflow:visible}.pce97 .pce-mrow button{flex:none;width:auto;height:auto;aspect-ratio:1}
 }
 @media (prefers-reduced-motion:reduce){.pce97 .pce-mtile .pce-mg{animation:none!important}}
+/* step 97b: the video link box */
+.pce97 .pce-pane input[data-vlink]{flex:1 1 100%;width:100%;min-width:0;box-sizing:border-box;height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.06);color:#f5f0e8;font:500 14px var(--font-sans)}
+.pce97 .pce-pane .pce-row:has(input[data-vlink]){flex-wrap:wrap;gap:6px}
+
+/* step 98b: change a photo right on the Hub (couple, photographer, PicGrades) */
+.pghp-back{position:fixed;inset:0;z-index:2147482000;background:rgba(10,8,7,.45)}
+.pghp{position:fixed;left:50%;bottom:0;z-index:2147482001;width:min(440px,100%);box-sizing:border-box;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));border-radius:20px 20px 0 0;background:var(--bg-cream,#faf6f0);color:var(--ink,#2a2420);box-shadow:0 -10px 40px rgba(0,0,0,.25);translate:-50% 100%;transition:translate .25s cubic-bezier(.2,.8,.2,1);font-family:var(--font-sans)}
+.pghp.in{translate:-50% 0}
+.pghp-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.pghp-top img{width:56px;height:56px;border-radius:12px;object-fit:cover;flex:none}
+.pghp-top div{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pghp-top b{font:600 16px var(--font-sans)}.pghp-top small{font:500 12px var(--font-sans);color:var(--ink-soft,#6b625a)}
+.pghp-x{flex:none;width:44px;height:44px;border:0;border-radius:12px;background:var(--bg-box,rgba(0,0,0,.05));color:inherit;font:400 18px var(--font-sans);cursor:pointer}
+.pghp-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pghp-acts button{min-height:48px;border:1px solid var(--border-hairline,rgba(0,0,0,.12));border-radius:14px;background:var(--bg-box,#fff);color:inherit;font:600 14px var(--font-sans);cursor:pointer}
+.pghp-acts button:first-child{background:var(--cta-peach,#e5b878);border-color:transparent;color:var(--cta-peach-ink,#1a1410)}
+.pghp-pick{height:min(80vh,720px);display:flex;flex-direction:column}
+.pghp-list{flex:1;min-height:0;overflow-y:auto}
+.pghp-list h6{margin:12px 0 6px;font:600 12px var(--font-sans);color:var(--ink-soft,#6b625a)}
+.pghp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.pghp-grid button{aspect-ratio:1;padding:0;border:0;border-radius:8px;overflow:hidden;background:var(--bg-box,#eee);cursor:pointer}
+.pghp-grid img{width:100%;height:100%;object-fit:cover;display:block}
+@media (min-width:700px){.pghp{bottom:auto;top:50%;border-radius:20px;translate:-50% -40%;opacity:0;transition:opacity .2s,translate .25s}.pghp.in{translate:-50% -50%;opacity:1}.pghp-grid{grid-template-columns:repeat(6,1fr)}}
+@media (prefers-reduced-motion:reduce){.pghp{transition:none}}
+
+/* step 99c: the split hero on a laptop — names and date sit in the middle of their panel, larger, not at the top of an empty half */
+@media (min-width:700px){.pgl-splittxt{justify-content:center;padding:28px 30px}.pgl-splittxt .pgl-names{font-size:clamp(34px,3.4vw,54px)}.pgl-splittxt small{font-size:13px}}
+
+/* ---------- step 99d: the header for every template — stays on top / scrolls away / hides going down; logo left · centre · right · none ---------- */
+body.pg-hdr-fixed .mk-header,body.pg-hdr-auto .mk-header{position:fixed;transition:transform .28s ease,background-color .2s ease}
+body.pg-hdr-fixed.pg-hdr-scrolled .mk-header,body.pg-hdr-auto.pg-hdr-scrolled .mk-header{background:color-mix(in srgb,var(--bg-cream) 78%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding-bottom:8px}
+body.pg-hdr-auto.pg-hdr-hide .mk-header{transform:translateY(-110%)}
+body.pg-logo-center .mk-stamp-badge{position:absolute;left:50%;transform:translateX(-50%);order:2}
+body.pg-logo-none .mk-stamp-badge{display:none}
+@media (prefers-reduced-motion:reduce){body.pg-hdr-auto .mk-header{transition:none}}
+.pce-hdr i img{width:calc(30px * var(--z,1));height:calc(30px * var(--z,1));object-fit:contain;border-radius:inherit}
+body.pg-logo-center .pg-role-badge{top:calc(env(safe-area-inset-top,0px) + 64px)}   /* the view's name moves under a centred logo */
+.pce-hdr .lg.center{left:50%;transform:translateX(-50%)}
+.pce-logo{align-items:center}.pce-logo-pv{width:56px;height:56px;border-radius:12px;border:1px solid var(--border-hairline);display:grid;place-items:center;overflow:hidden;background:repeating-conic-gradient(#0000000d 0 25%,transparent 0 50%) 0 0/12px 12px}
+.pce-logo-pv img{max-width:100%;max-height:100%;object-fit:contain}.pce-logo-pv em{font-size:10px;color:var(--ink-soft);text-align:center;font-style:normal}
+.mk-stamp-badge .pg-mono img{object-fit:contain}
+.pged-hdrmore{min-height:44px;border:1px solid var(--border-hairline);border-radius:99px;background:transparent;color:var(--ink);font:500 13px var(--font-sans);padding:0 14px;cursor:pointer}
+.pghd{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-end;justify-content:center}
+.pghd-back{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.pghd-box{position:relative;width:min(420px,100%);background:var(--bg-cream);color:var(--ink);border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;font-family:var(--font-sans)}
+@media (min-width:700px){.pghd{align-items:center}.pghd-box{border-radius:20px}}
+.pghd-box b{font:500 1.3rem var(--font-serif)}.pghd-box small{color:var(--ink-soft);font-size:12.5px;margin-top:6px}
+.pghd-seg{display:flex;gap:6px;flex-wrap:wrap}.pghd-seg button,.pghd-acts button,.pghd-logo button{min-height:44px;padding:0 14px;border-radius:99px;border:1px solid var(--border-hairline);background:transparent;color:var(--ink);font:500 13px var(--font-sans);cursor:pointer}
+.pghd-seg button.on,.pghd-acts .pri{background:var(--ink);color:var(--bg-cream);border-color:var(--ink)}
+.pghd-logo{display:flex;align-items:center;gap:10px}.pghd-logo span{width:56px;height:56px;border-radius:12px;border:1px solid var(--border-hairline);display:grid;place-items:center;overflow:hidden}.pghd-logo img{max-width:100%;max-height:100%;object-fit:contain}.pghd-logo em{font-size:10px;font-style:normal;color:var(--ink-soft)}
+.pghd-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
