@@ -36,6 +36,35 @@
   const ENTER = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine',
     'spin', 'flip-x', 'flip-y', 'turn', 'bounce', 'zoom-out', 'glide', 'arc', 'reveal', 'shutters'];   // step 97: the motion library (transform and opacity only)
   const LOOP = ['zoom', 'float', 'pulse', 'swing', 'wobble', 'spin-slow', 'breathe'], SCROLLM = ['fade-on-scroll', 'grow-on-scroll'];
+  // step 105: "While scrolling" — any part can also follow the scroll (as well as its entrance motion). One engine plays them all.
+  //   sc: { fx, rg, str 0–100, dir, sh, c2 }   fx = the effect · rg = when: pass (as it passes by) · in (while it comes in) · out (while it goes) · stay (while its section stays still)
+  const SCFX = ['grow', 'shrink', 'grow-shrink', 'move', 'fade-in', 'fade-out', 'spin', 'tilt', 'blur', 'reveal', 'colour'], SCRG = ['pass', 'in', 'out', 'stay'];
+  const lerp = (a, b, p) => a + (b - a) * p;
+  function scApply(x, b, r, vh, top0) {   // r: the part's box on screen; returns nothing, styles the part's inner box
+    const d = x.dataset, st = Math.max(0.1, Math.min(2, (+d.st || 50) / 50));
+    let p;
+    if (d.rg === 'stay') { const sec = x.closest('.pgc-sec'), sr = sec ? sec.getBoundingClientRect() : r, run = Math.max(1, sr.height - vh); p = -(sr.top - top0) / run; }
+    else if (d.rg === 'in') p = (vh - (r.top - top0)) / (vh * 0.6);
+    else if (d.rg === 'out') p = -((r.top - top0) - vh * 0.15) / Math.max(1, r.height);
+    else p = (vh - (r.top - top0)) / (vh + r.height);
+    p = Math.max(0, Math.min(1, p));
+    const small = Math.max(0.05, 1 - 0.7 * Math.min(st, 1.35));
+    switch (d.sc) {
+      case 'grow': b.style.scale = lerp(small, 1, p).toFixed(3); break;
+      case 'shrink': b.style.scale = lerp(1, small, p).toFixed(3); break;
+      case 'grow-shrink': b.style.scale = lerp(small, 1, 1 - Math.abs(2 * p - 1)).toFixed(3); break;
+      case 'move': { const v = (0.5 - p) * 240 * st, m = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] }[d.dir || 'up'] || [0, 1]; b.style.translate = (m[0] * v).toFixed(1) + 'px ' + (m[1] * v).toFixed(1) + 'px'; break; }
+      case 'fade-in': b.style.opacity = p.toFixed(3); break;
+      case 'fade-out': b.style.opacity = (1 - p).toFixed(3); break;
+      case 'spin': b.style.rotate = (360 * st * p).toFixed(1) + 'deg'; break;
+      case 'tilt': b.style.rotate = ((p - 0.5) * 30 * st).toFixed(2) + 'deg'; break;
+      case 'blur': b.style.filter = 'blur(' + ((1 - p) * 12 * st).toFixed(1) + 'px)'; break;
+      case 'reveal': { const q = p * 100; b.style.clipPath = d.sh === 'arch' ? 'inset(' + (100 - q).toFixed(1) + '% 0 0 0 round 999px 999px 0 0)' : d.sh === 'wipe' ? 'inset(0 ' + (100 - q).toFixed(1) + '% 0 0)' : 'circle(' + (q * 0.75).toFixed(1) + '% at 50% 50%)'; break; }
+      case 'colour': { if (!d.c1) d.c1 = getComputedStyle(b)[x.classList.contains('pgc-t-shape') ? 'backgroundColor' : 'color'] || '#000';
+        const mix = 'color-mix(in srgb, ' + (d.c2 || '#c9a227') + ' ' + (p * 100).toFixed(1) + '%, ' + d.c1 + ')';
+        if (x.classList.contains('pgc-t-shape')) b.style.backgroundColor = mix; else b.style.color = mix; break; }
+    }
+  }
   const DIRS = { bottom: [0, 1], top: [0, -1], left: [-1, 0], right: [1, 0] };   // where bounce / glide / arc come in from
   // step 97b: videos play in YouTube's or Google Drive's own player (no PicGrades relay). The page shows a poster until the video is on screen.
   const vidOk = src => !!src && ((src.k === 'yt' && /^[A-Za-z0-9_-]{6,20}$/.test(src.id || '')) || (src.k === 'drive' && /^[A-Za-z0-9_-]{20,80}$/.test(src.id || '')));
@@ -233,9 +262,10 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     // scroll depth (parallax): an element drifts a little slower or faster than the page
     const sc = opts.scroller || window;
     function onScroll() {
-      if (sraf || !pars.length || opts.still || document.documentElement.classList.contains('pg-lite')) return;   // step 97: light mode keeps the page still
+      if (sraf || !pars.length || opts.still || document.documentElement.classList.contains('pg-lite') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;   // step 97: light mode keeps the page still (step 105: and reduced motion)
       sraf = requestAnimationFrame(() => { sraf = 0; const vh = opts.scroller ? opts.scroller.clientHeight : window.innerHeight, top0 = opts.scroller ? opts.scroller.getBoundingClientRect().top : 0;
         pars.forEach(x => { const r = x.getBoundingClientRect(), c = r.top - top0 + r.height / 2 - vh / 2, b = x.firstElementChild; if (!b) return;
+          if (x.dataset.sc) { scApply(x, b, r, vh, top0); return; }   // step 105
           const sm = x.dataset.sm, prog = Math.max(0, Math.min(1, (vh - (r.top - top0)) / (vh * 0.75)));   // step 97: 0 when it comes in at the bottom, 1 once it is well on screen
           if (sm === 'fade-on-scroll') { b.style.opacity = (0.1 + 0.9 * prog).toFixed(2); return; }
           if (sm === 'grow-on-scroll') { b.style.scale = (0.82 + 0.18 * prog).toFixed(3); return; }
@@ -262,9 +292,10 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
           const inner = body(el, k, doc, data, P, ctx, sp); if (inner == null) return '';
           const mo = el.mo || {}, enter = ENTER.indexOf(el.m) > -1, stag = enter && el.t === 'events' && el.v !== 'list' && el.m !== 'shine';
           const m = stag ? ' pgc-stg' : enter ? ' pgc-e pgc-m-' + el.m : LOOP.indexOf(el.m) > -1 ? ' pgc-m-' + el.m : '';
-          const dir = DIRS[mo.dir], sm = SCROLLM.indexOf(el.m) > -1;
+          const dir = DIRS[mo.dir], sm = SCROLLM.indexOf(el.m) > -1, sc = el.sc && SCFX.indexOf(el.sc.fx) > -1 ? el.sc : null;
+          const scA = sc ? ' data-sc="' + sc.fx + '" data-rg="' + (SCRG.indexOf(sc.rg) > -1 ? sc.rg : 'pass') + '" data-st="' + num(sc.str, 50) + '"' + (sc.dir ? ' data-dir="' + esc(sc.dir) + '"' : '') + (sc.sh ? ' data-sh="' + esc(sc.sh) + '"' : '') + (sc.c2 ? ' data-c2="' + esc(sc.c2) + '"' : '') : '';
           const tim = (mo.d ? ';--d:' + num(mo.d, 0) + 'ms' : '') + (mo.t ? ';--t:' + num(mo.t, 900) + 'ms' : '') + (mo.str != null ? ';--str:' + (Math.max(0, Math.min(100, num(mo.str, 50))) / 50).toFixed(2) : '') + (dir ? ';--mx:' + dir[0] + ';--my:' + dir[1] : '');
-          return '<div class="pgc-el pgc-t-' + el.t + m + '" data-el="' + esc(el.id || '') + '"' + (mo.p || sm ? ' data-par="' + num(mo.p, 0) + '"' : '') + (sm ? ' data-sm="' + el.m + '"' : '') + ' style="left:' + (num(sp.x, 0) * k).toFixed(1) + 'px;top:' + (num(sp.y, 0) * k).toFixed(1) + 'px;width:' + (num(sp.w, 100) * k).toFixed(1) + 'px;height:' + (num(sp.h, 40) * k).toFixed(1) + 'px;z-index:' + num(sp.z, 1) + (sp.r ? ';rotate:' + num(sp.r, 0) + 'deg' : '') + tim + '">' + inner + '</div>';
+          return '<div class="pgc-el pgc-t-' + el.t + m + '" data-el="' + esc(el.id || '') + '"' + (mo.p || sm ? ' data-par="' + num(mo.p, 0) + '"' : '') + (sm ? ' data-sm="' + el.m + '"' : '') + scA + ' style="left:' + (num(sp.x, 0) * k).toFixed(1) + 'px;top:' + (num(sp.y, 0) * k).toFixed(1) + 'px;width:' + (num(sp.w, 100) * k).toFixed(1) + 'px;height:' + (num(sp.h, 40) * k).toFixed(1) + 'px;z-index:' + num(sp.z, 1) + (sp.r ? ';rotate:' + num(sp.r, 0) + 'deg' : '') + tim + '">' + inner + '</div>';
         }).join('');
         const stay = Math.max(0, num(sec.stay, 0)) * k;   // "stays while scrolling": the section holds still for this much scrolling
         return '<section class="pgc-sec' + (stay && !opts.editing ? ' stay' : '') + '" data-sec="' + esc(sec.id || '') + '" style="height:' + (h + stay).toFixed(1) + 'px;background:' + col(bg.c, 'transparent') + '"><div class="pgc-stick" style="height:' + h.toFixed(1) + 'px">' + bgHtml + '<div class="pgc-in" style="left:' + off.toFixed(1) + 'px;width:' + inW.toFixed(1) + 'px">' + els + '</div></div>' + (stay && opts.editing ? '<div class="pgc-staynote" style="height:' + stay.toFixed(1) + 'px">stays here while guests scroll</div>' : '') + '</section>';
@@ -306,7 +337,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
       io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: opts.scroller || null, threshold: .15 }) : null;
       root.querySelectorAll('.pgc-stg .pgc-ev>button').forEach((b, i) => b.style.setProperty('--i', i % 12));
       root.querySelectorAll('.pgc-e,.pgc-stg').forEach(x => (io ? io.observe(x) : x.classList.add('in')));
-      pars = [...root.querySelectorAll('[data-par]')]; onScroll();
+      pars = [...root.querySelectorAll('[data-par],[data-sc]')]; onScroll();
       // step 97b: a looping video starts when it comes on screen (never in the editor or in light mode)
       if (vio) vio.disconnect(); vio = null;
       const lite = document.documentElement.classList.contains('pg-lite');
@@ -344,5 +375,5 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     if (/drive\.google\.com/.test(url) && (m = /\/file\/d\/([A-Za-z0-9_-]{20,80})/.exec(url) || /[?&]id=([A-Za-z0-9_-]{20,80})/.exec(url))) return { k: 'drive', id: m[1] };
     return null;
   }
-  window.PGCanvas = { render, mod, FONTS, PW, LW, LAPTOP_AT, spotOf, secH, LABEL, ENTER, LOOP, SCROLLM, artUrl, videoFromLink };
+  window.PGCanvas = { render, mod, FONTS, PW, LW, LAPTOP_AT, spotOf, secH, LABEL, ENTER, LOOP, SCROLLM, SCFX, SCRG, artUrl, videoFromLink };
 })();
