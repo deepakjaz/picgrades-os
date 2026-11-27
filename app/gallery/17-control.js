@@ -253,6 +253,9 @@
   }
 
   // ---- the preview window ----
+  // step 100: each Hub layout has a short ready-made clip (tools/make-layout-previews.js), so choosing one plays a light
+  // video instead of opening the whole app in a frame. "Try with our photos" then opens it in the editor with the wedding's own photos.
+  let CLIPS = {}; fetch('/app/themes/preview/index.json').then(r => (r.ok ? r.json() : {})).then(j => { CLIPS = j || {}; }).catch(() => {});
   const PAGES = [['hub', 'Hub'], ['gallery', 'Events'], ['event', 'Event'], ['photo', 'Photo'], ['moments', 'Moments'], ['rooms', 'Notes']];
   function preview(want, box) {
     const themes = window.PGTheme ? PGTheme.list() : [], layouts = window.PGLayout ? PGLayout.list() : [];
@@ -264,6 +267,7 @@
       styles: Object.keys(PAGE_DEFS).reduce((o, k) => { o[k] = pk === k ? want.pages[k] : curStyle(k); return o; }, {}) };
     const withOwn = 'layout' in want && lay && lay.theme && themes.some(t => t.id === lay.theme);
     if (withOwn) state.theme = lay.theme;
+    let clip = !!('layout' in want && !pk && state.layout && CLIPS[state.layout]);
     const nameOf = () => {
       const t = themes.find(x => x.id === state.theme), l = layouts.find(x => x.id === state.layout) || (state.layout === 'custom' ? { name: 'Our own Hub' } : null);
       if (pk) return PAGE_DEFS[pk].title + ' · ' + PAGE_DEFS[pk].styles[state.styles[pk]][0];
@@ -279,6 +283,7 @@
     const fr = wrap.querySelector('iframe'), pages = wrap.querySelector('.pgcp-pv-pages'), wait = wrap.querySelector('.pgcp-pv-wait');
     const post = m => { try { fr.contentWindow.postMessage(Object.assign({ pg: 'preview' }, m), location.origin); } catch (e) {} };
     const load = () => {
+      if (clip) { wrap.querySelector('.pgcp-pv-name').textContent = nameOf(); return playClip(); }
       wait.hidden = false;
       fr.src = location.pathname + '?pgpreview=1&theme=' + encodeURIComponent(state.theme || 'original') + '&layout=' + encodeURIComponent(state.layout || 'original') + Object.keys(PAGE_DEFS).map(k => '&' + PAGE_DEFS[k].param + '=' + encodeURIComponent(state.styles[k])).join('') + '#hub';
       wrap.querySelector('.pgcp-pv-name').textContent = nameOf();
@@ -303,6 +308,11 @@
     // clean-up #5: a layout preview offers Edit (opens its editor; ✕ there comes back to this preview) next to Use this
     const ed = wrap.querySelector('.pgcp-pv-edit');
     if ('layout' in want && !pk && state.layout && designer(state.layout)) { ed.hidden = false; ed.addEventListener('click', () => { const id = state.layout; close(); designLayout(id, id); }); }
+    if (clip) {   // step 100: the clip shows a sample wedding; their own photos are one tap away
+      if (!ed.hidden) ed.textContent = 'Try with our photos';
+      else { ed.hidden = false; ed.textContent = 'See it with our photos'; ed.addEventListener('click', () => { clip = false; wrap.classList.remove('clip'); if (vid) vid.remove(); vid = null; ed.hidden = true; load(); fit(); }, { once: true }); }
+      wrap.classList.add('clip'); wrap.querySelector('.pgcp-pv-note').textContent = 'A sample wedding. Your own photos show when you use it.';
+    }
     const same = pk ? state.styles[pk] === curStyle(pk) : state.theme === (GALLERY.theme || '') && state.layout === (GALLERY.layout || '');
     const ap = wrap.querySelector('.pgcp-pv-apply');
     if ('layout' in want && !pk) ap.textContent = ROLE === 'demo' ? 'Use this on this phone' : 'Use this';
@@ -316,11 +326,20 @@
     const stage = wrap.querySelector('.pgcp-pv-stage'), phone = wrap.querySelector('.pgcp-pv-phone'), sizeBtn = wrap.querySelector('.pgcp-pv-size');
     const DEV = { phone: [390, 844], laptop: [1440, 900] };
     let dev = window.innerWidth >= 1000 ? 'laptop' : 'phone';
-    const fit = () => { if (!wrap.isConnected) return window.removeEventListener('resize', fit); const [W, H] = DEV[dev], r = stage.getBoundingClientRect(), k = Math.min(r.width / W, r.height / H, 1);
+    let vid = null;
+    function playClip() {
+      const k = dev === 'phone' ? 'p' : 'l', base = '/app/themes/preview/' + encodeURIComponent(state.layout) + '-' + k;
+      if (!vid) { vid = document.createElement('video'); vid.className = 'pgcp-pv-clip'; vid.muted = true; vid.loop = true; vid.autoplay = true; vid.playsInline = true; vid.setAttribute('playsinline', ''); vid.setAttribute('aria-label', 'Preview of ' + nameOf()); phone.appendChild(vid); }
+      wait.hidden = true; vid.poster = base + '.webp'; vid.src = base + '.mp4'; const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {});
+    }
+    const CLIPDEV = { phone: [360, 778], laptop: [640, 400] };
+    const fit = () => { if (!wrap.isConnected) return window.removeEventListener('resize', fit);
+      if (clip) { const [cw, chh] = CLIPDEV[dev], r = stage.getBoundingClientRect(), k = Math.min(r.width / cw, r.height / chh, dev === 'phone' ? 1.2 : 2); phone.classList.toggle('laptop', dev === 'laptop'); phone.style.width = Math.floor(cw * k) + 'px'; phone.style.height = Math.floor(chh * k) + 'px'; fr.style.display = 'none'; return; }
+      fr.style.display = ''; const [W, H] = DEV[dev], r = stage.getBoundingClientRect(), k = Math.min(r.width / W, r.height / H, 1);
       fr.style.width = W + 'px'; fr.style.height = H + 'px'; phone.classList.toggle('laptop', dev === 'laptop');
       phone.style.width = Math.floor(W * k) + 'px'; phone.style.height = Math.floor(H * k) + 'px'; fr.style.transform = 'scale(' + k + ')'; };
     const paintSize = () => { sizeBtn.textContent = dev === 'phone' ? 'Laptop' : 'Phone'; sizeBtn.title = 'See it on a ' + sizeBtn.textContent.toLowerCase(); };
-    sizeBtn.addEventListener('click', () => { dev = dev === 'phone' ? 'laptop' : 'phone'; paintSize(); fit(); }); paintSize();
+    sizeBtn.addEventListener('click', () => { dev = dev === 'phone' ? 'laptop' : 'phone'; paintSize(); fit(); if (clip) playClip(); }); paintSize();
     window.addEventListener('resize', fit);
     document.body.appendChild(wrap); fit(); load();
   }
