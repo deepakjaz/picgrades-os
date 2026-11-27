@@ -3637,3 +3637,27 @@ html[data-tkg-theme="dark"] .pgac-badge.is-on { color: #5ec28b; }
 
 /* step 99c: the split hero on a laptop — names and date sit in the middle of their panel, larger, not at the top of an empty half */
 @media (min-width:700px){.pgl-splittxt{justify-content:center;padding:28px 30px}.pgl-splittxt .pgl-names{font-size:clamp(34px,3.4vw,54px)}.pgl-splittxt small{font-size:13px}}
+
+/* ---------- step 99d: the header for every template — stays on top / scrolls away / hides going down; logo left · centre · right · none ---------- */
+body.pg-hdr-fixed .mk-header,body.pg-hdr-auto .mk-header{position:fixed;transition:transform .28s ease,background-color .2s ease}
+body.pg-hdr-fixed.pg-hdr-scrolled .mk-header,body.pg-hdr-auto.pg-hdr-scrolled .mk-header{background:color-mix(in srgb,var(--bg-cream) 78%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding-bottom:8px}
+body.pg-hdr-auto.pg-hdr-hide .mk-header{transform:translateY(-110%)}
+body.pg-logo-center .mk-stamp-badge{position:absolute;left:50%;transform:translateX(-50%);order:2}
+body.pg-logo-none .mk-stamp-badge{display:none}
+@media (prefers-reduced-motion:reduce){body.pg-hdr-auto .mk-header{transition:none}}
+.pce-hdr i img{width:calc(30px * var(--z,1));height:calc(30px * var(--z,1));object-fit:contain;border-radius:inherit}
+body.pg-logo-center .pg-role-badge{top:calc(env(safe-area-inset-top,0px) + 64px)}   /* the view's name moves under a centred logo */
+.pce-hdr .lg.center{left:50%;transform:translateX(-50%)}
+.pce-logo{align-items:center}.pce-logo-pv{width:56px;height:56px;border-radius:12px;border:1px solid var(--border-hairline);display:grid;place-items:center;overflow:hidden;background:repeating-conic-gradient(#0000000d 0 25%,transparent 0 50%) 0 0/12px 12px}
+.pce-logo-pv img{max-width:100%;max-height:100%;object-fit:contain}.pce-logo-pv em{font-size:10px;color:var(--ink-soft);text-align:center;font-style:normal}
+.mk-stamp-badge .pg-mono img{object-fit:contain}
+.pged-hdrmore{min-height:44px;border:1px solid var(--border-hairline);border-radius:99px;background:transparent;color:var(--ink);font:500 13px var(--font-sans);padding:0 14px;cursor:pointer}
+.pghd{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-end;justify-content:center}
+.pghd-back{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.pghd-box{position:relative;width:min(420px,100%);background:var(--bg-cream);color:var(--ink);border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;font-family:var(--font-sans)}
+@media (min-width:700px){.pghd{align-items:center}.pghd-box{border-radius:20px}}
+.pghd-box b{font:500 1.3rem var(--font-serif)}.pghd-box small{color:var(--ink-soft);font-size:12.5px;margin-top:6px}
+.pghd-seg{display:flex;gap:6px;flex-wrap:wrap}.pghd-seg button,.pghd-acts button,.pghd-logo button{min-height:44px;padding:0 14px;border-radius:99px;border:1px solid var(--border-hairline);background:transparent;color:var(--ink);font:500 13px var(--font-sans);cursor:pointer}
+.pghd-seg button.on,.pghd-acts .pri{background:var(--ink);color:var(--bg-cream);border-color:var(--ink)}
+.pghd-logo{display:flex;align-items:center;gap:10px}.pghd-logo span{width:56px;height:56px;border-radius:12px;border:1px solid var(--border-hairline);display:grid;place-items:center;overflow:hidden}.pghd-logo img{max-width:100%;max-height:100%;object-fit:contain}.pghd-logo em{font-size:10px;font-style:normal;color:var(--ink-soft)}
+.pghd-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}

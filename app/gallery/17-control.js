@@ -74,10 +74,11 @@
     if ('pages' in body) d.pages = Object.assign({}, d.pages || {}, parse(body.pages));
     if ('features' in body) d.features = Object.assign({}, d.features || {}, parse(body.features));
     if ('custom' in body) d.custom = parse(body.custom);
+    if ('logo' in body) d.logo = String(body.logo || '');   // step 99d
     if ('version' in body) { const v = parse(body.version); if (v && v.id) { d.versions = Object.assign({}, d.versions || {}); if (v.custom) d.versions[v.id] = v.custom; else delete d.versions[v.id]; } }   // step 76
     try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {}
     const g = pgDemoMerge(Object.assign({}, GALLERY));
-    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {}, custom: g.custom || { blocks: [] }, versions: g.versions || {} });
+    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {}, custom: g.custom || { blocks: [] }, versions: g.versions || {}, logoUrl: g.logoUrl || '' });
   }
   function showLook() {
     if (window.PGTheme) PGTheme.apply(GALLERY.theme || '');

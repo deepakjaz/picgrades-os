@@ -97,7 +97,7 @@
     if (E) return;
     const role = window.PGControl ? PGControl.role() : 'guest';
     E = { role, mode: window.innerWidth >= 700 ? 'l' : 'p', sel: null, undo: [], redo: [], tab: 'add', sub: 'design', snap: 'free', src: {}, inst: null, zoom: 1, play: false,
-      pages: { header: (GALLERY.pages || {}).header || 'right', modeside: (GALLERY.pages || {}).modeside || 'right' } };   // step 78: zoom, Play, the app header's places
+      pages: hdrNow(), logo: undefined };   // step 99d: logo = a new logo picture (data URL), '' = remove it, undefined = unchanged   // step 78: zoom, Play, the app header's places
     build();
     const start = (doc, src) => { E.doc = doc; E.src = src; E.saved = JSON.stringify(doc); draw(); panel(); tips(); };
     if (arg && typeof arg === 'object' && arg.doc) return start(clone(arg.doc), { id: arg.id || '', mine: !!arg.mine });
@@ -222,7 +222,7 @@
     E.pageW = Math.round((E.mode === 'p' ? Math.min(390, st.clientWidth) : Math.max(1, st.clientWidth - 40)) * E.zoom);   // zoom draws the page smaller or bigger (the spots stay the same)
     page.style.width = E.pageW + 'px';
     E.inst = PGCanvas.render(page, E.doc, Object.assign({}, PGLayout.storyData(), { can: null }), () => {}, { mode: E.mode, width: () => E.pageW, scroller: st, still: !E.play, editing: !E.play, onTap: () => true });
-    page.insertAdjacentHTML('beforeend', '<div class="pce-hdr ' + (E.mode === 'p' ? 'p' : 'l') + '" style="--z:' + (E.pageW / (E.mode === 'p' ? 390 : 1200) * (E.mode === 'p' ? 1 : 1.6)) + '"><i class="lg ' + E.pages.header + '">A&amp;R</i><i class="md ' + E.pages.modeside + '">☾</i><i class="mn ' + E.pages.modeside + '">≡</i></div>');   // where the app header sits on top (Page › Header)
+    page.insertAdjacentHTML('beforeend', '<div class="pce-hdr ' + (E.mode === 'p' ? 'p' : 'l') + '" style="--z:' + (E.pageW / (E.mode === 'p' ? 390 : 1200) * (E.mode === 'p' ? 1 : 1.6)) + '">' + (E.pages.logo === 'none' ? '' : '<i class="lg ' + E.pages.header + '">' + (E.pages.logo === 'image' && hdrLogo() ? '<img alt="" src="' + esc(hdrLogo()) + '">' : 'A&amp;R') + '</i>') + '<i class="md ' + E.pages.modeside + '">☾</i><i class="mn ' + E.pages.modeside + '">≡</i></div>');   // where the app header sits on top (Page › Header)
     const zb = E.el.querySelector('.pce-zoom-menu');
     zb.querySelector('b').textContent = Math.round(E.zoom * 100) + '%';
     E.el.querySelector('.pce-zoom-toggle').textContent = Math.round(E.zoom * 100) + '%';
@@ -414,6 +414,9 @@
 
   // ---- the panel ----
   const opt = (v, n, cur) => '<option value="' + esc(v) + '"' + (String(cur) === String(v) ? ' selected' : '') + '>' + esc(n) + '</option>';
+  // step 99d: the app header's settings as saved for the wedding
+  function hdrNow() { const g = GALLERY.pages || {}; return { header: g.header || 'right', modeside: g.modeside || 'right', hdrmode: g.hdrmode || 'scroll', logo: g.logo || 'mono' }; }
+  const hdrLogo = () => (E.logo !== undefined ? E.logo : (GALLERY.logoUrl || GALLERY.logoRaw || ''));
   const seg = (key, cur, list) => '<div class="pce-seg sm" data-k="' + key + '">' + list.map(([v, n]) => '<button type="button" data-v="' + esc(v) + '" class="' + (String(cur) === String(v) ? 'on' : '') + '">' + n + '</button>').join('') + '</div>';
   const row = (label, inner) => '<label class="pce-row"><span>' + label + '</span>' + inner + '</label>';
   function panel() {
@@ -555,7 +558,10 @@
       c += '<div class="pce-acts"><button type="button" data-secdo="up">Move up</button><button type="button" data-secdo="down">Move down</button><button type="button" data-secdo="dup">Duplicate</button><button type="button" data-secdo="add">Add section below</button><button type="button" data-secdo="del" class="danger">Delete section</button></div>';
     }
     c += '<div class="pce-sub">Header · the whole app</div><p class="pce-note">The app header sits on top of every page (the outline in the preview). It changes for the whole wedding when you apply.</p>' +
-      row('Logo', seg('hdr-header', E.pages.header, [['left', 'Left'], ['right', 'Right']])) + row('Light / dark and menu', seg('hdr-modeside', E.pages.modeside, [['left', 'Left'], ['right', 'Right']]));
+      row('When the page scrolls', seg('hdr-hdrmode', E.pages.hdrmode, [['scroll', 'Scrolls away'], ['fixed', 'Stays on top'], ['auto', 'Hides, comes back']])) +
+      row('Logo', seg('hdr-logo', E.pages.logo, [['mono', 'Initials'], ['image', 'Our logo'], ['none', 'No logo']])) +
+      (E.pages.logo === 'image' ? '<div class="pce-acts pce-logo"><span class="pce-logo-pv">' + (hdrLogo() ? '<img alt="Your logo" src="' + esc(hdrLogo()) + '">' : '<em>No logo yet</em>') + '</span><button type="button" data-do="logoUp">' + (hdrLogo() ? 'Change logo' : 'Upload logo') + '</button>' + (hdrLogo() ? '<button type="button" data-do="logoDel" class="danger">Remove</button>' : '') + '<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden data-logofile></div><p class="pce-note">A PNG or SVG with a see-through background looks best. It is made small (256 px) so it loads fast.</p>' : '') +
+      (E.pages.logo === 'none' ? '' : row('Logo place', seg('hdr-header', E.pages.header, [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]))) + row('Light / dark and menu', seg('hdr-modeside', E.pages.modeside, [['left', 'Left'], ['right', 'Right']]));
     if (E.mode === 'l') c += '<div class="pce-acts"><button type="button" data-do="lapreset">Laptop: start again from the phone</button></div>';
     return c;
   }
@@ -661,8 +667,12 @@
     on('[data-mo]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.mo; change(() => { const mo = Object.assign({}, e.mo); const v = parseFloat(x.value) || 0;
       if (k === 'p') { if (v) mo.p = v; else delete mo.p; } else if (k === 'str') mo.str = Math.round(v); else mo[k] = Math.round(v * 1000); if (k === 'd' && !mo.d) delete mo.d; if (Object.keys(mo).length) e.mo = mo; else delete e.mo; }); if (k !== 'p') replay(); });
     on('[data-sp]', 'change', ev => { const x = ev.currentTarget; change(() => { const sp = Object.assign({}, spot(e)); sp[x.dataset.sp] = parseFloat(x.value) || 0; setSpot(e, sp); }, true); });
+    on('[data-logofile]', 'change', ev => { const f = ev.currentTarget.files && ev.currentTarget.files[0]; if (!f || !window.PGHeader) return;
+      PGHeader.shrink(f).then(u => { E.logo = u; draw(); panel(); }).catch(err => showToast(err.message || 'Could not use that picture')); });
     on('[data-do]', 'click', ev => { const d = ev.currentTarget.dataset.do;
       if (d === 'deselect') { E.sel = null; E.frame = null; E.tab = 'add'; draw(); panel(); return; }
+      if (d === 'logoUp') { const f = E.el.querySelector('[data-logofile]'); if (f) f.click(); return; }   // step 99d: the couple's own logo
+      if (d === 'logoDel') { E.logo = ''; draw(); panel(); return; }
       if (d === 'dup') duplicate(); if (d === 'del') remove(); if (d === 'front') order(1); if (d === 'back') order(-1); if (d === 'hide') toggleHide(E.sel);
       if (d === 'rename') E.el.querySelector('.pce-title').click();
       if (d === 'frame') { E.frame = E.frame === E.sel ? null : E.sel; draw(); panel(); }
@@ -774,8 +784,9 @@
   function applyId(id, canvas) {
     const btn = E.el.querySelector('.pce-apply'); btn.disabled = true; btn.textContent = 'Applying…';
     const gp = GALLERY.pages || {}, body = { layout: id };
-    if ((gp.header || 'right') !== E.pages.header || (gp.modeside || 'right') !== E.pages.modeside) body.pages = JSON.stringify(E.pages);
-    return PGControl.save(body).then(r => { if (r.pages) GALLERY.pages = r.pages;
+    const was = hdrNow(); if (Object.keys(E.pages).some(k => was[k] !== E.pages[k])) body.pages = JSON.stringify(E.pages);   // step 99d: the header too
+    if (E.logo !== undefined) body.logo = E.logo;
+    return PGControl.save(body).then(r => { if (r.pages) GALLERY.pages = r.pages; if ('logoUrl' in r) GALLERY.logoUrl = r.logoUrl; if (window.PGHeader) PGHeader.apply();
       GALLERY.layout = r.layout; if (canvas) GALLERY.canvas = canvas; if (r.custom) GALLERY.custom = r.custom;
       E.saved = JSON.stringify(E.doc); window.pgEditorBack = null; close(true); if (window.switchViewFromNav) switchViewFromNav('hub'); window.scrollTo(0, 0);
       showToast('Applied — every guest sees this Hub now');
