@@ -52,7 +52,7 @@ const srv = http.createServer((req, res) => {
     await pg.click('.pce-pane [data-k=v] [data-v=player]'); await pg.waitForTimeout(150); ok((await vNow()).v === 'player', 'Tap to play can be chosen');
     await pg.click('.pce-pane [data-k=v] [data-v=loop]');
     // save: the backend keeps it
-    await pg.click('.pce-save'); await pg.waitForSelector('.pce-sgo'); await pg.fill('.pce-sname', 'With video'); await pg.click('.pce-sgo'); await pg.waitForFunction(() => PGCanvasEditor.state().src.id, null, { timeout: 8000 });
+    await pg.click('.pce-save'); /* step 101: no name / collection question — saved as the wedding's copy */ await pg.waitForFunction(() => PGCanvasEditor.state().src.id, null, { timeout: 8000 });
     const sv = call('canvasGet', { g: pub.galleryId, coupleKey: ck, id: (await S()).src.id }).doc.sections.flatMap(s => s.els).find(e => e.id === vid.id);
     ok(sv && JSON.stringify(sv.src) === '{"k":"yt","id":"dQw4w9WgXcQ"}' && sv.v === 'loop', 'saved with its video');
     ok(call('canvasSave', { g: pub.galleryId, coupleKey: ck, item: { kind: 'layout', name: 'bad', doc: { sections: [{ id: 's', h: { p: 600 }, els: [{ id: 'x', t: 'video', p: { x: 0, y: 0, w: 100, h: 60 }, src: { k: 'yt', id: '"><script>' } }, { id: 'y', t: 'photo', p: { x: 0, y: 0, w: 100, h: 60 }, src: { k: 'yt', id: 'dQw4w9WgXcQ' } }] }] } } }).doc.sections[0].els.every(e => !e.src || e.src.k !== 'yt'), 'the backend refuses a bad video id, and a video source on a photo');
