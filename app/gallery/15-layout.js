@@ -105,7 +105,7 @@
     const cap = '<div class="pgl-eye">' + esc(eyebrow(D) || 'Wedding Hub') + '</div><h2 class="pgl-names">' + esc(D.names) + '</h2>';
     if (v === 'split') {
       el.classList.add('pgl-split');
-      el.append(h('div', 'pgl-splittxt', '<div class="pgl-eye">' + esc(D.place || 'Wedding Hub') + '</div><h2 class="pgl-names">' + esc(D.names) + '</h2><small>' + esc(D.date) + '</small><em>' + D.events.length + ' ceremonies</em>'));
+      el.append(h('div', 'pgl-splittxt', '<div class="pgl-eye">' + esc(D.place || 'Wedding Hub') + '</div><h2 class="pgl-names">' + esc(D.names) + '</h2><small>' + esc(D.date) + '</small>'));   // step 99c: no count of ceremonies (counts stay in the Control Panel)
       const ph = h('div', 'pgl-splitph'); rot(ph, P, 900); el.appendChild(ph); return;
     }
     if (v === 'collage-3' || v === 'collage-5') {
