@@ -36,7 +36,7 @@
   // 'style' is the selected part's own panel (Design · Motion · Connect); 'page' is the Pages tool (sections + header)
   const TABS = [['add', 'Add'], ['layers', 'Layers'], ['page', 'Pages'], ['collections', 'Layouts'], ['theme', 'Theme'], ['media', 'Media']];
   const SUBTABS = [['design', 'Design'], ['motion', 'Motion'], ['connect', 'Connect']];
-  const TYPE = { photo: 'Photo', names: 'Names', date: 'Date', text: 'Text', events: 'Events', strip: 'Photo strip', action: 'Button', blessings: 'Blessing', credit: 'Credit', shape: 'Shape', card: 'App card', art: 'Element' };
+  const TYPE = { photo: 'Photo', names: 'Names', date: 'Date', text: 'Text', events: 'Events', strip: 'Photo strip', action: 'Button', blessings: 'Blessing', credit: 'Credit', shape: 'Shape', card: 'App card', art: 'Element', video: 'Video' };
   const catalog = () => (window.PGHubEditor && PGHubEditor.catalog ? PGHubEditor.catalog() : { CARDS: {}, VNAME: {} });
   const cardName = e => ((catalog().CARDS[e.block] || [])[0]) || e.block;
   const SNAP = 6;   // px
@@ -67,6 +67,7 @@
     if (t === 'credit') Object.assign(base, { p: { x: 20, y: 40, w: 350, h: 28, z: 5 }, s: { size: 11, ls: 0.2, upper: true, align: 'center', opacity: 0.7 } });
     if (t === 'card') { const C = catalog().CARDS[v] || ['', []]; Object.assign(base, { p: { x: 20, y: 40, w: 350, h: v === 'studio' || v === 'install' || v === 'review' ? 90 : 260, z: 5 }, block: v, variant: C[1][0] || undefined }); }
     if (t === 'art' && v && typeof v === 'object') { const w = 160, hh = Math.max(44, Math.min(320, Math.round(w * (v.h || 1) / (v.w || 1)))); Object.assign(base, { p: { x: (390 - w) / 2, y: 40, w, h: hh, z: 6 }, src: { k: 'art', id: v.id, o: v.occasion } }); }   // step 97: a picture from the elements library
+    if (t === 'video') Object.assign(base, { p: { x: 20, y: 40, w: 350, h: 197, z: 5 }, s: { radius: 14 }, v: 'loop' });   // step 97b: a YouTube / Drive video (16:9 to start)
     if (t === 'shape') Object.assign(base, v === 'line' ? { p: { x: 95, y: 40, w: 200, h: 2, z: 5 }, s: { bg: '#a07d4c' } } : v === 'circle' ? { p: { x: 145, y: 40, w: 100, h: 100, z: 5 }, s: { bg: '#a07d4c', shape: 'circle', opacity: 0.3 } } : { p: { x: 45, y: 40, w: 300, h: 200, z: 1 }, s: { bg: '#ffffff', radius: 16, shadow: 1 } });
     return base;
   }
@@ -401,7 +402,7 @@
     e.p.y = Math.min(inViewY, PGCanvas.secH(s, 'p') - e.p.h - 10); if (e.p.y < 0) e.p.y = 10;
     if (E.mode === 'l') { const a = PGCanvas.spotOf(e, 'l'); e.l = { x: (PGCanvas.LW - a.w) / 2, y: Math.min(inViewY, PGCanvas.secH(s, 'l') - a.h - 10), w: a.w, h: a.h, z: a.z }; }
     if (t === 'photo' && v) e.src = { k: 'id', id: v };   // step 97: a photo chosen in Media
-    change(() => { s.els = s.els || []; s.els.push(e); E.sel = e.id; E.tab = 'style'; E.sub = 'design'; });
+    change(() => { s.els = s.els || []; s.els.push(e); E.sel = e.id; E.tab = 'style'; E.sub = t === 'video' ? 'connect' : 'design'; });   // a new video asks for its link first
   }
   function duplicate() { const f = find(E.sel); if (!f) return; const c = clone(f.e); c.id = uid('e'); ['p', 'l'].forEach(m => { if (c[m]) { c[m].x += 12; c[m].y += 12; } }); change(() => { f.s.els.push(c); E.sel = c.id; }); }
   function remove() { const f = find(E.sel); if (!f) return; change(() => { f.s.els = f.s.els.filter(x => x.id !== f.e.id); E.sel = null; }); }
@@ -428,7 +429,7 @@
   }
   const tile = (t, v, n, note) => '<button type="button" class="pce-add" data-add="' + t + '" data-v="' + (v || '') + '"><b>' + n + '</b>' + (note ? '<small>' + note + '</small>' : '') + '</button>';
   function addPane() {
-    return '<div class="pce-sub">Basics</div><div class="pce-adds">' + tile('photo', '', 'Photo', 'any wedding photo') + tile('names', '', 'Names') + tile('date', '', 'Date') + tile('text', '', 'Text', 'your own words') +
+    return '<div class="pce-sub">Basics</div><div class="pce-adds">' + tile('photo', '', 'Photo', 'any wedding photo') + tile('video', '', 'Video', 'YouTube or Drive') + tile('names', '', 'Names') + tile('date', '', 'Date') + tile('text', '', 'Text', 'your own words') +
       tile('shape', 'box', 'Box') + tile('shape', 'circle', 'Circle') + tile('shape', 'line', 'Line') + '</div>' +
       '<div class="pce-sub">Elements</div>' + elementsGrid('add') +
       '<div class="pce-sub">App parts</div><div class="pce-adds">' + tile('events', 'row', 'Events', 'cards') + tile('events', 'circles', 'Events', 'circles') + tile('events', 'list', 'Events', 'list') +
@@ -464,6 +465,10 @@
     if (t === 'card') { const C = catalog(), vs = (C.CARDS[e.block] || ['', []])[1]; c += '<p class="pce-note">' + esc(cardName(e)) + ' — the same card the card layouts use. It draws itself; choose its look here.</p>' + (vs.length ? row('Look', '<select data-f="variant">' + vs.map(v => opt(v, C.VNAME[v] || v, e.variant || vs[0])).join('') + '</select>') : ''); }
     if (t === 'blessings') c += row('Which blessing', '<select data-f="n">' + [0, 1, 2, 3, 4].map(i => opt(i, i ? 'Number ' + (i + 1) : 'The latest', num(e.n, 0))).join('') + '</select>');
     if (t === 'art') c += '<p class="pce-note">Tap another element to swap this one.</p>' + elementsGrid('swap');
+    if (t === 'video') { const src = e.src || {}, link = src.k === 'yt' ? (src.sh ? 'https://youtube.com/shorts/' : 'https://youtu.be/') + src.id : src.k === 'drive' ? 'https://drive.google.com/file/d/' + src.id + '/view' : '';
+      c += row('Video link', '<input type="url" data-vlink="1" inputmode="url" placeholder="Paste a YouTube, Shorts or Google Drive link" value="' + esc(link) + '">') +
+        (src.k === 'drive' ? '<p class="pce-note">Google Drive: the video must be shared as “Anyone with the link”. Drive’s player always shows its play button, so guests tap to play.</p>'
+          : seg('v', e.v === 'player' ? 'player' : 'loop', [['loop', 'Plays by itself'], ['player', 'Tap to play']]) + '<p class="pce-note">' + (e.v === 'player' ? 'Guests tap to play, with sound and controls.' : 'Plays by itself, muted, again and again — like a TV. It fills its box like a photo.') + '</p>'); }
     if (t === 'shape') c += '<p class="pce-note">A shape shows only its colour. Change it in Design.</p>';
     return c;
   }
@@ -530,7 +535,7 @@
     E.rpT = setTimeout(() => { if (E && !E.play && root.isConnected) root.classList.add('pgc-still'); }, 2600);
   }
   function layersPane() {
-    const icon = { photo: '▣', names: 'Aa', date: '◷', text: 'T', events: '▤', strip: '⋯', action: '●', blessings: '❝', credit: '©', shape: '◆', card: '▦', art: '✿' };
+    const icon = { photo: '▣', names: 'Aa', date: '◷', text: 'T', events: '▤', strip: '⋯', action: '●', blessings: '❝', credit: '©', shape: '◆', card: '▦', art: '✿', video: '▶' };
     return '<p class="pce-note">Everything on the page, front first. ' + (E.mode === 'l' ? 'Hiding here hides on laptop only.' : 'Hiding here hides on phone only.') + '</p><div class="pce-lsec"><b>Guest actions</b><div class="pce-layer pce-global-layer"><span><i>◎</i>Find me</span><small>Floating guest action</small></div></div>' + E.doc.sections.map((s, si) =>
       '<div class="pce-lsec"><b>Section ' + (si + 1) + '</b>' + (s.els || []).slice().sort((a, b) => num(spot(b).z, 1) - num(spot(a).z, 1)).map(e => { const sp = spot(e);
         return '<div class="pce-layer' + (e.id === E.sel ? ' on' : '') + (sp.hide ? ' off' : '') + '"><button type="button" data-sel="' + e.id + '"><i>' + icon[e.t] + '</i>' + esc(TYPE[e.t]) + (e.text ? ' · ' + esc(String(e.text).slice(0, 18)) : e.act ? ' · ' + esc(PGCanvas.LABEL[e.act]) : '') + '</button><button type="button" class="pce-eye" data-eye="' + e.id + '" aria-label="' + (sp.hide ? 'Show' : 'Hide') + '">' + (sp.hide ? 'Hidden' : 'Shown') + '</button></div>'; }).join('') + '</div>').join('');
@@ -610,6 +615,10 @@
     on('[data-add]', 'click', ev => add(ev.currentTarget.dataset.add, ev.currentTarget.dataset.v));
     // step 97: the part's three tabs, the motion library, the elements, the wedding's photos, sections, grid, colour sets
     on('[data-sub]', 'click', ev => { E.sub = ev.currentTarget.dataset.sub; panel(); });
+    on('[data-vlink]', 'change', ev => { const g = find(E.sel); if (!g) return; const v = PGCanvas.videoFromLink(ev.currentTarget.value);   // step 97b
+      if (!v) { if (ev.currentTarget.value.trim()) showToast('That link isn’t a YouTube or Google Drive video'); return; }
+      change(() => { g.e.src = v; const sp = spot(g.e); if (v.sh && sp.w > sp.h) setSpot(g.e, Object.assign({}, sp, { h: Math.round(sp.w * 16 / 9) })); });   // a Short stands up
+      showToast(v.k === 'drive' ? 'Drive video added' : v.sh ? 'Short added' : 'YouTube video added'); });
     on('[data-mt]', 'click', ev => { const v = ev.currentTarget.dataset.mt, g = find(E.sel); if (!g) return; change(() => setMotion(g.e, v)); replay(); });
     on('.pce-elq', 'input', ev => { const x = ev.currentTarget, at = x.selectionStart; E.elQ = x.value; panel(); const n = E.el.querySelector('.pce-elq'); if (n) { n.focus(); try { n.setSelectionRange(at, at); } catch (er) {} } });
     on('[data-occ]', 'click', ev => { E.elOcc = ev.currentTarget.dataset.occ; panel(); });
