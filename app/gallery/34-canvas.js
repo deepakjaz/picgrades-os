@@ -19,6 +19,8 @@
 //       mo: { d: delay ms, t: speed ms, p: scroll depth -0.6…0.6, str: strength 0–100 (50 = normal), dir: 'bottom'|'top'|'left'|'right' (bounce, glide, arc) },
 //       section.stay: how long it holds still while scrolling; section.grid: { r, c, g } rows, columns, gap for the editor's Simple mode
 //     t: 'art' (step 97) — a ready-made picture from the elements library: src: { k: 'art', id: 'bs-teddy-brown', o: 'babyshower' }
+//     t: 'video' (step 97b) — a YouTube video or Short, or a Google Drive video: src: { k: 'yt', id, sh: 1 for a Short } | { k: 'drive', id };
+//        v: 'loop' (plays by itself, muted, again and again — like the TKG TV) | 'player' (tap to play, with sound). Drive's own player always needs a tap.
 //       text, src: { k: 'cover'|'hl'|'ev'|'id'|'auto', n, i, id }, act: 'findme'|'reel'|'post'|'memory'|'moments'|'notes', v: variant } ] } ] }
 (function pgCanvas() {
   'use strict';
@@ -35,6 +37,14 @@
     'spin', 'flip-x', 'flip-y', 'turn', 'bounce', 'zoom-out', 'glide', 'arc', 'reveal', 'shutters'];   // step 97: the motion library (transform and opacity only)
   const LOOP = ['zoom', 'float', 'pulse', 'swing', 'wobble', 'spin-slow', 'breathe'], SCROLLM = ['fade-on-scroll', 'grow-on-scroll'];
   const DIRS = { bottom: [0, 1], top: [0, -1], left: [-1, 0], right: [1, 0] };   // where bounce / glide / arc come in from
+  // step 97b: videos play in YouTube's or Google Drive's own player (no PicGrades relay). The page shows a poster until the video is on screen.
+  const vidOk = src => !!src && ((src.k === 'yt' && /^[A-Za-z0-9_-]{6,20}$/.test(src.id || '')) || (src.k === 'drive' && /^[A-Za-z0-9_-]{20,80}$/.test(src.id || '')));
+  const vidPoster = src => src.k === 'yt' ? 'https://i.ytimg.com/vi/' + src.id + '/hqdefault.jpg' : 'https://drive.google.com/thumbnail?id=' + src.id + '&sz=w800';
+  function vidFrame(src, loop) {
+    const u = src.k === 'yt' ? 'https://www.youtube-nocookie.com/embed/' + src.id + '?playsinline=1&rel=0&modestbranding=1' + (loop ? '&autoplay=1&mute=1&loop=1&controls=0&playlist=' + src.id : '&autoplay=1&controls=1')
+      : 'https://drive.google.com/file/d/' + src.id + '/preview';
+    return '<iframe src="' + u + '" title="Video" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+  }
   const artUrl = (src) => { const id = String((src && src.id) || ''), o = String((src && src.o) || ''); return /^[a-z0-9-]{1,40}$/.test(id) && /^[a-z0-9-]{1,30}$/.test(o) ? '/app/elements/' + o + '/' + id + '.webp' : ''; };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const num = (v, d) => (typeof v === 'number' && isFinite(v) ? v : d);
@@ -101,6 +111,12 @@
 .pgc-m-spin-slow{animation:pgc-spin 14s linear infinite}@keyframes pgc-spin{to{transform:rotate(360deg)}}
 .pgc-m-breathe{animation:pgc-breathe 4s ease-in-out infinite}@keyframes pgc-breathe{0%,100%{transform:scale(calc(1 - .03 * var(--str,1)));opacity:.92}50%{transform:scale(calc(1 + .03 * var(--str,1)));opacity:1}}
 .pgc-art img{width:100%;height:100%;object-fit:contain;display:block}
+.pgc-vid{background:#000}.pgc-vid>img{width:100%;height:100%;object-fit:cover;display:block}
+.pgc-vid iframe{position:absolute;border:0;left:50%;top:50%;translate:-50% -50%;width:100%;height:100%}
+.pgc-vid.loop iframe{pointer-events:none}
+.pgc-vid .pgc-vplay{position:absolute;left:50%;top:50%;translate:-50% -50%;width:56px;height:56px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;cursor:pointer}
+.pgc-vid .pgc-vplay svg{width:24px;height:24px;fill:currentColor;margin-left:3px}
+.pgc-vid .pgc-vnone{position:absolute;inset:0;display:grid;place-items:center;padding:10px;text-align:center;color:#fff;font:600 13px var(--font-sans,system-ui);background:repeating-linear-gradient(45deg,#2a2623 0 12px,#332e2a 12px 24px)}
 html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse,html.pg-lite .pgc-m-swing,html.pg-lite .pgc-m-wobble,html.pg-lite .pgc-m-spin-slow,html.pg-lite .pgc-m-breathe,html.pg-lite .pgc-strip{animation:none!important}
 .pgc .pgc-cardhost.pgl-grid{display:block;padding:0;margin:0;max-width:none;grid-template-columns:none;gap:0;--u:86px;overflow:visible}
 .pgc .pgc-cardhost>.pgl-b{width:100%;height:100%}
@@ -175,6 +191,12 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     if (t === 'text') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || '') + '</div>';
     if (t === 'credit') { const stu = data.studio && data.studio !== 'Your photographer' && !(window.GALLERY && GALLERY.credit === false) ? data.studio : ''; return stu ? '<div class="pgc-body pgc-txt" style="' + st + '">' + esc((el.text || 'Photographed by') + ' ' + stu) + '</div>' : null; }
     if (t === 'shape') return '<div class="pgc-body" style="' + (st || 'background:currentColor') + '"></div>';
+    if (t === 'video') {   // step 97b: poster first; the player comes in when it is on screen (or on a tap)
+      if (!vidOk(el.src)) return ctx.editing ? '<div class="pgc-body pgc-vid" style="' + st + '"><div class="pgc-vnone">Video · paste a YouTube or Drive link</div></div>' : null;
+      const loop = el.v !== 'player' && el.src.k === 'yt', box = sp ? (num(sp.w, 100) / num(sp.h, 56)) : 16 / 9, vr = el.src.sh ? 9 / 16 : 16 / 9;
+      const cover = loop ? (box > vr ? 'width:100%;height:' + (box / vr * 100).toFixed(1) + '%' : 'height:100%;width:' + (vr / box * 100).toFixed(1) + '%') : '';   // a looping video fills its box (like a photo); a player shows all of it
+      return '<div class="pgc-body pgc-vid' + (loop ? ' loop' : '') + '" style="' + st + '" data-vid="' + esc(el.src.k + ':' + el.src.id) + '" data-loop="' + (loop ? 1 : 0) + '" data-fit="' + cover + '"><img alt="" loading="lazy" draggable="false" src="' + vidPoster(el.src) + '">' + (loop ? '' : '<button type="button" class="pgc-vplay" aria-label="Play the video"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>') + '</div>';
+    }
     if (t === 'art') { const u = artUrl(el.src); return u ? '<div class="pgc-body pgc-art" style="' + st + '"><img alt="" loading="lazy" decoding="async" draggable="false" src="' + u + '"></div>' : null; }   // step 97: a picture from the elements library
     if (t === 'card') { ctx.cards.push({ el, i: ctx.cards.length }); return '<div class="pgc-body pgl-grid pgc-cardhost" data-card="' + (ctx.cards.length - 1) + '" style="' + st + '"></div>'; }   // step 77d: one of the app's own Hub cards
     if (t === 'events') {
@@ -206,7 +228,8 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     ensure(); opts = opts || {};
     const root = document.createElement('div'); root.className = 'pgc';
     box.appendChild(root);
-    let io = null, lastW = 0, pars = [], sraf = 0;
+    let io = null, vio = null, lastW = 0, pars = [], sraf = 0;
+    function startVid(b) { if (!b || b.querySelector('iframe')) return; const [k, id] = b.dataset.vid.split(':'), f = document.createElement('div'); f.innerHTML = vidFrame({ k, id }, b.dataset.loop === '1'); const fr = f.firstChild; if (b.dataset.fit) fr.style.cssText = b.dataset.fit; const pl = b.querySelector('.pgc-vplay'); if (pl) pl.remove(); b.appendChild(fr); }
     // scroll depth (parallax): an element drifts a little slower or faster than the page
     const sc = opts.scroller || window;
     function onScroll() {
@@ -224,7 +247,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
       const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth, mode = opts.mode || (W >= LAPTOP_AT ? 'l' : 'p');
       const D = mode === 'p' ? PW : LW, k = mode === 'p' ? W / PW : Math.min(W, 1680) / LW, inW = D * k, off = (W - inW) / 2;
       lastW = W;
-      const P = photos(data), ctx = { used: [], mode, cards: [] };
+      const P = photos(data), ctx = { used: [], mode, cards: [], editing: !!opts.editing };
       root.style.setProperty('--c-bg', col(C.bg, '#faf7f2')); root.style.setProperty('--c-ink', col(C.ink, '#2a2420')); root.style.setProperty('--c-acc', col(C.acc, '#b08d57'));
       root.style.setProperty('--c-card', col(C.card, '#ffffff')); root.style.setProperty('--c-acc2', col(C.acc2, col(C.acc, '#b08d57')));
       root.style.fontFamily = "'" + (FONTS.indexOf((doc.fonts || {}).body) > -1 ? doc.fonts.body : 'Jost') + "',system-ui,sans-serif";
@@ -284,17 +307,25 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
       root.querySelectorAll('.pgc-stg .pgc-ev>button').forEach((b, i) => b.style.setProperty('--i', i % 12));
       root.querySelectorAll('.pgc-e,.pgc-stg').forEach(x => (io ? io.observe(x) : x.classList.add('in')));
       pars = [...root.querySelectorAll('[data-par]')]; onScroll();
+      // step 97b: a looping video starts when it comes on screen (never in the editor or in light mode)
+      if (vio) vio.disconnect(); vio = null;
+      const lite = document.documentElement.classList.contains('pg-lite');
+      if (!opts.editing && !opts.still && !lite && 'IntersectionObserver' in window) {
+        vio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { startVid(e.target); vio.unobserve(e.target); } }), { root: opts.scroller || null, rootMargin: '200px 0px' });
+        root.querySelectorAll('.pgc-vid[data-loop="1"]').forEach(x => vio.observe(x));
+      }
       inst.used = ctx.used.filter(Boolean);
     }
     const onClick = e => {
       if (opts.onTap && opts.onTap(e)) return;
+      const vb = e.target.closest('.pgc-vid[data-vid]'); if (vb && !opts.editing) { startVid(vb); return; }   // step 97b: tap to play (and light mode)
       const ev = e.target.closest('[data-ev]'); if (ev) { const x = (data.events || [])[+ev.dataset.ev]; if (x) act('event', x.name); return; }
       const a = e.target.closest('[data-act]'); if (a) act(a.dataset.act);
     };
     root.addEventListener('click', onClick);
     let rz = 0; const onResize = () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth; if (Math.abs(W - lastW) > 2) draw(); }); };
     window.addEventListener('resize', onResize);
-    const inst = { root, used: [], redraw: draw, destroy() { window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
+    const inst = { root, used: [], redraw: draw, destroy() { window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); if (vio) vio.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
     draw();
     return inst;
   }
@@ -305,5 +336,13 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     render(box, data, act, opts) { if (live) live.destroy(); const doc = (opts && opts.tune && (opts.tune.doc || opts.tune)) || { sections: [] }; live = render(box, doc, data, act || (() => {}), opts); return live; },
     destroy() { if (live) live.destroy(); live = null; }
   };
-  window.PGCanvas = { render, mod, FONTS, PW, LW, LAPTOP_AT, spotOf, secH, LABEL, ENTER, LOOP, SCROLLM, artUrl };
+  // step 97b: read a pasted link (the same patterns as the TKG TV): YouTube watch / youtu.be / Shorts / embed, or a Drive file link
+  function videoFromLink(url) {
+    url = String(url || '').trim(); let m;
+    if ((m = /youtube\.com\/shorts\/([A-Za-z0-9_-]{6,20})/.exec(url))) return { k: 'yt', id: m[1], sh: 1 };
+    if ((m = /youtube\.com\/watch\?[^#]*\bv=([A-Za-z0-9_-]{6,20})/.exec(url) || /youtu\.be\/([A-Za-z0-9_-]{6,20})/.exec(url) || /youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{6,20})/.exec(url))) return { k: 'yt', id: m[1] };
+    if (/drive\.google\.com/.test(url) && (m = /\/file\/d\/([A-Za-z0-9_-]{20,80})/.exec(url) || /[?&]id=([A-Za-z0-9_-]{20,80})/.exec(url))) return { k: 'drive', id: m[1] };
+    return null;
+  }
+  window.PGCanvas = { render, mod, FONTS, PW, LW, LAPTOP_AT, spotOf, secH, LABEL, ENTER, LOOP, SCROLLM, artUrl, videoFromLink };
 })();
