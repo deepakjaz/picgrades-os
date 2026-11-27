@@ -1,6 +1,7 @@
 {
  "occasions": {
-  "babyshower": "Baby shower"
+  "babyshower": "Baby shower",
+  "decor": "Decor"
  },
  "items": [
   {
@@ -386,6 +387,182 @@
    "file": "/app/elements/babyshower/bs-welcome-sign.webp",
    "w": 282,
    "h": 567
+  },
+  {
+   "id": "dc-cloud-soft",
+   "name": "Soft cloud",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-cloud-soft.webp",
+   "w": 920,
+   "h": 520
+  },
+  {
+   "id": "dc-cloud",
+   "name": "Cloud",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-cloud.webp",
+   "w": 920,
+   "h": 520
+  },
+  {
+   "id": "dc-drop-green",
+   "name": "Green drop",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-drop-green.webp",
+   "w": 480,
+   "h": 480
+  },
+  {
+   "id": "dc-drop-pink",
+   "name": "Pink drop",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-drop-pink.webp",
+   "w": 480,
+   "h": 480
+  },
+  {
+   "id": "dc-drop-yellow",
+   "name": "Haldi drop",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-drop-yellow.webp",
+   "w": 480,
+   "h": 480
+  },
+  {
+   "id": "dc-gold-dust",
+   "name": "Gold dust",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-gold-dust.webp",
+   "w": 1200,
+   "h": 1200
+  },
+  {
+   "id": "dc-gold-glow",
+   "name": "Gold glow",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-gold-glow.webp",
+   "w": 1000,
+   "h": 1000
+  },
+  {
+   "id": "dc-hairline-frame",
+   "name": "Gallery frame",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-hairline-frame.webp",
+   "w": 800,
+   "h": 1040
+  },
+  {
+   "id": "dc-iris-ring",
+   "name": "Iris ring",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-iris-ring.webp",
+   "w": 1200,
+   "h": 1200
+  },
+  {
+   "id": "dc-keyhole-arch",
+   "name": "Keyhole arch",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-keyhole-arch.webp",
+   "w": 600,
+   "h": 920
+  },
+  {
+   "id": "dc-lattice",
+   "name": "Jaali lattice",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-lattice.webp",
+   "w": 800,
+   "h": 240
+  },
+  {
+   "id": "dc-mist",
+   "name": "Morning mist",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-mist.webp",
+   "w": 1200,
+   "h": 600
+  },
+  {
+   "id": "dc-mountains-far",
+   "name": "Mountains (far)",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-mountains-far.webp",
+   "w": 1200,
+   "h": 400
+  },
+  {
+   "id": "dc-mountains-near",
+   "name": "Mountains (near)",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-mountains-near.webp",
+   "w": 1200,
+   "h": 380
+  },
+  {
+   "id": "dc-splash-ring",
+   "name": "Splash ring",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-splash-ring.webp",
+   "w": 640,
+   "h": 640
+  },
+  {
+   "id": "dc-tea-hills",
+   "name": "Tea hills",
+   "occasion": "decor",
+   "tags": [
+    "decor"
+   ],
+   "file": "/app/elements/decor/dc-tea-hills.webp",
+   "w": 1200,
+   "h": 360
   }
  ]
 }
