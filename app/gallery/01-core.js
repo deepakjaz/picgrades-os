@@ -683,11 +683,12 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     GALLERY.faceSearch = res.gallery.faceSearch; GALLERY.guestGate = res.gallery.guestGate; GALLERY.status = res.gallery.status;   // step 62b: Draft / Published
     // the wedding's look and switches may have changed in the Control Panel since this phone's copy was kept
     pgDemoMerge(res.gallery); GALLERY.demo = res.gallery.demo;
-    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}, x.story || {}]), lookChanged = look(res.gallery) !== look(GALLERY);
+    const look = x => JSON.stringify([x.theme || '', x.layout || '', x.features || {}, x.pages || {}, x.custom || {}, x.story || {}, x.canvas || null]), lookChanged = look(res.gallery) !== look(GALLERY);   // step 98b: the wedding's own canvas layout too (a changed photo, or a phone that kept an older copy)
     // step 59: the story photos and the photographer were never refreshed, so a restart showed the old choice
     if (!(window.PGStoryPicks && PGStoryPicks.saving())) GALLERY.story = res.gallery.story || {};
     GALLERY.photographer = res.gallery.photographer; GALLERY.studio = res.gallery.studio; GALLERY.credit = res.gallery.credit;
     GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {}; GALLERY.custom = res.gallery.custom || { blocks: [] };
+    if (!GALLERY.demo) GALLERY.canvas = res.gallery.canvas || null;   // step 98b: was never refreshed, so the Hub fell back to the plain one
     if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)
     const newPosts = JSON.stringify(res.gallery.guestPosts || []) !== JSON.stringify(GALLERY.guestPosts || []);
     GALLERY.guestPosts = res.gallery.guestPosts || [];
