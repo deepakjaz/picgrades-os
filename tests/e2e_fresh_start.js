@@ -1,5 +1,5 @@
 // Browser test (step 101): a fresh start — one version of each template. A wedding has ONE copy of a template (photo change,
-// Save, Apply all update it), Back to original, Use our version / Use the original; story templates open their own editors.
+// Save, Apply all update it), Back to original, Use our version / Use the original; every template opens in the one editor.
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { call, mail, DRIVE } = require('./gas_mock');
 const root = path.join(__dirname, '..'), FX = path.join(__dirname, 'fixtures'), files = fs.readdirSync(FX).filter(f => f.endsWith('.jpg'));
@@ -75,12 +75,12 @@ const srv = http.createServer((req, res) => {
     await mp.waitForTimeout(800); await mp.screenshot({ path: '/tmp/s101_choice.png' });
     await mp.tap('.pgcp-pv-own'); await mp.waitForFunction(() => /^cv-/.test(GALLERY.layout), null, { timeout: 10000 });
     ok(call('getGallery', { g: G }).gallery.layout === c2.id || call('getGallery', { g: G }).gallery.layout === first, 'Use our version applies their copy');
-    // story templates open their own editors (no canvas copy)
+    // every template opens in the one editor
     const ed = await mp.evaluate(() => { const r = {}; const o1 = PGCanvasEditor.open, o2 = window.PGTemplateEditor && PGTemplateEditor.open, o3 = PGHubEditor.open; let who = '';
       PGCanvasEditor.open = () => { who = 'canvas'; }; if (o2) PGTemplateEditor.open = () => { who = 'template'; }; PGHubEditor.open = () => { who = 'hub'; };
       ['story-living', 'tpl-c3', 'tpl-g1'].forEach(id => { who = ''; PGControl.designLayout(id); r[id] = who; });
       PGCanvasEditor.open = o1; if (o2) PGTemplateEditor.open = o2; PGHubEditor.open = o3; return r; });
-    ok(ed['story-living'] !== 'canvas' && ed['tpl-c3'] !== 'canvas' && ed['tpl-g1'] !== 'canvas' && Object.values(ed).every(Boolean), 'story templates open their own editor, keeping their scroll effects (' + JSON.stringify(ed) + ')');
+    ok(Object.values(ed).every(x => x === 'canvas'), 'every template, story ones too, opens in the ONE editor (' + JSON.stringify(ed) + ')');
   } catch (e) { console.error(e); fails++; }
   console.log('page errors: ' + JSON.stringify(errors));
   ok(!errors.length, 'no page errors');

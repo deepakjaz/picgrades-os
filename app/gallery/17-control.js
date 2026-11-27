@@ -228,7 +228,7 @@
     if (/^cv-/.test(id) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77: a layout from a collection
     const l = window.PGLayout && PGLayout.find(id); if (!l) return null;
     if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor too
-    // step 101: a story template opens its own editor again (photos, words, colours, parts) — not the canvas copy, which lost the scroll effects
+    if (l.story && l.editor && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 97: every template opens in the ONE editor (a story template through its editor version)
     if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);   // story layouts without an editor version yet (staff-only ones)
     if (window.PGHubEditor) return () => PGHubEditor.open({ from: id });
     return null;
