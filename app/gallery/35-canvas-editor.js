@@ -531,7 +531,22 @@
     if (fam && fam !== 'parallax' && fam !== 'fade' && fam !== 'blur' && fam !== 'shine' && SCROLL(fam) === false) c += row('Strength', '<input type="range" min="10" max="100" step="5" data-mo="str" value="' + num(mo.str, 50) + '"><output>' + num(mo.str, 50) + '</output>');
     if (enter) c += row('Wait before (s)', '<input type="range" min="0" max="3" step="0.1" data-mo="d" value="' + (num(mo.d, 0) / 1000) + '"><output>' + (num(mo.d, 0) / 1000) + '</output>') + row('Speed (s)', '<input type="range" min="0.3" max="4" step="0.1" data-mo="t" value="' + (num(mo.t, 900) / 1000) + '"><output>' + (num(mo.t, 900) / 1000) + '</output>');
     if (fam === 'parallax' || fam) c += row('Scroll depth', '<input type="range" min="-0.5" max="0.5" step="0.05" data-mo="p" value="' + num(mo.p, 0) + '"><output>' + num(mo.p, 0) + '</output>') + '<p class="pce-note">Below 0 drifts slower than the page (far away), above 0 faster (close).</p>';
+    c += scrollPane(e);
     return c + '<p class="pce-note">Tap a tile to see it on the page. Press ▶ to watch the whole page.' + (e.t === 'events' ? ' Event cards come in one after another.' : '') + '</p>';
+  }
+  // step 105: "While scrolling" — as well as how it comes in, a part can follow the scroll
+  const SCLIB = [['', 'None'], ['grow', 'Grow'], ['shrink', 'Shrink'], ['grow-shrink', 'Grow, then shrink'], ['move', 'Move'], ['fade-in', 'Fade in'], ['fade-out', 'Fade out'],
+    ['spin', 'Spin'], ['tilt', 'Tilt'], ['blur', 'Blur to sharp'], ['reveal', 'Reveal'], ['colour', 'Change colour']];
+  function scrollPane(e) {
+    const sc = e.sc || {}, fx = sc.fx || '';
+    let c = '<div class="pce-sub">While scrolling</div><div class="pce-mgrid">' + SCLIB.map(([v, n]) => '<button type="button" data-scfx="' + v + '" class="pce-mtile' + (fx === v ? ' on' : '') + '" aria-pressed="' + (fx === v) + '"><i class="pce-mg pce-sg-' + (v || 'none') + '"></i><span>' + n + '</span></button>').join('') + '</div>';
+    if (!fx) return c;
+    c += row('When', seg('scrg', sc.rg || 'pass', [['pass', 'Passing'], ['in', 'Coming in'], ['out', 'Going out'], ['stay', 'Part stays']]));
+    if (fx === 'move') c += row('Moves', seg('scdir', sc.dir || 'up', [['up', 'Up'], ['down', 'Down'], ['left', 'Left'], ['right', 'Right']]));
+    if (fx === 'reveal') c += row('Shape', seg('scsh', sc.sh || 'circle', [['circle', 'Circle'], ['arch', 'Arch'], ['wipe', 'Wipe']]));
+    if (fx === 'colour') c += row('Changes to', '<input type="color" data-sco="c2" value="' + esc(sc.c2 || '#c9a227') + '">');
+    c += row('Strength', '<input type="range" min="10" max="100" step="5" data-sco="str" value="' + num(sc.str, 50) + '"><output>' + num(sc.str, 50) + '</output>');
+    return c + '<p class="pce-note">"Part stays" plays while its part of the page holds still (set "Stays while scrolling" on the part). Scroll the page to see it.</p>';
   }
   const SCROLL = v => PGCanvas.SCROLLM.indexOf(v) > -1;
   function setMotion(e, v) {
@@ -648,6 +663,9 @@
       if (!v) { if (ev.currentTarget.value.trim()) showToast('That link isn’t a YouTube or Google Drive video'); return; }
       change(() => { g.e.src = v; const sp = spot(g.e); if (v.sh && sp.w > sp.h) setSpot(g.e, Object.assign({}, sp, { h: Math.round(sp.w * 16 / 9) })); });   // a Short stands up
       showToast(v.k === 'drive' ? 'Drive video added' : v.sh ? 'Short added' : 'YouTube video added'); });
+    on('[data-scfx]', 'click', ev => { const v = ev.currentTarget.dataset.scfx, g = find(E.sel); if (!g) return; change(() => { if (!v) delete g.e.sc; else g.e.sc = Object.assign({ rg: 'pass', str: 50 }, g.e.sc, { fx: v }); }); });   // step 105
+    on('[data-sco]', 'input', ev => { const o = ev.currentTarget.nextElementSibling; if (o && o.tagName === 'OUTPUT') o.textContent = ev.currentTarget.value; });
+    on('[data-sco]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.sco, g = find(E.sel); if (!g || !g.e.sc) return; change(() => { g.e.sc = Object.assign({}, g.e.sc, { [k]: k === 'str' ? Math.round(+x.value || 50) : x.value }); }); });
     on('[data-mt]', 'click', ev => { const v = ev.currentTarget.dataset.mt, g = find(E.sel); if (!g) return; change(() => setMotion(g.e, v)); replay(); });
     on('.pce-elq', 'input', ev => { const x = ev.currentTarget, at = x.selectionStart; E.elQ = x.value; panel(); const n = E.el.querySelector('.pce-elq'); if (n) { n.focus(); try { n.setSelectionRange(at, at); } catch (er) {} } });
     on('[data-occ]', 'click', ev => { E.elOcc = ev.currentTarget.dataset.occ; panel(); });
@@ -672,6 +690,7 @@
     on('[data-tog]', 'click', ev => change(() => { const t = styleTarget(e), k = ev.currentTarget.dataset.tog; if (t[k]) delete t[k]; else t[k] = true; }));
     on('[data-k] button', 'click', ev => { const k = ev.currentTarget.closest('[data-k]').dataset.k, v = ev.currentTarget.dataset.v;
       if (k.indexOf('hdr-') === 0) { E.pages[k.slice(4)] = v; draw(); panel(); return; }   // the header: kept with the editor, saved on Apply
+      if (k === 'scrg' || k === 'scdir' || k === 'scsh') { change(() => { e.sc = Object.assign({}, e.sc, { [{ scrg: 'rg', scdir: 'dir', scsh: 'sh' }[k]]: v }); }); return; }   // step 105
       if (k === 'mdir' || k === 'mflip') { change(() => { if (k === 'mflip') e.m = v; else if (SLIDE[e.m]) e.m = SLIDE_M[v]; else e.mo = Object.assign({}, e.mo, { dir: v }); }); replay(); return; }   // step 97: where a motion comes from
       change(() => { if (k === 'align' || k === 'shape') { const t = styleTarget(e); if (v) t[k] = v; else delete t[k]; } else if (k === 'm') { if (v === 'none') delete e.m; else e.m = v; } else e[k] = v; }); });
     on('[data-f]', 'change', ev => { const x = ev.currentTarget, k = x.dataset.f;

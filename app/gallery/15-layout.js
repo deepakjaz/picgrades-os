@@ -331,7 +331,7 @@
     const box = h('div', 'pgl-story'); box.id = 'pgStory'; view.prepend(box); document.body.classList.add('pg-story-on');
     let asked = false; try { asked = localStorage.getItem('pg_storyq_' + GALLERY_ID) === '1'; } catch (e) {}
     let D = storyData(), T = cur.tune || null;
-    if (T && window.PGTune && (T.photos || T.hide || T.names || T.date || T.frame || T.colors)) {   // step 103: the couple's choices from "Try your photos"
+    if (T && window.PGTune && (T.photos || T.hide || T.names || T.date || T.frame || T.colors || (kind === 'canvas' && (T.texts || T.sections)))) {   // step 103: the couple's choices from "Try your photos"
       if (kind === 'canvas' && T.doc) T = Object.assign({}, T, { doc: PGTune.overlayCanvas(T.doc, T, document.documentElement.getAttribute('data-tkg-theme') === 'dark') });
       if (kind === 'canvas') D = PGTune.overlayWords(D, T);
       if (STORY[kind]) { D = PGTune.overlayStory(D, T); const hid = new Set(T.hide || []); T = Object.assign({}, T, { sections: (T.sections || []).filter(q => !hid.has(q.k)).concat([...hid].map(k => ({ k, on: false }))) }); }
@@ -391,7 +391,8 @@
     SCREEN, sizeOf, act: (a, x) => storyAct(a, x), data: () => data(), find: id => LAYOUTS.find(l => l.id === id) || null, refresh: () => { cur = choose(); render(); },
     apply: id => { const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {}; const l = id === 'custom' ? (G.custom && (G.custom.story || (G.custom.blocks && G.custom.blocks.length)) ? customOf(G.custom) : null) : LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
     reset: () => { cur = null; render(); }, stop: () => storyStop(),
-    storyTune: (box, t) => storyTune(box, t), storyPartsOf: box => storyParts(box).map(p => ({ k: p.k, name: p.name, fixed: p.fixed })),   // step 103: for "Try your photos"
+    storyTune: (box, t) => storyTune(box, t), storyPartsOf: box => storyParts(box).map(p => ({ k: p.k, name: p.name, fixed: p.fixed })),
+    storyTextsOf: box => storyTexts(box).map(x => ({ key: x.key, part: x.part, text: x.text, el: x.el })),   // step 106   // step 103: for "Try your photos"
     // for the Hub editor (step 54): the story's parts and headings, read from a hidden copy of the story
     storyInfo: kind => {
       const mod = storyMod(kind); if (!mod) return null;

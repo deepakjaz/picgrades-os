@@ -2623,9 +2623,10 @@ function customOf_(v) {
   var st = o.story;
   if (st && STORY_KINDS.indexOf(st.kind) > -1) {
     var key = /^[a-z0-9-]{1,32}(:\d{1,3})?$/, texts = {}, n = 0;
-    Object.keys(st.texts || {}).forEach(function (k) { var v = String(st.texts[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 120); if (key.test(k) && k.indexOf(':') > 0 && v && n < 60) { texts[k] = v; n++; } });
+    var cvKey = /^[A-Za-z0-9_-]{1,40}$/, isCv = st.kind === 'canvas';   // step 106: a canvas template's words and parts are named by its part ids
+    Object.keys(st.texts || {}).forEach(function (k) { var v = String(st.texts[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 120); if ((isCv ? cvKey.test(k) : key.test(k) && k.indexOf(':') > 0) && v && n < 60) { texts[k] = v; n++; } });
     out.story = { kind: st.kind, findme: ['left', 'right', 'off'].indexOf(st.findme) > -1 ? st.findme : 'right', bar: st.bar === 'on' ? 'on' : 'off', texts: texts,
-      sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 20).filter(function (q) { return q && key.test(String(q.k)) && String(q.k).indexOf(':') < 0; }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
+      sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 40).filter(function (q) { return q && (isCv ? cvKey.test(String(q.k)) : key.test(String(q.k)) && String(q.k).indexOf(':') < 0); }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
     tplTune_(st, out.story);
     out.blocks = [];
   }
@@ -3278,6 +3279,7 @@ function getStudio_(p) {
 // Anyone can make them — PicGrades staff, photographers, couples — and each decides who sees it (scope):
 //   me (only who made it) · wedding (this wedding) · studio (all of a photographer's weddings) · all (every wedding: PicGrades only).
 // The layout format is drawn by app/gallery/34-canvas.js; canvasDoc_() keeps only what it knows.
+var CANVAS_SCFX = ['grow', 'shrink', 'grow-shrink', 'move', 'fade-in', 'fade-out', 'spin', 'tilt', 'blur', 'reveal', 'colour'];   // step 105
 var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status', 'base'];   // base (step 101): the template a wedding's copy came from — one copy per template per wedding
 var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card', 'art', 'video'];   // art (step 97): a picture from the elements library; video (step 97b): YouTube or Drive   // card (step 77d): one of the app's own Hub cards
 var CANVAS_ACTS = ['findme', 'reel', 'post', 'memory', 'moments', 'notes'];
@@ -3351,6 +3353,14 @@ function canvasDoc_(d) {
       if (CANVAS_MOTIONS.indexOf(el.m) > -1) e.m = el.m;   // step 78: more motion, with delay / speed / scroll depth
       if (e.m && el.mo && typeof el.mo === 'object') { var mo = {}; if (el.mo.d) mo.d = cvNum_(el.mo.d, 0, 5000, 0); if (el.mo.t) mo.t = cvNum_(el.mo.t, 100, 6000, 900); if (el.mo.p) mo.p = cvNum_(el.mo.p, -0.6, 0.6, 0); if (el.mo.str != null) mo.str = cvNum_(el.mo.str, 0, 100, 50); if (['bottom', 'top', 'left', 'right'].indexOf(el.mo.dir) > -1) mo.dir = el.mo.dir; if (Object.keys(mo).length) e.mo = mo; }   // step 97: strength, direction
       else if (el.mo && el.mo.p) e.mo = { p: cvNum_(el.mo.p, -0.6, 0.6, 0) };
+      // step 105: "While scrolling" — one effect, when it plays, strength, and its own small options
+      if (el.sc && typeof el.sc === 'object' && CANVAS_SCFX.indexOf(String(el.sc.fx)) > -1) {
+        var sc = { fx: String(el.sc.fx), rg: ['pass', 'in', 'out', 'stay'].indexOf(String(el.sc.rg)) > -1 ? String(el.sc.rg) : 'pass', str: cvNum_(el.sc.str, 10, 100, 50) };
+        if (['up', 'down', 'left', 'right'].indexOf(String(el.sc.dir)) > -1) sc.dir = String(el.sc.dir);
+        if (['circle', 'arch', 'wipe'].indexOf(String(el.sc.sh)) > -1) sc.sh = String(el.sc.sh);
+        if (/^#[0-9a-f]{6}$/i.test(String(el.sc.c2 || ''))) sc.c2 = String(el.sc.c2);
+        e.sc = sc;
+      }
       if (el.text != null && el.text !== '') e.text = cvTxt_(el.text, 400);
       var src = cvSrc_(el.src), vk = src && (src.k === 'yt' || src.k === 'drive');
       if (src && (el.t === 'art' ? src.k === 'art' : el.t === 'video' ? vk : (src.k !== 'art' && !vk))) e.src = src;   // each part only takes its own kind of source

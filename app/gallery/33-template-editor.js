@@ -64,7 +64,7 @@
     if (E.inst) E.inst.destroy();
     sc.innerHTML = '';
     E.inst = PGTune.mount(E.kind, sc, PGLayout.storyData(), a => showToast('Guests can use this once the Hub is applied'),
-      { tune: E.tune, scroller: sc, ovHost: E.el.querySelector('.pgte-phone'), dark: E.dark, pick: slot => pickPhoto(slot), doc: E.l.canvas });
+      { tune: E.tune, scroller: sc, ovHost: E.el.querySelector('.pgte-phone'), dark: E.dark, pick: slot => pickPhoto(slot), pickText: k => pickText(k), doc: E.l.canvas });
     sc.scrollTop = y; E.inst.refresh();
     E.el.querySelector('.pgte-undo').disabled = !E.undo.length; E.el.querySelector('.pgte-redo').disabled = !E.redo.length;
     const dirty = JSON.stringify(E.tune) !== E.saved; E.el.querySelector('.pgte-save').textContent = dirty ? 'Save' : 'Saved'; E.el.querySelector('.pgte-save').disabled = !dirty;
@@ -92,13 +92,23 @@
         '<div class="pgte-slots">' + S.map(s => '<div class="pgte-slotw"><button type="button" class="pgte-slot" data-slot="' + s.k + '"><span style="' + (s.id ? 'background-image:url(\'' + pgImg(s.id, 240) + '\')' : '') + '"></span><b>' + esc(s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '')) + '</b><small>' + (mine[s.k] ? 'Your choice' : 'Automatic') + ((t.frame || {})[s.k] ? ' · framed' : '') + '</small></button>' + (s.id && PGTune.canFrame(E.kind) ? '<button type="button" class="pgte-mini pgte-frame" data-frame="' + s.k + '" aria-label="Frame this photo">Frame</button>' : '') + '</div>').join('') + '</div>';
     } else if (E.tab === 'parts') {
       const hid = new Set(t.hide || []);
-      html = '<p class="pgte-note">Hide anything you don’t want. Hidden parts stay saved here, so you can bring them back.</p>' +
+      (t.sections || []).forEach(q => { if (q.on === false) hid.add(q.k); });
+      if (E.inst.canOrder) {   // step 106: drag a part up or down by its handle (touch or mouse); hide the ones you don't want
+        const ord = orderedParts(t);
+        html = '<p class="pgte-note">Drag ⠿ to move a part up or down. Hide anything you don’t want — it stays saved here.</p><div class="pgte-order">' +
+          ord.map(x => '<div class="pgte-layer pgte-orow' + (hid.has(x.key) ? ' off' : '') + '" data-okey="' + esc(x.key) + '"><button type="button" class="pgte-grip" aria-label="Drag to move ' + esc(x.name) + '">⠿</button><span>' + esc(x.name) + '</span><button type="button" data-layer="' + esc(x.key) + '" aria-pressed="' + !hid.has(x.key) + '">' + (hid.has(x.key) ? 'Hidden' : 'Shown') + '</button></div>').join('') + '</div>' +
+          (E.kind === 'canvas' ? '<details class="pgte-more-parts"><summary>Hide smaller things (a button, a photo…)</summary>' + E.inst.layers().filter(x => x.depth > 0).map(x => '<div class="pgte-layer' + (hid.has(x.key) ? ' off' : '') + '" style="padding-left:14px"><span>' + esc(x.name) + '</span><button type="button" data-layer="' + esc(x.key) + '" aria-pressed="' + !hid.has(x.key) + '">' + (hid.has(x.key) ? 'Hidden' : 'Shown') + '</button></div>').join('') + '</details>' : '');
+      } else html = '<p class="pgte-note">Hide anything you don’t want. Hidden parts stay saved here, so you can bring them back.</p>' +
         E.inst.layers().map(x => '<div class="pgte-layer' + (hid.has(x.key) ? ' off' : '') + '" style="padding-left:' + (10 + x.depth * 16) + 'px"><span>' + esc(x.name) + '</span><button type="button" data-layer="' + x.key + '" aria-pressed="' + !hid.has(x.key) + '">' + (hid.has(x.key) ? 'Hidden' : 'Shown') + '</button></div>').join('');
     } else if (E.tab === 'words') {
       const D = PGLayout.storyData();
       html = '<p class="pgte-note">Leave a box empty to keep the wedding’s own words.</p>' +
         '<label class="pgte-text"><small>Names</small><input type="text" maxlength="60" data-text="names" placeholder="' + esc(D.names) + '" value="' + esc(t.names || '') + '"></label>' +
         '<label class="pgte-text"><small>Date line</small><input type="text" maxlength="80" data-text="date" placeholder="' + esc([D.date, D.place].filter(Boolean).join(' · ')) + '" value="' + esc(t.date || '') + '"></label>';
+      const TX = E.inst.texts ? E.inst.texts() : [], tx = t.texts || {};   // step 106: every word on the page, part by part (tap a word on the page to come here)
+      let lastPart = '';
+      html += TX.map(x => (x.part !== lastPart ? '<div class="pgte-tpart">' + esc(lastPart = x.part) + '</div>' : '') +
+        '<label class="pgte-text"><small>' + (x.button ? 'Button' : 'Words') + '</small>' + (String(x.text).length > 40 ? '<textarea rows="2" maxlength="120" data-tx="' + esc(x.key) + '" placeholder="' + esc(x.text) + '">' + esc(tx[x.key] || '') + '</textarea>' : '<input type="text" maxlength="120" data-tx="' + esc(x.key) + '" placeholder="' + esc(x.text) + '" value="' + esc(tx[x.key] || '') + '">') + '</label>').join('');
     } else {
       html = '<div class="pgte-group"><b>Motion</b><p class="pgte-note">Off keeps every part still (the page still opens as guests scroll).</p>' + seg('motion', t.motion === 'off' ? 'off' : 'on', [['on', 'On'], ['off', 'Off']]) + '</div>' +
         '<div class="pgte-group"><b>Find me button</b><p class="pgte-note">Floats on the page while guests scroll.</p>' + seg('findme', t.findme || 'right', [['left', 'Left'], ['right', 'Right'], ['off', 'Off']]) + '</div>' +
@@ -115,11 +125,36 @@
     pane.querySelectorAll('[data-uncol]').forEach(b => b.addEventListener('click', () => change(t => { const m = E.dark ? 'dark' : 'light'; delete ((t.colors || {})[m] || {})[b.dataset.uncol]; })));
     pane.querySelectorAll('.pgte-slot').forEach(b => b.addEventListener('click', () => pickPhoto(b.dataset.slot)));
     pane.querySelectorAll('[data-frame]').forEach(b => b.addEventListener('click', () => frameSlot(b.dataset.frame)));
-    pane.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => change(t => { const s = new Set(t.hide || []), k = b.dataset.layer; if (s.has(k)) s.delete(k); else s.add(k); t.hide = [...s]; if (!t.hide.length) delete t.hide; })));
+    pane.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => change(t => { const s = new Set(t.hide || []), k = b.dataset.layer; (t.sections || []).forEach(q => { if (q.k === k && q.on === false) { q.on = true; s.add(k); } });
+      if (s.has(k)) s.delete(k); else s.add(k); t.hide = [...s]; if (!t.hide.length) delete t.hide; })));
+    pane.querySelectorAll('[data-tx]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(), k = inp.dataset.tx; t.texts = Object.assign({}, t.texts); if (v) t.texts[k] = v; else delete t.texts[k]; if (!Object.keys(t.texts).length) delete t.texts; })));
+    pane.querySelectorAll('.pgte-grip').forEach(g => g.addEventListener('pointerdown', ev => dragPart(ev, g.closest('.pgte-orow'))));
     pane.querySelectorAll('[data-text]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(); if (v) t[inp.dataset.text] = v; else delete t[inp.dataset.text]; })));
     const adv = pane.querySelector('.pgte-adv'); if (adv) adv.addEventListener('click', () => { const id = E.id; close(); if (!E) PGCanvasEditor.open(id); });
     const rs = pane.querySelector('.pgte-reset'); if (rs) rs.addEventListener('click', () => change(t => { Object.keys(t).forEach(k => { if (k !== 'kind') delete t[k]; }); }));
   }
+
+  // step 106: the parts in the couple's order (parts they never moved keep their place)
+  function orderedParts(t) {
+    const all = E.inst.order(), pos = {}; (t.sections || []).forEach((q, i) => { pos[q.k] = i; });
+    const known = all.filter(x => x.key in pos).sort((a, b) => pos[a.key] - pos[b.key]); let ki = 0;
+    return all.map(x => (x.key in pos ? known[ki++] : x));
+  }
+  // drag a part row by its handle: the row follows the finger / mouse, the others make room; let go to keep the new order
+  function dragPart(ev, row) {
+    if (!row) return; ev.preventDefault(); const list = row.parentNode, grip = ev.currentTarget || row.querySelector('.pgte-grip');
+    try { grip.setPointerCapture(ev.pointerId); } catch (e) {}
+    row.classList.add('drag'); let lastY = ev.clientY;
+    const move = e => { lastY = e.clientY; const rows = [...list.children].filter(r => r !== row);
+      const after = rows.find(r => { const b = r.getBoundingClientRect(); return lastY < b.top + b.height / 2; });
+      if (after) list.insertBefore(row, after); else list.appendChild(row); };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); row.classList.remove('drag');
+      const keys = [...list.querySelectorAll('.pgte-orow')].map(r => r.dataset.okey);
+      change(t => { const off = new Set((t.sections || []).filter(q => q.on === false).map(q => q.k)); t.sections = keys.map(k => ({ k, on: !off.has(k) })); }); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);   // the page, not the handle: moving the row lets go of the handle
+  }
+  // tap words on the page → the Words tab opens at that box
+  function pickText(key) { E.tab = 'words'; setDrawer(true); panel(); const i = E.el.querySelector('[data-tx="' + CSS.escape(key) + '"]'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); } }
 
   // ---- choose a photo: the cover photos, the highlights, then each event ----
   function pickPhoto(slot) {
