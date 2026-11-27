@@ -9,12 +9,19 @@
   const clone = o => JSON.parse(JSON.stringify(o));
   const TYPE = { photo: 'Photo', title: 'Heading', text: 'Words', names: 'Names', date: 'Date line', action: 'Button', shape: 'Shape', art: 'Decoration', video: 'Video', card: 'Card', strip: 'Photo strip', blessings: 'Blessing', line: 'Line', icon: 'Icon' };
   const COLNAME = { bg: 'Background', ink: 'Words', acc: 'Accent', acc2: 'Second accent', card: 'Cards', sea: 'Extra' };
+  const WORDY = { text: 1, action: 1 };   // step 106: parts whose words the couple can change (names and the date line have their own boxes)
   const darkApp = () => document.documentElement.getAttribute('data-tkg-theme') === 'dark';
 
   // ---- canvas ----
   function overlayCanvas(doc, t, dark) {
     doc = clone(doc || { sections: [] }); t = t || {};
-    const ph = t.photos || {}, hide = new Set(t.hide || []), fr = t.frame || {};
+    const ph = t.photos || {}, hide = new Set(t.hide || []), fr = t.frame || {}, tx = t.texts || {};
+    (t.sections || []).forEach(q => { if (q.on === false) hide.add(q.k); });
+    if ((t.sections || []).length) {   // step 106: the couple's order of the parts (parts they never moved keep their place after)
+      const pos = {}; t.sections.forEach((q, i) => { pos[q.k] = i; });
+      const all = doc.sections || [], known = all.filter(x => x.id in pos).sort((a, b) => pos[a.id] - pos[b.id]); let ki = 0;
+      doc.sections = all.map(x => (x.id in pos ? known[ki++] : x));
+    }
     doc.sections = (doc.sections || []).filter(s => !hide.has(s.id));
     doc.sections.forEach(s => {
       if (s.bg && s.bg.src && ph['bg-' + s.id]) s.bg.src = { k: 'id', id: ph['bg-' + s.id] };
@@ -23,6 +30,7 @@
         if (e.t === 'photo' && ph[e.id]) e.src = { k: 'id', id: ph[e.id] };
         if (e.t === 'photo' && fr[e.id]) { const f = fr[e.id]; e.s = Object.assign({}, e.s, { fx: f.fx, fy: f.fy, zm: f.z }); if (e.sl) e.sl = Object.assign({}, e.sl, { fx: f.fx, fy: f.fy, zm: f.z }); }
         if (hide.has(e.id)) { e.p = Object.assign({}, e.p, { hide: true }); if (e.l) e.l = Object.assign({}, e.l, { hide: true }); }
+        if (WORDY[e.t] && typeof tx[e.id] === 'string' && tx[e.id].trim()) e.text = tx[e.id];   // step 106: the couple's own words
       });
     });
     const c = (t.colors || {})[dark ? 'dark' : 'light'];
@@ -45,7 +53,8 @@
     const inst = PGCanvas.render(box, doc, overlayWords(D, t), act || (() => {}), { scroller: o.scroller, still: t.motion === 'off', width: o.width, mode: o.mode });
     const shown = id => { const im = box.querySelector('.pgc-el[data-el="' + CSS.escape(id) + '"] img[data-photo]'); return im ? im.dataset.photo : ''; };
     const bgShown = id => { const im = box.querySelector('.pgc-sec[data-sec="' + CSS.escape(id) + '"] .pgc-bgimg'); return im ? im.dataset.photo : ''; };
-    if (o.pick) box.addEventListener('click', ev => {   // tap a photo on the page → choose another
+    if (o.pick) box.addEventListener('click', ev => {   // tap a photo on the page → choose another (step 106: tap words → change them)
+      const w = ev.target.closest('.pgc-t-text, .pgc-t-action'); if (w && w.dataset.el && o.pickText) { ev.preventDefault(); ev.stopPropagation(); o.pickText(w.dataset.el); return; }
       const el = ev.target.closest('.pgc-t-photo'), sec = !el && ev.target.closest('.pgc-sec');
       if (el && el.dataset.el) { ev.preventDefault(); ev.stopPropagation(); o.pick(el.dataset.el); return; }
       if (sec && sec.querySelector(':scope > .pgc-bgimg, .pgc-bgimg') && !ev.target.closest('.pgc-el')) { ev.preventDefault(); o.pick('bg-' + sec.dataset.sec); }
@@ -68,6 +77,14 @@
         });
         return out;
       },
+      texts() {   // step 106: every word on the page the couple can change, part by part
+        const out = [];
+        (base.sections || []).forEach((s, i) => (s.els || []).filter(e => WORDY[e.t]).sort((a, b) => ((a.p || {}).y || 0) - ((b.p || {}).y || 0)).forEach(e => {
+          const txt = e.t === 'action' ? (e.text || (PGCanvas.LABEL || {})[e.act] || 'Button') : (e.text || ''); if (!String(txt).trim()) return;
+          out.push({ key: e.id, part: sectionName(s, i), text: txt, button: e.t === 'action' }); }));
+        return out;
+      },
+      canOrder: true, order: () => (base.sections || []).map((s, i) => ({ key: s.id, name: sectionName(s, i) })),
       refresh() {}, destroy() { if (inst && inst.destroy) inst.destroy(); }
     };
   }
@@ -102,7 +119,9 @@
       if (D2.couple && D2.couple.groom) out.push({ k: 'groom', label: 'Groom portrait', id: D2.couple.groom });
       return out;
     };
+    if (o.pickText && PGLayout.storyTextsOf) PGLayout.storyTextsOf(box).forEach(x => { if (x.el) x.el.dataset.tkey = x.key; });
     if (o.pick) box.addEventListener('click', ev => {
+      const tw = ev.target.closest('[data-tkey]'); if (tw && o.pickText) { ev.preventDefault(); ev.stopPropagation(); o.pickText(tw.dataset.tkey); return; }
       const im = ev.target.closest('img'); const id = im && (im.dataset.pid || im.dataset.photoId); if (!id) return;
       const s = slotsOf().find(x => x.id === id); if (s) { ev.preventDefault(); ev.stopPropagation(); o.pick(s.k); }
     }, true);
@@ -110,6 +129,8 @@
       slots: slotsOf,
       photo: k => (slotsOf().find(x => x.k === k) || {}).id || '',
       layers: () => (PGLayout.storyPartsOf ? PGLayout.storyPartsOf(box) : []).filter(p => !p.fixed).map(p => ({ key: p.k, name: p.name, depth: 0 })),
+      texts: () => (PGLayout.storyTextsOf ? PGLayout.storyTextsOf(box) : []).map(x => ({ key: x.key, part: x.part, text: x.text })),
+      canOrder: true, order: () => (PGLayout.storyPartsOf ? PGLayout.storyPartsOf(box) : []).filter(p => !p.fixed).map(p => ({ key: p.k, name: p.name })),
       refresh() {}, destroy() { if (mod.destroy) mod.destroy(); }
     };
   }

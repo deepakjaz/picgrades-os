@@ -2623,9 +2623,10 @@ function customOf_(v) {
   var st = o.story;
   if (st && STORY_KINDS.indexOf(st.kind) > -1) {
     var key = /^[a-z0-9-]{1,32}(:\d{1,3})?$/, texts = {}, n = 0;
-    Object.keys(st.texts || {}).forEach(function (k) { var v = String(st.texts[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 120); if (key.test(k) && k.indexOf(':') > 0 && v && n < 60) { texts[k] = v; n++; } });
+    var cvKey = /^[A-Za-z0-9_-]{1,40}$/, isCv = st.kind === 'canvas';   // step 106: a canvas template's words and parts are named by its part ids
+    Object.keys(st.texts || {}).forEach(function (k) { var v = String(st.texts[k] || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 120); if ((isCv ? cvKey.test(k) : key.test(k) && k.indexOf(':') > 0) && v && n < 60) { texts[k] = v; n++; } });
     out.story = { kind: st.kind, findme: ['left', 'right', 'off'].indexOf(st.findme) > -1 ? st.findme : 'right', bar: st.bar === 'on' ? 'on' : 'off', texts: texts,
-      sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 20).filter(function (q) { return q && key.test(String(q.k)) && String(q.k).indexOf(':') < 0; }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
+      sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 40).filter(function (q) { return q && (isCv ? cvKey.test(String(q.k)) : key.test(String(q.k)) && String(q.k).indexOf(':') < 0); }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
     tplTune_(st, out.story);
     out.blocks = [];
   }
