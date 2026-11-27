@@ -3503,3 +3503,110 @@ html[data-tkg-theme="dark"] .pgac-badge.is-on { color: #5ec28b; }
 .pgcr-bar.pgcr-inline button+button{background:var(--cta-peach,#f2b98a);color:var(--cta-peach-ink,#16120f);border-color:transparent}
 @media (min-width:600px){.pgcr-bar.pgcr-inline{margin:8px 28px 12px}}
 @media (min-width:1100px){.pgcr-bar.pgcr-inline{margin:10px 40px 14px}}
+
+
+/* step 97: the ONE editor — top bar, tool rail, ⋯ menu, part tabs, motion library, elements (approved mockup: docs/handover/gemini/universal-editor-mockup.html) */
+.pce.pce97 .pce-top{height:56px;min-height:56px;max-height:56px;display:flex;align-items:center;gap:4px;padding:calc(env(safe-area-inset-top,0px) + 6px) 8px 6px;overflow:visible;justify-content:flex-start;box-sizing:border-box}
+.pce97 .pce-top svg{width:22px;height:22px;display:block}
+.pce97 .pce-x,.pce97 .pce-ic{flex:0 0 44px;width:44px;min-width:44px;height:44px;padding:0;border:0;border-radius:12px;background:rgba(255,255,255,.06);color:#f5f0e8;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.pce97 .pce-ic:disabled{opacity:.35;cursor:default}
+.pce97 .pce-play.on{background:#e5b878;color:#1a1410}
+.pce97 .pce-gap{flex:1 1 auto;min-width:4px}
+.pce97 .pce-title{display:none!important}
+.pce97 .pce-top .pce-save{display:none}
+.pce97 .pce-top .pce-apply{flex:none;width:auto;min-width:64px;height:44px;padding:0 16px;border:0;border-radius:12px;background:#e5b878;color:#1a1410;font:700 14px var(--font-sans);cursor:pointer}
+.pce.pce97 .pce-top{position:relative}
+.pce97 .pce-more{position:static;flex:none}
+.pce97 .pce-menu{position:absolute;top:56px;right:8px;z-index:30;width:292px;max-width:calc(100vw - 16px);padding:10px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#1b1715;box-shadow:0 16px 40px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:8px}
+.pce97 .pce-menu[hidden]{display:none}
+.pce97 .pce-menu-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font:500 12px var(--font-sans);color:rgba(245,240,232,.7)}
+.pce97 .pce-menu .pce-seg{display:flex;height:auto;padding:2px;gap:2px;border-radius:12px;background:rgba(255,255,255,.08);border:0}
+.pce97 .pce-menu .pce-seg button{min-width:72px;height:40px;padding:0 10px;border:0;border-radius:10px;background:none;color:rgba(245,240,232,.8);font:600 12px var(--font-sans);cursor:pointer}
+.pce97 .pce-menu .pce-seg button.on{background:#f5f0e8;color:#1a1410}
+.pce97 .pce-menu .pce-zrow{display:flex;align-items:center;gap:4px}
+.pce97 .pce-menu .pce-zoom-toggle{display:none!important}
+.pce97 .pce-menu .pce-zoom-menu{position:static;translate:none;display:flex;align-items:center;gap:4px;padding:0;border:0;background:none;box-shadow:none}
+.pce97 .pce-menu .pce-zoom-menu button{min-width:44px;width:auto;padding:0 10px;height:40px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#f5f0e8;font:600 14px var(--font-sans);cursor:pointer}
+.pce97 .pce-menu .pce-zoom-menu b{min-width:42px;text-align:center;color:#f5f0e8;font:600 12px var(--font-sans)}
+.pce97 .pce-menu-item{min-height:44px;padding:0 12px;border:0;border-radius:10px;background:rgba(255,255,255,.06);color:#f5f0e8;font:500 14px var(--font-sans);text-align:left;cursor:pointer}
+/* tool rail: icon over word */
+.pce.pce97 .pce-tabs{height:64px;min-height:64px;display:flex;align-items:stretch;gap:0;padding:0 4px;border-bottom:1px solid rgba(255,255,255,.08)}
+.pce.pce97 .pce-tabs button[data-tab]{flex:1 1 0;min-width:0;height:64px;padding:8px 0 6px;border:0;border-radius:12px;background:none;color:rgba(245,240,232,.66);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 11px var(--font-sans);cursor:pointer}
+.pce.pce97 .pce-tabs button[data-tab] svg{width:22px;height:22px}
+.pce.pce97 .pce-tabs button[data-tab] span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pce.pce97 .pce-tabs button[data-tab].on{color:#e5b878;background:rgba(229,184,120,.12)}
+.pce.pce97 .pce-tabs button[data-tab].on:after{display:none}
+.pce.pce97 .pce-drawer-toggle{flex:0 0 40px;width:40px;height:64px;border:0;background:none;color:rgba(245,240,232,.66)}
+.pce.pce97:not(.pce-drawer-open) .pce-panel{height:64px;max-height:64px;min-height:64px}
+.pce.pce97.pce-drawer-open .pce-panel{height:40vh;max-height:40vh}
+.pce.pce97[data-pane="style"] .pce-tabs button[data-tab]{color:rgba(245,240,232,.55)}
+/* the selected part: its name and the three tabs */
+.pce97 .pce-part{position:sticky;top:-10px;z-index:2;margin:-10px -12px 10px;padding:10px 12px 8px;background:#161311;border-bottom:1px solid rgba(255,255,255,.08)}
+.pce97 .pce-part .pce-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}
+.pce97 .pce-part .pce-head b{font:600 14px var(--font-sans);color:#f5f0e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pce97 .pce-part .pce-mini{min-height:36px;padding:0 14px}
+.pce97 .pce-subtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pce97 .pce-subtabs button{height:48px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.04);color:rgba(245,240,232,.78);display:flex;align-items:center;justify-content:center;gap:6px;font:600 13px var(--font-sans);cursor:pointer}
+.pce97 .pce-subtabs button svg{width:18px;height:18px}
+.pce97 .pce-subtabs button.on{border-color:#e5b878;background:rgba(229,184,120,.14);color:#f1cf98}
+/* option lists: one row of small tiles on a phone, a grid on a laptop */
+.pce97 .pce-mgrid,.pce97 .pce-els,.pce97 .pce-mrow{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.pce97 .pce-mtile{flex:0 0 76px;min-height:72px;padding:8px 4px 6px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.04);color:rgba(245,240,232,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.pce97 .pce-mtile span{font:500 11px var(--font-sans);text-align:center;line-height:1.2}
+.pce97 .pce-mtile.on{border-color:#e5b878;background:rgba(229,184,120,.16);color:#f1cf98}
+.pce97 .pce-mg{width:26px;height:26px;border-radius:7px;background:rgba(229,184,120,.3);border:1.5px solid #e5b878;display:block}
+.pce97 .pce-mg-none{background:none;border-style:dashed;border-color:rgba(245,240,232,.4)}
+.pce97 .pce-mtile:hover .pce-mg,.pce97 .pce-mtile.on .pce-mg{animation:pce-mg 1.6s ease-in-out infinite}
+.pce97 .pce-mg-slide,.pce97 .pce-mg-glide,.pce97 .pce-mg-arc,.pce97 .pce-mg-bounce{--mgf:translateY(10px)}
+.pce97 .pce-mg-grow,.pce97 .pce-mg-pulse,.pce97 .pce-mg-breathe,.pce97 .pce-mg-grow-on-scroll,.pce97 .pce-mg-zoom{--mgf:scale(.55)}
+.pce97 .pce-mg-zoom-out,.pce97 .pce-mg-reveal{--mgf:scale(1.35)}
+.pce97 .pce-mg-spin,.pce97 .pce-mg-spin-slow,.pce97 .pce-mg-turn,.pce97 .pce-mg-swing,.pce97 .pce-mg-wobble{--mgf:rotate(-90deg)}
+.pce97 .pce-mg-flip,.pce97 .pce-mg-shutters,.pce97 .pce-mg-unfold{--mgf:scaleY(.1)}
+.pce97 .pce-mg-wipe,.pce97 .pce-mg-iris{--mgf:scaleX(.1)}
+.pce97 .pce-mg-float,.pce97 .pce-mg-parallax{--mgf:translateY(-6px)}
+@keyframes pce-mg{0%,15%{transform:var(--mgf,none);opacity:.25}60%,100%{transform:none;opacity:1}}
+.pce97 .pce-els button{flex:0 0 72px;height:72px;padding:6px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:#f3ede4;cursor:pointer}
+.pce97 .pce-els img{width:100%;height:100%;object-fit:contain;display:block}
+.pce97 .pce-mrow button{flex:0 0 64px;height:64px;padding:0;border:0;border-radius:10px;overflow:hidden;background:#2a2623;cursor:pointer}
+.pce97 .pce-mrow img{width:100%;height:100%;object-fit:cover;display:block}
+.pce97 .pce-elq{width:100%;box-sizing:border-box;height:44px;margin:0 0 8px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.05);color:#f5f0e8;font:500 14px var(--font-sans)}
+.pce97 .pce-chips{display:flex;gap:6px;overflow-x:auto;margin:0 0 8px}
+.pce97 .pce-chips button{flex:none;min-height:36px;padding:0 14px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:none;color:rgba(245,240,232,.8);font:600 12px var(--font-sans);cursor:pointer}
+.pce97 .pce-chips button.on{background:#f5f0e8;color:#1a1410;border-color:#f5f0e8}
+/* Pages: the sections as a row */
+.pce97 .pce-secs{display:flex;gap:6px;overflow-x:auto;padding:0 0 8px}
+.pce97 .pce-secs button{flex:0 0 64px;height:56px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.04);color:#f5f0e8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+.pce97 .pce-secs button b{font:700 15px var(--font-sans)}.pce97 .pce-secs button span{font:500 10px var(--font-sans);opacity:.65}
+.pce97 .pce-secs button.on{border-color:#e5b878;color:#f1cf98}
+.pce97 .pce-secs .pce-secadd{font:400 24px var(--font-sans);color:rgba(245,240,232,.75)}
+/* Theme: colour sets */
+.pce97 .pce-pals{display:flex;gap:8px;overflow-x:auto;padding:0 0 8px}
+.pce97 .pce-pals button{flex:0 0 84px;min-height:64px;padding:8px 6px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.04);color:rgba(245,240,232,.85);display:flex;flex-direction:column;align-items:center;gap:6px;font:500 11px var(--font-sans);cursor:pointer}
+.pce97 .pce-pals i{display:flex;width:56px;height:20px;border-radius:6px;overflow:hidden}.pce97 .pce-pals em{flex:1}
+/* Add: compact tiles, three to a row on a phone */
+.pce97 .pce-adds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pce97 .pce-adds .pce-add,.pce97 .pce-cols .pce-adds button{min-height:48px;padding:6px 8px;border-radius:12px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px}
+.pce97 .pce-adds .pce-add b{font:600 12px/1.2 var(--font-sans)}
+.pce97 .pce-adds small{font:500 10px/1.2 var(--font-sans);opacity:.6}
+@media (max-width:699px){.pce97 .pce-adds .pce-add small{display:none}}
+/* Layouts (saved and ready) */
+.pce97 .pce-cols .pce-adds button[data-open]{text-align:left}
+/* Simple mode: the grid on the page */
+.pce-sgrid{position:absolute;z-index:40;pointer-events:none}
+.pce-sgrid i{position:absolute;border:1px dashed rgba(61,139,255,.55);background:rgba(61,139,255,.05);border-radius:4px}
+/* tips, once: a small card that never blocks a tap */
+.pce97 .pce-body{position:relative}
+.pce97 .pce-tips{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:60;width:min(340px,calc(100% - 24px));padding:12px 14px;border-radius:14px;background:rgba(29,25,23,.94);border:1px solid rgba(229,184,120,.4);color:#f5f0e8;font:500 13px/1.45 var(--font-sans);pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:4px}
+.pce97 .pce-tips b{font-size:14px;color:#f1cf98}
+@media (min-width:700px){
+ .pce.pce97 .pce-title{display:flex!important;flex-direction:column;align-items:flex-start;min-width:0;max-width:340px;height:44px;padding:0 10px;border:0;background:none;color:#f5f0e8;cursor:pointer}
+ .pce97 .pce-title b{font:600 14px var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.pce97 .pce-title small{font:500 11px var(--font-sans);opacity:.6}
+ .pce97 .pce-top .pce-save{display:inline-flex;align-items:center;height:44px;padding:0 16px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:none;color:#f5f0e8;font:600 14px var(--font-sans);cursor:pointer}
+ .pce.pce97 .pce-panel{flex:0 0 360px;width:360px;height:100%;max-height:none}
+ .pce.pce97:not(.pce-drawer-open) .pce-panel,.pce.pce97.pce-drawer-open .pce-panel{height:100%;max-height:none}
+ .pce.pce97 .pce-drawer-toggle{display:none}
+ .pce97 .pce-mgrid,.pce97 .pce-els{display:grid;grid-template-columns:repeat(4,1fr);overflow:visible}
+ .pce97 .pce-mtile,.pce97 .pce-els button{flex:none;width:auto}
+ .pce97 .pce-mrow{display:grid;grid-template-columns:repeat(5,1fr);overflow:visible}.pce97 .pce-mrow button{flex:none;width:auto;height:auto;aspect-ratio:1}
+}
+@media (prefers-reduced-motion:reduce){.pce97 .pce-mtile .pce-mg{animation:none!important}}

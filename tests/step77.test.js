@@ -66,7 +66,7 @@ call('coupleLook', { g: A.gid, coupleKey: A.ck, layout: '' });
 assert(!call('canvasList', { g: A.gid, coupleKey: A.ck }).layouts.some(x => x.id === lay.id), 'deleted layouts are gone from the list');
 
 // step 78: motion, delay / speed / scroll depth, "stays while scrolling"
-const mdoc = { sections: [{ id: 's', h: { p: 600 }, stay: 9000, els: [{ id: 'a', t: 'text', p: { x: 0, y: 0, w: 100, h: 40 }, m: 'iris', mo: { d: 99999, t: 400, p: 3, x: 1 } }, { id: 'b', t: 'text', p: { x: 0, y: 0, w: 100, h: 40 }, m: 'spin' }] }] };
+const mdoc = { sections: [{ id: 's', h: { p: 600 }, stay: 9000, els: [{ id: 'a', t: 'text', p: { x: 0, y: 0, w: 100, h: 40 }, m: 'iris', mo: { d: 99999, t: 400, p: 3, x: 1 } }, { id: 'b', t: 'text', p: { x: 0, y: 0, w: 100, h: 40 }, m: 'wiggle-dance' }] }] };
 const md = call('canvasSave', { token: admin, item: { kind: 'layout', name: 'Motion', doc: mdoc } }).doc;
 assert(md.sections[0].stay === 3000 && md.sections[0].els[0].m === 'iris' && JSON.stringify(md.sections[0].els[0].mo) === '{"d":5000,"t":400,"p":0.6}' && !md.sections[0].els[1].m, 'motion kept and clamped, unknown motion dropped: ' + JSON.stringify(md.sections[0]));
 

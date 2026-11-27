@@ -114,7 +114,7 @@ const srv=http.createServer((req,res)=>{
     await bar(pg,'.pged-top',size.n+' card editor top bar');
     await pg.evaluate(()=>PGHubEditor.close());
 
-    await pg.evaluate(()=>PGControl.designLayout('tpl-c1'));
+    await pg.evaluate(()=>PGTemplateEditor.open('tpl-c1'));   // step 97: opened directly (the Control Panel now sends Darbar to the one editor)
     await pg.waitForSelector('.pgte');
     ok(await hidden(pg),size.n+' template editor hides navigation and badge');
     await bar(pg,'.pgte-top',size.n+' template editor top bar');

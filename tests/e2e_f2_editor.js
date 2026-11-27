@@ -178,7 +178,7 @@ async function run() {
       }));
       check(freeWidth.preview <= freeWidth.screen + 1,
         name + ': free design fits screen width (' + freeWidth.preview + ' / ' + freeWidth.screen + ')');
-      await page.click('.pce-tabs [data-tab="style"]');
+      await page.evaluate(() => PGCanvasEditor.tab('style'));   // step 97: the selected part's panel (Design · Motion · Connect) opens in the drawer
       await page.waitForTimeout(100);
       const freeOpen = await measure(page, '.pce-page', '.pce-stage');
       console.log('DESIGN VISIBLE — Free editor drawer open — ' + name + ': ' + JSON.stringify(freeOpen));

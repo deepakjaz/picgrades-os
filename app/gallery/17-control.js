@@ -221,11 +221,12 @@
   // which editor designs this layout (null = none)
   function designer(id) {
     if (!id) return null;
-    if (id === 'custom') return () => PGHubEditor.open();
+    if (id === 'custom') return GALLERY.layout === 'custom' && window.PGCanvasEditor ? () => PGCanvasEditor.open('current') : () => PGHubEditor.open();   // step 97: "Our own Hub" opens in the one editor too
     if (/^cv-/.test(id) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77: a layout from a collection
     const l = window.PGLayout && PGLayout.find(id); if (!l) return null;
     if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor too
-    if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);
+    if (l.story && l.editor && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 97: a story layout with an editor version opens in the one editor
+    if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);   // story layouts without an editor version yet (staff-only ones)
     if (window.PGHubEditor) return () => PGHubEditor.open({ from: id });
     return null;
   }
