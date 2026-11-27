@@ -255,7 +255,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
       root.innerHTML = (doc.sections || []).map(sec => {
         const h = secH(sec, mode) * k, bg = sec.bg || {};
         let bgHtml = '';
-        if (bg.src) { const id = P.of(bg.src); ctx.used.push(id); bgHtml = '<img class="pgc-bgimg" alt="" src="' + url(id, 1600) + '" style="object-position:' + num(bg.fx, 50) + '% ' + num(bg.fy, 35) + '%' + (num(bg.z, 1) > 1 ? ';scale:' + Math.min(4, num(bg.z, 1)) + ';transform-origin:' + num(bg.fx, 50) + '% ' + num(bg.fy, 35) + '%' : '') + '">'; }
+        if (bg.src) { const id = P.of(bg.src); ctx.used.push(id); bgHtml = '<img class="pgc-bgimg" alt="" data-photo="' + esc(id) + '" src="' + url(id, 1600) + '" style="object-position:' + num(bg.fx, 50) + '% ' + num(bg.fy, 35) + '%' + (num(bg.z, 1) > 1 ? ';scale:' + Math.min(4, num(bg.z, 1)) + ';transform-origin:' + num(bg.fx, 50) + '% ' + num(bg.fy, 35) + '%' : '') + '">'; }
         if (bg.dim) bgHtml += '<div class="pgc-dim" style="background:rgba(0,0,0,' + Math.max(0, Math.min(.8, num(bg.dim, 0))) + ')"></div>';
         const els = (sec.els || []).map(el => {
           const sp = spotOf(el, mode); if (!sp || sp.hide) return '';

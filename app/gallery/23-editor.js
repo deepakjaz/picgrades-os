@@ -134,7 +134,7 @@
     const bl = E.d.base && PGLayout.find(E.d.base); if (bl) el.querySelector('.pged-title').textContent = bl.name;   // step 76: the layout being designed
     const from = el.querySelector('.pged-from');
     // step 76: the Template Studio templates have their own editor, and the layouts being reworked are for PicGrades only
-    const startList = PGLayout.list().filter(l => !(l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) && (l.group !== 'progress' || PGControl.role() === 'picgrades'));
+    const startList = PGLayout.list().filter(l => !(l.story && window.PGStoryStudio && PGStoryStudio.mods[l.story]) && (l.group !== 'progress' || PGControl.role() === 'picgrades'));   // step 103: the same list as before (only the Template Studio ones are left out)
     from.innerHTML = '<option value="">Start again from a layout…</option>' + startList.map(l => '<option value="' + l.id + '">' + pgEsc(l.name) + (l.story ? ' · story' : '') + '</option>').join('');
     from.addEventListener('change', () => { const l = PGLayout.find(from.value); from.value = ''; if (!l) return; if (!confirmBox('Start again from “' + l.name + '”? Your changes so far are replaced (Undo brings them back).')) return; snapshot();
       E.d = Object.assign(l.story ? storyDraft(l.story, l.id) : fromLayout(l), { header: E.d.header, modeside: E.d.modeside }); E.sel = -1; E.info = null; commit(); });

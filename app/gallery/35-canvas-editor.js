@@ -109,12 +109,22 @@
     }
     let l = arg && window.PGLayout ? PGLayout.find(arg) : null;
     if (l && l.story && l.editor) l = PGLayout.find(l.editor) || l;   // step 97: a story layout opens its editor version (Living Story → Living Story (editor))
-    if (l && l.canvas) return start(clone(l.canvas), { builtin: l.id });
-    if (l && !l.story && (l.blocks || []).length) return start(fromGrid(l), { builtin: l.id, converted: true });   // step 77d: Minimal layouts open here too
+    // step 101: one copy of each template per wedding — if this wedding already has its copy, open that copy (not the original)
+    if (l && (l.canvas || (!l.story && (l.blocks || []).length)) && role !== 'demo') {
+      const fresh = () => (l.canvas ? start(clone(l.canvas), { builtin: l.id, base: l.id }) : start(fromGrid(l), { builtin: l.id, base: l.id, converted: true }));
+      if (GALLERY.canvas && GALLERY.canvas.base === l.id && /^cv-/.test(GALLERY.layout || '')) arg = GALLERY.layout;
+      else {
+        E.el.querySelector('.pce-stage').innerHTML = '<p class="pce-wait">Opening…</p>';
+        return pgApi('canvasList', {}).then(r => { if (!E) return; const c = (r.layouts || []).find(x => x.base === l.id && x.scope === 'wedding' && x.galleryId === String(GALLERY.galleryId || ''));
+          if (!c) return fresh(); return pgApi('canvasGet', { id: c.id }).then(g => { if (E) start(g.doc, { id: g.id, mine: true, scope: 'wedding', name: g.name, base: l.id }); }); }).catch(() => { if (E) fresh(); });
+      }
+    }
+    else if (l && l.canvas) return start(clone(l.canvas), { builtin: l.id, base: l.id });
+    else if (l && !l.story && (l.blocks || []).length) return start(fromGrid(l), { builtin: l.id, base: l.id, converted: true });   // step 77d: Minimal layouts open here too
     if (arg && /^cv-/.test(arg)) {
       if (GALLERY.canvas && GALLERY.canvas.id === arg && role === 'demo') return start(clone(GALLERY.canvas.doc), { id: arg, mine: true, demo: true });
       E.el.querySelector('.pce-stage').innerHTML = '<p class="pce-wait">Opening…</p>';
-      return pgApi('canvasGet', { id: arg }).then(r => { if (E) start(r.doc, { id: r.id, mine: !!r.mine, collection: r.collection, scope: r.scope, name: r.name }); })
+      return pgApi('canvasGet', { id: arg }).then(r => { if (E) start(r.doc, { id: r.id, mine: !!r.mine || (r.scope === 'wedding' && r.galleryId === String(GALLERY.galleryId || '')), collection: r.collection, scope: r.scope, name: r.name, base: r.base || '' }); })
         .catch(err => { showToast(err.message || 'Could not open'); close(true); });
     }
     start(starter(), {});
@@ -154,7 +164,7 @@
         '<div class="pce-menu" hidden><div class="pce-menu-row"><span>Screen</span><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div>' +
         '<div class="pce-menu-row"><span>Placing</span><div class="pce-seg pce-snap"><button type="button" data-snap="simple">Simple</button><button type="button" data-snap="free">Free</button></div></div>' +
         '<div class="pce-menu-row"><span>Zoom</span><div class="pce-zrow"><button type="button" class="pce-zoom-toggle" hidden>100%</button><div class="pce-zoom-menu"><button type="button" data-z="-" aria-label="Smaller">−</button><b>100%</b><button type="button" data-z="+" aria-label="Bigger">+</button><button type="button" data-z="1">Fit</button></div></div></div>' +
-        '<button type="button" class="pce-menu-item" data-menu="rename">Rename this layout</button><button type="button" class="pce-menu-item" data-menu="save">Save as a copy / to a collection…</button></div></div>' +
+        '<button type="button" class="pce-menu-item" data-menu="original">Back to original</button><button type="button" class="pce-menu-item" data-menu="rename">Rename this layout</button><button type="button" class="pce-menu-item" data-menu="save">Save as a copy / to a collection…</button></div></div>' +
       '<button type="button" class="pce-ic pce-play" aria-label="Play" aria-pressed="false">' + IC.play + '</button><button type="button" class="pce-btn pce-save">Save</button><button type="button" class="pce-btn pce-apply">Apply</button></div>' +
       '<div class="pce-body"><div class="pce-stage"></div><div class="pce-panel"><div class="pce-tabs" role="tablist">' + TABS.map(([k, n]) => '<button type="button" data-tab="' + k + '" role="tab">' + IC[k] + '<span>' + n + '</span></button>').join('') + '<button type="button" class="pce-drawer-toggle" aria-label="Open tools" aria-expanded="false">⌃</button></div><div class="pce-pane"></div></div></div>';
     el.querySelector('.pce-x').addEventListener('click', () => { close(); if (!E && window.pgBackToPanel) pgBackToPanel(); });   // clean-up #1: back to where it was opened from
@@ -168,7 +178,7 @@
     el.addEventListener('pointerdown', ev => { if (!menu.hidden && !ev.target.closest('.pce-more')) shutMenu(); });
     el.querySelector('.pce-mode').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) shutMenu(); if (b && b.dataset.mode !== E.mode) { E.mode = b.dataset.mode; draw(); panel(); } });
     el.querySelector('.pce-snap').addEventListener('click', e => { const b = e.target.closest('[data-snap]'); if (b) shutMenu(); if (b && b.dataset.snap !== E.snap) { E.snap = b.dataset.snap; draw(); panel(); if (E.snap === 'simple') showToast('Simple: parts snap to the grid. Set rows and columns in Pages.'); } });
-    el.querySelectorAll('[data-menu]').forEach(b => b.addEventListener('click', () => { shutMenu(); if (b.dataset.menu === 'rename') rename(); else saveDialog(false); }));
+    el.querySelectorAll('[data-menu]').forEach(b => b.addEventListener('click', () => { shutMenu(); if (b.dataset.menu === 'rename') rename(); else if (b.dataset.menu === 'original') backToOriginal(); else saveDialog(false); }));
     el.querySelector('.pce-drawer-toggle').addEventListener('click', () => setDrawer(!E.drawerOpen));
     el.querySelector('.pce-zoom-toggle').addEventListener('click', () => { E.zoom = 1; draw(); });
     el.querySelector('.pce-save').addEventListener('click', quickSave);   // step 99e: their own layout saves straight over itself
@@ -461,7 +471,7 @@
   function connectPane(e) {
     const t = e.t, lap = E.mode === 'l'; let c = '';
     if (t === 'names' || t === 'date' || t === 'text' || t === 'credit') c += row(t === 'text' ? 'Words' : t === 'credit' ? 'Words before the name' : 'Words (empty = the wedding’s own)', '<textarea data-f="text" rows="2" maxlength="400" placeholder="' + (t === 'names' ? esc(PGLayout.storyData().names) : t === 'credit' ? 'Photographed by' : '') + '">' + esc(e.text || '') + '</textarea>');
-    if (t === 'photo') c += row('Photo', srcSelect(e.src)) + '<button type="button" class="pce-mini" data-pick="el">Choose a photo…</button>';
+    if (t === 'photo') c += row('Follow the story', srcSelect(e.src)) + '<p class="pce-note">To pick one photo, use the thumbnails in Design.</p>';
     if (t === 'action') c += row('Button', '<select data-f="act">' + Object.keys(PGCanvas.LABEL).map(k => opt(k, PGCanvas.LABEL[k], e.act)).join('') + '</select>') + row('Label (empty = usual)', '<input type="text" data-f="text" maxlength="40" value="' + esc(e.text || '') + '">') + seg('v', e.v || 'pill', [['pill', 'With icon'], ['circle', 'Icon only'], ['text', 'Words only']]);
     if (t === 'events') c += seg('v', e.v || 'row', [['row', 'Cards'], ['circles', 'Circles'], ['list', 'List']]) + (e.v === 'list' ? '' : row('Cards showing at once (' + (lap ? 'laptop' : 'phone') + ')', '<input type="number" step="0.1" min="1" max="8" data-f="per" value="' + num(e.per && typeof e.per === 'object' ? e.per[E.mode] : e.per, lap ? 3.5 : 2.2) + '">'));
     if (t === 'strip') c += row('Photos from', srcSelect(e.src));
@@ -478,7 +488,7 @@
   function designPane(f) {
     const e = f.e, lap = E.mode === 'l', own = lap && !!e.sl, s = Object.assign({}, e.s, lap && e.sl ? e.sl : {}), sp = spot(e), t = e.t;
     let c = '';
-    if (t === 'photo') c += '<div class="pce-acts"><button type="button" data-pick="el">Change photo</button><button type="button" data-do="frame" class="' + (E.frame === e.id ? 'on' : '') + '">' + (E.frame === e.id ? 'Done framing' : 'Move & zoom') + '</button><button type="button" data-do="frameReset">Reset</button></div>' +
+    if (t === 'photo') c += thumbs(e.src) + '<div class="pce-acts"><button type="button" data-do="frame" class="' + (E.frame === e.id ? 'on' : '') + '">' + (E.frame === e.id ? 'Done framing' : 'Move & zoom') + '</button><button type="button" data-do="frameReset">Reset</button></div>' +
       '<p class="pce-note">' + (E.frame === e.id ? 'Drag the photo on the page to move it inside its frame.' : 'Move & zoom moves the photo inside its frame, like in Photo Edits.') + '</p>' + row('Zoom', '<input type="range" min="1" max="3" step="0.05" data-s="zm" value="' + num(s.zm, 1) + '"><output>' + num(s.zm, 1) + '</output>');
     if (lap) c += '<label class="pce-check"><input type="checkbox" data-f="ownstyle"' + (own ? ' checked' : '') + '> Laptop has its own look (changes below stay on laptop)</label>';
     const textual = ['names', 'date', 'text', 'credit', 'action', 'blessings', 'events'].indexOf(t) > -1;
@@ -592,12 +602,25 @@
     if (JSON.stringify(E.doc) !== E.saved && !window.confirm('Open another layout? Changes you have not saved are lost.')) return;
     const keep = { mode: E.mode, snap: E.snap }; close(true); open(id); if (E) { E.snap = keep.snap; if (E.mode !== keep.mode) { E.mode = keep.mode; draw(); panel(); } }
   }
-  // Media: the wedding's photos and the elements library — tap to use
-  function mediaPane() {
+  // the wedding's photos, in groups (cover, highlights, each event)
+  function photoGroups() {
     const st = GALLERY.story || {}, groups = [];
     if ((st.cover || []).length) groups.push(['Cover photos', st.cover]);
     if ((st.wh || []).length) groups.push(['Wedding highlights', st.wh]);
     (GALLERY.events || []).forEach(e => { const ids = (e.photos || []).map(p => p.id); if (ids.length) groups.push([e.name, ids]); });
+    return groups;
+  }
+  // step 101b: a selected photo shows the wedding's photos as thumbnails right in its panel — tap one to put it in
+  function thumbs(src) {
+    const cur = src && src.k === 'id' ? src.id : '', gs = photoGroups();
+    if (!gs.length) return '<p class="pce-note">No photos yet.</p>';
+    return '<div class="pce-sub">Tap a photo to put it here</div>' + gs.map(([n, ids]) => '<div class="pce-tlabel">' + esc(n) + '</div><div class="pce-thumbs">' +
+      ids.slice(0, 40).map(id => '<button type="button" data-photo="' + esc(id) + '" class="' + (id === cur ? 'on' : '') + '" aria-label="Use this photo"><img loading="lazy" alt="" src="' + pgImg(id, 200) + '"></button>').join('') + '</div>').join('') +
+      '<button type="button" class="pce-mini" data-pick="el">See all photos…</button>';
+  }
+  // Media: the wedding's photos and the elements library — tap to use
+  function mediaPane() {
+    const groups = photoGroups();
     const f = E.sel && find(E.sel), photoSel = f && f.e.t === 'photo';
     return '<p class="pce-note">' + (photoSel ? 'Tap a photo to put it in the selected photo.' : 'Tap a photo to add it to the page.') + '</p>' +
       groups.map(([n, ids]) => '<div class="pce-sub">' + esc(n) + '</div><div class="pce-mrow">' + ids.slice(0, 30).map(id => '<button type="button" data-photo="' + esc(id) + '"><img loading="lazy" alt="" src="' + pgImg(id, 200) + '"></button>').join('') + '</div>').join('') +
@@ -735,10 +758,22 @@
   // step 99e: a layout that is already this wedding's own saves in place — no name or collection question again.
   // Only the first save of a ready layout asks (it makes the wedding's own copy). Other weddings never see it.
   function quickSave() {
-    if (E.role === 'demo' || !(E.src.id && E.src.mine)) return saveDialog(false);
+    if (E.role === 'demo' || !((E.src.id && E.src.mine) || E.src.base)) return saveDialog(false);
     const btn = E.el.querySelector('.pce-save'); if (btn) btn.disabled = true;
-    return pgApi('canvasSave', { item: { id: E.src.id, kind: 'layout', name: E.doc.name || 'My layout', collection: E.src.collection || undefined, scope: E.src.scope || 'wedding', doc: E.doc } })
-      .then(() => { E.saved = JSON.stringify(E.doc); showToast('Saved'); }).catch(err => showToast(err.message || 'Could not save')).then(() => { if (btn) btn.disabled = false; });
+    return saveOwn()
+      .then(() => { showToast('Saved — only this wedding sees it'); }).catch(err => showToast(err.message || 'Could not save')).then(() => { if (btn) btn.disabled = false; });
+  }
+  // step 101: save into this wedding's one copy of the template (made the first time, updated after that)
+  function saveOwn() {
+    return pgApi('canvasSave', { item: { id: E.src.id && E.src.mine ? E.src.id : undefined, kind: 'layout', name: E.doc.name || 'Our Hub', collection: E.src.collection || undefined, scope: E.src.scope || 'wedding', base: E.src.base || undefined, doc: E.doc } })
+      .then(res => { E.src = Object.assign({}, E.src, { id: res.id, mine: true, scope: res.scope, builtin: undefined, converted: undefined }); E.saved = JSON.stringify(E.doc); draw(); return res; });
+  }
+  // step 101: back to the template as it was made (their copy stays until they save or apply)
+  function backToOriginal() {
+    const l = E.src.base && window.PGLayout && PGLayout.find(E.src.base); if (!l) { showToast('This one has no original template'); return; }
+    if (!window.confirm('Go back to the original ' + (l.name || 'template') + '? Your changes go when you save.')) return;
+    change(doc => { const o = l.canvas ? clone(l.canvas) : fromGrid(l); Object.keys(doc).forEach(k => delete doc[k]); Object.assign(doc, o); });
+    showToast('Back to the original — Save to keep it');
   }
   function saveDialog(thenApply) {
     if (E.role === 'demo') { demoKeep(thenApply); return Promise.resolve(); }
@@ -762,7 +797,7 @@
         const name = sh.querySelector('.pce-sname').value.trim() || 'My layout', scope = sh.querySelector('.pce-sscope').value, copy = sh.querySelector('.pce-scopy') && sh.querySelector('.pce-scopy').checked;
         const btn = sh.querySelector('.pce-sgo'); btn.disabled = true; btn.textContent = 'Saving…';
         const colP = colSel.value === '+new' ? (nc.value.trim() ? pgApi('canvasSave', { item: { kind: 'collection', name: nc.value.trim(), scope } }).then(c => c.id) : Promise.resolve('')) : Promise.resolve(colSel.value);
-        colP.then(colId => { E.doc.name = name; return pgApi('canvasSave', { item: { id: mineEdit && !copy ? E.src.id : undefined, kind: 'layout', name, collection: colId || undefined, scope, doc: E.doc } }); })
+        colP.then(colId => { E.doc.name = name; return pgApi('canvasSave', { item: { id: mineEdit && !copy ? E.src.id : undefined, copy: copy || !mineEdit ? 1 : undefined, kind: 'layout', name, collection: colId || undefined, scope, doc: E.doc } }); })
           .then(res => { E.src = { id: res.id, mine: true, collection: res.collection, scope: res.scope }; E.saved = JSON.stringify(E.doc); shut(); draw(); showToast('Saved to ' + (res.collection ? 'the collection' : 'your layouts')); if (thenApply) applySaved(); })
           .catch(err => { showToast(err.message || 'Could not save'); btn.disabled = false; btn.textContent = 'Save'; });
       });
@@ -780,7 +815,8 @@
   function apply() {
     const dirty = JSON.stringify(E.doc) !== E.saved;
     if (E.src.builtin && !dirty) return applyId(E.src.builtin, null);
-    if (E.src.id && E.src.mine && !dirty && E.role !== 'demo') return applySaved();   // a ready layout, unchanged (a Minimal layout stays the card layout it was)
+    if (E.src.id && E.src.mine && !dirty && E.role !== 'demo') return applySaved();
+    if (E.role !== 'demo' && E.src.base && (dirty || !E.src.id)) return saveOwn().then(() => applySaved()).catch(err => showToast(err.message || 'Could not save'));   // step 101: their copy, no questions   // a ready layout, unchanged (a Minimal layout stays the card layout it was)
     if (E.role === 'demo') return demoKeep(true);
     if (!E.src.id || !E.src.mine || dirty) {
       if (E.src.id && E.src.mine && dirty) return pgApi('canvasSave', { item: { id: E.src.id, kind: 'layout', name: E.doc.name || 'My layout', collection: E.src.collection || undefined, scope: E.src.scope || 'wedding', doc: E.doc } }).then(() => { E.saved = JSON.stringify(E.doc); applySaved(); }).catch(err => showToast(err.message || 'Could not save'));

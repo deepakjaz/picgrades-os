@@ -1,4 +1,6 @@
 // Step 98b — change a photo right where you see it on the Hub (the couple, the photographer, PicGrades).
+// Step 103: on a ready template this saves only the couple's choice (the same as "Try your photos"), never a copy of the design;
+// a layout made in the Advanced editor (cv-…) still updates its own copy.
 // On a canvas Hub layout every photo is its own part: tap it (or a section's background photo) and choose
 // Change photo · Move & zoom · Reset. The change is saved as this wedding's own copy of the layout
 // (canvasSave, "this wedding"), applied at once, so every guest sees it. Guests' taps are unchanged.
@@ -11,9 +13,13 @@
   // the canvas doc the Hub shows now: the wedding's own (cv-…) or a ready canvas layout
   function current() {
     const id = GALLERY.layout || '';
-    if (/^cv-/.test(id) && GALLERY.canvas && GALLERY.canvas.doc) return { id, mine: true, doc: clone(GALLERY.canvas.doc), name: GALLERY.canvas.name };
+    const cb = id === 'custom' && GALLERY.custom && GALLERY.custom.story && GALLERY.custom.story.kind === 'canvas' && !GALLERY.custom.story.doc ? GALLERY.custom.base : '';
+    const bl = cb && window.PGLayout && PGLayout.find(cb);
+    if (bl && bl.canvas) return { id, choices: true, base: cb, doc: PGTune.overlayCanvas(bl.canvas, GALLERY.custom.story), name: bl.name, tune: clone(GALLERY.custom.story) };   // step 103: a template with the couple's choices
+    if (/^cv-/.test(id) && GALLERY.canvas && GALLERY.canvas.doc) return { id, mine: true, doc: clone(GALLERY.canvas.doc), name: GALLERY.canvas.name, base: GALLERY.canvas.base || '' };
     const l = id && window.PGLayout && PGLayout.find(id);
-    return l && l.canvas ? { id, mine: false, doc: clone(l.canvas), name: l.name } : null;
+    if (l && l.canvas) { const v = (GALLERY.versions || {})[l.id]; const tv = v && v.story && v.story.kind === 'canvas' ? clone(v.story) : { kind: 'canvas' }; return { id, choices: true, base: l.id, doc: PGTune.overlayCanvas(l.canvas, tv), name: l.name, tune: tv }; }   // step 103
+    return null;
   }
   const editable = () => OWNERS.indexOf(role()) > -1 && !!current();
   function find(doc, elId) { for (const s of doc.sections || []) { const e = (s.els || []).find(x => x.id === elId); if (e) return e; } return null; }
@@ -72,17 +78,35 @@
   }
   // change the doc, save it as this wedding's own copy, apply it
   let busy = false;
+  // step 103: keep only the choice for this spot (photo, framing), apply the template with the couple's choices
+  function saveChoice(cur, w, fn, done) {
+    const slot = w.kind === 'bg' ? 'bg-' + w.id : w.id, t = cur.tune; t.kind = 'canvas';
+    const probe = { s: {}, src: null };
+    const old = (t.frame || {})[slot]; if (old) { probe.s.fx = old.fx; probe.s.fy = old.fy; if (w.kind === 'bg') probe.s.z = old.z; else probe.s.zm = old.z; }
+    fn(probe.s, probe);
+    if (probe.src && probe.src.k === 'id') { t.photos = Object.assign({}, t.photos, { [slot]: probe.src.id }); }
+    const z = w.kind === 'bg' ? probe.s.z : probe.s.zm;
+    if (probe.s.fx != null || probe.s.fy != null) t.frame = Object.assign({}, t.frame, { [slot]: { fx: probe.s.fx || 0, fy: probe.s.fy || 0, z: z || 1 } });
+    else if (t.frame) { delete t.frame[slot]; if (!Object.keys(t.frame).length) delete t.frame; }
+    const custom = { base: cur.base, story: t, blocks: [] };
+    busy = true; showToast('Saving…');
+    PGControl.save({ version: JSON.stringify({ id: cur.base, custom }), layout: 'custom', custom: JSON.stringify(custom) }).then(r => {
+      if (r.versions) GALLERY.versions = r.versions; GALLERY.layout = r.layout || 'custom'; GALLERY.custom = r.custom || custom;
+      if (window.PGLayout) PGLayout.refresh(); showToast(done + ' — every guest sees it now');
+    }).catch(err => showToast((err && err.message) || 'Could not save')).then(() => { busy = false; });
+  }
   function save(w, fn, done) {
     const cur = current(); if (!cur || busy) return;
+    if (cur.choices) return saveChoice(cur, w, fn, done);
     const doc = cur.doc;
     if (w.kind === 'bg') { const s = doc.sections.find(x => x.id === w.id); if (!s || !s.bg) return; fn(s.bg, s.bg); }
     else { const e = find(doc, w.id); if (!e) return; const t = w.mode === 'l' && e.sl ? e.sl : (e.s = e.s || {}); fn(t, e); }
     busy = true; showToast('Saving…');
-    const item = { kind: 'layout', name: cur.name || doc.name || 'Our Hub', scope: 'wedding', doc };
+    const item = { kind: 'layout', name: cur.name || doc.name || 'Our Hub', scope: 'wedding', doc, base: cur.base || undefined };   // step 101: the wedding's one copy of this template
     const put = id => pgApi('canvasSave', { item: Object.assign({}, item, id ? { id } : {}) });
     (cur.mine ? put(GALLERY.layout).catch(() => put(null)) : put(null))   // a ready layout (or someone else's) becomes this wedding's own copy
       .then(res => (res.id === GALLERY.layout ? Promise.resolve({ layout: res.id }) : PGControl.save({ layout: res.id })).then(r => {
-        GALLERY.layout = r.layout || res.id; GALLERY.canvas = { id: res.id, name: item.name, doc: res.doc || doc };
+        GALLERY.layout = r.layout || res.id; GALLERY.canvas = { id: res.id, name: item.name, doc: res.doc || doc, base: cur.base || '' };
         if (window.PGLayout) PGLayout.refresh(); showToast(done + ' — every guest sees it now');
       }))
       .catch(err => showToast((err && err.message) || 'Could not save'))

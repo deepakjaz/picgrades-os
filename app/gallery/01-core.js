@@ -75,12 +75,14 @@ function pgApi(action, body) {
     .then(res => { if (!res.ok) { const err = new Error(res.error || 'Something went wrong.'); err.draft = !!res.draft; err.res = res; throw err; } return res; })
     .finally(() => { if (timer) clearTimeout(timer); });
 }
-function pgImg(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+function pgImg(id, w) { if (/^demo:/.test(id)) return pgDemoImg(id, w); return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
+// step 102: PicGrades' own demo wedding photos (app/demo-wedding) — used only by template previews, never a client's photos
+function pgDemoImg(id, w) { return '/app/demo-wedding/' + String(id).slice(5).replace(/[^a-z0-9-]/g, '') + (w <= 520 ? '-s' : '-l') + '.webp'; }
 // Phones get photos sized for their screen (an iPhone shows ~1200 px across; 2048 px photos use 3× the memory and make Safari reload the page).
 // Downloads still use the full 2048 px photo.
 const PG_PHONE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)) || Math.min(screen.width, screen.height) < 820;
 const PG_FULL_W = PG_PHONE ? 1280 : 2048, PG_THUMB_W = 200;
-function pgImgFallback(id, w) { return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w; }
+function pgImgFallback(id, w) { if (/^demo:/.test(id)) return pgDemoImg(id, w); return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w' + w; }
 function pgEsc(t) { const d = document.createElement('div'); d.textContent = String(t == null ? '' : t); return d.innerHTML; }
 function pgDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '.' + m[2] + '.' + m[1].slice(2) : ''; }
 function pgMoment(photo, ceremony, n, total) {

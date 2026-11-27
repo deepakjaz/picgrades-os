@@ -321,6 +321,8 @@
     if (a === 'event' && x) return window.pgOpenEvent ? pgOpenEvent(x) : openCollection(x, 0);
     if (a === 'photo' && x && x.id) return pgOpenPhoto(x.id);
   }
+  // step 103: a ready canvas template with the couple's choices: its design comes from the template itself
+  function tuneWithBase(c) { const st = c.story; if (st.kind !== 'canvas' || st.doc) return st; const b = LAYOUTS.find(l => l.id === c.base); return b && b.canvas ? Object.assign({}, st, { doc: b.canvas, base: b.id }) : st; }
   function storyRender(view, kind) {
     const mod = storyMod(kind); if (!mod) return false;
     const old = $('pgLay'); if (old) old.remove(); document.body.classList.remove('pg-lay-on');
@@ -328,7 +330,13 @@
     storyStop();
     const box = h('div', 'pgl-story'); box.id = 'pgStory'; view.prepend(box); document.body.classList.add('pg-story-on');
     let asked = false; try { asked = localStorage.getItem('pg_storyq_' + GALLERY_ID) === '1'; } catch (e) {}
-    try { mod.render(box, storyData(), storyAct, { first: !asked && !/pgpreview=1/.test(location.search), galleryId: GALLERY_ID, tune: cur.tune || null }); storyOn = { kind, mod, tune: JSON.stringify(cur.tune || null), picks: JSON.stringify(GALLERY.story || null) }; storyTune(box, cur.tune); }
+    let D = storyData(), T = cur.tune || null;
+    if (T && window.PGTune && (T.photos || T.hide || T.names || T.date || T.frame || T.colors)) {   // step 103: the couple's choices from "Try your photos"
+      if (kind === 'canvas' && T.doc) T = Object.assign({}, T, { doc: PGTune.overlayCanvas(T.doc, T, document.documentElement.getAttribute('data-tkg-theme') === 'dark') });
+      if (kind === 'canvas') D = PGTune.overlayWords(D, T);
+      if (STORY[kind]) { D = PGTune.overlayStory(D, T); const hid = new Set(T.hide || []); T = Object.assign({}, T, { sections: (T.sections || []).filter(q => !hid.has(q.k)).concat([...hid].map(k => ({ k, on: false }))) }); }
+    }
+    try { mod.render(box, D, storyAct, { first: !asked && !/pgpreview=1/.test(location.search), galleryId: GALLERY_ID, tune: T, still: !!(T && T.motion === 'off' && kind === 'canvas') }); storyOn = { kind, mod, tune: JSON.stringify(cur.tune || null), picks: JSON.stringify(GALLERY.story || null) }; storyTune(box, T); }
     catch (e) { console.warn('Story Hub', e); storyStop(); return false; }
     return true;
   }
@@ -358,7 +366,7 @@
     // (a ready layout can bring its own palette: "palette": { "id": "royal" })   // the wedding's own Hub (made in the Hub editor)
     return LAYOUTS.find(l => l.id === id) || null;
   }
-  const customOf = c => (c.story && storyKnown(c.story.kind) ? { id: 'custom', name: 'Our own Hub', theme: '', base: c.base || '', story: c.story.kind, tune: c.story, blocks: [] }
+  const customOf = c => (c.story && storyKnown(c.story.kind) ? { id: 'custom', name: 'Our own Hub', theme: '', base: c.base || '', story: c.story.kind, tune: tuneWithBase(c), blocks: [] }
     : { id: 'custom', name: 'Our own Hub', theme: '', palette: c.palette || null, blocks: (c.blocks || []).map(b => Object.assign({}, b)) });
   try { localStorage.removeItem('pg_layout_pick'); } catch (e) {}   // old test-menu choice no longer overrides the wedding
   const ready = fetch('/app/themes/layouts.json').then(r => r.json()).then(d => { LAYOUTS = (d.layouts || []).filter(l => l && l.id && Array.isArray(l.blocks)); LAYOUTS.forEach(l => { if (l.canvas) { l.story = 'canvas'; l.tune = { doc: l.canvas }; } }); cur = choose(); if (typeof GALLERY !== 'undefined' && GALLERY) render(); return LAYOUTS; }).catch(() => []);
@@ -383,6 +391,7 @@
     SCREEN, sizeOf, act: (a, x) => storyAct(a, x), data: () => data(), find: id => LAYOUTS.find(l => l.id === id) || null, refresh: () => { cur = choose(); render(); },
     apply: id => { const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {}; const l = id === 'custom' ? (G.custom && (G.custom.story || (G.custom.blocks && G.custom.blocks.length)) ? customOf(G.custom) : null) : LAYOUTS.find(x => x.id === id) || null; if (id && !l) return false; cur = l; render(); return true; },
     reset: () => { cur = null; render(); }, stop: () => storyStop(),
+    storyTune: (box, t) => storyTune(box, t), storyPartsOf: box => storyParts(box).map(p => ({ k: p.k, name: p.name, fixed: p.fixed })),   // step 103: for "Try your photos"
     // for the Hub editor (step 54): the story's parts and headings, read from a hidden copy of the story
     storyInfo: kind => {
       const mod = storyMod(kind); if (!mod) return null;

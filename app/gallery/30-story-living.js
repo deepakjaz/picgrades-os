@@ -100,7 +100,7 @@
   function destroy() {
     if (!S) return;
     if (S.raf) cancelAnimationFrame(S.raf);
-    if (S.onScroll) window.removeEventListener('scroll', S.onScroll);
+    if (S.onScroll) (S.scroller || window).removeEventListener('scroll', S.onScroll);
     if (S.onResize) window.removeEventListener('resize', S.onResize);
     if (S.memIo) S.memIo.disconnect();
     if (S.evIo) S.evIo.disconnect();
@@ -149,12 +149,13 @@
   // Enforce strict <= 12 live images on screen at any time
   function enforceImageBudget() {
     if (!S || !S.imgs.length) return;
-    const vh = window.innerHeight || 800;
+    const sc = S.scroller, top0 = sc ? sc.getBoundingClientRect().top : 0, left0 = sc ? sc.getBoundingClientRect().left : 0;   // step 103: inside a box
+    const vh = sc ? (sc.clientHeight || 800) : (window.innerHeight || 800);
     const scored = [];
     for (let i = 0; i < S.imgs.length; i++) {
       const im = S.imgs[i];
       if (!im.isConnected || !im.dataset.pid) continue;
-      const r = im.getBoundingClientRect(), vw = window.innerWidth || 400;
+      const r0 = im.getBoundingClientRect(), r = { top: r0.top - top0, bottom: r0.bottom - top0, left: r0.left - left0, right: r0.right - left0, width: r0.width, height: r0.height }, vw = sc ? (sc.clientWidth || 400) : (window.innerWidth || 400);
       const center = (r.top + r.bottom) / 2;
       const dist = Math.abs(center - vh / 2);
       // PicGrades fix: a hidden picture (no size) or one parked far to the side must not take a place in the budget,
@@ -216,6 +217,7 @@
 
     S = {
       box: box,
+      scroller: opts.scroller || null,   // step 103
       D: D,
       act: runAct,
       opts: opts,
@@ -714,8 +716,10 @@
       enforceImageBudget();
       if (S.reduced) return;
 
-      const sy = window.scrollY || document.documentElement.scrollTop || 0;
-      const vh = window.innerHeight || 800;
+      const sc = S.scroller;   // step 103: inside a preview / "Try your photos" box, the box scrolls (not the page)
+      const top0 = sc ? sc.getBoundingClientRect().top : 0;
+      const sy = sc ? sc.scrollTop : (window.scrollY || document.documentElement.scrollTop || 0);
+      const vh = sc ? (sc.clientHeight || 800) : (window.innerHeight || 800);
 
       // 1. Shrinking opening cover (0% -> 25% scroll)
       if (S.heroCard) {
@@ -730,7 +734,7 @@
       if (!S.lowMem && S.glances.length) {
         for (let i = 0; i < S.glances.length; i++) {
           const g = S.glances[i];
-          const r = g.el.getBoundingClientRect();
+          const r0 = g.el.getBoundingClientRect(), r = { top: r0.top - top0, bottom: r0.bottom - top0, height: r0.height };
           if (r.bottom < -100 || r.top > vh + 100) continue;
           const norm = ((r.top + r.height / 2) - vh / 2) / (vh / 2); // -1 to 1
           const ty = norm * -28;
@@ -741,7 +745,7 @@
 
       // 3. Varmala Convergence (portraits move toward each other & garland drops)
       if (S.vmTrack && S.vmLeft && S.vmRight) {
-        const r = S.vmTrack.getBoundingClientRect();
+        const r0 = S.vmTrack.getBoundingClientRect(), r = { top: r0.top - top0, height: r0.height };
         const total = Math.max(1, r.height - vh * 0.55);
         const prog = clamp((-r.top + vh * 0.25) / total, 0, 1);
         const sep = (1 - prog) * 42; // % separation
@@ -763,7 +767,7 @@
 
     S.onScroll = requestTick;
     S.onResize = requestTick;
-    window.addEventListener('scroll', S.onScroll, { passive: true });
+    (S.scroller || window).addEventListener('scroll', S.onScroll, { passive: true });
     window.addEventListener('resize', S.onResize, { passive: true });
     requestTick();
   }

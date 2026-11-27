@@ -7,11 +7,14 @@
 // - Words: the names and the date line.  - More: motion on/off, the Find me button, start again.
 // Save keeps this version for the template (nothing changes for guests). Apply makes it the wedding's Hub (and keeps the version).
 // Each template remembers its own version: choose it again later and the couple's changes are still there.
+// Step 103: this is "Try your photos" for EVERY template (canvas, Living Story, Editorial too, through 54-tune.js). Only the couple's
+// choices are kept — never a copy of the design — so the template, its motion and its scroll stay exactly as made.
+// Canvas templates also offer the Advanced editor (More); story templates have only this.
 (function pgTemplateEditor() {
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const clone = o => JSON.parse(JSON.stringify(o));
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  const handles = k => !!(window.PGStoryStudio && PGStoryStudio.mods[k]);
+  const handles = k => !!(window.PGTune && PGTune.handles(k));
   const TABS = [['colours', 'Colours'], ['photos', 'Photos'], ['parts', 'Parts'], ['words', 'Words'], ['more', 'More']];
   let E = null;   // { id, l, el, tune, saved, undo, redo, inst, dark, tab }
 
@@ -27,10 +30,10 @@
     const l = window.PGLayout && PGLayout.find(id); if (!l || !handles(l.story) || E) return false;
     if (PGLayout.stop) PGLayout.stop();   // the Hub's own copy of a template uses the same ids: stop it while editing
     const tune = versionOf(id, l.story);
-    E = { id, l, tune, saved: JSON.stringify(tune), undo: [], redo: [], inst: null, dark: isDarkApp(), tab: 'photos', drawerOpen: false };
+    E = { id, l, tune, saved: JSON.stringify(tune), undo: [], redo: [], inst: null, dark: isDarkApp(), tab: 'photos', drawerOpen: false, kind: l.story };
     const el = h('div', 'pgte'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Design ' + l.name); E.el = el;
     el.innerHTML = '<div class="pgte-top"><button type="button" class="pgte-x" aria-label="Close">‹</button>' +
-      '<div class="pgte-title"><b>' + esc(l.name) + '</b><small>' + esc(l.idea || '') + '</small></div>' +
+      '<div class="pgte-title"><b>' + esc(l.name) + '</b><small>Try your photos</small></div>' +
       '<button type="button" class="pgte-ic pgte-undo" aria-label="Undo">↶</button><button type="button" class="pgte-ic pgte-redo" aria-label="Redo">↷</button>' +
       '<button type="button" class="pgte-btn pgte-save">Save</button><button type="button" class="pgte-btn pgte-apply">Apply</button></div>' +
       '<div class="pgte-body"><div class="pgte-stage"><div class="pgte-phone"><div class="pgte-scroll"></div></div><p class="pgte-tip">Scroll the page to see it move. Tap any photo to change it.</p></div>' +
@@ -60,8 +63,8 @@
     const sc = E.el.querySelector('.pgte-scroll'), y = sc.scrollTop;
     if (E.inst) E.inst.destroy();
     sc.innerHTML = '';
-    E.inst = PGStoryStudio.mount(E.l.story, sc, PGLayout.storyData(), a => showToast('Guests can use this once the Hub is applied'),
-      { tune: E.tune, scroller: sc, ovHost: E.el.querySelector('.pgte-phone'), dark: E.dark, pick: slot => pickPhoto(slot) });
+    E.inst = PGTune.mount(E.kind, sc, PGLayout.storyData(), a => showToast('Guests can use this once the Hub is applied'),
+      { tune: E.tune, scroller: sc, ovHost: E.el.querySelector('.pgte-phone'), dark: E.dark, pick: slot => pickPhoto(slot), doc: E.l.canvas });
     sc.scrollTop = y; E.inst.refresh();
     E.el.querySelector('.pgte-undo').disabled = !E.undo.length; E.el.querySelector('.pgte-redo').disabled = !E.redo.length;
     const dirty = JSON.stringify(E.tune) !== E.saved; E.el.querySelector('.pgte-save').textContent = dirty ? 'Save' : 'Saved'; E.el.querySelector('.pgte-save').disabled = !dirty;
@@ -72,12 +75,13 @@
   const seg = (name, cur, opts) => '<div class="pgte-seg" data-set="' + name + '">' + opts.map(o => '<button type="button" data-v="' + o[0] + '" class="' + (cur === o[0] ? 'on' : '') + '">' + o[1] + '</button>').join('') + '</div>';
   function panel() {
     const pane = E.el.querySelector('.pgte-pane'), t = E.tune;
-    E.el.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('on', b.dataset.tab === E.tab); b.setAttribute('aria-selected', b.dataset.tab === E.tab); });
+    if (E.tab === 'colours' && !PGTune.colors(E.kind, E.dark, E.l.canvas).length) E.tab = 'photos';
+    E.el.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('on', b.dataset.tab === E.tab); b.setAttribute('aria-selected', b.dataset.tab === E.tab); if (b.dataset.tab === 'colours') b.hidden = !PGTune.colors(E.kind, E.dark, E.l.canvas).length; });
     let html = '';
     if (E.tab === 'colours') {
       const mode = E.dark ? 'dark' : 'light', own = (t.colors || {})[mode] || {};
       html = '<p class="pgte-note">The template’s own colours. Guests on dark mode see the dark set.</p>' + seg('dark', mode, [['light', 'Light'], ['dark', 'Dark']]) +
-        PGStoryStudio.colors(E.l.story, E.dark).map(c => '<label class="pgte-col"><span>' + esc(c.name) + '</span><input type="color" data-col="' + c.k + '" value="' + esc(String(own[c.k] || c.value).slice(0, 7)) + '">' +
+        PGTune.colors(E.kind, E.dark, E.l.canvas).map(c => '<label class="pgte-col"><span>' + esc(c.name) + '</span><input type="color" data-col="' + c.k + '" value="' + esc(String(own[c.k] || c.value).slice(0, 7)) + '">' +
           (own[c.k] ? '<button type="button" class="pgte-mini" data-uncol="' + c.k + '">Reset</button>' : '<em>original</em>') + '</label>').join('');
     } else if (E.tab === 'photos') {
       const S = E.inst.slots(), mine = t.photos || {}, seen = {}, total = {};
@@ -85,7 +89,7 @@
       S.forEach(s => { const m = /^e(\d+)h(\d+)$/.exec(s.k); if (m) { s.label = (((GALLERY.events || [])[+m[1]] || {}).name || 'Event ' + (+m[1] + 1)) + ' · photo ' + (+m[2] + 1); total[s.label] = 1; } });   // clean-up #4: an event's own strip photos are named after the event
       S.forEach(s => { if (total[s.label] > 1) { seen[s.label] = (seen[s.label] || 0) + 1; s.label += ' ' + seen[s.label]; } });   // "Film strip 1, 2, 3…"
       html = '<p class="pgte-note">Every photo on this page. Tap one to choose another of your wedding photos. ' + (GALLERY.guestPhotos === 'findme' ? 'Guests will see the photos you choose here, even before Find me.' : '') + '</p>' +
-        '<div class="pgte-slots">' + S.map(s => '<div class="pgte-slotw"><button type="button" class="pgte-slot" data-slot="' + s.k + '"><span style="' + (s.id ? 'background-image:url(\'' + pgImg(s.id, 240) + '\')' : '') + '"></span><b>' + esc(s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '')) + '</b><small>' + (mine[s.k] ? 'Your choice' : 'Automatic') + ((t.frame || {})[s.k] ? ' · framed' : '') + '</small></button>' + (s.id ? '<button type="button" class="pgte-mini pgte-frame" data-frame="' + s.k + '" aria-label="Frame this photo">Frame</button>' : '') + '</div>').join('') + '</div>';
+        '<div class="pgte-slots">' + S.map(s => '<div class="pgte-slotw"><button type="button" class="pgte-slot" data-slot="' + s.k + '"><span style="' + (s.id ? 'background-image:url(\'' + pgImg(s.id, 240) + '\')' : '') + '"></span><b>' + esc(s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '')) + '</b><small>' + (mine[s.k] ? 'Your choice' : 'Automatic') + ((t.frame || {})[s.k] ? ' · framed' : '') + '</small></button>' + (s.id && PGTune.canFrame(E.kind) ? '<button type="button" class="pgte-mini pgte-frame" data-frame="' + s.k + '" aria-label="Frame this photo">Frame</button>' : '') + '</div>').join('') + '</div>';
     } else if (E.tab === 'parts') {
       const hid = new Set(t.hide || []);
       html = '<p class="pgte-note">Hide anything you don’t want. Hidden parts stay saved here, so you can bring them back.</p>' +
@@ -98,6 +102,7 @@
     } else {
       html = '<div class="pgte-group"><b>Motion</b><p class="pgte-note">Off keeps every part still (the page still opens as guests scroll).</p>' + seg('motion', t.motion === 'off' ? 'off' : 'on', [['on', 'On'], ['off', 'Off']]) + '</div>' +
         '<div class="pgte-group"><b>Find me button</b><p class="pgte-note">Floats on the page while guests scroll.</p>' + seg('findme', t.findme || 'right', [['left', 'Left'], ['right', 'Right'], ['off', 'Off']]) + '</div>' +
+        (E.kind === 'canvas' && window.PGCanvasEditor ? '<div class="pgte-group"><b>Move things around</b><p class="pgte-note">The Advanced editor moves, resizes and adds parts. It keeps its own copy of this template.</p><button type="button" class="pgte-mini pgte-adv">Open the Advanced editor</button></div>' : '') +
         '<div class="pgte-group"><b>Start again</b><p class="pgte-note">Back to the template as it was made (Undo brings your version back).</p><button type="button" class="pgte-mini pgte-reset">Start again</button></div>';
     }
     pane.innerHTML = html;
@@ -112,6 +117,7 @@
     pane.querySelectorAll('[data-frame]').forEach(b => b.addEventListener('click', () => frameSlot(b.dataset.frame)));
     pane.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => change(t => { const s = new Set(t.hide || []), k = b.dataset.layer; if (s.has(k)) s.delete(k); else s.add(k); t.hide = [...s]; if (!t.hide.length) delete t.hide; })));
     pane.querySelectorAll('[data-text]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(); if (v) t[inp.dataset.text] = v; else delete t[inp.dataset.text]; })));
+    const adv = pane.querySelector('.pgte-adv'); if (adv) adv.addEventListener('click', () => { const id = E.id; close(); if (!E) PGCanvasEditor.open(id); });
     const rs = pane.querySelector('.pgte-reset'); if (rs) rs.addEventListener('click', () => change(t => { Object.keys(t).forEach(k => { if (k !== 'kind') delete t[k]; }); }));
   }
 
@@ -124,7 +130,7 @@
     (GALLERY.events || []).forEach(e => { const ids = (e.photos || []).map(p => p.id); if (ids.length) groups.push([e.name, ids]); });
     const cur = E.inst.photo(slot), mine = !!(E.tune.photos || {})[slot];
     const back = h('div', 'pgte-back'), sh = h('div', 'pgte-pick'); sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-label', 'Choose a photo');
-    sh.innerHTML = '<div class="pgte-pick-top"><b>Choose a photo</b>' + (cur ? '<button type="button" class="pgte-mini pgte-frameit">Frame this one</button>' : '') + (mine ? '<button type="button" class="pgte-mini pgte-auto">Use automatic</button>' : '') + '<button type="button" class="pgte-x" aria-label="Close">✕</button></div>' +
+    sh.innerHTML = '<div class="pgte-pick-top"><b>Choose a photo</b>' + (cur && PGTune.canFrame(E.kind) ? '<button type="button" class="pgte-mini pgte-frameit">Frame this one</button>' : '') + (mine ? '<button type="button" class="pgte-mini pgte-auto">Use automatic</button>' : '') + '<button type="button" class="pgte-x" aria-label="Close">✕</button></div>' +
       '<div class="pgte-pick-list">' + groups.map(([name, ids], gi) => '<h6>' + esc(name) + '</h6><div class="pgte-grid" data-g="' + gi + '">' + ids.slice(0, 48).map(id => '<button type="button" data-id="' + esc(id) + '" class="' + (id === cur ? 'on' : '') + '"><img loading="lazy" alt="" src="' + pgImg(id, 240) + '"></button>').join('') +
         (ids.length > 48 ? '<button type="button" class="pgte-more" data-more="' + gi + '">All ' + ids.length + '</button>' : '') + '</div>').join('') + '</div>';
     const shut = () => { back.remove(); sh.remove(); };

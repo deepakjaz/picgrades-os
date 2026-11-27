@@ -260,9 +260,10 @@
   function updateLiveImages() {
     if (!state || state.destroyed) return;
     var nodes = state.box.querySelectorAll('img[data-photo-id]');
-    var rects = [], vh = window.innerHeight || 800;
+    var sc = state.scroller, top0 = sc ? sc.getBoundingClientRect().top : 0;   // step 103: inside a box, the box scrolls
+    var rects = [], vh = sc ? (sc.clientHeight || 800) : (window.innerHeight || 800);
     Array.prototype.forEach.call(nodes, function (img) {
-      var r = img.getBoundingClientRect();
+      var r0 = img.getBoundingClientRect(), r = { top: r0.top - top0, bottom: r0.bottom - top0 };
       var near = r.bottom > -vh * 0.8 && r.top < vh * 1.8;
       rects.push({ img: img, near: near, distance: Math.abs((r.top + r.bottom) / 2 - vh / 2) });
     });
@@ -289,7 +290,7 @@
       var chosen = state.cover[0];
       var best = Infinity;
       state.storyAnchors.forEach(function (a) {
-        var r = a.node.getBoundingClientRect(), d = Math.abs(r.top - vh * 0.34);
+        var r = a.node.getBoundingClientRect(), d = Math.abs(r.top - top0 - vh * 0.34);
         if (d < best) { best = d; if (a.id) chosen = a.id; }
       });
       if (chosen && chosen !== state.lastHeroId) { state.hero._changePhoto(chosen); state.lastHeroId = chosen; }
@@ -335,7 +336,7 @@
     if (!box || !D) return;
     state = { box: box, act: typeof actFn === 'function' ? actFn : function () {}, cleanups: [], destroyed: false,
       frame: 0, revealObserver: null, videoObserver: null, cover: coverIds(D), reduced: !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
-      storyAnchors: [], lastHeroId: null, hero: null };
+      storyAnchors: [], lastHeroId: null, hero: null, scroller: (opts && opts.scroller) || null };
     box.textContent = ''; box.classList.add('pse-root');
     var hero = makeHero(D, state.cover); state.hero = hero; box.appendChild(hero);
     if (hero.querySelector('img')) hero.querySelector('img').dataset.pshPriority = '1';
@@ -352,7 +353,7 @@
     var post = buildDemo(D, opts, 'post'); if (post) body.appendChild(post);
     body.appendChild(buildFooter(D));
     observeReveals();
-    addListener(window, 'scroll', scheduleImages, { passive: true });
+    addListener(state.scroller || window, 'scroll', scheduleImages, { passive: true });
     addListener(window, 'resize', scheduleImages, { passive: true });
     addListener(document, 'visibilitychange', function () {
       if (document.hidden && state) state.box.querySelectorAll('video').forEach(function (v) { setVideoPlayback(v, false); });

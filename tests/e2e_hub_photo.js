@@ -51,24 +51,24 @@ const srv = http.createServer((req, res) => {
     const want = await mp.getAttribute('.pghp-pick [data-id] >> nth=5', 'data-id');
     await mp.waitForTimeout(1200); await mp.screenshot({ path: '/tmp/s98b_pick.png' });
     await mp.tap('.pghp-pick [data-id] >> nth=5');
-    await mp.waitForFunction(() => /^cv-/.test(GALLERY.layout), null, { timeout: 10000 }); await mp.waitForTimeout(600);
-    const lay1 = await mp.evaluate(() => GALLERY.layout);
+    // step 103 (changed from step 98b/101): a ready template keeps only the couple's choice — no copy of the design
+    await mp.waitForFunction(() => GALLERY.layout === 'custom', null, { timeout: 10000 }); await mp.waitForTimeout(600);
+    const lay1 = await mp.evaluate(() => GALLERY.layout), base0 = await mp.evaluate(() => GALLERY.custom.base);
     ok(await mp.evaluate((a) => { const i = document.querySelector('#pgStory .pgc-el[data-el="' + a[0] + '"] img'); return !!i && i.dataset.photo === a[1]; }, [elId, want]), 'the new photo shows on the Hub at once');
     let srv1 = call('getGallery', { g: pub.galleryId, coupleKey: ck }).gallery;
-    const savedEl = d => d && d.sections.flatMap(s => s.els).find(e => e.id === elId);
-    ok(srv1.layout === lay1 && savedEl(srv1.canvas && srv1.canvas.doc).src.id === want, 'saved as the wedding\'s own copy of the layout, and applied for every guest');
+    ok(srv1.layout === 'custom' && srv1.custom.base === base0 && srv1.custom.story.photos[elId] === want && !srv1.custom.story.doc && call('canvasList', { g: pub.galleryId, coupleKey: ck }).layouts.filter(x => x.scope === 'wedding').length === 0, 'saved as the couple\'s choice for this template (no copy of the design), applied for every guest');
     // move & zoom
     await mp.tap('#pgStory .pgc-el[data-el="' + elId + '"]'); await mp.waitForSelector('.pghp.in'); await mp.tap('.pghp [data-a=frame]');
     await mp.waitForSelector('.pgfr .pgfr-zoom input');
     await mp.evaluate(() => { const r = document.querySelector('.pgfr .pgfr-zoom input'); r.value = '1.8'; r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); });
     await mp.tap('.pgfr-done'); await mp.waitForTimeout(1500);
     srv1 = call('getGallery', { g: pub.galleryId, coupleKey: ck }).gallery;
-    const fe = savedEl(srv1.canvas.doc); ok(srv1.layout === lay1 && fe.s && +fe.s.zm === 1.8, 'Move & zoom saves the framing — on the same copy (no new one) ' + JSON.stringify(fe.s));
+    const fe = (srv1.custom.story.frame || {})[elId]; ok(srv1.layout === 'custom' && fe && +fe.z === 1.8 && srv1.custom.story.photos[elId] === want, 'Move & zoom saves the framing as a choice too (the photo choice stays) ' + JSON.stringify(fe));
     ok(await mp.evaluate(id => document.querySelector('#pgStory .pgc-el[data-el="' + id + '"] img').style.scale === '1.8', elId), '…and the Hub shows it zoomed');
     // reset
     await mp.tap('#pgStory .pgc-el[data-el="' + elId + '"]'); await mp.waitForSelector('.pghp.in'); await mp.tap('.pghp [data-a=reset]'); await mp.waitForTimeout(1500);
-    const re = savedEl(call('getGallery', { g: pub.galleryId, coupleKey: ck }).gallery.canvas.doc);
-    ok(!re.s || (re.s.zm == null && re.s.fx == null), 'Reset clears the framing');
+    const re = call('getGallery', { g: pub.galleryId, coupleKey: ck }).gallery.custom.story;
+    ok(!(re.frame || {})[elId] && re.photos[elId] === want, 'Reset clears the framing (the photo choice stays)');
     // the guest page now shows the couple's photo
     await gp.reload(); await gp.waitForSelector('#pgStory .pgc .pgc-t-photo', { timeout: 10000 }); await gp.waitForTimeout(400);   // a guest who already had the page open before
     ok(await gp.evaluate((a) => { const i = document.querySelector('#pgStory .pgc-el[data-el="' + a[0] + '"] img'); return !!i && i.dataset.photo === a[1]; }, [elId, want]), 'guests see the new photo');

@@ -54,10 +54,10 @@ const srv = http.createServer((req, res) => {
   ok(inGroup[0] === 'Original Hub' && /^Living Story,Editorial Album,/.test(inGroup[1]) && /Cinema Chapters/.test(inGroup[1]) && /Horizon/.test(inGroup[2]), 'Yours = the Hub in use; Stories and Free canvas list the templates: ' + inGroup.join(' | '));
   ok(!/Magazine Cover|Royal Journey|Widget Home/.test(inGroup.join()), 'Minimal and the old card layouts are hidden from the couple');
   await pg.evaluate(() => document.querySelector('.pgcp-lgroup').scrollIntoView()); await pg.screenshot({ path: '/tmp/tpl_panel.png' });
-  // step 97: the Control Panel now opens Darbar Invitation in the ONE editor (through its editor version)
-  await pg.evaluate(() => PGControl.designLayout('tpl-c1')); await pg.waitForSelector('.pce .pce-page .pgc-sec', { timeout: 8000 });
-  ok(await pg.evaluate(() => PGCanvasEditor.state().src.builtin === 'darbar-invitation'), 'Darbar Invitation opens in the one editor (its editor version)');
-  await pg.evaluate(() => { PGCanvasEditor.close(true); window.pgEditorBack = null; });   // opened from the Control Panel: forget its way back
+  // step 103 (changed from step 97, Deepak's decision): story templates open "Try your photos" only — the real template, no canvas copy
+  await pg.evaluate(() => PGControl.designLayout('tpl-c1')); await pg.waitForSelector('.pgte .pss-c1', { timeout: 8000 });
+  ok(await pg.evaluate(() => !document.querySelector('.pce') && PGTemplateEditor.state().id === 'tpl-c1'), 'Darbar Invitation opens "Try your photos" (the real template)');
+  await pg.evaluate(() => { PGTemplateEditor.close(true); window.pgEditorBack = null; });   // opened from the Control Panel: forget its way back
   // the template editor still serves story layouts without an editor version yet — its own checks, opened directly
   await pg.evaluate(() => PGTemplateEditor.open('tpl-c1'));
   await pg.waitForSelector('.pgte .pss-c1', { timeout: 8000 });
@@ -115,7 +115,8 @@ const srv = http.createServer((req, res) => {
   await openLook();
   ok(await pg.evaluate(() => !document.querySelector('.pgcp-layout[data-layout="custom"]')), 'a designed template is not shown as "Our own Hub"');
   // a card layout opens the free editor (step 77d), every card in its place
-  await pg.evaluate(() => PGControl.designLayout('magazine-cover'));   // clean-up #8: Minimal layouts are hidden from couples; open it the way Edit does await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(300);
+  await pg.evaluate(() => PGControl.designLayout('magazine-cover'));   // clean-up #8: Minimal layouts are hidden from couples; open it the way Edit does
+  await pg.waitForSelector('.pce .pgc-cardhost .pgl-b'); await pg.waitForTimeout(300);   // step 101: this wait had slipped into the comment above; the editor now first looks for the wedding's own copy
   ok((await pg.textContent('.pce-title b')) === 'Magazine Cover' && (await pg.evaluate(() => PGCanvasEditor.state().doc.sections[0].els.every(e => e.t === 'card'))), 'a card layout opens the free editor, its cards placed as they were');
   await pg.evaluate(() => PGCanvasEditor.close(true)); await pg.waitForTimeout(300);
   // a guest sees the applied template with the chosen photo, and no versions
