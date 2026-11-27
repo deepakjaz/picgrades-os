@@ -34,6 +34,9 @@ const srv = http.createServer((req, res) => {
     ok(await pg.evaluate(() => { const l = PGLayout.find('story-living'); return !!(l && l.story && l.editor === 'canvas-living'); }), 'Living Story is linked to its editor version');
     await pg.evaluate(() => PGCanvasEditor.open('story-living')); await pg.waitForSelector('.pce .pce-page .pgc-sec');
     ok((await S()).doc.name === 'Living Story (editor)' && (await S()).src.builtin === 'canvas-living', 'the story layout opens in the one editor');
+    await pg.evaluate(() => { PGCanvasEditor.close(true); PGControl.designLayout('tpl-g3'); }); await pg.waitForSelector('.pce .pce-page .pgc-sec');
+    ok((await S()).src.builtin === 'canvas-alabaster', 'a rebuilt story template (Alabaster Gallery) opens in the one editor from the Control Panel');
+    await pg.evaluate(() => { PGCanvasEditor.close(true); window.pgEditorBack = null; PGCanvasEditor.open('story-living'); }); await pg.waitForSelector('.pce .pce-page .pgc-sec');
     ok(await pg.evaluate(() => [...document.querySelectorAll('.pce-tabs [data-tab]')].map(b => b.dataset.tab).join() === 'add,layers,page,collections,theme,media' && document.querySelectorAll('.pce-tabs [data-tab] svg').length === 6), 'six tools with line icons: Add, Layers, Pages, Collections, Theme, Media');
     // tap a photo: its Design opens
     const tapEl = async (p, id) => { const r = await p.evaluate(id => { const n = document.querySelector('.pce-page .pgc-el[data-el="' + id + '"]'); n.scrollIntoView({ block: 'center' }); const b = n.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; }, id); await p.mouse.click(r.x, r.y); await p.waitForTimeout(250); };
@@ -63,7 +66,10 @@ const srv = http.createServer((req, res) => {
     ok((await elOf(ph.id)).src.id === pid, 'Media: a tapped photo goes into the selected photo');
     // Add: the elements library
     await pg.click('.pce-pane [data-do=deselect]').catch(() => {}); await pg.evaluate(() => PGCanvasEditor.select(null)); await pg.click('[data-tab=add]');
-    await pg.waitForSelector('.pce-els [data-art]'); ok(await pg.locator('.pce-els [data-art]').count() === 26, 'Add shows the 26 baby shower elements');
+    await pg.waitForSelector('.pce-els [data-art]'); await pg.click('.pce-chips [data-occ=babyshower]'); await pg.waitForTimeout(100);
+    ok(await pg.locator('.pce-els [data-art]').count() === 26, 'Add shows the 26 baby shower elements (the Baby shower chip)');
+    await pg.click('.pce-chips [data-occ=decor]'); await pg.waitForTimeout(100); ok(await pg.locator('.pce-els [data-art]').count() === 16, '…and the 16 decorations of the rebuilt story templates (the Decor chip)');
+    await pg.click('.pce-chips [data-occ=all]'); await pg.waitForTimeout(100);
     await pg.fill('.pce-elq', 'teddy'); await pg.waitForTimeout(150); ok(await pg.locator('.pce-els [data-art]').count() === 1, 'search finds the teddy');
     await pg.click('.pce-els [data-art=bs-teddy-brown]'); await pg.waitForTimeout(200);
     const art = (await S()).doc.sections.flatMap(s => s.els).find(e => e.t === 'art');
