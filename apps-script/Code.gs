@@ -2675,13 +2675,13 @@ function customOf_(v) {
 }
 // Step 76: the Template Studio's Story (c1–c5) and Minimal (g1–g3) templates. What the couple changed in the Template editor:
 // photos (slot → one of the wedding's photo ids), colours (light / dark), hidden parts, motion, the names and the date line.
-var STORY_KINDS = ['living', 'editorial', 'c1', 'c2', 'c3', 'c4', 'c5', 'g1', 'g2', 'g3', 'canvas'];
+var STORY_KINDS = ['living', 'editorial', 'c1', 'c2', 'c3', 'c4', 'c5', 'g1', 'g2', 'g3', 'canvas', 'c1i', 'c2i', 'c3i', 'c4i', 'c5i', 'g1i', 'g2i', 'g3i'];   // step 115: Gemini's iPhone versions
 var TPL_COLOURS = ['bg', 'ink', 'acc', 'acc2', 'card', 'sea'];
 function tplTune_(st, out) {
   if (out.kind === 'canvas' && st.doc) out.doc = canvasDoc_(st.doc);   // step 77 (step 103: a ready canvas template keeps only the couple's choices, no doc)
   // step 103: "Try your photos" — every template keeps the couple's choices: photos per spot, colours, hidden parts, motion, framing, names, date
   // each kind has its own spot names: Template Studio s12 / e3; Living Story & Editorial cover-0 / ev-1-2 / bride / groom; canvas part ids (bg-<section> for a background)
-  var SLOT = /^[cg]\d$/.test(out.kind) ? /^[se]\d{1,3}$/ : out.kind === 'canvas' ? /^[A-Za-z0-9_-]{1,40}$/ : /^(cover-\d{1,2}|ev-\d{1,2}-\d{1,2}|bride|groom)$/;
+  var SLOT = /^[cg]\di?$/.test(out.kind) ? /^[se]\d{1,3}$/ : out.kind === 'canvas' ? /^[A-Za-z0-9_-]{1,40}$/ : /^(cover-\d{1,2}|ev-\d{1,2}-\d{1,2}|bride|groom)$/;
   var PART = out.kind === 'canvas' ? /^[A-Za-z0-9_-]{1,40}$/ : /^[a-z0-9-]{1,40}$/;
   var photos = {}, n = 0;
   Object.keys(st.photos || {}).forEach(function (k) { var id = String(st.photos[k] || ''); if (SLOT.test(k) && /^[A-Za-z0-9_-]{2,120}$/.test(id) && n < 80) { photos[k] = id; n++; } });
