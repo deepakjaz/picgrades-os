@@ -56,7 +56,7 @@ const C1={id:'c1',src:'Claude',name:'Darbar Invitation',venue:'Palace / haveli /
  dpal:{bg:'#1D1210',ink:'#F3E6D2',acc:'#C9A24E',card:'#2A1A16',acc2:'#B8434F',nav:'#2A1410',navInk:'#F3E6D2',navOn:'#2A1410',hdrInk:'#F3E6D2',glass:'#2A1A16cc'},
  motion:[['Names in gold','on load','Only the names show; carved doors are closed inside the jharokha.'],['Doors open, camera goes through the arch','scroll 0→600px','Doors swing open (3D), then the arch grows past the screen edges.'],['Invitation unfolds','in view','Each event is one fold of the card; the line glows gold in the middle.'],['Wax seal Create','tap','Seal breaks open into three live previews. For guests and couple.']],
  render(){const E=evs();const J=`background-image:repeating-linear-gradient(45deg,color-mix(in srgb,var(--acc) 18%,transparent) 0 1px,transparent 1px 18px),repeating-linear-gradient(-45deg,color-mix(in srgb,var(--acc) 18%,transparent) 0 1px,transparent 1px 18px)`;
- return `<section data-stage style="height:${844+620}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden">
+ return `<section data-stage style="height:${844+1240}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden">
  ${L('Jali pattern','', 'div',`style="position:absolute;inset:0;${J}"`)}
  ${L('Couple names',`<div style="font:400 60px/1 'Pinyon Script';color:var(--acc2)">${nm()[0]}</div><div style="font:italic 22px 'Cormorant Garamond';color:var(--acc);margin:4px 0">&amp;</div><div style="font:400 60px/1 'Pinyon Script';color:var(--acc2)">${nm()[1]||''}</div>`,'div','id="c1n" style="position:absolute;top:100px;left:0;right:0;text-align:center;z-index:3"')}
  <div data-l="Jharokha arch (zooms)" id="c1a" style="position:absolute;left:80px;top:330px;width:230px;height:420px;clip-path:${ARCH};transform-origin:50% 35%">
@@ -85,7 +85,7 @@ const C1={id:'c1',src:'Claude',name:'Darbar Invitation',venue:'Palace / haveli /
  ${L('Blessing card',`<div style="font:italic 16px 'Cormorant Garamond'">${Q(0)}</div><div style="font-size:10px;opacity:.6;margin-top:4px">${QA(0)}</div><div style="font:600 11px Jost;color:var(--acc2);margin-top:10px">Leave a blessing</div>`,'div','style="margin:0 18px;background:var(--card);border:1px solid var(--acc);padding:16px" onclick="PGSS.a(this,\'notes\')"')}
  ${L('Photographer credit',`Photographed by ${STU}`,'div','style="text-align:center;font:italic 14px \'Cormorant Garamond\';opacity:.7;padding:24px 0 110px"')}
  `},
- scroll(vp){const st=vp.querySelector('[data-stage]');if(!st)return;const p=Math.min(1,vp.scrollTop/620),a=Math.min(1,p/.4),z=Math.max(0,(p-.4)/.6);
+ scroll(vp){const st=vp.querySelector('[data-stage]');if(!st)return;const p=Math.min(1,vp.scrollTop/1240),a=Math.min(1,p/.4),z=Math.max(0,(p-.4)/.6);
   const q=id=>vp.querySelector('#'+id);q('c1dl').style.transform=`perspective(600px) rotateY(${-a*100}deg)`;q('c1dr').style.transform=`perspective(600px) rotateY(${a*100}deg)`;
   const s=1+z*z*3.4;q('c1a').style.transform=`translateY(${-z*230}px) scale(${s})`;q('c1o').style.transform=`translateY(${-z*230}px) scale(${s})`;q('c1o').style.opacity=1-z;
   q('c1n').style.opacity=1-z*1.6;q('c1n').style.transform=`translateY(${-z*80}px)`;q('c1h').style.opacity=1-a;q('c1t').style.opacity=Math.max(0,(z-.75)*4);q('c1s').style.opacity=Math.max(0,(z-.6)*2.5);
@@ -96,7 +96,7 @@ const C2={id:'c2',src:'Claude',name:'Tide Journey',venue:'Beach destination',fd:
  dpal:{bg:'#0B2229',ink:'#E7F1EF',acc:'#7FC4C4',acc2:'#E07A5F',card:'#123039',nav:'#123039',navInk:'#E7F1EF',navOn:'#0B2229',hdrInk:'#fff',sea:'#07181D',glass:'#ffffff22'},
  motion:[['The sea covers everything','on load','Four wave layers rise and fall; names float on the water.'],['Tide goes out','scroll 0→560px','Each wave layer slides down at its own speed and uncovers the film.'],['Walk along the shore','swipe sideways','Events are stops on a sideways path; footprints + shell dots show where you are.'],['Message in a bottle','tap','The bottle bobs; tap it and three live previews float out.']],
  render(){const E=evs();const wave=(y,c,op,id)=>`<svg data-l="Wave layer ${id}" class="c2w" data-k="${id}" viewBox="0 0 390 900" preserveAspectRatio="none" style="position:absolute;left:-10px;width:410px;top:${y}px;height:900px"><path d="M0,30 C60,0 130,60 195,30 C260,0 330,60 390,30 V900 H0Z" fill="${c}" opacity="${op}"/></svg>`;
- return `<section data-stage style="height:${844+560}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden;background:var(--sea)">
+ return `<section data-stage style="height:${844+1120}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden;background:var(--sea)">
  ${L('Cover photo',img(17,'cover kb'),'div','style="position:absolute;inset:0"')}
  ${wave(-40,'#1F5A66',.95,1)}${wave(150,'#2A6A78',.95,2)}${wave(330,'#235F6C',.97,3)}${wave(520,'#123F4A',1,4)}
  ${L('Couple names',`<div style="font:56px/1 Marcellus">${nm()[0]}</div><div style="font:40px Marcellus;opacity:.85">&amp; ${nm()[1]||''}</div><div style="font:500 11px Jost;letter-spacing:4px;margin-top:10px;opacity:.8">${S.date.toUpperCase()}</div>`,'div','id="c2n" style="position:absolute;top:330px;left:0;right:0;text-align:center;color:#fff;z-index:3"')}
@@ -120,7 +120,7 @@ const C2={id:'c2',src:'Claude',name:'Tide Journey',venue:'Beach destination',fd:
   ${CR.map((x,i)=>`<button data-l="Create · ${x[1]}" class="c2pv" onclick="PGSS.a(this,'${x[0]}')" style="--dx:${[-120,0,120][i]}px;position:absolute;left:50%;top:170px;margin-left:-40px;background:none;border:0;cursor:pointer;color:#123F4A;opacity:0;transform:scale(.2);transition:.6s cubic-bezier(.34,1.56,.64,1) ${i*.1}s;display:flex;flex-direction:column;align-items:center;gap:5px">${pv(x[0],80,'16px')}<b style="font-size:11.5px">${x[1]}</b></button>`).join('')}
  </section><style>#c2c.open .c2pv{opacity:1;transform:translate(var(--dx),110px)}</style>
  ${L('Photographer credit',`Photographed by ${STU}`,'div','style="text-align:center;font:13px Marcellus;opacity:.7;padding:24px 0 110px"')}`},
- scroll(vp){const p=Math.min(1,vp.scrollTop/560);vp.querySelectorAll('.c2w').forEach(w=>{w.style.transform=`translateY(${p*(320+w.dataset.k*160)}px)`});
+ scroll(vp){const p=Math.min(1,vp.scrollTop/1120);vp.querySelectorAll('.c2w').forEach(w=>{w.style.transform=`translateY(${p*(320+w.dataset.k*160)}px)`});
   const n=vp.querySelector('#c2n');n.style.transform=`translateY(${p*260}px)`;n.style.opacity=1-p*1.3;vp.querySelector('#c2e').style.opacity=Math.max(0,(p-.7)*3.3)}};
 function c2dots(t){const i=Math.round(t.scrollLeft/288);document.querySelectorAll('#c2dots i').forEach((d,k)=>{d.style.background=k===i?'var(--acc)':'#c8b99c';d.style.width=d.style.height=(k===i?10:7)+'px'})}
 
@@ -129,7 +129,7 @@ const C3={id:'c3',src:'Claude',name:'Cloud Pages',venue:'Mountain destination',f
  dpal:{bg:'#101814',ink:'#E6ECE6',acc:'#C9A36B',acc2:'#8A9A9E',card:'#18241D',nav:'#0B120E',navInk:'#E6ECE6',navOn:'#0B120E',hdrInk:'#fff',glass:'#00000044'},
  motion:[['Inside the clouds','on load','Clouds drift slowly; only the date shows.'],['Clouds part, names rise','scroll 0→600px','Clouds slide left/right, mountains move slower (parallax), names rise from the valley.'],['Story pages','swipe up','Each event is one full-screen page with progress bars at the top (like Instagram stories).'],['Drawer from the valley','tap the tab','A mist-coloured drawer slides up with three live previews.']],
  render(){const E=evs();const cl=(x,y,r,k)=>`<g class="c3c" data-d="${k}"><circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/><circle cx="${x+r}" cy="${y+10}" r="${r*.8}" fill="#fff"/><circle cx="${x-r}" cy="${y+14}" r="${r*.7}" fill="#fff"/></g>`;
- return `<section data-stage style="height:${844+600}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden;background:linear-gradient(#DCE6EA,#EEF0EB)">
+ return `<section data-stage style="height:${844+1200}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden;background:linear-gradient(#DCE6EA,#EEF0EB)">
  ${L('Mountains (far)',`<svg width="390" height="844"><path d="M0,560 L80,470 L150,520 L230,410 L310,500 L390,450 V844 H0Z" fill="#5D6C70" opacity=".55"/></svg>`,'div','id="c3m1" style="position:absolute;inset:0"')}
  ${L('Mountains (near)',`<svg width="390" height="844"><path d="M0,640 L110,560 L200,620 L290,560 L390,610 V844 H0Z" fill="#1E3A2C"/></svg>`,'div','id="c3m2" style="position:absolute;inset:0"')}
  ${L('Cover photo (in mountain)',img(1,'cover kb'),'div','id="c3f" style="position:absolute;inset:0;clip-path:polygon(0 100%,0 62%,20% 52%,38% 58%,59% 44%,80% 56%,100% 49%,100% 100%);transform:translateY(100%)"')}
@@ -154,11 +154,11 @@ const C3={id:'c3',src:'Claude',name:'Cloud Pages',venue:'Mountain destination',f
   <div style="font:34px 'Instrument Serif'">Make something</div><div style="font-size:12px;opacity:.7">from this wedding · guests and the couple</div>
   <div style="display:flex;justify-content:space-between;margin-top:26px">${CR.map(x=>`<button data-l="Create · ${x[1]}" onclick="PGSS.a(this,'${x[0]}')" style="background:none;border:0;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:flex-start;gap:7px">${pv(x[0],100,'14px')}<b style="font-size:12.5px">${x[1]}</b><small style="opacity:.65;margin-top:-6px">${x[2]}</small></button>`).join('')}</div></div>`)}
  <style>#c3dr.open{transform:none!important}.c3drift{animation:drift 9s ease-in-out infinite}@keyframes drift{50%{transform:translateX(10px)}}</style>`},
- scroll(vp){const p=Math.min(1,vp.scrollTop/600),q=id=>vp.querySelector('#'+id);if(!q('c3n'))return;
+ scroll(vp){const p=Math.min(1,vp.scrollTop/1200),q=id=>vp.querySelector('#'+id);if(!q('c3n'))return;
   vp.querySelectorAll('.c3c').forEach(c=>c.style.transform=`translateX(${c.dataset.d*p*470}px)`);q('c3d').style.opacity=1-p*3;
   q('c3n').style.opacity=Math.min(1,p*2.5)*(1-Math.max(0,(p-.75)*4));q('c3n').style.transform=`translateY(${(1-Math.min(1,p*2))*60}px)`;
   q('c3m1').style.transform=`translateY(${p*40}px)`;q('c3m2').style.transform=`translateY(${p*90}px)`;q('c3f').style.transform=`translateY(${(1-Math.max(0,(p-.45)/.55))*100}%)`;
-  q('c3f').style.clipPath=p>.92?'none':'polygon(0 100%,0 62%,20% 52%,38% 58%,59% 44%,80% 56%,100% 49%,100% 100%)'}};
+  const o=Math.max(0,(p-.8)/.2),y=v=>(v*(1-o)).toFixed(1)+'%';q('c3f').style.clipPath=`polygon(0 100%,0 ${y(62)},20% ${y(52)},38% ${y(58)},59% ${y(44)},80% ${y(56)},100% ${y(49)},100% 100%)`}};   // step 114: the mountain edge flattens smoothly (it snapped)
 
 const blob=(cx,cy,r,seed,k=9,j=.28)=>{let s=seed*9301,R=()=>{s=(s*9301+49297)%233280;return s/233280};const pts=[];for(let i=0;i<k;i++){const a=2*Math.PI*i/k,rr=r*(1+(R()*2-1)*j);pts.push([cx+rr*Math.cos(a),cy+rr*Math.sin(a)])}
  let d='';for(let i=0;i<k;i++){const a=pts[i],b=pts[(i+1)%k],m=[(a[0]+b[0])/2,(a[1]+b[1])/2];d+=i?`Q${a[0].toFixed(1)},${a[1].toFixed(1)} ${m[0].toFixed(1)},${m[1].toFixed(1)} `:`M${m[0].toFixed(1)},${m[1].toFixed(1)} `}
@@ -168,7 +168,7 @@ const C4={id:'c4',src:'Claude',name:'Haldi Splash',venue:'Farmhouse / garden day
  dpal:{bg:'#1D1B14',ink:'#F0E9DA',acc:'#E07A4E',acc2:'#9BAA72',card:'#2A271E',nav:'#2A271E',navInk:'#F0E9DA',navOn:'#1D1B14',hdrInk:'#F0E9DA',glass:'#2A271Ecc'},
  motion:[['Names written by hand','on load 2s','Script names draw in left-to-right; tiny colour drops fall like powder.'],['Colour splashes open the photo','scroll 0→560px','Turmeric, gulaal and leaf-green splashes grow; the photo is inside them until they join.'],['Collage settles','in view','Scattered prints drift into place; the film plays in a splash-shaped window.'],['Peel a sticker','tap','Each Create option is a sticker with a live preview; tap to peel.']],
  render(){const E=evs(),S3=[[120,300,140,1,'#E8B931'],[280,420,150,2,'#E46E8C'],[150,560,120,3,'#55623A']];
- return `<section data-stage style="height:${844+560}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden">
+ return `<section data-stage style="height:${844+1120}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden">
  ${L('Colour drops',[[60,200,8,'#E8B931'],[320,260,6,'#E46E8C'],[90,620,7,'#55623A'],[300,680,9,'#E8B931'],[200,150,5,'#E46E8C']].map(([x,y,r,c])=>`<svg style="position:absolute;left:${x-r*2}px;top:${y-r*2}px" width="${r*4}" height="${r*4}" class="bob"><path d="${blob(r*2,r*2,r,x)}" fill="${c}"/></svg>`).join(''))}
  <svg data-l="Splash reveal (photo in splashes)" width="390" height="844" style="position:absolute;inset:0"><defs><clipPath id="c4clip">${S3.map(([x,y,r,s])=>`<path class="c4b" d="${blob(x,y,r,s)}" style="transform-origin:${x}px ${y}px;transform:scale(0)"/>`).join('')}</clipPath></defs>
   <image href="${p(26)}" width="390" height="844" preserveAspectRatio="xMidYMid slice" clip-path="url(#c4clip)"/>
@@ -188,7 +188,7 @@ const C4={id:'c4',src:'Claude',name:'Haldi Splash',venue:'Farmhouse / garden day
  .scat{transition:transform 1s cubic-bezier(.34,1.3,.64,1);transform:translate(var(--sx),var(--sy)) rotate(calc(var(--r)*3))}.scat.in{transform:rotate(var(--r))}
  .peel .corner{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;background:linear-gradient(135deg,transparent 50%,#e9dcc6 50%);border-radius:0 0 14px 0}.peel.pl{transform:rotate(-6deg) translateY(-8px);box-shadow:0 12px 20px #0003}</style>
  ${L('Photographer credit',`Photographed by ${STU}`,'div','style="text-align:center;font:22px Parisienne;color:var(--acc2);padding:20px 0 110px"')}`},
- scroll(vp){const p=Math.min(1,vp.scrollTop/560);vp.querySelectorAll('.c4b').forEach((b,i)=>b.style.transform=`scale(${Math.max(0,p*2.6-(i%3)*.25)})`);
+ scroll(vp){const p=Math.min(1,vp.scrollTop/1120);vp.querySelectorAll('.c4b').forEach((b,i)=>b.style.transform=`scale(${Math.max(0,p*2.6-(i%3)*.25)})`);
   const n=vp.querySelector('#c4n');if(n){n.style.opacity=1-p*1.6;n.style.transform=`translateY(${-p*120}px)`}
   vp.querySelectorAll('.scat').forEach(s=>{const r=s.getBoundingClientRect(),o=vp.getBoundingClientRect();s.classList.toggle('in',r.top-o.top<vp.clientHeight*.8)})}};
 
@@ -197,7 +197,7 @@ const C5={id:'c5',src:'Claude',name:'Cinema Chapters',venue:'5-star ballroom · 
  dpal:{bg:'#000',ink:'#F4EDE2',acc:'#D8C197',acc2:'#C98B7A',card:'#141210',nav:'#1a1816',navInk:'#D8C197',navOn:'#000',hdrInk:'#D8C197',glass:'#ffffff10'},
  motion:[['One spotlight in the dark','on load','A warm spotlight fades up; names inside; gold dust floats.'],['Iris opens','scroll 0→560px','The circle of light grows like a camera iris and shows the film.'],['Letterbox','end of reveal','Black bars slide in; credits fade in like a film opening.'],['Chapters','scroll','Each event = full-screen title card (roman numeral) + a film strip that keeps moving.'],['Clapperboard Create','tap','The arm snaps shut and the three live previews open.']],
  render(){const E=evs(),RN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
- return `<section data-stage style="height:${844+560}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden;background:#000">
+ return `<section data-stage style="height:${844+1120}px;position:relative"><div style="position:sticky;top:0;height:844px;overflow:hidden;background:#000">
  ${L('Spotlight','', 'div','id="c5g" style="position:absolute;left:25px;top:250px;width:340px;height:340px;border-radius:50%;background:radial-gradient(#D8C19766,transparent 70%)"')}
  ${L('Gold dust',parts('glow',26),'div','style="position:absolute;inset:0"')}
  ${L('Cover photo (iris)',`<div id="c5fi" style="position:absolute;left:365px;top:138px;width:390px;height:844px;will-change:transform">${img(83,'cover kb')}</div>`,'div','id="c5f" style="position:absolute;left:50%;top:50%;width:1120px;height:1120px;margin:-560px 0 0 -560px;border-radius:50%;overflow:hidden;transform:scale(.001);will-change:transform"')}
@@ -219,7 +219,7 @@ const C5={id:'c5',src:'Claude',name:'Cinema Chapters',venue:'5-star ballroom · 
   <div data-l="Toast note" style="margin:26px 20px 0;border:1px solid #D8C197;padding:16px"><div style="font:italic 16px Bodoni Moda">${Q(0)}</div><div style="font-size:10px;color:#D8C197;margin-top:4px">${QA(0)}</div><div style="font:600 10px Jost;letter-spacing:2px;color:#C98B7A;margin-top:10px">RAISE A TOAST · LEAVE A NOTE</div></div>
   <div style="font:500 9px Jost;letter-spacing:3px;color:#D8C197;padding:28px 0 100px">PHOTOGRAPHED BY ${STU.toUpperCase()}</div></section>
  <style>.pss-strip{animation:pss-strip linear infinite}@keyframes pss-strip{to{transform:translateX(-50%)}}.cpv{max-height:0;overflow:hidden;opacity:0;transition:.5s}#c5c.open .cpv{max-height:200px;opacity:1}#c5c.open #c5arm{transform:none}</style>`},
- scroll(vp){const p=Math.min(1,vp.scrollTop/560),q=id=>vp.querySelector('#'+id);if(!q('c5f'))return;const r=p*560;
+ scroll(vp){const p=Math.min(1,vp.scrollTop/1120),q=id=>vp.querySelector('#'+id);if(!q('c5f'))return;const r=p*560;
   const s=Math.max(.001,r/560);q('c5f').style.transform=`scale(${s})`;q('c5fi').style.transform=`scale(${1/s})`;q('c5r').style.transform=`scale(${s})`;q('c5r').parentNode.style.opacity=p<.95?1:0;   // clean-up: scale, not clip-path — smooth on phones
   q('c5n').style.opacity=1-p*1.8;q('c5g').style.opacity=1-p;const lb=Math.max(0,(p-.75)*4);q('c5lt').style.transform=q('c5lb').style.transform=`scaleY(${lb})`;q('c5t').style.opacity=Math.max(0,(p-.85)*6.6)}};
 const G1={id:'g1',col:'gemini',src:'Gemini',name:'Heritage Courtyard · Dusk',venue:'Historic haveli · evening courtyard',fd:'Cormorant Garamond',fb:'Jost',hub:'palace',
@@ -234,7 +234,7 @@ const G1={id:'g1',col:'gemini',src:'Gemini',name:'Heritage Courtyard · Dusk',ve
  render(){const E=evs();
  const f1=E[0]||{n:'Celebration',t:'Day 1',ph:58};
  return `
- <section data-stage style="height:${844+440}px;position:relative">
+ <section data-stage style="height:${844+880}px;position:relative">
   <div id="g1bg" style="position:sticky;top:0;height:844px;overflow:hidden;background:var(--bg);transition:background .25s linear">
    ${L('Couple names (opening)',`<div style="font:400 10px Jost;letter-spacing:3.5px;color:var(--acc);margin-bottom:10px">YOU ARE INVITED TO CELEBRATE</div><div style="font:500 44px/1.04 'Cormorant Garamond';letter-spacing:-0.02em;color:var(--ink)">${nm()[0]}</div><div style="font:italic 22px 'Cormorant Garamond';color:var(--acc);margin:2px 0">&amp;</div><div style="font:500 44px/1.04 'Cormorant Garamond';letter-spacing:-0.02em;color:var(--ink)">${nm()[1]||''}</div><div style="font:500 10px Jost;letter-spacing:2.6px;color:var(--ink);opacity:.65;margin-top:14px">${S.date.toUpperCase()}</div>`,'div','id="g1n" style="position:absolute;top:116px;left:24px;right:24px;text-align:center;z-index:3"')}
    <div data-l="Keyhole arch aperture" id="g1a" style="position:absolute;left:55px;top:338px;width:280px;height:440px;border-radius:140px 140px 16px 16px;overflow:hidden;border:1px solid var(--acc);transform-origin:50% 42%;box-shadow:0 24px 60px #00000018">
@@ -304,7 +304,7 @@ const G1={id:'g1',col:'gemini',src:'Gemini',name:'Heritage Courtyard · Dusk',ve
  </section>
  `},
  scroll(vp){
-  const p=Math.min(1,vp.scrollTop/440),q=id=>vp.querySelector('#'+id);
+  const p=Math.min(1,vp.scrollTop/880),q=id=>vp.querySelector('#'+id);
   if(!q('g1a'))return;
   const sc=1+p*0.42,ty=-p*160;
   q('g1a').style.transform=`translateY(${ty}px) scale(${sc})`;
@@ -326,7 +326,7 @@ const G2={id:'g2',col:'gemini',src:'Gemini',name:'Misty Tea Estate · Morning',v
  ],
  render(){const E=evs();
  return `
- <section data-stage style="height:${844+420}px;position:relative">
+ <section data-stage style="height:${844+840}px;position:relative">
   <div style="position:sticky;top:0;height:844px;overflow:hidden;background:var(--bg)">
    ${L('Cover photo (full-bleed)',img(12,'cover kb','object-position:50% 35%')+`<div id="g2fb" style="position:absolute;inset:0;filter:blur(6px) brightness(1.04);will-change:opacity">${img(12,'cover','object-position:50% 35%')}</div>`,'div','id="g2f" style="position:absolute;inset:0;transform:scale(1.06);will-change:transform"')}
    <div style="position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 34%,transparent 62%,var(--bg) 100%)"></div>
@@ -378,7 +378,7 @@ const G2={id:'g2',col:'gemini',src:'Gemini',name:'Misty Tea Estate · Morning',v
  </section>
  `},
  scroll(vp){
-  const p=Math.min(1,vp.scrollTop/420),q=id=>vp.querySelector('#'+id);
+  const p=Math.min(1,vp.scrollTop/840),q=id=>vp.querySelector('#'+id);
   if(!q('g2f'))return;
   q('g2ml').style.transform=`translateX(${-p*110}%)`;
   q('g2mr').style.transform=`translateX(${p*110}%)`;
@@ -400,7 +400,7 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
  ],
  render(){const E=evs();
  return `
- <section data-stage style="height:${844+400}px;position:relative">
+ <section data-stage style="height:${844+800}px;position:relative">
   <div style="position:sticky;top:0;height:844px;overflow:hidden;background:var(--bg)">
    ${L('Monograph title',`<div style="font:500 9px Jost;letter-spacing:3.5px;color:var(--acc);margin-bottom:8px">MONOGRAPH · ${S.date.toUpperCase()}</div><div style="font:400 38px/1.08 'Bodoni Moda';letter-spacing:-0.02em;color:var(--ink)">${S.names}</div>`,'div','id="g3n" style="position:absolute;top:106px;left:24px;right:24px;text-align:center;z-index:3"')}
    <div id="g3m" data-l="Museum mat frame" style="position:absolute;left:36px;right:36px;top:216px;height:510px;border-radius:12px;overflow:hidden;border:0.5px solid color-mix(in srgb,var(--acc) 45%,transparent);box-shadow:0 20px 50px #00000012">
@@ -448,7 +448,7 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
  </section>
  `},
  scroll(vp){
-  const p=Math.min(1,vp.scrollTop/400),q=id=>vp.querySelector('#'+id);
+  const p=Math.min(1,vp.scrollTop/800),q=id=>vp.querySelector('#'+id);
   if(!q('g3m'))return;
   const inset=Math.max(0,36*(1-p));
   q('g3m').style.left=inset+'px';
@@ -499,7 +499,8 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
 .pss .rise{opacity:0;transform:translateY(30px);transition:opacity .7s,transform .8s cubic-bezier(.2,.8,.2,1)}.pss .rise.in{opacity:1;transform:none}
 @keyframes pulse{50%{opacity:.3;transform:scale(.7)}}
 .pss [onclick],.pss-ov [onclick]{cursor:pointer}
-.pss-fit{position:absolute;left:50%;top:0;width:390px;height:844px;margin-left:-195px;transform-origin:50% 0}
+.pss-fit{position:absolute;left:50%;top:0;width:390px;height:844px;margin-left:-195px;transform-origin:50% 0;overflow:hidden;contain:paint}
+.pss [data-stage]>div:first-child{clip-path:inset(0)}
 .pss-ov{position:fixed;inset:0;pointer-events:none;z-index:70}
 .pss-ov.in-frame{position:absolute}
 .pss-still *,.pss-still *:before,.pss-still *:after{animation:none!important;transition:none!important}
@@ -574,13 +575,16 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
     const mo = opts.dark == null ? new MutationObserver(recolour) : null; if (mo) mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-tkg-theme'] });
     const cover = photoFn('s58') || photoFn('e0'); if (cover && window.pgImg) bd.style.backgroundImage = 'url("' + pgImg(cover, 800) + '")';
     // the opening stage: a 390 × 844 design, scaled down on shorter screens so nothing hides under the bottom bar
-    const zoomOf = () => Math.min(1, ((opts.width && opts.width()) || (scroller ? scroller.clientWidth : (window.innerWidth || 390))) / 390);   // step 113: the width the caller draws at (a zoomed box is not zoomed twice)
+    // step 114: a phone a little wider than 390 (iPhone Pro 402, Pro Max 440) scales the design up to fill it — no side gaps
+    const zoomOf = () => { const w = (opts.width && opts.width()) || (scroller ? scroller.clientWidth : (window.innerWidth || 390)); return w >= 700 ? 1 : Math.min(440 / 390, w / 390); };   // laptops keep the 390 design as before   // step 113: the width the caller draws at (a zoomed box is not zoomed twice)
     function fit() {
       const z = zoomOf(); root.style.zoom = z === 1 ? '' : z; ovEl.style.zoom = root.style.zoom;
       const H = (scroller ? scroller.clientHeight : (window.pgVH ? pgVH() : window.innerHeight)) / z;   // step 113: a steady height
       root.querySelectorAll('[data-stage] > div:first-child').forEach(st => {
         let f = st.querySelector(':scope > .pss-fit'); if (st._h0 == null) st._h0 = st.style.height;
-        if (H >= 844) { st.style.height = st._h0; if (f) f.style.transform = ''; return; }
+        // step 114: only a really short screen (iPhone SE, landscape) shrinks the opening. An iPhone with Safari's bar
+        // showing (~760) keeps the full design — shrinking it there left side strips where the photo spilled out
+        if (H >= 720) { st.style.height = st._h0; if (f) f.style.transform = ''; return; }
         if (!f) { f = document.createElement('div'); f.className = 'pss-fit'; [...st.childNodes].forEach(c => f.appendChild(c)); st.appendChild(f); }
         st.style.height = H + 'px'; f.style.transform = 'scale(' + (H / 844) + ')';
       });
@@ -598,9 +602,17 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
       querySelector: s => root.querySelector(s) || ovEl.querySelector(s), querySelectorAll: s => root.querySelectorAll(s),
       scrollTo: o => window.scrollTo({ top: root.getBoundingClientRect().top + window.scrollY + (o.top || 0) * zoomOf(), behavior: o.behavior })
     };
-    let raf = 0;
+    // step 114: the opening glides behind your finger instead of jumping with every flick — the template reads a
+    // smoothed scroll position that eases toward the real one (each frame closes about a fifth of the gap)
+    let raf = 0, sm = null;
+    const sv = { get scrollTop() { return sm == null ? vp.scrollTop : sm; }, get clientHeight() { return vp.clientHeight; },
+      getBoundingClientRect: () => vp.getBoundingClientRect(), querySelector: s => vp.querySelector(s), querySelectorAll: s => vp.querySelectorAll(s), scrollTo: o => vp.scrollTo(o) };
+    const glide = () => !(opts.still || window.pgCalm || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches));
     function tick() {
-      raf = 0; try { if (t.scroll) t.scroll(vp); } catch (e) {}
+      raf = 0; const real = vp.scrollTop;
+      if (sm == null || !glide() || Math.abs(real - sm) > 2400) sm = real; else { sm += (real - sm) * 0.2; if (Math.abs(real - sm) < 0.6) sm = real; }
+      try { if (t.scroll) t.scroll(sv); } catch (e) {}
+      if (sm !== real) raf = requestAnimationFrame(tick);
       const lim = (scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight) - 30;
       root.querySelectorAll('.rise:not(.in)').forEach(x => { if (x.getBoundingClientRect().top < lim) x.classList.add('in'); });
     }
