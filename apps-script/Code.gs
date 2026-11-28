@@ -2656,7 +2656,7 @@ function tplTune_(st, out) {
   if (Object.keys(colors).length) out.colors = colors;
   var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return PART.test(k); }).slice(0, 80);
   if (hide.length) out.hide = hide;
-  if (st.motion === 'off') out.motion = 'off';
+  if (st.motion === 'off' || (st.motion === 'calm' && out.kind === 'canvas')) out.motion = String(st.motion);   // step 109: Calm (canvas)
   var frame = {}, fn = 0;   // step 79: photos moved inside their holder / zoomed { slot: { fx, fy, z } }
   Object.keys(st.frame || {}).forEach(function (k) { var f = (st.frame || {})[k]; if (!SLOT.test(k) || !f || typeof f !== 'object' || fn >= 80) return;
     frame[k] = { fx: Math.max(0, Math.min(100, Math.round(+f.fx || 0))), fy: Math.max(0, Math.min(100, Math.round(+f.fy || 0))), z: Math.max(1, Math.min(3, Math.round((+f.z || 1) * 100) / 100)) }; fn++; });

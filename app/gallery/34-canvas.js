@@ -151,6 +151,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
 .pgc .pgc-cardhost>.pgl-b{width:100%;height:100%}
 .pgc-staynote{display:grid;place-items:center;font:600 12px var(--font-sans,system-ui);color:#3d8bff;background:repeating-linear-gradient(45deg,rgba(61,139,255,.07) 0 10px,transparent 10px 20px);border-top:1px dashed rgba(61,139,255,.5)}
 .pgc-cardnone{width:100%;height:100%;display:grid;place-items:center;border:1.5px dashed rgba(127,127,127,.5);border-radius:14px;font:600 12px var(--font-sans,system-ui);opacity:.7;text-align:center;padding:6px}
+.pgc-calm .pgc-e:not(.in){translate:0 0!important;scale:1!important;transform:none!important;filter:none!important;clip-path:none!important}.pgc-calm .pgc-e{transition-duration:.7s!important}.pgc-calm .pgc-e>.pgc-body{clip-path:none!important}.pgc-calm [class*="pgc-m-"]:not(.pgc-e),.pgc-calm [class*="pgc-m-"]:not(.pgc-e) img{animation:none!important}
 .pgc-still *,.pgc-still{animation:none!important;transition:none!important}.pgc-still .pgc-e,.pgc-still .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none;transform:none}
 @media (prefers-reduced-motion:reduce){.pgc *{animation:none!important;transition:none!important}.pgc .pgc-e,.pgc .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none;transform:none}}`;
 
@@ -262,7 +263,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     // scroll depth (parallax): an element drifts a little slower or faster than the page
     const sc = opts.scroller || window;
     function onScroll() {
-      if (sraf || !pars.length || opts.still || document.documentElement.classList.contains('pg-lite') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;   // step 97: light mode keeps the page still (step 105: and reduced motion)
+      if (sraf || !pars.length || opts.still || opts.calm || document.documentElement.classList.contains('pg-lite') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;   // step 97: light mode keeps the page still (step 105: and reduced motion)
       sraf = requestAnimationFrame(() => { sraf = 0; const vh = opts.scroller ? opts.scroller.clientHeight : window.innerHeight, top0 = opts.scroller ? opts.scroller.getBoundingClientRect().top : 0;
         pars.forEach(x => { const r = x.getBoundingClientRect(), c = r.top - top0 + r.height / 2 - vh / 2, b = x.firstElementChild; if (!b) return;
           if (x.dataset.sc) { scApply(x, b, r, vh, top0); return; }   // step 105
@@ -333,6 +334,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
         });
       }
       if (opts.still) root.classList.add('pgc-still');
+      if (opts.calm) root.classList.add('pgc-calm');   // step 109: Calm — parts only fade in; nothing keeps moving or follows the scroll
       if (io) io.disconnect();
       io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: opts.scroller || null, threshold: .15 }) : null;
       root.querySelectorAll('.pgc-stg .pgc-ev>button').forEach((b, i) => b.style.setProperty('--i', i % 12));

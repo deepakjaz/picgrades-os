@@ -68,7 +68,7 @@
   function mountCanvas(box, D, act, o) {
     const t = o.tune || {}, raw = o.doc || (t.doc) || { sections: [] }, base = withKit(clone(raw), t);   // base: the template + parts added from kits (for the lists)
     const doc = overlayCanvas(raw, t, o.dark != null ? o.dark : darkApp());
-    const inst = PGCanvas.render(box, doc, overlayWords(D, t), act || (() => {}), { scroller: o.scroller, still: t.motion === 'off', width: o.width, mode: o.mode });
+    const inst = PGCanvas.render(box, doc, overlayWords(D, t), act || (() => {}), { scroller: o.scroller, still: t.motion === 'off', calm: t.motion === 'calm', width: o.width, mode: o.mode });
     const shown = id => { const im = box.querySelector('.pgc-el[data-el="' + CSS.escape(id) + '"] img[data-photo]'); return im ? im.dataset.photo : ''; };
     const bgShown = id => { const im = box.querySelector('.pgc-sec[data-sec="' + CSS.escape(id) + '"] .pgc-bgimg'); return im ? im.dataset.photo : ''; };
     if (o.pick) box.addEventListener('click', ev => {   // tap a photo on the page → choose another (step 106: tap words → change them)

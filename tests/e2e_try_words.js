@@ -67,8 +67,12 @@ const srv = http.createServer((req, res) => {
     await mp.evaluate(() => document.querySelector('.pgte-fontrow[data-fk=head] [data-font="Parisienne"]').click()); await mp.waitForTimeout(500);
     ok(await mp.evaluate(() => PGTemplateEditor.state().tune.fonts.head === 'Parisienne' && [...document.querySelectorAll('.pgte-scroll .pgc-t-names .pgc-body, .pgte-scroll .pgc-t-text .pgc-body')].some(b => /Parisienne/.test(getComputedStyle(b).fontFamily))), 'choosing a heading font changes the template');
     await mp.screenshot({ path: '/tmp/s108_fonts.png' });
+    // step 109: Motion — On / Calm / Off
+    await mp.evaluate(() => PGTemplateEditor.tab('more')); await mp.waitForSelector('[data-set=motion] [data-v=calm]');
+    await mp.evaluate(() => document.querySelector('[data-set=motion] [data-v=calm]').click()); await mp.waitForTimeout(500);
+    ok(await mp.evaluate(() => PGTemplateEditor.state().tune.motion === 'calm' && !!document.querySelector('.pgte-scroll .pgc.pgc-calm')), 'Motion: Calm — parts only fade in (no moving, no scroll effects)');
     await mp.tap('.pgte-apply'); await mp.waitForFunction(() => !document.querySelector('.pgte'), null, { timeout: 10000 }); await mp.waitForTimeout(400);
-    ok(gal().custom.story.fonts.head === 'Parisienne', 'Apply keeps the font');
+    ok(gal().custom.story.fonts.head === 'Parisienne' && gal().custom.story.motion === 'calm', 'Apply keeps the font and Calm');
     // ---- step 107: add a part from another template's design kit ----
     await mp.evaluate(() => PGControl.designLayout('custom')); await mp.waitForSelector('.pgte .pgte-scroll .pgc-sec', { timeout: 8000 });
     await mp.evaluate(() => { PGTemplateEditor.tab('parts'); const e = document.querySelector('.pgte'); if (!e.classList.contains('pgte-drawer-open')) document.querySelector('.pgte-drawer-toggle').click(); }); await mp.waitForSelector('.pgte-addkit');
