@@ -58,6 +58,17 @@ const srv = http.createServer((req, res) => {
     await gp.goto(URL); await gp.waitForSelector('#pgStory .pgc', { timeout: 10000 }); await gp.waitForTimeout(600);
     ok(await gp.evaluate(([k, first]) => /Our forever begins/.test(document.querySelector('#pgStory').textContent) && document.querySelector('#pgStory .pgc-sec').dataset.sec === first, [word, before[1]]), 'guests see the new words and the new order');
     await gp.close();
+    // ---- step 108: fonts (closed rows) ----
+    await mp.evaluate(() => PGControl.designLayout('custom')); await mp.waitForSelector('.pgte .pgte-scroll .pgc-sec', { timeout: 8000 });
+    await mp.evaluate(() => { PGTemplateEditor.tab('colours'); const e = document.querySelector('.pgte'); if (!e.classList.contains('pgte-drawer-open')) document.querySelector('.pgte-drawer-toggle').click(); });
+    await mp.waitForSelector('.pgte-fontrow');
+    ok(await mp.evaluate(() => [...document.querySelectorAll('.pgte-fontrow')].every(d => !d.open) && document.querySelector('[data-tab=colours]').textContent === 'Look'), 'Look: fonts are closed rows (nothing changes by scrolling)');
+    await mp.evaluate(() => { const d = document.querySelector('.pgte-fontrow[data-fk=head]'); d.open = true; d.scrollIntoView({ block: 'center' }); }); await mp.waitForTimeout(200);
+    await mp.evaluate(() => document.querySelector('.pgte-fontrow[data-fk=head] [data-font="Parisienne"]').click()); await mp.waitForTimeout(500);
+    ok(await mp.evaluate(() => PGTemplateEditor.state().tune.fonts.head === 'Parisienne' && [...document.querySelectorAll('.pgte-scroll .pgc-t-names .pgc-body, .pgte-scroll .pgc-t-text .pgc-body')].some(b => /Parisienne/.test(getComputedStyle(b).fontFamily))), 'choosing a heading font changes the template');
+    await mp.screenshot({ path: '/tmp/s108_fonts.png' });
+    await mp.tap('.pgte-apply'); await mp.waitForFunction(() => !document.querySelector('.pgte'), null, { timeout: 10000 }); await mp.waitForTimeout(400);
+    ok(gal().custom.story.fonts.head === 'Parisienne', 'Apply keeps the font');
     // ---- step 107: add a part from another template's design kit ----
     await mp.evaluate(() => PGControl.designLayout('custom')); await mp.waitForSelector('.pgte .pgte-scroll .pgc-sec', { timeout: 8000 });
     await mp.evaluate(() => { PGTemplateEditor.tab('parts'); const e = document.querySelector('.pgte'); if (!e.classList.contains('pgte-drawer-open')) document.querySelector('.pgte-drawer-toggle').click(); }); await mp.waitForSelector('.pgte-addkit');

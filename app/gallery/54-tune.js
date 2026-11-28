@@ -45,6 +45,11 @@
         if (WORDY[e.t] && typeof tx[e.id] === 'string' && tx[e.id].trim()) e.text = tx[e.id];   // step 106: the couple's own words
       });
     });
+    if (t.fonts) {   // step 108: the couple's fonts — parts written in the template's heading / body font take the new one
+      const was = Object.assign({}, doc.fonts), swap = { [was.head]: t.fonts.head, [was.body]: t.fonts.body };
+      doc.sections.forEach(sx => (sx.els || []).forEach(e => ['s', 'sl'].forEach(k => { if (e[k] && e[k].font && swap[e[k].font]) e[k] = Object.assign({}, e[k], { font: swap[e[k].font] }); })));
+      doc.fonts = Object.assign({}, doc.fonts, t.fonts);
+    }
     const c = (t.colors || {})[dark ? 'dark' : 'light'];
     if (c) doc.colors = Object.assign({}, doc.colors, c);
     return doc;

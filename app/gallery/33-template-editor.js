@@ -15,7 +15,7 @@
   const clone = o => JSON.parse(JSON.stringify(o));
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const handles = k => !!(window.PGTune && PGTune.handles(k));
-  const TABS = [['colours', 'Colours'], ['photos', 'Photos'], ['parts', 'Parts'], ['words', 'Words'], ['more', 'More']];
+  const TABS = [['colours', 'Look'], ['photos', 'Photos'], ['parts', 'Parts'], ['words', 'Words'], ['more', 'More']];
   let E = null;   // { id, l, el, tune, saved, undo, redo, inst, dark, tab }
 
   // the couple's saved version of this template, or the one in use, or a fresh start
@@ -82,7 +82,7 @@
       const mode = E.dark ? 'dark' : 'light', own = (t.colors || {})[mode] || {};
       html = '<p class="pgte-note">The template’s own colours. Guests on dark mode see the dark set.</p>' + seg('dark', mode, [['light', 'Light'], ['dark', 'Dark']]) +
         PGTune.colors(E.kind, E.dark, E.l.canvas).map(c => '<label class="pgte-col"><span>' + esc(c.name) + '</span><input type="color" data-col="' + c.k + '" value="' + esc(String(own[c.k] || c.value).slice(0, 7)) + '">' +
-          (own[c.k] ? '<button type="button" class="pgte-mini" data-uncol="' + c.k + '">Reset</button>' : '<em>original</em>') + '</label>').join('');
+          (own[c.k] ? '<button type="button" class="pgte-mini" data-uncol="' + c.k + '">Reset</button>' : '<em>original</em>') + '</label>').join('') + fontRows(t);
     } else if (E.tab === 'photos') {
       const S = E.inst.slots(), mine = t.photos || {}, seen = {}, total = {};
       S.forEach(s => { s.label = s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '').replace(/\s*\(.*\)$/, '').replace(/^Create · /, ''); total[s.label] = (total[s.label] || 0) + 1; });
@@ -130,6 +130,9 @@
     pane.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => change(t => { const s = new Set(t.hide || []), k = b.dataset.layer; (t.sections || []).forEach(q => { if (q.k === k && q.on === false) { q.on = true; s.add(k); } });
       if (s.has(k)) s.delete(k); else s.add(k); t.hide = [...s]; if (!t.hide.length) delete t.hide; })));
     pane.querySelectorAll('[data-tx]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(), k = inp.dataset.tx; t.texts = Object.assign({}, t.texts); if (v) t.texts[k] = v; else delete t.texts[k]; if (!Object.keys(t.texts).length) delete t.texts; })));
+    pane.querySelectorAll('.pgte-fontrow').forEach(d => d.addEventListener('toggle', () => { if (d.open) pane.querySelectorAll('.pgte-fontrow').forEach(o => { if (o !== d) o.open = false; }); }));   // one open at a time
+    pane.querySelectorAll('[data-font]').forEach(b => b.addEventListener('click', () => { const k = b.closest('[data-fk]').dataset.fk, f = b.dataset.font;
+      change(t => { t.fonts = Object.assign({}, t.fonts); if (f) t.fonts[k] = f; else delete t.fonts[k]; if (!Object.keys(t.fonts).length) delete t.fonts; }); }));
     const ak = pane.querySelector('.pgte-addkit'); if (ak) ak.addEventListener('click', () => pickKit());   // step 107
     pane.querySelectorAll('[data-unkit]').forEach(b => b.addEventListener('click', () => change(t => { const k = b.dataset.unkit, id = k.split('-')[0];
       t.add = (t.add || []).filter(a => a.id !== id); if (!t.add.length) delete t.add; if (t.sections) { t.sections = t.sections.filter(q => q.k !== k); if (!t.sections.length) delete t.sections; } })));
@@ -139,6 +142,15 @@
     const rs = pane.querySelector('.pgte-reset'); if (rs) rs.addEventListener('click', () => change(t => { Object.keys(t).forEach(k => { if (k !== 'kind') delete t[k]; }); }));
   }
 
+  // step 108: fonts for a canvas template — closed rows; tap one to see the fonts, each written in itself
+  function fontRows(t) {
+    if (E.kind !== 'canvas' || !window.PGCanvas) return '';
+    const base = (E.l.canvas || {}).fonts || {}, own = t.fonts || {};
+    return '<div class="pgte-tpart">Fonts</div>' + [['head', 'Headings'], ['body', 'Other text']].map(([k, n]) => { const cur = own[k] || base[k] || 'Jost';
+      return '<details class="pgte-fontrow" data-fk="' + k + '"><summary><span>' + n + '</span><b style="font-family:\'' + esc(cur) + '\'">' + esc(cur) + '</b>' + (own[k] ? '' : '<em>original</em>') + '</summary><div class="pgte-fontlist">' +
+        PGCanvas.FONTS.map(f => '<button type="button" data-font="' + esc(f) + '" class="' + (f === cur ? 'on' : '') + '" style="font-family:\'' + esc(f) + '\'">' + esc(f) + '</button>').join('') +
+        (own[k] ? '<button type="button" data-font="" class="pgte-fontreset">Back to the template\'s font</button>' : '') + '</div></details>'; }).join('');
+  }
   // step 106: the parts in the couple's order (parts they never moved keep their place)
   function orderedParts(t) {
     const all = E.inst.order(), pos = {}; (t.sections || []).forEach((q, i) => { pos[q.k] = i; });

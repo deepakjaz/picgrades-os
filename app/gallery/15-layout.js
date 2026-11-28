@@ -331,7 +331,7 @@
     const box = h('div', 'pgl-story'); box.id = 'pgStory'; view.prepend(box); document.body.classList.add('pg-story-on');
     let asked = false; try { asked = localStorage.getItem('pg_storyq_' + GALLERY_ID) === '1'; } catch (e) {}
     let D = storyData(), T = cur.tune || null;
-    if (T && window.PGTune && (T.photos || T.hide || T.names || T.date || T.frame || T.colors || (kind === 'canvas' && (T.texts || T.sections || T.add)))) {   // step 103: the couple's choices from "Try your photos"
+    if (T && window.PGTune && (T.photos || T.hide || T.names || T.date || T.frame || T.colors || (kind === 'canvas' && (T.texts || T.sections || T.add || T.fonts)))) {   // step 103: the couple's choices from "Try your photos"
       if (kind === 'canvas' && T.doc) T = Object.assign({}, T, { doc: PGTune.overlayCanvas(T.doc, T, document.documentElement.getAttribute('data-tkg-theme') === 'dark') });
       if (kind === 'canvas') D = PGTune.overlayWords(D, T);
       if (STORY[kind]) { D = PGTune.overlayStory(D, T); const hid = new Set(T.hide || []); T = Object.assign({}, T, { sections: (T.sections || []).filter(q => !hid.has(q.k)).concat([...hid].map(k => ({ k, on: false }))) }); }
