@@ -69,9 +69,14 @@ const srv = http.createServer((req, res) => {
     await gp.screenshot({ path: '/tmp/s111_films.png' }); await gp.close();
     // no videos: guests get no card, the couple sees where they will play
     call('coupleLook', { g: G, coupleKey: ck, films: '[]' });
-    const gp2 = await ctx.newPage(); gp2.on('pageerror', e => errors.push(e.message)); await route(gp2);
-    await gp2.goto(URL); await gp2.waitForSelector('#pgStory .pgc', { timeout: 10000 }); await gp2.waitForTimeout(500);
-    ok(!(await gp2.$('#pgStory [data-films]')), 'no videos: guests do not see an empty films card'); await gp2.close();
+    const card = { name: 't', sections: [{ id: 's', h: { p: 400 }, els: [{ id: 'tv', t: 'films', p: { x: 10, y: 10, w: 360, h: 300 } }] }] };
+    const drawn = pg => pg.evaluate(doc => { const b = document.createElement('div'); b.style.width = '390px'; document.body.appendChild(b); PGCanvas.render(b, doc, { films: [], events: [] }, () => {}, {}); const r = { card: !!b.querySelector('[data-films]'), note: !!b.querySelector('.pgf-empty') }; b.remove(); return r; }, card);
+    const gp2 = await ctx.newPage(); gp2.on('pageerror', e => errors.push(e.message)); await route(gp2); await gp2.goto(URL); await gp2.waitForFunction(() => window.PGCanvas && window.PGControl, null, { timeout: 10000 });
+    const asGuest = await drawn(gp2), asCouple = await drawn(mp);
+    ok(!asGuest.card && asCouple.card && asCouple.note, 'no videos: guests see no empty card; the couple sees where the films will play'); await gp2.close();
+    const gp3 = await ctx.newPage(); gp3.on('pageerror', e => errors.push(e.message)); await route(gp3);
+    await gp3.goto(URL); await gp3.waitForSelector('#pgStory .pgc', { timeout: 10000 }); await gp3.waitForTimeout(500);
+    ok(!(await gp3.$('#pgStory [data-films]')), 'no videos: the guest\'s Hub shows without the films card'); await gp3.close();
   } catch (e) { console.error(e); fails++; }
   console.log('page errors: ' + JSON.stringify(errors));
   ok(!errors.length, 'no page errors');

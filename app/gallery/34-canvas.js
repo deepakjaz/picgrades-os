@@ -224,7 +224,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     if (t === 'shape') return '<div class="pgc-body" style="' + (st || 'background:currentColor') + '"></div>';
     if (t === 'films') {   // step 111: the couple's films, one after another (56-films.js). Nothing to show a guest → the part is left out
       const owner = !!(window.PGControl && ['couple', 'photographer', 'picgrades'].indexOf(PGControl.role()) > -1);
-      if (!(data.films || []).length && !owner && !opts.editing) return null;
+      if (!(data.films || []).length && !owner && !(ctx && ctx.editing)) return null;
       return '<div class="pgc-body pgc-films" data-films style="' + st + '"></div>';
     }
     if (t === 'video') {   // step 97b: poster first; the player comes in when it is on screen (or on a tap)
