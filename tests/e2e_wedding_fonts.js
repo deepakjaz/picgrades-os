@@ -13,7 +13,7 @@ const bytesOf = (id) => { const n = parseInt(String(id).replace(/\D/g, ''), 10) 
 global.__fetchBytes = bytesOf;
 function login(email) { call('requestCode', { email }); const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]; return call('verifyCode', { email, code }).token; }
 const admin = login('adcmediaa@gmail.com');
-const pub = call('setGallery', { token: admin, orderId: call('queue', { token: admin }).recentDone[0].orderId, folderUrl: W, title: 'Vithushan & Harveer', eventDate: '2026-12-20' });
+const pub = call('setGallery', { token: admin, orderId: call('queue', { token: admin }).recentDone[0].orderId, folderUrl: W, title: 'Vishwajeet & Harleen', eventDate: '2026-12-20' });
 const gid = pub.galleryId, ck = call('facesStatus', { token: admin, g: gid }).gallery.coupleKey;
 const face = (v, k) => { const b = Buffer.alloc(128); for (let i = 0; i < 128; i++) b[i] = (v + i * (k || 3)) % 100; return [[0.1, 0.1, 0.2, 0.2], b.toString('base64')]; };
 const FACES = {}; Object.keys(DRIVE.files).filter(id => id.startsWith('RL')).forEach(id => { FACES[id] = { w: 100, h: 100, f: [face(30 + Number(id.slice(2)), 11)] }; });

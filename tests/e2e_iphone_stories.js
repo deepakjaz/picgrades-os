@@ -11,7 +11,7 @@ DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' };
 [['IPHONESTORIESHALDI00000114', 'Haldi'], ['IPHONESTORIESWEDDING0000114', 'Wedding']].forEach(([id, n], k) => { DRIVE.folders[id] = { name: n, parent: W }; for (let i = 0; i < 6; i++) DRIVE.files['IS' + k + i] = { name: 'p' + i + '.jpg', parent: id, mime: 'image/jpeg' }; });
 function login(email) { call('requestCode', { email }); const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]; return call('verifyCode', { email, code }).token; }
 const admin = login('adcmediaa@gmail.com');
-const G = call('setGallery', { token: admin, orderId: call('queue', { token: admin }).recentDone[0].orderId, folderUrl: W, title: 'Vithushan & Harveer', eventDate: '2026-12-14' }).galleryId;
+const G = call('setGallery', { token: admin, orderId: call('queue', { token: admin }).recentDone[0].orderId, folderUrl: W, title: 'Anika & Rohan', eventDate: '2026-12-14' }).galleryId;
 const ck = call('facesStatus', { token: admin, g: G }).gallery.coupleKey;
 const bytesOf = (id) => { const n = parseInt(String(id).replace(/\D/g, ''), 10) || 0; return fs.readFileSync(path.join(FX, files[n % files.length])); };
 global.__fetchBytes = bytesOf;
@@ -38,7 +38,8 @@ const srv = http.createServer((req, res) => {
   const sideways = pg => pg.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   try {
     // ---- iPhone 17 Pro, Safari's bar showing ----
-    for (const id of ['tpl-c1', 'tpl-c2', 'tpl-c3', 'tpl-c4', 'tpl-c5']) {
+    // step 115: Gemini's iPhone versions get the same checks
+    for (const id of ['tpl-c1', 'tpl-c2', 'tpl-c3', 'tpl-c4', 'tpl-c5', 'tpl-c1i', 'tpl-c2i', 'tpl-c3i', 'tpl-c4i', 'tpl-c5i', 'tpl-g1i', 'tpl-g2i', 'tpl-g3i']) {
       const pg = await open(402, 760, id);
       const scaled = await pg.evaluate(() => [...document.querySelectorAll('.pss .pss-fit')].some(f => f.style.transform));
       ok(!scaled, id + ' (402 × 760): the opening keeps the full design — not shrunk');
@@ -46,6 +47,7 @@ const srv = http.createServer((req, res) => {
       ok(full[0] <= 0 && full[1] >= full[2], id + ': the design fills the screen edge to edge (' + full + ')');
       let side = 0; for (const p of [0.3, 0.6, 0.95]) { await go(pg, p, 900); side = Math.max(side, await sideways(pg)); }
       ok(side <= 1, id + ': the page never pans sideways while the opening plays (' + side + ' px)');
+      if (id === 'tpl-c5i') { const lb = await pg.evaluate(() => { const t = document.getElementById('c5ilt').getBoundingClientRect(), r = document.querySelector('.pss').getBoundingClientRect(); return { t: [t.left, t.right, t.height], r: [r.left, r.right] }; }); ok(lb.t[2] > 20 && lb.t[0] <= lb.r[0] + 1 && lb.t[1] >= lb.r[1] - 1, 'Nocturne · iPhone (Gemini): the letterbox bar covers the whole width (' + JSON.stringify(lb) + ')'); }
       if (id === 'tpl-c5') {
         const lb = await pg.evaluate(() => { const t = document.getElementById('c5lt').getBoundingClientRect(), r = document.querySelector('.pss').getBoundingClientRect(); return { t: [t.left, t.right, t.height], r: [r.left, r.right] }; });
         ok(lb.t[2] > 20 && lb.t[0] <= lb.r[0] + 1 && lb.t[1] >= lb.r[1] - 1, 'Nocturne: the letterbox bar covers the whole width (' + JSON.stringify(lb) + ')');

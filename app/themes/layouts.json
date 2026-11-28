@@ -388,6 +388,7 @@
       "by": "C",
       "editor": "darbar-invitation"
     },
+    {"id": "tpl-c1i", "name": "Darbar Invitation · iPhone", "story": "c1i", "group": "progress", "blocks": [], "idea": "Palace, haveli or fort — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "tpl-c2",
       "name": "Tide Journey",
@@ -398,6 +399,7 @@
       "by": "C",
       "editor": "tide-journey"
     },
+    {"id": "tpl-c2i", "name": "Tide Journey · iPhone", "story": "c2i", "group": "progress", "blocks": [], "idea": "Beach wedding — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "tpl-c3",
       "name": "Cloud Pages",
@@ -408,6 +410,7 @@
       "by": "C",
       "editor": "canvas-cloud-pages"
     },
+    {"id": "tpl-c3i", "name": "Cloud Pages · iPhone", "story": "c3i", "group": "progress", "blocks": [], "idea": "Mountain wedding — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "tpl-c4",
       "name": "Haldi Splash",
@@ -418,6 +421,7 @@
       "by": "C",
       "editor": "canvas-haldi-splash"
     },
+    {"id": "tpl-c4i", "name": "Haldi Splash · iPhone", "story": "c4i", "group": "progress", "blocks": [], "idea": "Farmhouse or garden, by day — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "tpl-c5",
       "name": "Cinema Chapters",
@@ -428,6 +432,7 @@
       "by": "C",
       "editor": "canvas-cinema-chapters"
     },
+    {"id": "tpl-c5i", "name": "Cinema Chapters · iPhone", "story": "c5i", "group": "progress", "blocks": [], "idea": "Ballroom, party plot or reception — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "tpl-g1",
       "name": "Heritage Courtyard",
@@ -438,6 +443,7 @@
       "by": "G",
       "editor": "canvas-heritage-courtyard"
     },
+    {"id": "tpl-g1i", "name": "Heritage Courtyard · Dusk · iPhone", "story": "g1i", "group": "progress", "blocks": [], "idea": "Haveli courtyard at dusk — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "tpl-g2",
       "name": "Misty Tea Estate",
@@ -448,6 +454,7 @@
       "by": "G",
       "editor": "canvas-misty-tea"
     },
+    {"id": "tpl-g2i", "name": "Misty Tea Estate · Morning · iPhone", "story": "g2i", "group": "progress", "blocks": [], "idea": "Hills and estates, morning — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "tpl-g3",
       "name": "Alabaster Gallery",
@@ -458,6 +465,7 @@
       "by": "G",
       "editor": "canvas-alabaster"
     },
+    {"id": "tpl-g3i", "name": "Alabaster Gallery · Minimal Luxury · iPhone", "story": "g3i", "group": "progress", "blocks": [], "idea": "Modern hall, quiet luxury — iPhone-first version by Gemini", "by": "G"},
     {
       "id": "x-royal-journey",
       "name": "Royal Journey",

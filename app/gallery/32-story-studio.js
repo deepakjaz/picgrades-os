@@ -461,7 +461,707 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
 };
 
   // ---------------- the bridge ----------------
-  const T = { c1: C1, c2: C2, c3: C3, c4: C4, c5: C5, g1: G1, g2: G2, g3: G3 };
+  // ---------- step 115: Gemini's iPhone-first versions of the 8 templates (built from GEMINI_TASK.md) ----------
+  // From Gemini, unchanged except one fix (marked "Claude") and the wrapper: they use this file's helpers.
+  const GI = (function () {   // step 115: Gemini's iPhone-first versions (c1i–g3i), next to the originals for comparing on iPhones
+  
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  
+    const clamp01 = v => (v <= 0 ? 0 : v >= 1 ? 1 : v);
+    const easeOutCubic = t => 1 - Math.pow(1 - clamp01(t), 3);
+    const easeInOutSine = t => -(Math.cos(Math.PI * clamp01(t)) - 1) / 2;
+  
+    function isCalm(vp) {
+      if (window.pgCalm) return true;
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+      let cur = vp && vp.querySelector ? vp.querySelector('.pss') : null;
+      while (cur) {
+        if (cur.classList && cur.classList.contains('pss-still')) return true;
+        cur = cur.parentElement;
+      }
+      return false;
+    }
+  
+    function setTransform(el, val) {
+      if (!el) return;
+      el.style.transform = val;
+      el.style.translate = 'none';
+    }
+  
+    function setOpacity(el, val) {
+      if (!el) return;
+      el.style.opacity = String(Math.max(0, Math.min(1, val)));
+    }
+  
+    const ARCH_CLIP = "path('M0,420 V104 Q0,20 115,0 Q230,20 230,104 V420Z')";
+  
+    const c1i = {
+      id: 'c1i',
+      name: 'Darbar Invitation · iPhone',
+      venue: 'Palace / haveli / fort',
+      fd: 'Pinyon Script',
+      fb: 'Jost',
+      hub: 'palace',
+      pal: { bg: '#F6EEE2', ink: '#2A1712', acc: '#B08A3E', card: '#FFFDF8', acc2: '#6B1B26', nav: '#6B1B26', navInk: '#F6EEE2', navOn: '#6B1B26', hdrInk: '#6B1B26', glass: '#F6EEE2cc' },
+      dpal: { bg: '#1D1210', ink: '#F3E6D2', acc: '#C9A24E', card: '#2A1A16', acc2: '#B8434F', nav: '#2A1410', navInk: '#F3E6D2', navOn: '#2A1410', hdrInk: '#F3E6D2', glass: '#2A1A16cc' },
+      motion: [
+        ['Names in gold', 'on load', 'Names appear above the jharokha while carved doors stay closed inside the stage.'],
+        ['Doors open & arch zooms inside stage', 'scroll 0→1200px', 'Doors swing open smoothly on 3D hinge axes; the arch scales inside a clipped 390×844 stage with zero sideways spill.'],
+        ['Invitation unfolds', 'in view', 'Each event fold glides into place without layout thrashing.'],
+        ['Wax seal Create', 'tap', 'Seal opens into three live previews for guests and couple.']
+      ],
+      render() {
+        const E = evs();
+        const J = 'background-image:repeating-linear-gradient(45deg,color-mix(in srgb,var(--acc) 18%,transparent) 0 1px,transparent 1px 18px),repeating-linear-gradient(-45deg,color-mix(in srgb,var(--acc) 18%,transparent) 0 1px,transparent 1px 18px)';
+        return `<section data-stage style="height:${844 + 1200}px;position:relative"><div style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0)">
+          ${L('Jali pattern', '', 'div', `style="position:absolute;inset:0;${J}"`)}
+          ${L('Couple names', `<div style="font:400 60px/1 'Pinyon Script';color:var(--acc2)">${nm()[0]}</div><div style="font:italic 22px 'Cormorant Garamond';color:var(--acc);margin:4px 0">&amp;</div><div style="font:400 60px/1 'Pinyon Script';color:var(--acc2)">${nm()[1] || ''}</div>`, 'div', 'id="c1in" style="position:absolute;top:100px;left:0;right:0;text-align:center;z-index:3;will-change:transform,opacity"')}
+          <div data-l="Jharokha arch (zooms)" id="c1ia" style="position:absolute;left:80px;top:330px;width:230px;height:420px;clip-path:${ARCH_CLIP};transform-origin:50% 35%;will-change:transform">
+            ${L('Cover photo', img(58, 'cover kb'), 'div', 'style="position:absolute;inset:0"')}
+            ${L('Left door', `<div style="position:absolute;inset:24px 16px;border:1px solid #fff3;border-radius:60px 60px 0 0"></div><i style="position:absolute;right:10px;top:50%;width:9px;height:9px;border-radius:50%;background:var(--acc)"></i>`, 'div', 'id="c1idl" style="position:absolute;inset:0 50% 0 0;background:linear-gradient(90deg,#4a0f18,var(--acc2));border-right:1px solid var(--acc);transform-origin:0 50%;will-change:transform"')}
+            ${L('Right door', `<div style="position:absolute;inset:24px 16px;border:1px solid #fff3;border-radius:60px 60px 0 0"></div><i style="position:absolute;left:10px;top:50%;width:9px;height:9px;border-radius:50%;background:var(--acc)"></i>`, 'div', 'id="c1idr" style="position:absolute;inset:0 0 0 50%;background:linear-gradient(270deg,#4a0f18,var(--acc2));border-left:1px solid var(--acc);transform-origin:100% 50%;will-change:transform"')}
+          </div>
+          ${L('Arch outline', `<svg width="230" height="420" style="overflow:visible"><path d="M1,420 V104 Q1,20 115,1 Q229,20 229,104 V420" fill="none" stroke="currentColor" stroke-width="3"/></svg>`, 'div', 'id="c1io" style="position:absolute;left:80px;top:330px;color:var(--acc);transform-origin:115px 147px;pointer-events:none;will-change:transform,opacity"')}
+          ${L('Film title (after reveal)', `<div style="font:400 44px 'Pinyon Script';color:#F6EEE2">${S.names}</div><div style="font:500 10px Jost;letter-spacing:3px;color:#E9CF8E;margin-top:4px">${S.date.toUpperCase()}</div>`, 'div', 'id="c1it" style="position:absolute;left:0;right:0;bottom:120px;text-align:center;opacity:0;z-index:4;will-change:opacity"')}
+          <div id="c1is" style="position:absolute;left:0;right:0;bottom:0;height:300px;background:linear-gradient(transparent,#3a0a12dd);opacity:0;z-index:3;pointer-events:none;will-change:opacity" data-l="Maroon shade"></div>
+          ${L('Hint', 'SCROLL TO ENTER ↓', 'div', 'id="c1ih" style="position:absolute;bottom:110px;left:0;right:0;text-align:center;font:600 10px Jost;letter-spacing:3px;color:var(--acc2);will-change:opacity"')}
+        </div></section>
+        <section data-events data-l="Invitation card" style="margin:20px 18px;background:var(--card);border:1px solid var(--acc);padding:22px 18px;position:relative;${J}">
+          <div style="position:absolute;inset:8px;border:1px solid color-mix(in srgb,var(--acc) 60%,transparent);pointer-events:none"></div>
+          <div data-l="Invitation line" style="text-align:center;font:italic 15px 'Cormorant Garamond';margin-bottom:10px">together with their families request your presence at</div>
+          ${E.map(e => `<div class="fold in" data-l="Event · ${e.n}" onclick="PGSS.ev(this,${e.i})" style="display:flex;gap:14px;align-items:center;padding:12px 4px;border-top:1px solid color-mix(in srgb,var(--acc) 40%,transparent);cursor:pointer;transform-origin:top">
+            <div style="width:58px;height:74px;flex:none;clip-path:path('M0,74 V26 Q0,6 29,0 Q58,6 58,26 V74Z')">${img(e.ph)}</div>
+            <div><div style="font:600 25px 'Cormorant Garamond';color:var(--acc2)">The ${e.n}</div><div style="font:500 10px Jost;letter-spacing:2px;opacity:.75">${e.t.toUpperCase()}</div></div>
+          </div>`).join('')}
+        </section>
+        <section data-l="Create · wax seal" style="text-align:center;padding:26px 0 10px;position:relative;height:330px">
+          <div style="font:italic 15px 'Cormorant Garamond';opacity:.8">for guests and the couple</div>
+          <div id="c1iseal" onclick="this.parentNode.classList.toggle('open')" data-l="Wax seal" style="cursor:pointer;margin:12px auto 0;width:118px;height:118px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9a2a38,var(--acc2) 60%,#3d0a12);display:grid;place-items:center;color:#F6EEE2;box-shadow:0 10px 24px #6B1B2666,inset 0 0 0 7px #ffffff14;position:relative;z-index:2;transition:transform .4s"><div><div style="font:italic 14px 'Cormorant Garamond'">Add your</div><div style="font:30px 'Pinyon Script';color:#E9CF8E;line-height:.9">moment</div><div style="font:9px Jost;letter-spacing:2px;margin-top:4px;opacity:.8">TAP TO BREAK</div></div></div>
+          ${CR.map((x, i) => `<button data-l="Create · ${x[1]}" class="sealpv" onclick="PGSS.a(this,'${x[0]}')" style="--dx:${[-110, 0, 110][i]}px;--dy:${[60, 116, 60][i]}px;position:absolute;left:50%;top:110px;margin-left:-38px;background:none;border:0;cursor:pointer;color:var(--ink);opacity:0;transform:scale(.3);transition:.5s cubic-bezier(.34,1.56,.64,1) ${i * .07}s;display:flex;flex-direction:column;align-items:center;gap:4px">${pv(x[0], 76, '14px')}<b style="font-size:11.5px">${x[1]}</b></button>`).join('')}
+        </section>
+        <style>.pss-c1i .open .sealpv{opacity:1!important;transform:translate(var(--dx),var(--dy))!important}.pss-c1i .open #c1iseal{transform:scale(.7) translateY(-30px)}</style>
+        ${L('Blessing card', `<div style="font:italic 16px 'Cormorant Garamond'">${Q(0)}</div><div style="font-size:10px;opacity:.6;margin-top:4px">${QA(0)}</div><div style="font:600 11px Jost;color:var(--acc2);margin-top:10px">Leave a blessing</div>`, 'div', 'style="margin:0 18px;background:var(--card);border:1px solid var(--acc);padding:16px" onclick="PGSS.a(this,\'notes\')"')}
+        ${L('Photographer credit', `Photographed by ${STU}`, 'div', 'style="text-align:center;font:italic 14px \'Cormorant Garamond\';opacity:.7;padding:24px 0 110px"')}
+        `;
+      },
+      scroll(vp) {
+        const q = id => vp.querySelector('#' + id);
+        const dl = q('c1idl'), dr = q('c1idr'), ar = q('c1ia'), ou = q('c1io'), nmEl = q('c1in'), ti = q('c1it'), sh = q('c1is'), hi = q('c1ih');
+        if (!dl || !ar) return;
+        if (isCalm(vp)) {
+          setTransform(dl, 'perspective(600px) rotateY(-100deg)');
+          setTransform(dr, 'perspective(600px) rotateY(100deg)');
+          setTransform(ar, 'translateY(-110px) scale(2.4)');
+          setTransform(ou, 'translateY(-110px) scale(2.4)');
+          setOpacity(ou, 0);
+          setOpacity(nmEl, 0);
+          setOpacity(hi, 0);
+          setOpacity(ti, 1);
+          setOpacity(sh, 1);
+          return;
+        }
+        const p = clamp01(vp.scrollTop / 1200);
+        const a = easeOutCubic(clamp01(p / 0.45));
+        const z = easeInOutSine(clamp01((p - 0.35) / 0.65));
+        setTransform(dl, `perspective(600px) rotateY(${(-a * 100).toFixed(2)}deg)`);
+        setTransform(dr, `perspective(600px) rotateY(${(a * 100).toFixed(2)}deg)`);
+        const s = 1 + z * z * 1.65;
+        const ty = -z * 115;
+        setTransform(ar, `translateY(${ty.toFixed(1)}px) scale(${s.toFixed(3)})`);
+        setTransform(ou, `translateY(${ty.toFixed(1)}px) scale(${s.toFixed(3)})`);
+        setOpacity(ou, 1 - z);
+        setOpacity(nmEl, 1 - clamp01(p / 0.55));
+        setTransform(nmEl, `translateY(${(-z * 48).toFixed(1)}px)`);
+        setOpacity(hi, 1 - a);
+        setOpacity(ti, clamp01((z - 0.65) / 0.35));
+        setOpacity(sh, clamp01((z - 0.45) / 0.45));
+      }
+    };
+  
+    const c2i = {
+      id: 'c2i',
+      name: 'Tide Journey · iPhone',
+      venue: 'Beach destination',
+      fd: 'Marcellus',
+      fb: 'Jost',
+      hub: 'home',
+      pal: { bg: '#EEE3D0', ink: '#123F4A', acc: '#123F4A', acc2: '#E07A5F', card: '#FFFFFF', nav: '#FFFFFF', navInk: '#123F4A', navOn: '#fff', hdrInk: '#fff', sea: '#123F4A', glass: '#ffffff22' },
+      dpal: { bg: '#0B2229', ink: '#E7F1EF', acc: '#7FC4C4', acc2: '#E07A5F', card: '#123039', nav: '#123039', navInk: '#E7F1EF', navOn: '#0B2229', hdrInk: '#fff', sea: '#07181D', glass: '#ffffff22' },
+      motion: [
+        ['The sea covers everything', 'on load', 'Four wave layers sit inside the 390×844 stage; couple names float above the tide.'],
+        ['Tide goes out', 'scroll 0→1200px', 'Each wave layer translates along Y using ease-out curves to uncover the coastal portrait smoothly.'],
+        ['Walk along the shore', 'swipe sideways', 'Events sit on a sideways snap rail with shell indicator dots.'],
+        ['Message in a bottle', 'tap', 'Tap the bottle to reveal three live previews.']
+      ],
+      render() {
+        const E = evs();
+        const wave = (y, c, op, id) => `<svg data-l="Wave layer ${id}" class="c2iw" data-k="${id}" viewBox="0 0 390 900" width="390" height="900" preserveAspectRatio="none" style="position:absolute;left:0;top:${y}px;width:390px;height:900px;will-change:transform"><path d="M0,30 C60,0 130,60 195,30 C260,0 330,60 390,30 V900 H0Z" fill="${c}" opacity="${op}"/></svg>`;
+        return `<section data-stage style="height:${844 + 1200}px;position:relative"><div style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0);background:var(--sea)">
+          ${L('Cover photo', img(17, 'cover kb'), 'div', 'style="position:absolute;inset:0"')}
+          ${wave(-40, '#1F5A66', .95, 1)}${wave(150, '#2A6A78', .95, 2)}${wave(330, '#235F6C', .97, 3)}${wave(520, '#123F4A', 1, 4)}
+          ${L('Couple names', `<div style="font:56px/1 Marcellus">${nm()[0]}</div><div style="font:40px Marcellus;opacity:.85">&amp; ${nm()[1] || ''}</div><div style="font:500 11px Jost;letter-spacing:4px;margin-top:10px;opacity:.8">${S.date.toUpperCase()}</div>`, 'div', 'id="c2in" style="position:absolute;top:330px;left:0;right:0;text-align:center;color:#fff;z-index:3;will-change:transform,opacity"')}
+          <div id="c2ie" style="opacity:0;position:absolute;inset:0;z-index:4;pointer-events:none;will-change:opacity">
+            ${L('Foam line', `<svg viewBox="0 0 390 40" width="390" height="40"><path d="M0,20 C60,0 130,40 195,20 C260,0 330,40 390,20 V40H0Z" fill="#fff" opacity=".9"/></svg>`, 'div', 'class="bob" style="position:absolute;bottom:0;left:0"')}
+            ${film('top:100px;left:20px')}
+            ${L('Film title', `<div style="font:34px Marcellus">${S.names}</div><div style="font-size:12px;opacity:.85">Three days by the sea</div><div onclick="PGSS.go(this)" style="pointer-events:auto;display:inline-block;margin-top:12px;background:#fff;color:#123F4A;padding:9px 18px;border-radius:20px;font:600 12px Jost;cursor:pointer">Begin the journey →</div>`, 'div', 'style="position:absolute;left:24px;bottom:120px;color:#fff"')}
+          </div>
+        </div></section>
+        <section data-events data-l="Shore (sideways journey)" style="padding:30px 0 10px;position:relative">
+          <div style="text-align:center;font:26px Marcellus">Along the shore</div>
+          ${L('Shell progress dots', E.map((_, i) => `<i style="display:inline-block;width:${i ? 7 : 10}px;height:${i ? 7 : 10}px;border-radius:50%;margin:0 4px;background:${i ? '#c8b99c' : 'var(--acc)'}"></i>`).join(''), 'div', 'id="c2idots" style="text-align:center;margin:10px 0"')}
+          <div id="c2it" onscroll="PGSS.c2(this)" style="display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px 60px 20px;scrollbar-width:none">
+            ${E.map((e, i) => `<div data-l="Event · ${e.n}" style="flex:none;width:270px;scroll-snap-align:center;cursor:pointer" onclick="PGSS.ev(this,${e.i})"><div style="height:330px;border-radius:20px;overflow:hidden;box-shadow:0 14px 30px #0003;transform:rotate(${i % 2 ? 2 : -2}deg)">${img(e.ph)}</div><div style="font:26px Marcellus;margin-top:14px">${e.n}</div><div style="font:500 11px Jost;letter-spacing:2px;opacity:.7">${e.t.toUpperCase()}</div></div>`).join('')}
+          </div>
+          ${L('Footprints', `<svg width="390" height="40">${Array.from({ length: 9 }).map((_, i) => `<ellipse cx="${30 + i * 42}" cy="${20 + (i % 2 ? 8 : -6)}" rx="5" ry="9" fill="#c8b99c" transform="rotate(70 ${30 + i * 42} ${20 + (i % 2 ? 8 : -6)})"/>`).join('')}</svg>`)}
+        </section>
+        <section data-l="Create · bottle" id="c2ic" style="background:linear-gradient(#EAF1F0,#BFD9DB);margin-top:10px;padding:30px 0 40px;text-align:center;position:relative;color:#123F4A;height:420px;overflow:hidden">
+          <div style="font:28px Marcellus">Send a moment</div><div style="font-size:12px;opacity:.7">guests and the couple · tap the bottle</div>
+          <div class="bob" data-l="Bottle" onclick="document.getElementById('c2ic').classList.toggle('open')" style="cursor:pointer;margin:26px auto 0;width:150px;position:relative;z-index:2"><svg width="150" height="80" viewBox="0 0 150 80"><g transform="rotate(-16 75 40)"><rect x="18" y="16" width="100" height="52" rx="25" fill="#cfe7e4" stroke="#123F4A" stroke-width="1.5"/><rect x="114" y="31" width="26" height="22" rx="4" fill="#b98c5a"/></g></svg></div>
+          ${L('Waves', `<svg viewBox="0 0 390 80" width="390" height="80" style="position:absolute;left:0;top:230px"><path d="M0,30 C60,0 130,60 195,30 C260,0 330,60 390,30 V80H0Z" fill="#9CC7CB"/></svg>`)}
+          ${CR.map((x, i) => `<button data-l="Create · ${x[1]}" class="c2ipv" onclick="PGSS.a(this,'${x[0]}')" style="--dx:${[-110, 0, 110][i]}px;position:absolute;left:50%;top:170px;margin-left:-40px;background:none;border:0;cursor:pointer;color:#123F4A;opacity:0;transform:scale(.2);transition:.6s cubic-bezier(.34,1.56,.64,1) ${i * .1}s;display:flex;flex-direction:column;align-items:center;gap:5px">${pv(x[0], 80, '16px')}<b style="font-size:11.5px">${x[1]}</b></button>`).join('')}
+        </section><style>.pss-c2i #c2ic.open .c2ipv{opacity:1;transform:translate(var(--dx),110px)}</style>
+        ${L('Photographer credit', `Photographed by ${STU}`, 'div', 'style="text-align:center;font:13px Marcellus;opacity:.7;padding:24px 0 110px"')}`;
+      },
+      scroll(vp) {
+        const n = vp.querySelector('#c2in'), e = vp.querySelector('#c2ie');
+        const waves = vp.querySelectorAll('.c2iw');
+        if (!n || !e) return;
+        if (isCalm(vp)) {
+          waves.forEach(w => { const k = +(w.dataset.k || 1); setTransform(w, `translateY(${(320 + k * 140).toFixed(1)}px)`); });
+          setTransform(n, 'translateY(220px)');
+          setOpacity(n, 0);
+          setOpacity(e, 1);
+          return;
+        }
+        const p = easeOutCubic(clamp01(vp.scrollTop / 1200));
+        waves.forEach(w => {
+          const k = +(w.dataset.k || 1);
+          setTransform(w, `translateY(${(p * (300 + k * 140)).toFixed(1)}px)`);
+        });
+        setTransform(n, `translateY(${(p * 220).toFixed(1)}px)`);
+        setOpacity(n, 1 - clamp01(p / 0.72));
+        setOpacity(e, clamp01((p - 0.65) / 0.35));
+      }
+    };
+  
+    const c3i = {
+      id: 'c3i',
+      name: 'Cloud Pages · iPhone',
+      venue: 'Mountain destination',
+      fd: 'Instrument Serif',
+      fb: 'Jost',
+      hub: 'home',
+      pal: { bg: '#EEF0EB', ink: '#1E3A2C', acc: '#C9A36B', acc2: '#5D6C70', card: '#FFFFFF', nav: '#1E3A2C', navInk: '#EEF0EB', navOn: '#1E3A2C', hdrInk: '#1E3A2C', glass: '#ffffff99' },
+      dpal: { bg: '#101814', ink: '#E6ECE6', acc: '#C9A36B', acc2: '#8A9A9E', card: '#18241D', nav: '#0B120E', navInk: '#E6ECE6', navOn: '#0B120E', hdrInk: '#fff', glass: '#00000044' },
+      motion: [
+        ['Inside the clouds', 'on load', 'Clouds drift inside a 390×844 clipped stage while the wedding date sits centered.'],
+        ['Clouds part, names rise', 'scroll 0→1200px', 'Clouds slide horizontally without exceeding stage bounds; mountain layers and portrait translate smoothly.'],
+        ['Story pages', 'swipe up', 'Each event renders as a full story chapter with progress indicators.'],
+        ['Drawer from the valley', 'tap the tab', 'Tap to open the live preview drawer.']
+      ],
+      render() {
+        const E = evs();
+        const cl = (x, y, r, k) => `<g class="c3ic" data-d="${k}"><circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/><circle cx="${x + r}" cy="${y + 10}" r="${r * .8}" fill="#fff"/><circle cx="${x - r}" cy="${y + 14}" r="${r * .7}" fill="#fff"/></g>`;
+        return `<section data-stage style="height:${844 + 1200}px;position:relative"><div style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0);background:linear-gradient(#DCE6EA,#EEF0EB)">
+          ${L('Mountains (far)', `<svg width="390" height="844"><path d="M0,560 L80,470 L150,520 L230,410 L310,500 L390,450 V844 H0Z" fill="#5D6C70" opacity=".55"/></svg>`, 'div', 'id="c3im1" style="position:absolute;inset:0;will-change:transform"')}
+          ${L('Mountains (near)', `<svg width="390" height="844"><path d="M0,640 L110,560 L200,620 L290,560 L390,610 V844 H0Z" fill="#1E3A2C"/></svg>`, 'div', 'id="c3im2" style="position:absolute;inset:0;will-change:transform"')}
+          ${L('Cover photo (in mountain)', img(1, 'cover kb'), 'div', 'id="c3if" style="position:absolute;inset:0;transform:translateY(100%);will-change:transform"')}
+          ${L('Clouds', `<svg width="390" height="844">${cl(80, 220, 68, -1)}${cl(300, 300, 76, 1)}${cl(140, 470, 74, -1)}${cl(320, 560, 68, 1)}${cl(70, 680, 72, -1)}${cl(260, 760, 76, 1)}</svg>`, 'div', 'class="c3idrift" style="position:absolute;inset:0;pointer-events:none"')}
+          ${L('Couple names', `<div style="font:66px/1 'Instrument Serif'">${nm()[0]}</div><div style="font:italic 50px 'Instrument Serif'">&amp; ${nm()[1] || ''}</div>`, 'div', 'id="c3in" style="position:absolute;top:300px;left:0;right:0;text-align:center;color:#1E3A2C;opacity:0;will-change:transform,opacity"')}
+          ${L('Date', S.date.toUpperCase(), 'div', 'id="c3id" style="position:absolute;top:410px;left:0;right:0;text-align:center;font:600 12px Jost;letter-spacing:4px;color:#5D6C70;will-change:opacity"')}
+        </div></section>
+        <div data-events></div>
+        ${E.map((e, i) => `<section data-l="Event · ${e.n}" style="height:844px;position:relative;scroll-snap-align:start;color:#fff;overflow:hidden">${img(e.ph, 'cover kb')}
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 45%,#000c)"></div>
+          <div data-l="Progress bars" style="position:absolute;top:20px;left:16px;right:16px;display:flex;gap:4px">${E.map((_, k) => `<i style="flex:1;height:3px;border-radius:2px;background:#fff;opacity:${k <= i ? 1 : .35}"></i>`).join('')}</div>
+          <div style="position:absolute;left:24px;bottom:290px;font:600 10px Jost;letter-spacing:3px;color:#E9CF8E">PAGE ${i + 1}</div>
+          <div class="rise" style="position:absolute;left:22px;bottom:220px;font:60px 'Instrument Serif'">${e.n}</div>
+          <div data-l="Peek photos" style="position:absolute;left:24px;bottom:146px;display:flex;gap:8px">${[0, 1, 2, 3].map(k => `<div class="rise" style="width:60px;height:56px;border-radius:8px;overflow:hidden;transition-delay:${.15 + k * .07}s">${img('e' + i + 'h' + (k + 1))}</div>`).join('')}<div onclick="PGSS.ev(this,${e.i})" style="width:60px;height:56px;border-radius:8px;border:1px solid #fff;display:grid;place-items:center;font:600 12px Jost;cursor:pointer">Open</div></div>
+        </section>`).join('')}
+        <section data-l="Notes page" style="min-height:500px;padding:120px 26px 140px;scroll-snap-align:start">
+          <div style="font:44px 'Instrument Serif'">Words for us</div>
+          ${QL().map(q => `<div class="rise" style="font:italic 20px 'Instrument Serif';margin:22px 0;border-left:2px solid var(--acc);padding-left:14px">${q}</div>`).join('')}
+          <div style="font-size:11px;opacity:.6;margin-top:40px">Photographed by ${STU}</div>
+        </section>
+        ${ov(L('Drawer tab', '↑ Make something', 'div', 'onclick="document.getElementById(\'c3idr\').classList.add(\'open\')" style="pointer-events:auto;position:absolute;bottom:84px;left:50%;transform:translateX(-50%);z-index:41;background:var(--card);color:var(--ink);padding:8px 18px;border-radius:18px 18px 0 0;font:600 12px Jost;cursor:pointer;box-shadow:0 -4px 14px #0002"'))}
+        ${ov(`<div id="c3idr" data-l="Create drawer" style="pointer-events:auto;position:absolute;left:0;right:0;bottom:0;height:470px;z-index:45;background:var(--bg);color:var(--ink);font:13px/1.45 Jost,system-ui,sans-serif;border-radius:28px 28px 0 0;padding:16px 22px;transform:translateY(100%);transition:transform .5s cubic-bezier(.2,.9,.2,1);box-shadow:0 -10px 40px #0004">
+          <div onclick="this.parentNode.classList.remove('open')" style="width:50px;height:5px;border-radius:3px;background:#5D6C7066;margin:0 auto 18px;cursor:pointer"></div>
+          <div style="font:34px 'Instrument Serif'">Make something</div><div style="font-size:12px;opacity:.7">from this wedding · guests and the couple</div>
+          <div style="display:flex;justify-content:space-between;margin-top:26px">${CR.map(x => `<button data-l="Create · ${x[1]}" onclick="PGSS.a(this,'${x[0]}')" style="background:none;border:0;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:flex-start;gap:7px">${pv(x[0], 100, '14px')}<b style="font-size:12.5px">${x[1]}</b><small style="opacity:.65;margin-top:-6px">${x[2]}</small></button>`).join('')}</div>
+        </div>`)}
+        <style>.pss-c3i #c3idr.open{transform:none!important}.pss-c3i .c3idrift{animation:pss-c3idrift 9s ease-in-out infinite}@keyframes pss-c3idrift{50%{transform:translateX(8px)}}</style>`;
+      },
+      scroll(vp) {
+        const q = id => vp.querySelector('#' + id);
+        const n = q('c3in'), d = q('c3id'), m1 = q('c3im1'), m2 = q('c3im2'), f = q('c3if');
+        const clouds = vp.querySelectorAll('.c3ic');
+        if (!n || !f) return;
+        if (isCalm(vp)) {
+          clouds.forEach(c => { const dir = +(c.dataset.d || 1); setTransform(c, `translateX(${dir * 260}px)`); });
+          setOpacity(d, 0);
+          setOpacity(n, 1);
+          setTransform(n, 'translateY(0px)');
+          setTransform(m1, 'translateY(40px)');
+          setTransform(m2, 'translateY(90px)');
+          setTransform(f, 'translateY(0%)');
+          return;
+        }
+        const p = clamp01(vp.scrollTop / 1200);
+        const ep = easeOutCubic(p);
+        clouds.forEach(c => {
+          const dir = +(c.dataset.d || 1);
+          setTransform(c, `translateX(${(dir * ep * 260).toFixed(1)}px)`);
+        });
+        setOpacity(d, 1 - clamp01(p / 0.35));
+        const nIn = clamp01(p / 0.45);
+        const nOut = 1 - clamp01((p - 0.72) / 0.28);
+        setOpacity(n, nIn * nOut);
+        setTransform(n, `translateY(${((1 - easeOutCubic(nIn)) * 48).toFixed(1)}px)`);
+        if (m1) setTransform(m1, `translateY(${(ep * 40).toFixed(1)}px)`);
+        if (m2) setTransform(m2, `translateY(${(ep * 90).toFixed(1)}px)`);
+        const fProg = easeInOutSine(clamp01((p - 0.42) / 0.58));
+        setTransform(f, `translateY(${((1 - fProg) * 100).toFixed(1)}%)`);
+      }
+    };
+  
+    const blob = (cx, cy, r, seed, k = 9, j = .28) => {
+      let s = seed * 9301, R = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+      const pts = [];
+      for (let i = 0; i < k; i++) { const a = 2 * Math.PI * i / k, rr = r * (1 + (R() * 2 - 1) * j); pts.push([cx + rr * Math.cos(a), cy + rr * Math.sin(a)]); }
+      let pathD = '';
+      for (let i = 0; i < k; i++) { const a = pts[i], b = pts[(i + 1) % k], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; pathD += i ? `Q${a[0].toFixed(1)},${a[1].toFixed(1)} ${m[0].toFixed(1)},${m[1].toFixed(1)} ` : `M${m[0].toFixed(1)},${m[1].toFixed(1)} `; }
+      const a = pts[0], m = [(pts[0][0] + pts[1][0]) / 2, (pts[0][1] + pts[1][1]) / 2];
+      return pathD + `Q${a[0].toFixed(1)},${a[1].toFixed(1)} ${m[0].toFixed(1)},${m[1].toFixed(1)}Z`;
+    };
+  
+    const c4i = {
+      id: 'c4i',
+      name: 'Haldi Splash · iPhone',
+      venue: 'Farmhouse / garden day wedding',
+      fd: 'Parisienne',
+      fb: 'Jost',
+      hub: 'flower',
+      pal: { bg: '#F3EEE3', ink: '#2E2A22', acc: '#C0643B', acc2: '#55623A', card: '#FFFFFF', nav: '#55623A', navInk: '#F3EEE3', navOn: '#fff', hdrInk: '#55623A', glass: '#F3EEE3cc' },
+      dpal: { bg: '#1D1B14', ink: '#F0E9DA', acc: '#E07A4E', acc2: '#9BAA72', card: '#2A271E', nav: '#2A271E', navInk: '#F0E9DA', navOn: '#1D1B14', hdrInk: '#F0E9DA', glass: '#2A271Ecc' },
+      motion: [
+        ['Names written by hand', 'on load', 'Script names reveal cleanly across the garden stage.'],
+        ['Colour splashes open the photo', 'scroll 0→1200px', 'Splash outlines scale within the 390×844 stage and unveil the portrait without sideways spill.'],
+        ['Collage settles', 'in view', 'Scattered prints glide smoothly into position.'],
+        ['Peel a sticker', 'tap', 'Tap any sticker in the sheet to launch its creation tool.']
+      ],
+      render() {
+        const E = evs(), S3 = [[120, 300, 140, 1, '#E8B931'], [280, 420, 150, 2, '#E46E8C'], [150, 560, 120, 3, '#55623A']];
+        return `<section data-stage style="height:${844 + 1200}px;position:relative"><div style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0)">
+          ${L('Colour drops', [[60, 200, 8, '#E8B931'], [320, 260, 6, '#E46E8C'], [90, 620, 7, '#55623A'], [300, 680, 9, '#E8B931'], [200, 150, 5, '#E46E8C']].map(([x, y, r, c]) => `<svg style="position:absolute;left:${x - r * 2}px;top:${y - r * 2}px" width="${r * 4}" height="${r * 4}" class="bob"><path d="${blob(r * 2, r * 2, r, x)}" fill="${c}"/></svg>`).join(''))}
+          <svg data-l="Splash reveal (photo in splashes)" width="390" height="844" style="position:absolute;inset:0;will-change:opacity">
+            <defs><clipPath id="c4iclip">${S3.map(([x, y, r, s]) => `<path class="c4ib-clip" d="${blob(x, y, r * 1.45, s)}" style="transform-box:fill-box;transform-origin:center;transform:scale(0)"/>`).join('')}</clipPath></defs>
+            <g id="c4iphoto" style="opacity:0;will-change:opacity"><image href="${p(26)}" width="390" height="844" preserveAspectRatio="xMidYMid slice" clip-path="url(#c4iclip)"/></g>
+            ${S3.map(([x, y, r, s, c]) => `<path class="c4ib" d="${blob(x, y, r * 1.05, s)}" fill="none" stroke="${c}" stroke-width="10" opacity=".75" style="transform-box:fill-box;transform-origin:center;transform:scale(0);will-change:transform"/>`).join('')}
+          </svg>
+          ${L('Couple names (handwritten)', `<div><span class="hand" style="font:72px/1.1 Parisienne;color:var(--acc)">${nm()[0]}</span></div><div><span class="hand" style="font:54px/1.1 Parisienne;color:var(--acc2);animation-delay:.7s">&amp; ${nm()[1] || ''}</span></div><div style="font:600 10px Jost;letter-spacing:3px;color:var(--acc2);margin-top:10px">A DAY IN THE GARDEN · ${S.date.toUpperCase()}</div>`, 'div', 'id="c4in" style="position:absolute;top:340px;left:0;right:0;text-align:center;will-change:transform,opacity"')}
+        </div></section>
+        <section data-l="Collage" style="position:relative;height:620px;margin-top:-120px">
+          ${[[28, 20, 10, 150, 190, -6], [86, 220, 0, 150, 200, 5], [29, 30, 420, 160, 180, 4], [9, 210, 440, 160, 190, -5]].map(([n, x, y, w, h, r], i) => `<div data-l="Collage print ${i + 1}" class="scat in" style="--r:${r}deg;position:absolute;left:${x}px;top:${y}px;width:${w + 12}px;padding:6px 6px 24px;background:#fff;box-shadow:0 8px 20px #0002;transform:rotate(${r}deg)">${img(n, 'cover', 'height:' + h + 'px')}</div>`).join('')}
+          <div data-l="Cover photo (splash window)" style="position:absolute;left:85px;top:170px;width:220px;height:280px;clip-path:path('${blob(110, 140, 125, 7, 11, .15)}');z-index:2">${img(26, 'cover kb')}</div>
+          ${film('top:410px;left:136px;z-index:3')}
+        </section>
+        <section data-events data-l="Sticker events" style="padding:10px 16px 20px"><div style="font:44px Parisienne;color:var(--acc2);margin-left:6px">Our days</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px">${E.map((e, i) => { const c = ['#E8B931', '#55623A', '#E46E8C', '#C0643B', '#55623A'][i % 5]; return `<div data-l="Event · ${e.n}" class="rise in bob" onclick="PGSS.ev(this,${e.i})" style="animation-delay:${i * .3}s;transform:rotate(${i % 2 ? 4 : -4}deg);background:#fff;border:3px solid ${c};border-radius:16px;padding:8px;position:relative;cursor:pointer"><i style="position:absolute;top:-10px;left:50px;width:60px;height:18px;background:${c};opacity:.6;transform:rotate(-8deg)"></i><div style="height:130px;border-radius:10px;overflow:hidden">${img(e.ph)}</div><div style="text-align:center;font:26px Parisienne;color:${c}">${e.n}</div></div>`; }).join('')}</div>
+        </section>
+        <section data-l="Create · sticker sheet" style="margin:10px 16px;background:var(--card);border:1px solid #e5dccb;border-radius:18px;padding:16px"><div style="font:36px Parisienne;color:var(--acc2)">Make something</div><div style="font-size:11px;opacity:.6">guests and the couple · tap a sticker to peel it</div>
+          <div style="display:flex;justify-content:space-around;margin-top:14px">${CR.map(x => `<button data-l="Create · ${x[1]}" class="peel" onclick="this.classList.toggle('pl');PGSS.a(this,'${x[0]}')" style="background:#fff;border:2px dashed var(--acc);border-radius:16px;padding:6px 6px 8px;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:4px;transition:.4s;position:relative">${pv(x[0], 78, '12px')}<b style="font-size:11.5px">${x[1]}</b><i class="corner"></i></button>`).join('')}</div>
+        </section>
+        <style>.pss-c4i .hand{display:inline-block;clip-path:inset(0 100% 0 0);animation:pss-c4ihand 1.6s ease forwards}@keyframes pss-c4ihand{to{clip-path:inset(0 0 0 0)}}.pss-c4i .peel .corner{position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;background:linear-gradient(135deg,transparent 50%,#e9dcc6 50%);border-radius:0 0 14px 0}.pss-c4i .peel.pl{transform:rotate(-6deg) translateY(-8px);box-shadow:0 12px 20px #0003}</style>
+        ${L('Photographer credit', `Photographed by ${STU}`, 'div', 'style="text-align:center;font:22px Parisienne;color:var(--acc2);padding:20px 0 110px"')}`;
+      },
+      scroll(vp) {
+        const n = vp.querySelector('#c4in');
+        const ph = vp.querySelector('#c4iphoto');
+        const rings = vp.querySelectorAll('.c4ib');
+        const clips = vp.querySelectorAll('.c4ib-clip');
+        if (!n) return;
+        if (isCalm(vp)) {
+          rings.forEach(r => setTransform(r, 'scale(1.6)'));
+          clips.forEach(c => setTransform(c, 'scale(1.6)'));
+          setOpacity(ph, 1);
+          setOpacity(n, 0.25);
+          setTransform(n, 'translateY(-80px)');
+          return;
+        }
+        const p = clamp01(vp.scrollTop / 1200);
+        const sp = easeOutCubic(p);
+        rings.forEach((r, i) => {
+          const sVal = clamp01((sp - i * 0.08) / 0.75) * 1.55;
+          setTransform(r, `scale(${sVal.toFixed(3)})`);
+        });
+        clips.forEach((c, i) => {
+          const sVal = clamp01((sp - i * 0.08) / 0.75) * 1.55;
+          setTransform(c, `scale(${sVal.toFixed(3)})`);
+        });
+        setOpacity(ph, clamp01((p - 0.15) / 0.45));
+        setOpacity(n, 1 - clamp01((p - 0.25) / 0.55));
+        setTransform(n, `translateY(${(-sp * 80).toFixed(1)}px)`);
+      }
+    };
+  
+    const c5i = {
+      id: 'c5i',
+      name: 'Cinema Chapters (Nocturne) · iPhone',
+      venue: '5-star ballroom · party plot · reception',
+      fd: 'Bodoni Moda',
+      fb: 'Jost',
+      hub: 'chand',
+      pal: { bg: '#0F0E0D', ink: '#F4EDE2', acc: '#D8C197', acc2: '#C98B7A', card: '#1C1A18', nav: '#24211E', navInk: '#D8C197', navOn: '#0F0E0D', hdrInk: '#D8C197', glass: '#ffffff10' },
+      dpal: { bg: '#000', ink: '#F4EDE2', acc: '#D8C197', acc2: '#C98B7A', card: '#141210', nav: '#1a1816', navInk: '#D8C197', navOn: '#000', hdrInk: '#D8C197', glass: '#ffffff10' },
+      motion: [
+        ['One spotlight in the dark', 'on load', 'Spotlight and gold dust sit inside a 390×844 stage with zero sideways overflow.'],
+        ['Iris opens inside 390×844 stage', 'scroll 0→1200px', 'Scales a 390×844 portrait and ring using transform inside a clip-path:inset(0) sticky stage—no 1120px element spill.'],
+        ['Letterbox & opening title', 'end of reveal', 'Top and bottom bars scale along Y while credits fade in smoothly.'],
+        ['Chapters & clapperboard', 'scroll / tap', 'Roman-numeral chapters and live preview clapperboard.']
+      ],
+      render() {
+        const E = evs(), RN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+        return `<section data-stage style="height:${844 + 1200}px;position:relative"><div style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0);background:#000">
+          ${L('Spotlight', '', 'div', 'id="c5ig" style="position:absolute;left:25px;top:250px;width:340px;height:340px;border-radius:50%;background:radial-gradient(#D8C19766,transparent 70%);will-change:opacity"')}
+          ${L('Gold dust', parts('glow', 24), 'div', 'style="position:absolute;inset:0;pointer-events:none"')}
+          ${L('Cover photo (iris)', `<div id="c5ifi" style="position:absolute;inset:0;will-change:transform">${img(83, 'cover kb')}</div>`, 'div', 'id="c5if" style="position:absolute;left:0;top:0;width:390px;height:844px;border-radius:50%;overflow:hidden;transform:scale(.01);will-change:transform"')}
+          ${L('Iris ring', `<div id="c5ir" style="width:390px;height:390px;border-radius:50%;border:2px solid #D8C19788;box-sizing:border-box;transform:scale(.01);will-change:transform"></div>`, 'div', 'id="c5irwrap" style="position:absolute;left:0;top:227px;width:390px;height:390px;pointer-events:none;will-change:opacity"')}
+          ${L('Couple names', `<div style="font:500 40px Bodoni Moda;letter-spacing:8px">${nm()[0].toUpperCase()}</div><div style="font:italic 18px Bodoni Moda;color:#D8C197">&amp;</div><div style="font:500 40px Bodoni Moda;letter-spacing:8px">${(nm()[1] || '').toUpperCase()}</div><div style="font:600 9px Jost;letter-spacing:4px;color:#D8C197;margin-top:14px">A FILM IN ${E.length} CHAPTER${E.length > 1 ? 'S' : ''}</div>`, 'div', 'id="c5in" style="position:absolute;top:340px;left:0;right:0;text-align:center;color:#F4EDE2;will-change:opacity"')}
+          ${L('Letterbox top', '', 'div', 'id="c5ilt" style="position:absolute;top:0;left:0;right:0;height:140px;background:#000;z-index:3;transform:scaleY(0);transform-origin:top;will-change:transform"')}
+          ${L('Letterbox bottom', '', 'div', 'id="c5ilb" style="position:absolute;bottom:0;left:0;right:0;height:140px;background:#000;z-index:3;transform:scaleY(0);transform-origin:bottom;will-change:transform"')}
+          ${L('Opening credits', `<div style="font:italic 30px Bodoni Moda;color:#F4EDE2">${S.names}</div><div style="font:500 9px Jost;letter-spacing:3px;color:#D8C197;margin-top:6px">${S.date.toUpperCase()}</div>`, 'div', 'id="c5it" style="position:absolute;bottom:164px;left:0;right:0;text-align:center;z-index:4;opacity:0;will-change:opacity"')}
+        </div></section>
+        <div data-events></div>
+        ${E.map((e, i) => `<section data-l="Event · ${e.n}" style="padding:80px 0 40px;text-align:center;background:#000;color:#F4EDE2">
+          <div class="rise in" style="font:600 11px Jost;letter-spacing:6px;color:#D8C197">CHAPTER</div><div class="rise in" style="font:110px/1 Bodoni Moda;color:#D8C197">${RN[i % RN.length]}</div>
+          <div class="rise in" style="font:italic 46px Bodoni Moda">${e.n}</div><div class="rise in" style="font-size:11px;color:#D8C197;opacity:.8">${e.t}</div>
+          <div data-l="Film strip (moving)" style="margin-top:34px;background:#211E1B;padding:14px 0;overflow:hidden;position:relative;border-top:6px dashed #000;border-bottom:6px dashed #000" onclick="PGSS.ev(this,${e.i})"><div class="pss-istrip" style="display:flex;gap:8px;width:max-content;animation-duration:${18 + i}s">${[...Array(2)].map(() => [0, 1, 2, 3, 4].map(k => `<div style="width:100px;height:130px">${img(k ? 'e' + i + 'h' + k : e.ph)}</div>`).join('')).join('')}</div></div>
+        </section>`).join('')}
+        <section data-l="Create · clapperboard" id="c5ic" style="background:#000;color:#F4EDE2;text-align:center;padding:40px 0 30px">
+          <div onclick="document.getElementById('c5ic').classList.toggle('open')" style="cursor:pointer;width:170px;margin:0 auto;position:relative" data-l="Clapperboard"><div id="c5iarm" style="height:34px;background:repeating-linear-gradient(110deg,#D8C197 0 18px,#0F0E0D 18px 34px);border-radius:4px;transform-origin:0 100%;transform:rotate(-22deg);transition:transform .25s"></div><div style="height:90px;background:#211E1B;border:1px solid #D8C197;border-radius:4px;display:grid;place-items:center;font:italic 22px Bodoni Moda">Your cut</div></div>
+          <div style="font-size:11px;color:#D8C197;margin-top:10px">guests and the couple · tap the board</div>
+          <div class="cpv" style="display:flex;justify-content:center;gap:16px;margin-top:20px">${CR.map(x => `<button data-l="Create · ${x[1]}" onclick="PGSS.a(this,'${x[0]}')" style="background:none;border:0;cursor:pointer;color:#F4EDE2;display:flex;flex-direction:column;align-items:center;gap:6px">${pv(x[0], 86, '6px')}<b style="font-size:11.5px">${x[1]}</b></button>`).join('')}</div>
+          <div data-l="Toast note" style="margin:26px 20px 0;border:1px solid #D8C197;padding:16px"><div style="font:italic 16px Bodoni Moda">${Q(0)}</div><div style="font-size:10px;color:#D8C197;margin-top:4px">${QA(0)}</div><div style="font:600 10px Jost;letter-spacing:2px;color:#C98B7A;margin-top:10px">RAISE A TOAST · LEAVE A NOTE</div></div>
+          <div style="font:500 9px Jost;letter-spacing:3px;color:#D8C197;padding:28px 0 100px">PHOTOGRAPHED BY ${STU.toUpperCase()}</div>
+        </section>
+        <style>.pss-c5i .pss-istrip{animation:pss-c5istrip linear infinite}@keyframes pss-c5istrip{to{transform:translateX(-50%)}}.pss-c5i .cpv{max-height:0;overflow:hidden;opacity:0;transition:.5s}.pss-c5i #c5ic.open .cpv{max-height:200px;opacity:1}.pss-c5i #c5ic.open #c5iarm{transform:none}</style>`;
+      },
+      scroll(vp) {
+        const q = id => vp.querySelector('#' + id);
+        const f = q('c5if'), fi = q('c5ifi'), r = q('c5ir'), rw = q('c5irwrap'), n = q('c5in'), g = q('c5ig'), lt = q('c5ilt'), lb = q('c5ilb'), t = q('c5it');
+        if (!f || !fi) return;
+        if (isCalm(vp)) {
+          setTransform(f, 'scale(2.3)');
+          setTransform(fi, 'scale(0.435)');
+          setTransform(r, 'scale(2.3)');
+          setOpacity(rw, 0);
+          setOpacity(n, 0);
+          setOpacity(g, 0);
+          setTransform(lt, 'scaleY(1)');
+          setTransform(lb, 'scaleY(1)');
+          setOpacity(t, 1);
+          return;
+        }
+        const p = clamp01(vp.scrollTop / 1200);
+        const irisP = easeInOutSine(clamp01(p / 0.72));
+        const s = 0.01 + irisP * 2.29;
+        setTransform(f, `scale(${s.toFixed(4)})`);
+        setTransform(fi, `scale(${(1 / s).toFixed(4)})`);
+        if (r) setTransform(r, `scale(${s.toFixed(4)})`);
+        if (rw) setOpacity(rw, p < 0.85 ? 1 : 0);
+        setOpacity(n, 1 - clamp01(p / 0.55));
+        setOpacity(g, 1 - p);
+        const bars = clamp01((p - 0.72) / 0.22);   // Claude: renamed (was "lb", the same name as the bottom bar, which crashed)
+        if (lt) setTransform(lt, `scaleY(${bars.toFixed(3)})`);
+        if (lb) setTransform(lb, `scaleY(${bars.toFixed(3)})`);
+        setOpacity(t, clamp01((p - 0.84) / 0.16));
+      }
+    };
+  
+    const g1i = {
+      id: 'g1i',
+      name: 'Heritage Courtyard · Dusk · iPhone',
+      venue: 'Historic haveli · evening courtyard',
+      fd: 'Cormorant Garamond',
+      fb: 'Jost',
+      hub: 'palace',
+      pal: { bg: '#F6F2EC', ink: '#1E1B18', acc: '#B8925A', card: '#EFE8DC', acc2: '#7A5A32', nav: '#171C26', navInk: '#F9F7F3', navOn: '#171C26', hdrInk: '#1E1B18', glass: '#F6F2ECb8' },
+      dpal: { bg: '#12151C', ink: '#F9F7F3', acc: '#CFA86E', card: '#1B202B', acc2: '#E5C38E', nav: '#0B0D12', navInk: '#F9F7F3', navOn: '#0B0D12', hdrInk: '#F9F7F3', glass: '#12151Cb8' },
+      motion: [
+        ['Architectural Aperture', 'scroll 0→1200px', 'Arch scales and fades smoothly inside a clipped 390×844 stage without layout-driven jumps.'],
+        ['Names Glide Up', 'scroll 0→840px', 'Couple names translate and fade out cleanly as the courtyard opens.'],
+        ['Plumb Line & Stagger', 'in view', 'Events and evening gallery cards appear cleanly across 1 to 20 events.'],
+        ['Editorial Create Bar', 'live micro-previews', 'Reel, Post, and Add a moment previews in the dusk courtyard.']
+      ],
+      render() {
+        const E = evs();
+        const f1 = E[0] || { n: 'Celebration', t: 'Day 1', ph: 'e0', i: 0 };
+        return `<section data-stage style="height:${844 + 1200}px;position:relative">
+          <div id="g1ibg" style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0);background:var(--bg)">
+            ${L('Couple names (opening)', `<div style="font:400 10px Jost;letter-spacing:3.5px;color:var(--acc);margin-bottom:10px">YOU ARE INVITED TO CELEBRATE</div><div style="font:500 44px/1.04 'Cormorant Garamond';letter-spacing:-0.02em;color:var(--ink)">${nm()[0]}</div><div style="font:italic 22px 'Cormorant Garamond';color:var(--acc);margin:2px 0">&amp;</div><div style="font:500 44px/1.04 'Cormorant Garamond';letter-spacing:-0.02em;color:var(--ink)">${nm()[1] || ''}</div><div style="font:500 10px Jost;letter-spacing:2.6px;color:var(--ink);opacity:.65;margin-top:14px">${S.date.toUpperCase()}</div>`, 'div', 'id="g1in" style="position:absolute;top:116px;left:24px;right:24px;text-align:center;z-index:3;will-change:transform,opacity"')}
+            <div data-l="Keyhole arch aperture" id="g1ia" style="position:absolute;left:55px;top:338px;width:280px;height:440px;border-radius:140px 140px 16px 16px;overflow:hidden;border:1px solid var(--acc);transform-origin:50% 42%;box-shadow:0 24px 60px #00000018;will-change:transform">
+              ${L('Cover photo (muted loop)', img(58, 'cover kb'), 'div', 'style="position:absolute;inset:0"')}
+              <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 58%,#0d101799)"></div>
+              ${film('bottom:14px;left:14px')}
+            </div>
+            ${L('Scroll cue', 'SCROLL TO ENTER', 'div', 'id="g1ih" style="position:absolute;bottom:92px;left:0;right:0;text-align:center;font:500 9px Jost;letter-spacing:3px;color:var(--acc);will-change:opacity"')}
+          </div>
+        </section>
+        <section id="g1idusk" data-l="Dusk Courtyard Story" style="background:#171C26;color:#F9F7F3;padding:44px 0 110px;position:relative">
+          <div data-l="Brass plumb line" style="position:absolute;left:50%;top:0;bottom:140px;width:1px;background:linear-gradient(180deg,#B8925A,#B8925A33 85%,transparent);pointer-events:none"></div>
+          <div style="text-align:center;padding:0 24px 36px;position:relative;z-index:2">
+            <div style="display:inline-block;background:#171C26;padding:6px 14px">
+              <div style="font:500 9.5px Jost;letter-spacing:3px;color:#CFA86E">THE CELEBRATIONS</div>
+              <div style="font:italic 26px 'Cormorant Garamond';color:#F9F7F3;margin-top:4px">Moments under the evening sky</div>
+            </div>
+          </div>
+          <div data-events data-l="Staggered chapters" style="padding:0 22px;position:relative;z-index:2">
+            ${E.length === 1 ? `
+              <div class="rise in" data-l="Event · ${f1.n}" onclick="PGSS.ev(this,${f1.i})" style="cursor:pointer;background:#1F2533;border:0.5px solid #CFA86E55;border-radius:18px;overflow:hidden">
+                <div style="height:260px;overflow:hidden">${img(f1.ph, 'cover kb')}</div>
+                <div style="padding:18px 20px;display:flex;justify-content:space-between;align-items:baseline">
+                  <div style="font:500 24px 'Cormorant Garamond';color:#F9F7F3">${f1.n}</div>
+                  <div style="font:500 10px Jost;letter-spacing:1.8px;color:#CFA86E">${f1.t.toUpperCase()}</div>
+                </div>
+              </div>
+            ` : `
+              ${E.length > 6 ? `<div data-l="Chapter index rail" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:18px;margin-bottom:10px;scrollbar-width:none">${E.map(e => `<span onclick="PGSS.ev(this,${e.i})" style="flex:none;padding:6px 12px;border-radius:20px;border:0.5px solid #CFA86E55;background:#171C26;font:500 10px Jost;letter-spacing:1px;color:#E5C38E;cursor:pointer">${e.n}</span>`).join('')}</div>` : ''}
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+                ${E.map((e, i) => `<div class="rise in" data-l="Event · ${e.n}" onclick="PGSS.ev(this,${e.i})" style="cursor:pointer;margin-top:${i % 2 ? 28 : 0}px">
+                  <div style="height:196px;border-radius:14px;overflow:hidden;border:0.5px solid #CFA86E44;box-shadow:0 14px 30px #0004">${img(e.ph, 'cover')}</div>
+                  <div style="padding:10px 4px 0">
+                    <div style="font:500 19px/1.15 'Cormorant Garamond';color:#F9F7F3">${e.n}</div>
+                    <div style="font:400 10px Jost;letter-spacing:1.2px;color:#CFA86E;margin-top:3px">${e.t}</div>
+                  </div>
+                </div>`).join('')}
+              </div>
+            `}
+          </div>
+          <div data-l="Quiet Create Bar" style="margin:44px 20px 0;padding:12px;border-radius:18px;background:#ffffff0a;backdrop-filter:blur(14px);border:0.5px solid #CFA86E44;position:relative;z-index:2">
+            <div style="font:500 9px Jost;letter-spacing:2.5px;color:#CFA86E;text-align:center;margin-bottom:10px">CONTRIBUTE TO THE GALLERY</div>
+            <div style="display:flex;gap:8px">
+              ${CR.map(x => `<button data-l="Create · ${x[1]}" onclick="PGSS.a(this,'${x[0]}')" style="flex:1;background:#171C26cc;border:0.5px solid #CFA86E33;border-radius:12px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#F9F7F3;cursor:pointer">${pv(x[0], 34, '8px')}<span style="font:500 10px Jost;letter-spacing:.4px">${x[1]}</span></button>`).join('')}
+            </div>
+          </div>
+          <div data-l="Root Moment Contact Sheet" style="margin-top:44px;position:relative;z-index:2">
+            <div style="padding:0 22px 12px;display:flex;justify-content:space-between;align-items:baseline">
+              <div style="font:500 22px 'Cormorant Garamond';color:#F9F7F3">Root Moment</div>
+              <div onclick="PGSS.a(this,'moments')" style="font:500 10px Jost;letter-spacing:1.8px;color:#CFA86E;cursor:pointer">VIEW FEED →</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:4px;padding:0 20px">
+              <div onclick="PGSS.a(this,'moments')" style="height:224px;border-radius:12px 0 0 12px;overflow:hidden;cursor:pointer">${img(MOM[0], 'cover')}</div>
+              <div style="display:grid;grid-template-rows:1fr 1fr;gap:4px;height:224px">
+                <div onclick="PGSS.a(this,'moments')" style="border-radius:0 12px 0 0;overflow:hidden;cursor:pointer">${img(MOM[1], 'cover')}</div>
+                <div onclick="PGSS.a(this,'moments')" style="border-radius:0 0 12px 0;overflow:hidden;cursor:pointer">${img(MOM[5], 'cover')}</div>
+              </div>
+            </div>
+          </div>
+          <div data-l="Guest Blessing" style="margin:44px 28px 0;text-align:center;position:relative;z-index:2">
+            <div style="width:28px;height:0.5px;background:#CFA86E;margin:0 auto 14px"></div>
+            <div style="font:italic 20px/1.4 'Cormorant Garamond';color:#F9F7F3">${Q(0)}</div>
+            <div style="font:400 10px Jost;letter-spacing:2px;color:#CFA86E;margin-top:8px">${QA(0, 1)}</div>
+            <div onclick="PGSS.a(this,'notes')" style="display:inline-block;margin-top:14px;font:500 10px Jost;letter-spacing:2px;color:#F9F7F3;border-bottom:0.5px solid #CFA86E;padding-bottom:3px;cursor:pointer">LEAVE A BLESSING</div>
+          </div>
+          <div data-l="Photographer credit" style="text-align:center;margin-top:42px;font:400 9.5px Jost;letter-spacing:2.6px;color:#CFA86E;opacity:.85">PHOTOGRAPHED BY ${STU.toUpperCase()}</div>
+        </section>`;
+      },
+      scroll(vp) {
+        const q = id => vp.querySelector('#' + id);
+        const a = q('g1ia'), n = q('g1in'), h = q('g1ih');
+        if (!a || !n) return;
+        if (isCalm(vp)) {
+          setTransform(a, 'translateY(-140px) scale(1.38)');
+          setOpacity(n, 0);
+          setTransform(n, 'translateY(-36px)');
+          setOpacity(h, 0);
+          return;
+        }
+        const p = clamp01(vp.scrollTop / 1200);
+        const ep = easeOutCubic(p);
+        setTransform(a, `translateY(${(-ep * 140).toFixed(1)}px) scale(${(1 + ep * 0.38).toFixed(3)})`);
+        setOpacity(n, 1 - clamp01(p / 0.58));
+        setTransform(n, `translateY(${(-ep * 36).toFixed(1)}px)`);
+        setOpacity(h, 1 - clamp01(p / 0.25));
+      }
+    };
+  
+    const g2i = {
+      id: 'g2i',
+      name: 'Misty Tea Estate · Morning · iPhone',
+      venue: 'Munnar / Coorg hills & estate',
+      fd: 'Instrument Serif',
+      fb: 'Jost',
+      hub: 'palm',
+      pal: { bg: '#F4F6F2', ink: '#18261E', acc: '#4B6B56', card: '#E8EDE6', acc2: '#8C9E90', nav: '#18261E', navInk: '#F4F6F2', navOn: '#18261E', hdrInk: '#18261E', glass: '#F4F6F2c4' },
+      dpal: { bg: '#0F1713', ink: '#ECF1EC', acc: '#7FA38B', card: '#18241E', acc2: '#567360', nav: '#090E0B', navInk: '#ECF1EC', navOn: '#090E0B', hdrInk: '#ECF1EC', glass: '#0F1713c4' },
+      motion: [
+        ['Morning Mist Parting', 'scroll 0→1200px', 'Mist veils part horizontally via transform and soft-focus layer fades via opacity without per-frame filter changes.'],
+        ['Horizontal Terrace Path', 'horizontal scroll', 'Events scroll along a snap rail for any number of events.'],
+        ['Floating Create Pill', 'in view', 'Frosted creation strip below the terrace rail.'],
+        ['Botanical Calm', 'continuous', 'Smooth ease-out curves within a clipped 390×844 sticky stage.']
+      ],
+      render() {
+        const E = evs();
+        return `<section data-stage style="height:${844 + 1200}px;position:relative">
+          <div style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0);background:var(--bg)">
+            ${L('Cover photo (full-bleed)', img(12, 'cover kb', 'object-position:50% 35%') + `<div id="g2ifb" style="position:absolute;inset:0;filter:blur(6px) brightness(1.04);pointer-events:none;will-change:opacity">${img(12, 'cover', 'object-position:50% 35%')}</div>`, 'div', 'id="g2if" style="position:absolute;inset:0;transform:scale(1.06);will-change:transform"')}
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,transparent 34%,transparent 62%,var(--bg) 100%);pointer-events:none"></div>
+            <div id="g2iml" data-l="Mist veil left" style="position:absolute;inset:0 45% 0 0;background:linear-gradient(90deg,var(--bg) 55%,transparent);pointer-events:none;will-change:transform"></div>
+            <div id="g2imr" data-l="Mist veil right" style="position:absolute;inset:0 0 0 45%;background:linear-gradient(270deg,var(--bg) 55%,transparent);pointer-events:none;will-change:transform"></div>
+            ${L('Couple names', `<div style="font:500 9.5px Jost;letter-spacing:3.2px;color:var(--acc);margin-bottom:8px">IN THE HIGH HILLS</div><div style="font:400 46px/1 'Instrument Serif';color:var(--ink)">${S.names}</div><div style="font:400 10.5px Jost;letter-spacing:2.2px;color:var(--ink);opacity:.7;margin-top:10px">${S.date.toUpperCase()}</div>`, 'div', 'id="g2in" style="position:absolute;top:290px;left:24px;right:24px;text-align:center;z-index:4;will-change:transform,opacity"')}
+            ${film('bottom:112px;left:22px')}
+          </div>
+        </section>
+        <section data-l="Estate Terrace Journey" style="padding:28px 0 110px;background:var(--bg)">
+          <div data-events style="padding:0 22px 14px;display:flex;justify-content:space-between;align-items:baseline">
+            <div>
+              <div style="font:500 9.5px Jost;letter-spacing:2.8px;color:var(--acc)">THE TERRACE PATH</div>
+              <div style="font:400 28px 'Instrument Serif';color:var(--ink);margin-top:2px">Gatherings in the mist</div>
+            </div>
+            <div style="font:400 10px Jost;letter-spacing:1.4px;color:var(--acc)">${E.length > 1 ? 'SWIPE →' : 'SINGLE DAY'}</div>
+          </div>
+          <div data-l="Horizontal event rail" style="display:flex;gap:14px;overflow-x:auto;padding:4px 22px 16px;scroll-snap-type:x mandatory;scrollbar-width:none">
+            ${E.map(e => `<div class="rise in" data-l="Event · ${e.n}" onclick="PGSS.ev(this,${e.i})" style="flex:0 0 ${E.length === 1 ? '346px' : '244px'};scroll-snap-align:center;cursor:pointer">
+              <div style="height:300px;border-radius:20px;overflow:hidden;border:0.5px solid color-mix(in srgb,var(--acc) 35%,transparent);position:relative">
+                ${img(e.ph, 'cover')}
+                <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,#0e1712b8)"></div>
+                <div style="position:absolute;left:18px;right:18px;bottom:18px;color:#F4F6F2">
+                  <div style="font:400 9.5px Jost;letter-spacing:2px;opacity:.8">${e.t.toUpperCase()}</div>
+                  <div style="font:400 26px/1.1 'Instrument Serif';margin-top:3px">${e.n}</div>
+                </div>
+              </div>
+            </div>`).join('')}
+          </div>
+          <div data-l="Frosted Create Bar" class="rise in" style="margin:26px 22px 0;padding:12px 14px;border-radius:18px;background:var(--card);border:0.5px solid color-mix(in srgb,var(--acc) 30%,transparent);display:flex;align-items:center;justify-content:space-between;gap:8px">
+            ${CR.map(x => `<button data-l="Create · ${x[1]}" onclick="PGSS.a(this,'${x[0]}')" style="flex:1;background:var(--bg);border:0.5px solid color-mix(in srgb,var(--acc) 25%,transparent);border-radius:12px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--ink);cursor:pointer">${pv(x[0], 34, '8px')}<span style="font:500 10px Jost">${x[1]}</span></button>`).join('')}
+          </div>
+          <div data-l="Root Moment Editorial" class="rise in" style="margin:36px 22px 0">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+              <div style="font:400 26px 'Instrument Serif';color:var(--ink)">Root Moment</div>
+              <div onclick="PGSS.a(this,'moments')" style="font:500 10px Jost;letter-spacing:1.8px;color:var(--acc);cursor:pointer">ALL MOMENTS →</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div onclick="PGSS.a(this,'moments')" style="height:176px;border-radius:16px;overflow:hidden;cursor:pointer">${img(MOM[2], 'cover')}</div>
+              <div onclick="PGSS.a(this,'moments')" style="height:176px;border-radius:16px;overflow:hidden;cursor:pointer">${img(MOM[6], 'cover')}</div>
+            </div>
+          </div>
+          <div data-l="Guest Note" class="rise in" style="margin:36px 24px 0;padding:22px 20px;border-radius:18px;background:var(--card);text-align:center">
+            <div style="font:italic 21px/1.35 'Instrument Serif';color:var(--ink)">${Q(0)}</div>
+            <div style="font:500 9.5px Jost;letter-spacing:2px;color:var(--acc);margin-top:8px">${QA(0, 1)}</div>
+            <div onclick="PGSS.a(this,'notes')" style="display:inline-block;margin-top:12px;font:500 10px Jost;letter-spacing:1.8px;color:var(--ink);border-bottom:0.5px solid var(--acc);padding-bottom:2px;cursor:pointer">ADD YOUR NOTE</div>
+          </div>
+          <div data-l="Photographer credit" style="text-align:center;margin-top:34px;font:400 9.5px Jost;letter-spacing:2.5px;color:var(--acc)">PHOTOGRAPHED BY ${STU.toUpperCase()}</div>
+        </section>`;
+      },
+      scroll(vp) {
+        const q = id => vp.querySelector('#' + id);
+        const f = q('g2if'), fb = q('g2ifb'), ml = q('g2iml'), mr = q('g2imr'), n = q('g2in');
+        if (!f || !n) return;
+        if (isCalm(vp)) {
+          if (ml) setTransform(ml, 'translateX(-110%)');
+          if (mr) setTransform(mr, 'translateX(110%)');
+          if (fb) setOpacity(fb, 0);
+          setTransform(f, 'scale(1)');
+          setTransform(n, 'translateY(160px)');
+          setOpacity(n, 0.25);
+          return;
+        }
+        const p = clamp01(vp.scrollTop / 1200);
+        const ep = easeOutCubic(p);
+        if (ml) setTransform(ml, `translateX(${(-ep * 110).toFixed(1)}%)`);
+        if (mr) setTransform(mr, `translateX(${(ep * 110).toFixed(1)}%)`);
+        if (fb) setOpacity(fb, 1 - ep);
+        setTransform(f, `scale(${(1.06 - ep * 0.06).toFixed(4)})`);
+        setTransform(n, `translateY(${(ep * 160).toFixed(1)}px)`);
+        setOpacity(n, Math.max(0.2, 1 - ep * 0.75));
+      }
+    };
+  
+    const g3i = {
+      id: 'g3i',
+      name: 'Alabaster Gallery · Minimal Luxury · iPhone',
+      venue: 'Modern banquet · architectural hall',
+      fd: 'Bodoni Moda',
+      fb: 'Jost',
+      hub: 'chand',
+      pal: { bg: '#FAF9F6', ink: '#141413', acc: '#8E795E', card: '#F1EFEA', acc2: '#C5B8A5', nav: '#141413', navInk: '#FAF9F6', navOn: '#141413', hdrInk: '#141413', glass: '#FAF9F6cc' },
+      dpal: { bg: '#0E0E0D', ink: '#F5F4F0', acc: '#BFA98A', card: '#191917', acc2: '#5C554B', nav: '#050505', navInk: '#F5F4F0', navOn: '#050505', hdrInk: '#F5F4F0', glass: '#0E0E0Dcc' },
+      motion: [
+        ['Gallery Frame Unveil', 'scroll 0→1200px', 'Portrait scales and translates smoothly inside a 390×844 clipped frame without animating width/height/top/left.'],
+        ['Monograph Index', 'in view', 'Numbered event plates for 1 to 20 events.'],
+        ['Tactile Create Drawer', 'tap to expand', 'Reel, Post, and Add a moment strip.'],
+        ['iPhone-Grade Restraint', 'continuous', 'Smooth transform and opacity motion on scroll.']
+      ],
+      render() {
+        const E = evs();
+        return `<section data-stage style="height:${844 + 1200}px;position:relative">
+          <div style="position:sticky;top:0;width:390px;height:844px;overflow:hidden;clip-path:inset(0);background:var(--bg)">
+            ${L('Monograph title', `<div style="font:500 9px Jost;letter-spacing:3.5px;color:var(--acc);margin-bottom:8px">MONOGRAPH · ${S.date.toUpperCase()}</div><div style="font:400 38px/1.08 'Bodoni Moda';letter-spacing:-0.02em;color:var(--ink)">${S.names}</div>`, 'div', 'id="g3in" style="position:absolute;top:106px;left:24px;right:24px;text-align:center;z-index:3;will-change:transform,opacity"')}
+            <div id="g3im" data-l="Museum mat frame" style="position:absolute;left:36px;right:36px;top:216px;height:510px;border-radius:12px;overflow:hidden;border:0.5px solid color-mix(in srgb,var(--acc) 45%,transparent);box-shadow:0 20px 50px #00000012;transform-origin:50% 42%;will-change:transform">
+              ${L('Cover photo', img(59, 'cover kb'), 'div', 'style="position:absolute;inset:0"')}
+              ${film('bottom:14px;left:14px')}
+            </div>
+          </div>
+        </section>
+        <section data-l="Curated Plates" style="padding:20px 24px 110px;background:var(--bg)">
+          <div data-events style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:14px;border-bottom:0.5px solid color-mix(in srgb,var(--acc) 40%,transparent)">
+            <div style="font:500 10px Jost;letter-spacing:2.8px;color:var(--acc)">ORDER OF EVENTS</div>
+            <div style="font:italic 15px 'Bodoni Moda';color:var(--ink)">Curated Chapters</div>
+          </div>
+          <div data-l="Event plates">
+            ${E.map((e, i) => `<div class="rise in" data-l="Plate · ${e.n}" onclick="PGSS.ev(this,${e.i})" style="display:flex;align-items:center;gap:14px;padding:16px 0;border-bottom:0.5px solid color-mix(in srgb,var(--acc) 25%,transparent);cursor:pointer">
+              <div style="font:400 13px 'Bodoni Moda';color:var(--acc);width:22px">${String(i + 1).padStart(2, '0')}</div>
+              <div style="width:54px;height:68px;border-radius:8px;overflow:hidden;flex:none">${img(e.ph, 'cover')}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 20px/1.15 'Bodoni Moda';color:var(--ink)">${e.n}</div>
+                <div style="font:400 10.5px Jost;letter-spacing:1px;color:var(--acc);margin-top:3px">${e.t}</div>
+              </div>
+              <div style="font:400 14px Jost;color:var(--acc)">→</div>
+            </div>`).join('')}
+          </div>
+          <div data-l="Create Strip" class="rise in" style="margin-top:32px;padding:14px;border-radius:16px;background:var(--card);border:0.5px solid color-mix(in srgb,var(--acc) 30%,transparent)">
+            <div style="display:flex;gap:8px">
+              ${CR.map(x => `<button data-l="Create · ${x[1]}" onclick="PGSS.a(this,'${x[0]}')" style="flex:1;background:var(--bg);border:0.5px solid color-mix(in srgb,var(--acc) 25%,transparent);border-radius:11px;padding:9px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink);cursor:pointer">${pv(x[0], 34, '6px')}<span style="font:500 10px Jost">${x[1]}</span></button>`).join('')}
+            </div>
+          </div>
+          <div data-l="Root Moment Triptych" class="rise in" style="margin-top:36px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+              <div style="font:500 21px 'Bodoni Moda';color:var(--ink)">Root Moment</div>
+              <div onclick="PGSS.a(this,'moments')" style="font:500 9.5px Jost;letter-spacing:2px;color:var(--acc);cursor:pointer">EXPLORE →</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+              ${[MOM[3], MOM[4], MOM[8]].map(m => `<div onclick="PGSS.a(this,'moments')" style="height:126px;border-radius:8px;overflow:hidden;cursor:pointer">${img(m, 'cover')}</div>`).join('')}
+            </div>
+          </div>
+          <div data-l="Guest Note" class="rise in" style="margin-top:36px;padding:24px 16px;border-top:0.5px solid color-mix(in srgb,var(--acc) 35%,transparent);border-bottom:0.5px solid color-mix(in srgb,var(--acc) 35%,transparent);text-align:center">
+            <div style="font:italic 19px/1.4 'Bodoni Moda';color:var(--ink)">${Q(0)}</div>
+            <div style="font:500 9.5px Jost;letter-spacing:2.2px;color:var(--acc);margin-top:8px">${QA(0, 1)}</div>
+            <div onclick="PGSS.a(this,'notes')" style="display:inline-block;margin-top:12px;font:500 9.5px Jost;letter-spacing:2px;color:var(--ink);text-decoration:underline;text-underline-offset:4px;cursor:pointer">SIGN THE GUESTBOOK</div>
+          </div>
+          <div data-l="Photographer credit" style="text-align:center;margin-top:32px;font:400 9px Jost;letter-spacing:2.8px;color:var(--acc)">PHOTOGRAPHED BY ${STU.toUpperCase()}</div>
+        </section>`;
+      },
+      scroll(vp) {
+        const q = id => vp.querySelector('#' + id);
+        const m = q('g3im'), n = q('g3in');
+        if (!m || !n) return;
+        if (isCalm(vp)) {
+          setTransform(m, 'translateY(-95px) scale(1.18)');
+          setOpacity(n, 0);
+          setTransform(n, 'translateY(-24px)');
+          return;
+        }
+        const p = clamp01(vp.scrollTop / 1200);
+        const ep = easeOutCubic(p);
+        setTransform(m, `translateY(${(-ep * 95).toFixed(1)}px) scale(${(1 + ep * 0.18).toFixed(3)})`);
+        setOpacity(n, 1 - clamp01(p / 0.55));
+        setTransform(n, `translateY(${(-ep * 24).toFixed(1)}px)`);
+      }
+    };
+  
+    return { c1i, c2i, c3i, c4i, c5i, g1i, g2i, g3i };
+  })();
+  const T = { c1: C1, c2: C2, c3: C3, c4: C4, c5: C5, g1: G1, g2: G2, g3: G3, c1i: GI.c1i, c2i: GI.c2i, c3i: GI.c3i, c4i: GI.c4i, c5i: GI.c5i, g1i: GI.g1i, g2i: GI.g2i, g3i: GI.g3i };
   // the colours a couple may change (the rest are the studio's own header / bar colours, which the app does not use)
   const COLOR_NAMES = { bg: 'Background', ink: 'Text', acc: 'Accent', acc2: 'Second accent', card: 'Cards', sea: 'Sea' };
   function palOf(kind, dark, tune) {
