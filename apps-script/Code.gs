@@ -3464,7 +3464,9 @@ function canvasList_(p) {
   canvasRows_().forEach(function (r) {
     if (!canvasSees_(r, who)) return;
     if (r.kind === 'layout' && r.scope === 'wedding' && !(who.g && String(r.galleryId) === String(who.g.galleryId))) return;   // step 104: another wedding's copy (with its photos) is never listed here
-    var m = canvasMeta_(r); m.mine = r.owner === who.owner || who.role === 'staff';
+    // step 113: inside a wedding, PicGrades staff see only their own layouts here, not every couple's or studio's private ones (those can hold another wedding's photos)
+    if (who.role === 'staff' && who.g && r.kind === 'layout' && r.owner !== who.owner && r.scope !== 'all' && r.scope !== 'wedding' && !(r.scope === 'studio' && who.g && String(r.companyName).trim().toLowerCase() === String(who.g.companyName || '').trim().toLowerCase())) return;
+    var m = canvasMeta_(r); m.mine = r.owner === who.owner || (who.role === 'staff' && r.scope === 'wedding');
     (r.kind === 'collection' ? out.collections : out.layouts).push(m);
   });
   var by = function (a, b) { return a.order - b.order || String(a.name).localeCompare(String(b.name)); };

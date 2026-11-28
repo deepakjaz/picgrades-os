@@ -9,7 +9,7 @@
 // Each template remembers its own version: choose it again later and the couple's changes are still there.
 // Step 103: this is "Try your photos" for EVERY template (canvas, Living Story, Editorial too, through 54-tune.js). Only the couple's
 // choices are kept — never a copy of the design — so the template, its motion and its scroll stay exactly as made.
-// Canvas templates also offer the Advanced editor (More); story templates have only this.
+// Canvas templates also offer the Advanced editor (a switch under the name, when it is on); story templates have only this.
 (function pgTemplateEditor() {
   const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const clone = o => JSON.parse(JSON.stringify(o));
@@ -26,6 +26,8 @@
   }
   const isDarkApp = () => document.documentElement.getAttribute('data-tkg-theme') === 'dark';
 
+  // step 113: like the PicGrades ↔ Guest switch — Try your photos ↔ Advanced, only for canvas templates and only when the Advanced editor is on
+  const advSwitch = l => l.story === 'canvas' && !!window.PGCanvasEditor && !!window.PGControl && PGControl.advanced();
   function open(id) {
     const l = window.PGLayout && PGLayout.find(id); if (!l || !handles(l.story) || E) return false;
     if (PGLayout.stop) PGLayout.stop();   // the Hub's own copy of a template uses the same ids: stop it while editing
@@ -33,7 +35,7 @@
     E = { id, l, tune, saved: JSON.stringify(tune), undo: [], redo: [], inst: null, dark: isDarkApp(), tab: 'photos', drawerOpen: false, kind: l.story };
     const el = h('div', 'pgte'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Design ' + l.name); E.el = el;
     el.innerHTML = '<div class="pgte-top"><button type="button" class="pgte-x" aria-label="Close">‹</button>' +
-      '<div class="pgte-title"><b>' + esc(l.name) + '</b><small>Try your photos</small></div>' +
+      '<div class="pgte-title"><b>' + esc(l.name) + '</b>' + (advSwitch(l) ? '<div class="pgte-mode"><button type="button" class="pgte-modebtn" aria-haspopup="true" aria-expanded="false">Try your photos <span aria-hidden="true">▾</span></button><div class="pgte-modemenu" hidden role="menu"><button type="button" role="menuitemradio" aria-checked="true" class="on">Try your photos</button><button type="button" role="menuitemradio" aria-checked="false" class="pgte-adv">Advanced editor</button></div></div>' : '<small>Try your photos</small>') + '</div>' +
       '<button type="button" class="pgte-ic pgte-undo" aria-label="Undo">↶</button><button type="button" class="pgte-ic pgte-redo" aria-label="Redo">↷</button>' +
       '<button type="button" class="pgte-btn pgte-save">Save</button><button type="button" class="pgte-btn pgte-apply">Apply</button></div>' +
       '<div class="pgte-body"><div class="pgte-stage"><div class="pgte-phone"><div class="pgte-scroll"></div></div><p class="pgte-tip">Scroll the page to see it move. Tap any photo to change it.</p></div>' +
@@ -43,6 +45,13 @@
     el.querySelector('.pgte-redo').addEventListener('click', () => { if (!E.redo.length) return; E.undo.push(JSON.stringify(E.tune)); E.tune = JSON.parse(E.redo.pop()); draw(); });
     el.querySelector('.pgte-save').addEventListener('click', () => save(false));
     el.querySelector('.pgte-apply').addEventListener('click', () => save(true));
+    const advB = el.querySelector('.pgte-mode .pgte-adv'); if (advB) {   // step 113: the switch, like PicGrades ↔ Guest: a small menu under the name
+      const mb = el.querySelector('.pgte-modebtn'), mm = el.querySelector('.pgte-modemenu'), shut = () => { mm.hidden = true; mb.setAttribute('aria-expanded', 'false'); };
+      mb.addEventListener('click', ev => { ev.stopPropagation(); mm.hidden = !mm.hidden; mb.setAttribute('aria-expanded', String(!mm.hidden)); });
+      el.addEventListener('pointerdown', ev => { if (!mm.hidden && !ev.target.closest('.pgte-mode')) shut(); });
+      mm.querySelector('.on').addEventListener('click', shut);
+      advB.addEventListener('click', () => { shut(); const id = E.id; close(); if (!E) PGCanvasEditor.open(id, { from: 'try' }); });
+    }
     el.querySelector('.pgte-tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { const same = E.tab === b.dataset.tab; E.tab = b.dataset.tab; setDrawer(!(same && E.drawerOpen)); panel(); } });
     el.querySelector('.pgte-drawer-toggle').addEventListener('click', () => setDrawer(!E.drawerOpen));
     document.body.appendChild(el); document.body.classList.add('pgte-on');
@@ -115,7 +124,6 @@
       html = '<div class="pgte-group"><b>Motion</b><p class="pgte-note">' + (E.kind === 'canvas' ? 'Calm: parts only fade in — nothing keeps moving. ' : '') + 'Off keeps every part still (the page still opens as guests scroll).</p>' + seg('motion', t.motion === 'off' ? 'off' : t.motion === 'calm' ? 'calm' : 'on', E.kind === 'canvas' ? [['on', 'On'], ['calm', 'Calm'], ['off', 'Off']] : [['on', 'On'], ['off', 'Off']]) + '</div>' +
         filmsGroup() +
         '<div class="pgte-group"><b>Find me button</b><p class="pgte-note">Floats on the page while guests scroll.</p>' + seg('findme', t.findme || 'right', [['left', 'Left'], ['right', 'Right'], ['off', 'Off']]) + '</div>' +
-        (E.kind === 'canvas' && window.PGCanvasEditor && window.PGControl && PGControl.advanced() ? '<div class="pgte-group"><b>Move things around</b><p class="pgte-note">The Advanced editor moves, resizes and adds parts. It keeps its own copy of this template.</p><button type="button" class="pgte-mini pgte-adv">Open the Advanced editor</button></div>' : '') +
         '<div class="pgte-group"><b>Start again</b><p class="pgte-note">Back to the template as it was made (Undo brings your version back).</p><button type="button" class="pgte-mini pgte-reset">Start again</button></div>';
     }
     pane.innerHTML = html;
@@ -141,7 +149,6 @@
       t.add = (t.add || []).filter(a => a.id !== id); if (!t.add.length) delete t.add; if (t.sections) { t.sections = t.sections.filter(q => q.k !== k); if (!t.sections.length) delete t.sections; } })));
     pane.querySelectorAll('.pgte-grip').forEach(g => g.addEventListener('pointerdown', ev => dragPart(ev, g.closest('.pgte-orow'))));
     pane.querySelectorAll('[data-text]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(); if (v) t[inp.dataset.text] = v; else delete t[inp.dataset.text]; })));
-    const adv = pane.querySelector('.pgte-adv'); if (adv) adv.addEventListener('click', () => { const id = E.id; close(); if (!E) PGCanvasEditor.open(id); });
     const rs = pane.querySelector('.pgte-reset'); if (rs) rs.addEventListener('click', () => change(t => { Object.keys(t).forEach(k => { if (k !== 'kind') delete t[k]; }); }));
   }
 

@@ -261,7 +261,7 @@
     if (!state || state.destroyed) return;
     var nodes = state.box.querySelectorAll('img[data-photo-id]');
     var sc = state.scroller, top0 = sc ? sc.getBoundingClientRect().top : 0;   // step 103: inside a box, the box scrolls
-    var rects = [], vh = sc ? (sc.clientHeight || 800) : (window.innerHeight || 800);
+    var rects = [], vh = sc ? (sc.clientHeight || 800) : (window.pgVH ? pgVH() : (window.innerHeight || 800));
     Array.prototype.forEach.call(nodes, function (img) {
       var r0 = img.getBoundingClientRect(), r = { top: r0.top - top0, bottom: r0.bottom - top0 };
       var near = r.bottom > -vh * 0.8 && r.top < vh * 1.8;

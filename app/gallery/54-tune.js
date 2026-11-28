@@ -166,7 +166,7 @@
 
   // step 107: the design kits — every canvas template's parts, ready to add to another canvas template
   function kits(exceptId) {
-    return (window.PGLayout ? PGLayout.list() : []).filter(l => l.canvas && l.id !== exceptId && (l.canvas.sections || []).length && (!l.hidden || l.group === 'kit' || /\(editor\)/i.test(l.name || '')))
+    return (window.PGLayout ? PGLayout.list() : []).filter(l => l.canvas && l.id !== exceptId && (l.canvas.sections || []).length && l.group !== 'old' && (!l.hidden || l.group === 'kit' || /\(editor\)/i.test(l.name || '')))
       .sort((a, b) => (b.group === 'kit') - (a.group === 'kit'))   // step 111: Extras (the films card) first
       .map(l => ({ id: l.id, name: (l.name || '').replace(/\s*\(editor\)\s*$/i, ''), parts: (l.canvas.sections || []).map((s, i) => ({ sec: s.id, name: sectionName(s, i) })) }));
   }

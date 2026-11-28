@@ -363,7 +363,7 @@
     if (q === 'original') return null;   // preview of the original Hub
     const G = typeof GALLERY !== 'undefined' && GALLERY ? GALLERY : {};
     if (window.PGHubDraft && PGHubDraft()) return customOf(PGHubDraft());   // the Hub editor's draft, previewed on this phone only
-    const id = q || (window.pgDemoRotates && pgDemoRotates('layout') ? pgDemoPick('layout', LAYOUTS.filter(l => l.group !== 'progress' && l.group !== 'canvas').map(l => l.id)) : G.layout || '');   // step 72: demo rotates
+    const id = q || (window.pgDemoRotates && pgDemoRotates('layout') ? pgDemoPick('layout', LAYOUTS.filter(l => l.group !== 'progress' && l.group !== 'canvas' && l.group !== 'old').map(l => l.id)) : G.layout || '');   // step 72: demo rotates
     if (id === 'custom') return G.custom && G.custom.blocks ? customOf(G.custom) : null;
     if (/^cv-/.test(id) && G.canvas && G.canvas.id === id && G.canvas.doc) return { id, name: G.canvas.name || 'Hub', story: 'canvas', tune: { doc: G.canvas.doc }, blocks: [] };   // step 77: a layout from a collection
     // (a ready layout can bring its own palette: "palette": { "id": "royal" })   // the wedding's own Hub (made in the Hub editor)

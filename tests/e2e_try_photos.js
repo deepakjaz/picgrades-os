@@ -51,11 +51,15 @@ const srv = http.createServer((req, res) => {
     await mp.evaluate(() => PGTemplateEditor.tab('more'));
     ok(!(await mp.$('.pgte-adv')), 'step 112: the Advanced editor is not offered until PicGrades turns it on for the wedding');
     call('setAdvanced', { token: admin, g: G, on: true }); await mp.evaluate(() => { GALLERY.advanced = true; PGTemplateEditor.tab('photos'); PGTemplateEditor.tab('more'); });
-    ok(await mp.isVisible('.pgte-adv'), 'once it is on, More offers the Advanced editor for a canvas template');
+    // step 113 (Deepak, 28 Nov): the Advanced editor moved from More to a "Try your photos ▾" switch under the name; it is drawn when the editor opens (checked below)
+    ok(!(await mp.$('.pgte-pane .pgte-adv')), 'step 113: More no longer holds the Advanced editor (it is a switch under the name)');
     await mp.tap('.pgte-apply'); await mp.waitForFunction(() => !document.querySelector('.pgte'), null, { timeout: 10000 }); await mp.waitForTimeout(600);
     let g = gal();
     ok(g.layout === 'custom' && g.custom.base === 'canvas-quiet' && g.custom.story.kind === 'canvas' && !g.custom.story.doc && g.custom.story.photos[slot] === chosen, 'Apply keeps only the choices (photo, hidden part, names) — no copy of the design');
     ok(call('canvasList', { g: G, coupleKey: ck }).layouts.filter(x => x.scope === 'wedding').length === 0, 'no layout copy is made');
+    await mp.evaluate(() => PGTemplateEditor.open('canvas-quiet')); await mp.waitForSelector('.pgte'); await mp.waitForTimeout(400);
+    ok(await mp.isVisible('.pgte-modebtn'), 'once it is on, the editor offers the Advanced editor for a canvas template (switch under the name)');
+    await mp.evaluate(() => PGTemplateEditor.close(true)); await mp.waitForTimeout(300);
     // a guest sees them, with the template's own scroll
     const gp = await ctx.newPage(); gp.on('pageerror', e => errors.push(e.message)); await gp.route('https://lh3.googleusercontent.com/**', r => { const id = (r.request().url().match(/\/d\/([^=?]+)/) || [])[1]; r.fulfill({ contentType: 'image/jpeg', body: bytesOf(id) }); });
     await gp.goto(URL); await gp.waitForSelector('#pgStory .pgc', { timeout: 10000 }); await gp.waitForTimeout(700);

@@ -150,7 +150,7 @@
   function enforceImageBudget() {
     if (!S || !S.imgs.length) return;
     const sc = S.scroller, top0 = sc ? sc.getBoundingClientRect().top : 0, left0 = sc ? sc.getBoundingClientRect().left : 0;   // step 103: inside a box
-    const vh = sc ? (sc.clientHeight || 800) : (window.innerHeight || 800);
+    const vh = sc ? (sc.clientHeight || 800) : (window.pgVH ? pgVH() : (window.innerHeight || 800));   // step 113: steady height
     const scored = [];
     for (let i = 0; i < S.imgs.length; i++) {
       const im = S.imgs[i];
@@ -713,13 +713,14 @@
     function updateScrollMotion() {
       if (!S) return;
       S.raf = 0;
-      enforceImageBudget();
+      const nowT = performance.now(); if (!S.budgetT || nowT - S.budgetT > 160) { S.budgetT = nowT; enforceImageBudget(); }   // step 113: not every frame (it measures every photo)
+      else if (!S.budgetLate) S.budgetLate = setTimeout(() => { if (S) { S.budgetLate = 0; S.budgetT = performance.now(); enforceImageBudget(); } }, 180);
       if (S.reduced) return;
 
       const sc = S.scroller;   // step 103: inside a preview / "Try your photos" box, the box scrolls (not the page)
       const top0 = sc ? sc.getBoundingClientRect().top : 0;
       const sy = sc ? sc.scrollTop : (window.scrollY || document.documentElement.scrollTop || 0);
-      const vh = sc ? (sc.clientHeight || 800) : (window.innerHeight || 800);
+      const vh = sc ? (sc.clientHeight || 800) : (window.pgVH ? pgVH() : (window.innerHeight || 800));   // step 113: steady height
 
       // 1. Shrinking opening cover (0% -> 25% scroll)
       if (S.heroCard) {
@@ -730,8 +731,8 @@
         S.heroCard.style.borderRadius = radius + 'px';
       }
 
-      // 2. Glancing photos (subtle vertical + horizontal drift as they pass)
-      if (!S.lowMem && S.glances.length) {
+      // 2. Glancing photos (subtle vertical + horizontal drift as they pass) — step 113: still on a slow phone
+      if (!S.lowMem && !window.pgCalm && S.glances.length) {
         for (let i = 0; i < S.glances.length; i++) {
           const g = S.glances[i];
           const r0 = g.el.getBoundingClientRect(), r = { top: r0.top - top0, bottom: r0.bottom - top0, height: r0.height };
@@ -766,7 +767,8 @@
     }
 
     S.onScroll = requestTick;
-    S.onResize = requestTick;
+    S.sk = window.pgScreenKey ? pgScreenKey() : '';
+    S.onResize = () => { const k = window.pgScreenKey ? pgScreenKey() : Math.random(); if (S && k === S.sk && !S.scroller) return; if (S) S.sk = k; requestTick(); };   // step 113: the address bar moving is not a resize
     (S.scroller || window).addEventListener('scroll', S.onScroll, { passive: true });
     window.addEventListener('resize', S.onResize, { passive: true });
     requestTick();

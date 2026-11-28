@@ -128,6 +128,7 @@
 .pgc-m-turn{opacity:0;transform:rotate(calc(24deg * var(--str,1))) scale(.92)}
 .pgc-m-bounce{opacity:0;transform:translate(calc(var(--mx,0) * 40px * var(--str,1)),calc(var(--my,1) * 40px * var(--str,1)))}
 .pgc-e.pgc-m-bounce{transition-timing-function:cubic-bezier(.34,1.56,.64,1)}
+.pgc-el[data-sc]>.pgc-body,.pgc-el[data-par]>.pgc-body{transition:none!important}
 .pgc-m-zoom-out{opacity:0;transform:scale(calc(1 + .2 * var(--str,1)))}
 .pgc-m-glide{opacity:0;transform:translate(calc(var(--mx,-1) * 70px * var(--str,1)),calc(var(--my,0) * 70px * var(--str,1)))}
 .pgc-e.pgc-m-glide{transition-timing-function:cubic-bezier(.16,1,.3,1)}
@@ -269,8 +270,8 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     // scroll depth (parallax): an element drifts a little slower or faster than the page
     const sc = opts.scroller || window;
     function onScroll() {
-      if (sraf || !pars.length || opts.still || opts.calm || document.documentElement.classList.contains('pg-lite') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;   // step 97: light mode keeps the page still (step 105: and reduced motion)
-      sraf = requestAnimationFrame(() => { sraf = 0; const vh = opts.scroller ? opts.scroller.clientHeight : window.innerHeight, top0 = opts.scroller ? opts.scroller.getBoundingClientRect().top : 0;
+      if (sraf || !pars.length || opts.still || opts.calm || window.pgCalm || document.documentElement.classList.contains('pg-lite') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;   // step 97: light mode keeps the page still (step 105: and reduced motion)
+      sraf = requestAnimationFrame(() => { sraf = 0; const vh = opts.scroller ? opts.scroller.clientHeight : (window.pgVH ? pgVH() : window.innerHeight), top0 = opts.scroller ? opts.scroller.getBoundingClientRect().top : 0;
         pars.forEach(x => { const r = x.getBoundingClientRect(), c = r.top - top0 + r.height / 2 - vh / 2, b = x.firstElementChild; if (!b) return;
           if (x.dataset.sc) { scApply(x, b, r, vh, top0); return; }   // step 105
           const sm = x.dataset.sm, prog = Math.max(0, Math.min(1, (vh - (r.top - top0)) / (vh * 0.75)));   // step 97: 0 when it comes in at the bottom, 1 once it is well on screen
@@ -367,7 +368,9 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     root.addEventListener('click', onClick);
     let rz = 0; const onResize = () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth; if (Math.abs(W - lastW) > 2) draw(); }); };
     window.addEventListener('resize', onResize);
-    const inst = { root, used: [], redraw: draw, destroy() { films.splice(0).forEach(f => f.destroy()); window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); if (vio) vio.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
+    const onCalm = () => pars.forEach(x => { const b = x.firstElementChild; if (b) ['scale', 'translate', 'rotate', 'filter', 'clipPath', 'opacity'].forEach(k => { b.style[k] = ''; }); });   // step 113: a slow phone — scroll effects settle where they end
+    document.addEventListener('pg:calm', onCalm);
+    const inst = { root, used: [], redraw: draw, destroy() { document.removeEventListener('pg:calm', onCalm); films.splice(0).forEach(f => f.destroy()); window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); if (vio) vio.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
     draw();
     return inst;
   }
