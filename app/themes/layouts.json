@@ -1159,7 +1159,7 @@
       "idea": "Structured iOS widget grid with a split-screen hero, quick guest actions, and balanced event tiles.",
       "theme": "bento-concierge",
       "blocks": [],
-      "group": "canvas",
+      "group": "old",
       "canvas": {
         "v": 1,
         "name": "Bento Concierge",
@@ -1560,7 +1560,7 @@
       "idea": "Fine-art monograph aesthetic with a 3-photo triptych, clean action row, and numbered chapter index.",
       "theme": "archive-monograph",
       "blocks": [],
-      "group": "canvas",
+      "group": "old",
       "canvas": {
         "v": 1,
         "name": "Archive Monograph",
@@ -3965,7 +3965,7 @@
       "idea": "An airy architectural grid with a 5-photo frieze on laptop (2 on phone) and gallery-first horizontal chapters.",
       "theme": "modern-pavilion",
       "blocks": [],
-      "group": "canvas",
+      "group": "old",
       "canvas": {
         "v": 1,
         "name": "Modern Pavilion",
@@ -6939,7 +6939,7 @@
     {
       "id": "bs-oh-baby-scroll",
       "name": "Oh Baby · Scroll",
-      "group": "progress",
+      "group": "old",
       "occasion": "babyshower",
       "blocks": [],
       "canvas": {
@@ -7750,7 +7750,7 @@
     {
       "id": "bs-oh-baby-story",
       "name": "Oh Baby · Story",
-      "group": "progress",
+      "group": "old",
       "occasion": "babyshower",
       "blocks": [],
       "canvas": {
@@ -8271,7 +8271,7 @@
     {
       "id": "bs-oh-baby-minimal",
       "name": "Oh Baby · Minimal",
-      "group": "progress",
+      "group": "old",
       "occasion": "babyshower",
       "blocks": [],
       "canvas": {

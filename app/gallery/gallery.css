@@ -961,7 +961,7 @@ body.pgv-info .pgv-top *,body.pgv-info .pgv-bar *{pointer-events:none}
 .fm-result .mk-btn-peach{width:100%}
 .fm-link{display:block;margin:10px auto 0;background:none;border:0;color:var(--ink-faint);text-decoration:underline;font:inherit;font-size:.75rem;cursor:pointer;min-height:36px}
 /* ===== Hub ===== */
-.pgh-hero{position:relative;width:100%;height:72vh;height:72dvh;min-height:420px;overflow:hidden;background:#0b0908;cursor:pointer}
+.pgh-hero{position:relative;width:100%;height:72vh;height:72svh;min-height:420px;overflow:hidden;background:#0b0908;cursor:pointer}
 .pgh-hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:0;transform:scale(1.06);transition:opacity 1.2s ease,transform 7s ease-out}
 .pgh-hero-img.is-on{opacity:1;transform:scale(1)}
 .pgh-hero-scrim{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 28%,transparent 50%,rgba(0,0,0,.72) 100%)}
@@ -1901,14 +1901,14 @@ body.pgmenu-on .pgmenu{transform:none}body.pgmenu-on .pgmenu-back{opacity:1;poin
 .psh-hero-track {
   position: relative;
   height: 132vh;
-  height: 132dvh;
+  height: 132svh;   /* step 113: svh does not change while Safari's address bar moves (dvh did, so the opening jumped) */
 }
 .psh-hero-sticky {
   position: sticky;
   top: 0;
   width: 100%;
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3382,8 +3382,8 @@ body[data-view="hub"] .pg-modebtn,body[data-view="hub"] .mk-stamp-badge,body[dat
 .pgcp-layout.pgcp-lrow .pgcp-chev{margin:0!important}
 /* clean-up #9 (Deepak, 25 Nov): the function cards on the Hub (Reel Edits, Post Edits, Add a moment) stay still —
    their little looping previews flashed like ads. The page's own scroll effects are not touched. */
-.pss .lp,.pss .lp *{animation:none!important}
-.pss .lp.sm img:first-child{opacity:1}
+:is(.pss,.pss-ov) .lp,:is(.pss,.pss-ov) .lp *{animation:none!important}
+:is(.pss,.pss-ov) .lp.sm img:first-child{opacity:1}
 .pss .lp .bars b{height:55%}.pss .lp .bars b:nth-child(2){height:85%}.pss .lp .bars b:nth-child(3){height:40%}.pss .lp .bars b:nth-child(4){height:70%}
 .pgl-reelcard .pgrm-scr img.on,.pgl-reelcard .pgrm-bars *{animation:none!important;transition:none!important}
 
@@ -3741,3 +3741,34 @@ body.pghp-on #pgStory .pgc-t-photo{outline:2px dashed color-mix(in srgb,var(--in
 .pgf-bar button{min-height:44px;min-width:44px;padding:0 14px;border-radius:22px;border:1px solid color-mix(in srgb,currentColor 25%,transparent);background:transparent;color:inherit;font:500 13px var(--font-sans);cursor:pointer}
 .pgf-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:16px;border:1.5px dashed color-mix(in srgb,currentColor 30%,transparent);border-radius:inherit;font-family:var(--font-sans)}
 .pgf-empty span{font-size:12.5px;opacity:.75;max-width:30ch}
+/* step 113: Try your photos ↔ Advanced — a small switch under the template name (like PicGrades ↔ Guest) */
+.pgte-mode{position:relative;display:inline-block}
+.pgte-modebtn{position:relative;margin-top:2px;height:22px;padding:0 8px;border:0;border-radius:11px;background:rgba(255,255,255,.12);color:inherit;font:600 11px var(--font-sans);white-space:nowrap;cursor:pointer}
+.pgte-modebtn::before{content:'';position:absolute;inset:-11px -4px}
+.pgte-modemenu{position:absolute;left:0;top:calc(100% + 8px);z-index:50;min-width:190px;padding:6px;border-radius:14px;background:#1c1916;box-shadow:0 12px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:2px}
+.pgte-modemenu[hidden]{display:none}
+.pgte-modemenu button{min-height:44px;padding:0 12px;border:0;border-radius:10px;background:none;color:#f5f0e8;font:600 13px var(--font-sans);text-align:left;cursor:pointer}
+.pgte-modemenu button.on{background:rgba(255,255,255,.1)}
+.pgte-modemenu button.on::after{content:' ✓';opacity:.7}
+/* step 113: one Yours list (a layout made in the Advanced editor can be removed) and a closed "Minimal and older" */
+.pgcp-cvmine{position:relative}
+.pgcp-cvmine .pgcp-lrow{padding-right:56px}
+.pgcp-cvdel{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:inherit;opacity:.6;font-size:15px;cursor:pointer}
+.pgcp-cvdel:hover{opacity:1}
+.pgcp-cvmine .pgcp-chev{display:none}
+details.pgcp-lfold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:44px}
+details.pgcp-lfold>summary::-webkit-details-marker{display:none}
+details.pgcp-lfold>summary::after{content:'';width:9px;height:9px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg);margin-right:8px;opacity:.6;transition:transform .2s}
+details.pgcp-lfold[open]>summary::after{transform:rotate(-135deg)}
+details.pgcp-lfold>summary h5{margin:0}
+/* step 113: the sign-in sheet opens ABOVE the "being prepared" page (it opened behind it, so Sign in seemed to do nothing) */
+.pg-signin{z-index:600}
+body.pg-draft-wait .pg-signin.show{visibility:visible}
+.pg-draft-staff a,.pg-draft-small a{display:inline-block;min-height:44px;line-height:44px;padding:0 4px}
+/* step 113: no scrollbar line inside the phone frame of a preview */
+.pgcp-pv-live{scrollbar-width:none}.pgcp-pv-live::-webkit-scrollbar{display:none}
+/* step 113: the Advanced editor's ⋯ menu above the drawn app header (its logo and ‹ ≡ buttons showed through the menu) */
+.pce97 .pce-top{position:relative;z-index:400}
+/* the Try your photos | Advanced switch fits the phone top bar */
+.pgte-top{position:relative;z-index:400}   /* step 113: the switch's menu opens over the design, not under it */
+.pgte-top .pgte-title:has(.pgte-mode){overflow:visible!important}

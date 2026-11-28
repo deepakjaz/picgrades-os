@@ -86,7 +86,8 @@ const srv = http.createServer((req, res) => {
   // open it again from its collection
   await openLook(); await pg.waitForSelector('.pgcp-layout[data-layout="' + lay.id + '"]');
   const heads = await pg.evaluate(() => [...document.querySelectorAll('.pgcp-lgroup h5')].map(h => h.textContent));
-  ok(heads[0] === 'Our layouts' && heads.indexOf('Stories') > 0, 'saved layouts come first in Hub layout: ' + heads.slice(0, 3).join(' / '));
+  // step 113 (Deepak, 28 Nov): one "Yours" list comes first; a collection follows it, still before the templates
+  ok((heads[0] === 'Our layouts' || (heads[0] === 'Yours' && heads[1] === 'Our layouts')) && heads.indexOf('Stories') > heads.indexOf('Our layouts'), 'saved layouts come first in Hub layout: ' + heads.slice(0, 3).join(' / '));
   await pg.click('.pgcp-layout[data-layout="' + lay.id + '"]'); await pg.waitForFunction(() => window.PGCanvasEditor && PGCanvasEditor.state() && PGCanvasEditor.state().doc);
   ok(await pg.evaluate(() => PGCanvasEditor.state().doc.name === 'Our evening' && PGCanvasEditor.state().src.mine), 'tap it: it opens in the editor with everything kept');
   await pg.evaluate(() => PGCanvasEditor.close(true)); await pg.waitForTimeout(300);

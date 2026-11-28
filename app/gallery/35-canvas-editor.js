@@ -99,7 +99,7 @@
     E = { role, mode: window.innerWidth >= 700 ? 'l' : 'p', sel: null, undo: [], redo: [], tab: 'add', sub: 'design', snap: 'free', src: {}, inst: null, zoom: 1, play: false,
       pages: hdrNow(), logo: undefined };   // step 99d: logo = a new logo picture (data URL), '' = remove it, undefined = unchanged   // step 78: zoom, Play, the app header's places
     build();
-    const start = (doc, src) => { E.doc = doc; E.src = src; E.saved = JSON.stringify(doc); draw(); panel(); tips(); };
+    const start = (doc, src) => { E.doc = doc; E.src = src; E.saved = JSON.stringify(doc); const er = E.el.querySelector('.pce-editor-row'); if (er) er.hidden = !tryBase(); draw(); panel(); tips(); };
     if (arg && typeof arg === 'object' && arg.doc) return start(clone(arg.doc), { id: arg.id || '', mine: !!arg.mine });
     if (arg === 'current') {   // "Design your own Hub": start from the Hub the wedding has now
       const G = GALLERY, C = G.custom || {};
@@ -129,6 +129,7 @@
     }
     start(starter(), {});
   }
+  function tryBase() { const b = E && E.src && E.src.base, l = b && window.PGLayout && PGLayout.find(b); return l && l.story === 'canvas' && window.PGTemplateEditor && PGTemplateEditor.handles(l.story) ? b : ''; }
   function setDrawer(open) {
     if (!E) return;
     E.drawerOpen = !!open;
@@ -161,7 +162,7 @@
       '<button type="button" class="pce-title" aria-label="Rename"><b></b><small>Tap a part to change it</small></button>' +
       '<span class="pce-gap"></span>' +
       '<div class="pce-more"><button type="button" class="pce-ic pce-more-btn" aria-label="More" aria-haspopup="true" aria-expanded="false">' + IC.more + '</button>' +
-        '<div class="pce-menu" hidden><div class="pce-menu-row"><span>Screen</span><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div>' +
+        '<div class="pce-menu" hidden><div class="pce-menu-row pce-editor-row" hidden><span>Editor</span><div class="pce-seg pce-edmode"><button type="button" data-ed="try">Try your photos</button><button type="button" data-ed="adv" class="on">Advanced</button></div></div><div class="pce-menu-row"><span>Screen</span><div class="pce-seg pce-mode"><button type="button" data-mode="p">Phone</button><button type="button" data-mode="l">Laptop</button></div></div>' +
         '<div class="pce-menu-row"><span>Placing</span><div class="pce-seg pce-snap"><button type="button" data-snap="simple">Simple</button><button type="button" data-snap="free">Free</button></div></div>' +
         '<div class="pce-menu-row"><span>Zoom</span><div class="pce-zrow"><button type="button" class="pce-zoom-toggle" hidden>100%</button><div class="pce-zoom-menu"><button type="button" data-z="-" aria-label="Smaller">−</button><b>100%</b><button type="button" data-z="+" aria-label="Bigger">+</button><button type="button" data-z="1">Fit</button></div></div></div>' +
         '<button type="button" class="pce-menu-item" data-menu="original">Back to original</button><button type="button" class="pce-menu-item" data-menu="rename">Rename this layout</button><button type="button" class="pce-menu-item" data-menu="save">Save as a copy / to a collection…</button></div></div>' +
@@ -178,6 +179,8 @@
     el.addEventListener('pointerdown', ev => { if (!menu.hidden && !ev.target.closest('.pce-more')) shutMenu(); });
     el.querySelector('.pce-mode').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) shutMenu(); if (b && b.dataset.mode !== E.mode) { E.mode = b.dataset.mode; draw(); panel(); } });
     el.querySelector('.pce-snap').addEventListener('click', e => { const b = e.target.closest('[data-snap]'); if (b) shutMenu(); if (b && b.dataset.snap !== E.snap) { E.snap = b.dataset.snap; draw(); panel(); if (E.snap === 'simple') showToast('Simple: parts snap to the grid. Set rows and columns in Pages.'); } });
+    // step 113: the switch back to Try your photos (like PicGrades ↔ Guest), for a layout made from a template Try your photos can open
+    el.querySelector('.pce-edmode').addEventListener('click', e => { const b = e.target.closest('[data-ed="try"]'); if (!b || !E) return; shutMenu(); const base = tryBase(); if (!base) return; close(); if (!E) PGTemplateEditor.open(base); });
     el.querySelectorAll('[data-menu]').forEach(b => b.addEventListener('click', () => { shutMenu(); if (b.dataset.menu === 'rename') rename(); else if (b.dataset.menu === 'original') backToOriginal(); else saveDialog(false); }));
     el.querySelector('.pce-drawer-toggle').addEventListener('click', () => setDrawer(!E.drawerOpen));
     el.querySelector('.pce-zoom-toggle').addEventListener('click', () => { E.zoom = 1; draw(); });
@@ -604,7 +607,7 @@
   function collectionsPane() { return '<div class="pce-cols"><p class="pce-note">Loading your layouts…</p></div>'; }
   function fillCollections(pane) {
     const box = pane.querySelector('.pce-cols'), staff = E.role === 'picgrades';
-    const ready = (window.PGLayout ? PGLayout.list() : []).filter(l => (l.canvas || l.editor || (!l.story && (l.blocks || []).length)) && (staff || l.group !== 'progress'));
+    const ready = (window.PGLayout ? PGLayout.list() : []).filter(l => (l.canvas || l.editor || (!l.story && (l.blocks || []).length)) && l.group !== 'old' && (staff || l.group !== 'progress'));
     const card = (id, n, note) => '<button type="button" data-open="' + esc(id) + '"><b>' + esc(n) + '</b>' + (note ? '<small>' + esc(note) + '</small>' : '') + '</button>';
     const paint = mine => { if (!E || E.tab !== 'collections' || !box.isConnected) return;
       box.innerHTML = (mine.length ? '<div class="pce-sub">Your layouts</div><div class="pce-adds">' + mine.map(x => card(x.id, x.name, x.collectionName || '')).join('') + '</div>' : '') +

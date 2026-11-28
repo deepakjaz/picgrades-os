@@ -149,7 +149,7 @@ const C3={id:'c3',src:'Claude',name:'Cloud Pages',venue:'Mountain destination',f
   ${QL().map(q=>`<div class="rise" style="font:italic 20px 'Instrument Serif';margin:22px 0;border-left:2px solid var(--acc);padding-left:14px">${q}</div>`).join('')}
   <div style="font-size:11px;opacity:.6;margin-top:40px">Photographed by ${STU}</div></section>
  ${ov(L('Drawer tab',`↑ Make something`,'div','onclick="document.getElementById(\'c3dr\').classList.add(\'open\')" style="pointer-events:auto;position:absolute;bottom:84px;left:50%;transform:translateX(-50%);z-index:41;background:var(--card);color:var(--ink);padding:8px 18px;border-radius:18px 18px 0 0;font:600 12px Jost;cursor:pointer;box-shadow:0 -4px 14px #0002"'))}
- ${ov(`<div id="c3dr" data-l="Create drawer" style="pointer-events:auto;position:absolute;left:0;right:0;bottom:0;height:470px;z-index:45;background:var(--bg);border-radius:28px 28px 0 0;padding:16px 22px;transform:translateY(100%);transition:transform .5s cubic-bezier(.2,.9,.2,1);box-shadow:0 -10px 40px #0004">
+ ${ov(`<div id="c3dr" data-l="Create drawer" style="pointer-events:auto;position:absolute;left:0;right:0;bottom:0;height:470px;z-index:45;background:var(--bg);color:var(--ink);font:13px/1.45 Jost,system-ui,sans-serif;border-radius:28px 28px 0 0;padding:16px 22px;transform:translateY(100%);transition:transform .5s cubic-bezier(.2,.9,.2,1);box-shadow:0 -10px 40px #0004">
   <div onclick="this.parentNode.classList.remove('open')" style="width:50px;height:5px;border-radius:3px;background:#5D6C7066;margin:0 auto 18px;cursor:pointer"></div>
   <div style="font:34px 'Instrument Serif'">Make something</div><div style="font-size:12px;opacity:.7">from this wedding · guests and the couple</div>
   <div style="display:flex;justify-content:space-between;margin-top:26px">${CR.map(x=>`<button data-l="Create · ${x[1]}" onclick="PGSS.a(this,'${x[0]}')" style="background:none;border:0;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:flex-start;gap:7px">${pv(x[0],100,'14px')}<b style="font-size:12.5px">${x[1]}</b><small style="opacity:.65;margin-top:-6px">${x[2]}</small></button>`).join('')}</div></div>`)}
@@ -477,20 +477,20 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
   }
   const CSS = `
 .pss{position:relative;z-index:1;width:390px;margin:0 auto;background:var(--bg);color:var(--ink);font:13px/1.45 Jost,system-ui,sans-serif;overflow-x:clip;isolation:isolate;-webkit-tap-highlight-color:transparent}
-.pss *,.pss *:before,.pss *:after{box-sizing:border-box}
+:is(.pss,.pss-ov) *,:is(.pss,.pss-ov) *:before,:is(.pss,.pss-ov) *:after{box-sizing:border-box}
 .pss button{font:inherit;color:inherit}
 .pss img,.pss svg{max-width:none}
-.pss .cover{width:100%;height:100%;object-fit:cover;display:block}
+:is(.pss,.pss-ov) .cover{width:100%;height:100%;object-fit:cover;display:block}
 .pss .kb{animation:pss-kb 12s ease-in-out infinite}@keyframes pss-kb{50%{transform:scale(1.1) translate(-2%,-1%)}}
-.pss .lp{position:relative;overflow:hidden}
-.pss .lp.sm img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
-.pss .lp.sm img:nth-child(1){animation:pss-f1 1.2s steps(1) infinite}.pss .lp.sm img:nth-child(2){animation:pss-f2 1.2s steps(1) infinite}.pss .lp.sm img:nth-child(3){animation:pss-f3 1.2s steps(1) infinite}
+:is(.pss,.pss-ov) .lp{position:relative;overflow:hidden}
+:is(.pss,.pss-ov) .lp.sm img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+:is(.pss,.pss-ov) .lp.sm img:nth-child(1){animation:pss-f1 1.2s steps(1) infinite}:is(.pss,.pss-ov) .lp.sm img:nth-child(2){animation:pss-f2 1.2s steps(1) infinite}:is(.pss,.pss-ov) .lp.sm img:nth-child(3){animation:pss-f3 1.2s steps(1) infinite}
 @keyframes pss-f1{0%{opacity:1;transform:rotate(-4deg)}33%,100%{opacity:0}}@keyframes pss-f2{0%,32%{opacity:0}33%{opacity:1;transform:rotate(3deg)}66%,100%{opacity:0}}@keyframes pss-f3{0%,65%{opacity:0}66%{opacity:1;transform:rotate(-2deg)}100%{opacity:0}}
-.pss .lp.beat img{animation:pss-beat .6s cubic-bezier(.34,1.56,.64,1) infinite}@keyframes pss-beat{25%{transform:scale(1.1)}50%{transform:scale(.96)}75%{transform:scale(1.07)}}
-.pss .lp .bars{position:absolute;left:4px;right:4px;bottom:3px;display:flex;gap:2px;align-items:flex-end;height:12px}.pss .lp .bars b{flex:1;background:#fff;border-radius:1px;animation:pss-bar .6s ease-in-out infinite alternate}
-.pss .lp .bars b:nth-child(2){animation-delay:.15s}.pss .lp .bars b:nth-child(3){animation-delay:.3s}.pss .lp .bars b:nth-child(4){animation-delay:.45s}@keyframes pss-bar{from{height:3px}to{height:12px}}
-.pss .lp.snap>div{position:absolute;inset:4px;background:#fff;padding:2px;border-radius:4px;animation:pss-snap 1.8s cubic-bezier(.22,1,.36,1) infinite}@keyframes pss-snap{0%,100%{transform:scale(1.25) rotate(8deg);opacity:.7}35%,80%{transform:none;opacity:1}}
-.pss .lp.snap img{width:100%;height:100%;object-fit:cover;border-radius:2px}
+:is(.pss,.pss-ov) .lp.beat img{animation:pss-beat .6s cubic-bezier(.34,1.56,.64,1) infinite}@keyframes pss-beat{25%{transform:scale(1.1)}50%{transform:scale(.96)}75%{transform:scale(1.07)}}
+:is(.pss,.pss-ov) .lp .bars{position:absolute;left:4px;right:4px;bottom:3px;display:flex;gap:2px;align-items:flex-end;height:12px}:is(.pss,.pss-ov) .lp .bars b{flex:1;background:#fff;border-radius:1px;animation:pss-bar .6s ease-in-out infinite alternate}
+:is(.pss,.pss-ov) .lp .bars b:nth-child(2){animation-delay:.15s}:is(.pss,.pss-ov) .lp .bars b:nth-child(3){animation-delay:.3s}:is(.pss,.pss-ov) .lp .bars b:nth-child(4){animation-delay:.45s}@keyframes pss-bar{from{height:3px}to{height:12px}}
+:is(.pss,.pss-ov) .lp.snap>div{position:absolute;inset:4px;background:#fff;padding:2px;border-radius:4px;animation:pss-snap 1.8s cubic-bezier(.22,1,.36,1) infinite}@keyframes pss-snap{0%,100%{transform:scale(1.25) rotate(8deg);opacity:.7}35%,80%{transform:none;opacity:1}}
+:is(.pss,.pss-ov) .lp.snap img{width:100%;height:100%;object-fit:cover;border-radius:2px}
 .pss .pt{position:absolute;pointer-events:none;z-index:6;top:-20px;animation:pss-fall linear infinite}
 @keyframes pss-fall{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:.95}100%{transform:translate(30px,520px) rotate(380deg);opacity:0}}
 .pss .tw{position:absolute;border-radius:50%;animation:pss-tw 1.6s ease-in-out infinite;pointer-events:none}@keyframes pss-tw{50%{opacity:.25;transform:scale(.6)}}
@@ -574,10 +574,10 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
     const mo = opts.dark == null ? new MutationObserver(recolour) : null; if (mo) mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-tkg-theme'] });
     const cover = photoFn('s58') || photoFn('e0'); if (cover && window.pgImg) bd.style.backgroundImage = 'url("' + pgImg(cover, 800) + '")';
     // the opening stage: a 390 × 844 design, scaled down on shorter screens so nothing hides under the bottom bar
-    const zoomOf = () => Math.min(1, (scroller ? scroller.clientWidth : (window.innerWidth || 390)) / 390);
+    const zoomOf = () => Math.min(1, ((opts.width && opts.width()) || (scroller ? scroller.clientWidth : (window.innerWidth || 390))) / 390);   // step 113: the width the caller draws at (a zoomed box is not zoomed twice)
     function fit() {
       const z = zoomOf(); root.style.zoom = z === 1 ? '' : z; ovEl.style.zoom = root.style.zoom;
-      const H = (scroller ? scroller.clientHeight : window.innerHeight) / z;
+      const H = (scroller ? scroller.clientHeight : (window.pgVH ? pgVH() : window.innerHeight)) / z;   // step 113: a steady height
       root.querySelectorAll('[data-stage] > div:first-child').forEach(st => {
         let f = st.querySelector(':scope > .pss-fit'); if (st._h0 == null) st._h0 = st.style.height;
         if (H >= 844) { st.style.height = st._h0; if (f) f.style.transform = ''; return; }
@@ -593,7 +593,7 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
       querySelector: s => root.querySelector(s) || ovEl.querySelector(s), querySelectorAll: s => root.querySelectorAll(s),
       scrollTo: o => scroller.scrollTo(o)
     } : {
-      get scrollTop() { return Math.max(0, -root.getBoundingClientRect().top / zoomOf()); }, get clientHeight() { return window.innerHeight / zoomOf(); },
+      get scrollTop() { return Math.max(0, -root.getBoundingClientRect().top / zoomOf()); }, get clientHeight() { return (window.pgVH ? pgVH() : window.innerHeight) / zoomOf(); },
       getBoundingClientRect: () => ({ top: 0, left: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight }),
       querySelector: s => root.querySelector(s) || ovEl.querySelector(s), querySelectorAll: s => root.querySelectorAll(s),
       scrollTo: o => window.scrollTo({ top: root.getBoundingClientRect().top + window.scrollY + (o.top || 0) * zoomOf(), behavior: o.behavior })
@@ -605,7 +605,8 @@ const G3={id:'g3',col:'gemini',src:'Gemini',name:'Alabaster Gallery · Minimal L
       root.querySelectorAll('.rise:not(.in)').forEach(x => { if (x.getBoundingClientRect().top < lim) x.classList.add('in'); });
     }
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
-    const onResize = () => { fit(); onScroll(); };
+    let sk = window.pgScreenKey ? pgScreenKey() : '', bw = scroller ? scroller.clientWidth + 'x' + scroller.clientHeight : '';
+    const onResize = () => { const k = window.pgScreenKey ? pgScreenKey() : Math.random(), b = scroller ? scroller.clientWidth + 'x' + scroller.clientHeight : ''; if (k === sk && b === bw) return; sk = k; bw = b; fit(); onScroll(); };   // step 113: the address bar moving is not a resize
     const sc = scroller || window; sc.addEventListener('scroll', onScroll, { passive: true }); window.addEventListener('resize', onResize);
     tick(); setTimeout(tick, 400);
     // tap a photo in the editor = change it

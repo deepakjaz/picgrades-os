@@ -17,6 +17,28 @@ function pgHookable(name) {
     return r;
   };
 }
+// ---------- step 113: a steady screen height, and calm motion on slow phones ----------
+// iPhone Safari changes the screen height while you scroll (the address bar hides and shows). Templates that sized
+// themselves from that height kept re-measuring mid-scroll, so photos jumped and shook. pgVH() keeps the height it
+// first saw for this width; only a real change (turning the phone, the keyboard) counts.
+window.pgVH = (function () {
+  let w = 0, hh = 0;
+  return function () {
+    const iw = window.innerWidth || 390, ih = window.innerHeight || 800;
+    if (!hh || Math.abs(iw - w) > 40 || Math.abs(ih - hh) > 220) { w = iw; hh = ih; document.documentElement.style.setProperty('--pg-vh', (hh / 100) + 'px'); }
+    return hh;
+  };
+})();
+pgVH();
+window.pgScreenKey = () => (window.innerWidth || 0) + 'x' + pgVH();   // changes only on a real resize (not the address bar)
+// a phone that cannot keep up while scrolling (under ~25 frames a second for a while) gets calm motion: the scroll
+// effects stop moving things, so nothing shakes. Templates read window.pgCalm; the 'pg-calm' class is on <html>.
+(function () {
+  let last = 0, slow = 0, frames = 0, on = false, raf = 0;
+  const step = t => { raf = 0; if (last) { frames++; if (t - last > 40) slow++; } last = t; if (frames >= 45) { if (slow / frames > 0.5) { window.pgCalm = true; document.documentElement.classList.add('pg-calm'); document.dispatchEvent(new Event('pg:calm')); } frames = slow = 0; } if (on) raf = requestAnimationFrame(step); };
+  let stopT = 0;
+  document.addEventListener('scroll', () => { if (window.pgCalm) return; if (!on) { on = true; last = 0; raf = requestAnimationFrame(step); } clearTimeout(stopT); stopT = setTimeout(() => { on = false; }, 160); }, { passive: true, capture: true });
+})();
 const API = (window.PG_CONFIG || {}).apiUrl;
 // a photographer's page (/p/<name>) uses the same app; its id is 'p-<name>' so nothing mixes with a wedding
 const PG_STUDIO_SLUG = (new URLSearchParams(location.search).get('p') || (location.pathname.match(/\/p\/([a-z0-9-]+)/) || [])[1] || '').trim().toLowerCase();
@@ -727,6 +749,8 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
       more.querySelector('a').addEventListener('click', e => { e.preventDefault(); ready.then(() => window.PGLinks && PGLinks.signIn()); }); }
     else if (PG_AS === 'couple') { more.textContent = 'This couple link is not valid. Please ask your photographer for the right link.'; inner.appendChild(more); }
     else if (ck) { more.innerHTML = 'Are you the couple? <a href="' + pgLinkFor('couple') + '">Open your couple link</a>.'; inner.appendChild(more); }
+    // step 113: from the guest link too — the photographer and PicGrades open their own link, where they sign in to see the draft
+    if (!PG_STAFF_LINK && PG_AS !== 'couple') { const st = document.createElement('p'); st.className = 'pg-draft-small pg-draft-staff'; st.innerHTML = 'Photographer or PicGrades? Open your own link: <a href="' + pgLinkFor('photographer') + '">Photographer</a> · <a href="' + pgLinkFor('picgrades') + '">PicGrades</a>'; inner.appendChild(st); }
   }
   function start(res, fromKept) {
     GALLERY = pgDemoMerge(res.gallery); GALLERY.likes = GALLERY.likes || {}; GALLERY.notes = GALLERY.notes || {}; GALLERY.mine = Object.assign(pgLoadMine(), GALLERY.mine || {});
