@@ -74,11 +74,12 @@
     if ('pages' in body) d.pages = Object.assign({}, d.pages || {}, parse(body.pages));
     if ('features' in body) d.features = Object.assign({}, d.features || {}, parse(body.features));
     if ('custom' in body) d.custom = parse(body.custom);
+    if ('films' in body) d.films = parse(body.films) || [];   // step 111
     if ('logo' in body) d.logo = String(body.logo || '');   // step 99d
     if ('version' in body) { const v = parse(body.version); if (v && v.id) { d.versions = Object.assign({}, d.versions || {}); if (v.custom) d.versions[v.id] = v.custom; else delete d.versions[v.id]; } }   // step 76
     try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {}
     const g = pgDemoMerge(Object.assign({}, GALLERY));
-    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {}, custom: g.custom || { blocks: [] }, versions: g.versions || {}, logoUrl: g.logoUrl || '' });
+    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {}, custom: g.custom || { blocks: [] }, versions: g.versions || {}, logoUrl: g.logoUrl || '', films: g.films || [] });
   }
   function showLook() {
     if (window.PGTheme) PGTheme.apply(GALLERY.theme || '');
@@ -196,7 +197,7 @@
         });
       }
       const copies = new Set(layouts.map(l => l.editor).filter(Boolean));   // step 101: the canvas copies of the story templates are not offered (one version of each template)
-      const rest = f => layouts.filter(l => !shownIds[l.id] && !copies.has(l.id) && f(l)).map(l => layoutRow(l, false, false));
+      const rest = f => layouts.filter(l => !shownIds[l.id] && !copies.has(l.id) && l.group !== 'kit' && f(l)).map(l => layoutRow(l, false, false));
       group('Stories', 'One long page that tells the wedding as a story while guests scroll.', rest(story));
       const storyNames = {}; layouts.filter(story).forEach(l => { storyNames[l.name] = 1; });
       group('Free canvas', 'Every part placed by hand, separately for phone and laptop.', rest(canvas).map(r => { const n = r.querySelector('b'); if (n && storyNames[n.textContent]) n.textContent += ' · canvas'; return r; }));   // same name as a story: tell them apart

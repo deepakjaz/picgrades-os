@@ -315,6 +315,7 @@ function pgDemoMerge(g) {
   if (d.custom && d.custom.blocks) g.custom = d.custom;
   if (d.story) g.story = d.story;   // story photos chosen on this phone (step 56)
   if (d.versions) g.versions = Object.assign({}, g.versions || {}, d.versions);
+  if ('films' in d) g.films = d.films;   // step 111: films tried on this phone (demo)
   if ('logo' in d) g.logoRaw = d.logo;   // step 99d: a logo tried on this phone
   if (g.logoRaw != null) g.logoUrl = (g.pages || {}).logo === 'image' ? g.logoRaw : '';
   if (d.canvas) g.canvas = d.canvas;   // step 77: a free-canvas layout made on this phone   // step 76: each layout's version made on this phone
@@ -693,6 +694,7 @@ document.getElementById('mkQuickCurlBtn').addEventListener('click', () => { nav.
     GALLERY.photographer = res.gallery.photographer; GALLERY.studio = res.gallery.studio; GALLERY.credit = res.gallery.credit;
     GALLERY.theme = res.gallery.theme || ''; GALLERY.layout = res.gallery.layout || ''; GALLERY.features = res.gallery.features || {}; GALLERY.pages = res.gallery.pages || {}; GALLERY.custom = res.gallery.custom || { blocks: [] };
     if (!GALLERY.demo) { if ((GALLERY.logoUrl || '') !== (res.gallery.logoUrl || '')) { GALLERY.logoUrl = res.gallery.logoUrl || ''; pgMonogram(); } }   // step 99d: a new logo reaches returning guests
+    if (!GALLERY.demo && JSON.stringify(GALLERY.films || []) !== JSON.stringify(res.gallery.films || [])) { GALLERY.films = res.gallery.films || []; if (window.PGLayout) setTimeout(() => PGLayout.refresh(), 0); }   // step 111: new films reach returning guests
     if (window.PGHeader) PGHeader.apply();   // step 99d: header choices may have changed
     if (!GALLERY.demo) GALLERY.canvas = res.gallery.canvas || null;   // step 98b: was never refreshed, so the Hub fell back to the plain one
     if (lookChanged) pgRenderHub();   // theme, layout and switches follow the Hub (14–16)

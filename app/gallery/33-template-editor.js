@@ -113,6 +113,7 @@
         '<label class="pgte-text"><small>' + (x.button ? 'Button' : 'Words') + '</small>' + (String(x.text).length > 40 ? '<textarea rows="2" maxlength="120" data-tx="' + esc(x.key) + '" placeholder="' + esc(x.text) + '">' + esc(tx[x.key] || '') + '</textarea>' : '<input type="text" maxlength="120" data-tx="' + esc(x.key) + '" placeholder="' + esc(x.text) + '" value="' + esc(tx[x.key] || '') + '">') + '</label>').join('');
     } else {
       html = '<div class="pgte-group"><b>Motion</b><p class="pgte-note">' + (E.kind === 'canvas' ? 'Calm: parts only fade in — nothing keeps moving. ' : '') + 'Off keeps every part still (the page still opens as guests scroll).</p>' + seg('motion', t.motion === 'off' ? 'off' : t.motion === 'calm' ? 'calm' : 'on', E.kind === 'canvas' ? [['on', 'On'], ['calm', 'Calm'], ['off', 'Off']] : [['on', 'On'], ['off', 'Off']]) + '</div>' +
+        filmsGroup() +
         '<div class="pgte-group"><b>Find me button</b><p class="pgte-note">Floats on the page while guests scroll.</p>' + seg('findme', t.findme || 'right', [['left', 'Left'], ['right', 'Right'], ['off', 'Off']]) + '</div>' +
         (E.kind === 'canvas' && window.PGCanvasEditor ? '<div class="pgte-group"><b>Move things around</b><p class="pgte-note">The Advanced editor moves, resizes and adds parts. It keeps its own copy of this template.</p><button type="button" class="pgte-mini pgte-adv">Open the Advanced editor</button></div>' : '') +
         '<div class="pgte-group"><b>Start again</b><p class="pgte-note">Back to the template as it was made (Undo brings your version back).</p><button type="button" class="pgte-mini pgte-reset">Start again</button></div>';
@@ -133,6 +134,8 @@
     pane.querySelectorAll('.pgte-fontrow').forEach(d => d.addEventListener('toggle', () => { if (d.open) pane.querySelectorAll('.pgte-fontrow').forEach(o => { if (o !== d) o.open = false; }); }));   // one open at a time
     pane.querySelectorAll('[data-font]').forEach(b => b.addEventListener('click', () => { const k = b.closest('[data-fk]').dataset.fk, f = b.dataset.font;
       change(t => { t.fonts = Object.assign({}, t.fonts); if (f) t.fonts[k] = f; else delete t.fonts[k]; if (!Object.keys(t.fonts).length) delete t.fonts; }); }));
+    pane.querySelectorAll('[data-film-del]').forEach(b => b.addEventListener('click', () => { const F = (GALLERY.films || []).slice(); F.splice(+b.dataset.filmDel, 1); saveFilms(F); }));
+    const fa = pane.querySelector('[data-film-add]'); if (fa) fa.addEventListener('change', () => { const v = PGCanvas.videoFromLink(fa.value); if (!v) { showToast('That link is not a YouTube, Shorts or Google Drive video'); return; } if ((GALLERY.films || []).some(f => f.id === v.id)) { fa.value = ''; showToast('That video is already there'); return; } fa.value = ''; saveFilms((GALLERY.films || []).concat([v])); });
     const ak = pane.querySelector('.pgte-addkit'); if (ak) ak.addEventListener('click', () => pickKit());   // step 107
     pane.querySelectorAll('[data-unkit]').forEach(b => b.addEventListener('click', () => change(t => { const k = b.dataset.unkit, id = k.split('-')[0];
       t.add = (t.add || []).filter(a => a.id !== id); if (!t.add.length) delete t.add; if (t.sections) { t.sections = t.sections.filter(q => q.k !== k); if (!t.sections.length) delete t.sections; } })));
@@ -142,6 +145,17 @@
     const rs = pane.querySelector('.pgte-reset'); if (rs) rs.addEventListener('click', () => change(t => { Object.keys(t).forEach(k => { if (k !== 'kind') delete t[k]; }); }));
   }
 
+  // step 111: the wedding's films (YouTube, Shorts, Drive) — for the films card. They belong to the wedding, so they are saved at once.
+  function filmsGroup() {
+    if (E.kind !== 'canvas') return '';
+    const F = GALLERY.films || [], name = f => f.k === 'drive' ? 'Drive video' : f.sh ? 'YouTube Short' : 'YouTube video';
+    return '<div class="pgte-group"><b>Your videos</b><p class="pgte-note">They play one after another in the films card (Parts › Add a part › Extras).</p>' +
+      F.map((f, i) => '<div class="pgte-layer"><span>' + name(f) + ' · ' + esc(f.id.slice(0, 8)) + '…</span><button type="button" data-film-del="' + i + '">Remove</button></div>').join('') +
+      (F.length < 12 ? '<label class="pgte-text"><small>Add a link</small><input type="url" inputmode="url" data-film-add placeholder="YouTube, Shorts or Google Drive link"></label>' : '') + '</div>';
+  }
+  function saveFilms(list) {
+    return PGControl.save({ films: JSON.stringify(list) }).then(r => { GALLERY.films = r.films || list; draw(); panel(); showToast('Videos saved'); }).catch(e => showToast(e.message || 'Could not save'));
+  }
   // step 108: fonts for a canvas template — closed rows; tap one to see the fonts, each written in itself
   function fontRows(t) {
     if (E.kind !== 'canvas' || !window.PGCanvas) return '';

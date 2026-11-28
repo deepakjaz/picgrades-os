@@ -222,6 +222,11 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     if (t === 'text') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || '') + '</div>';
     if (t === 'credit') { const stu = data.studio && data.studio !== 'Your photographer' && !(window.GALLERY && GALLERY.credit === false) ? data.studio : ''; return stu ? '<div class="pgc-body pgc-txt" style="' + st + '">' + esc((el.text || 'Photographed by') + ' ' + stu) + '</div>' : null; }
     if (t === 'shape') return '<div class="pgc-body" style="' + (st || 'background:currentColor') + '"></div>';
+    if (t === 'films') {   // step 111: the couple's films, one after another (56-films.js). Nothing to show a guest → the part is left out
+      const owner = !!(window.PGControl && ['couple', 'photographer', 'picgrades'].indexOf(PGControl.role()) > -1);
+      if (!(data.films || []).length && !owner && !opts.editing) return null;
+      return '<div class="pgc-body pgc-films" data-films style="' + st + '"></div>';
+    }
     if (t === 'video') {   // step 97b: poster first; the player comes in when it is on screen (or on a tap)
       if (!vidOk(el.src)) return ctx.editing ? '<div class="pgc-body pgc-vid" style="' + st + '"><div class="pgc-vnone">Video · paste a YouTube or Drive link</div></div>' : null;
       const loop = el.v !== 'player' && el.src.k === 'yt', box = sp ? (num(sp.w, 100) / num(sp.h, 56)) : 16 / 9, vr = el.src.sh ? 9 / 16 : 16 / 9;
@@ -259,7 +264,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     ensure(); opts = opts || {};
     const root = document.createElement('div'); root.className = 'pgc';
     box.appendChild(root);
-    let io = null, vio = null, lastW = 0, pars = [], sraf = 0;
+    let io = null, vio = null, lastW = 0, pars = [], sraf = 0; const films = [];
     function startVid(b) { if (!b || b.querySelector('iframe')) return; const [k, id] = b.dataset.vid.split(':'), f = document.createElement('div'); f.innerHTML = vidFrame({ k, id }, b.dataset.loop === '1'); const fr = f.firstChild; if (b.dataset.fit) fr.style.cssText = b.dataset.fit; const pl = b.querySelector('.pgc-vplay'); if (pl) pl.remove(); b.appendChild(fr); }
     // scroll depth (parallax): an element drifts a little slower or faster than the page
     const sc = opts.scroller || window;
@@ -348,6 +353,9 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
         vio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { startVid(e.target); vio.unobserve(e.target); } }), { root: opts.scroller || null, rootMargin: '200px 0px' });
         root.querySelectorAll('.pgc-vid[data-loop="1"]').forEach(x => vio.observe(x));
       }
+      // step 111: the films card plays the wedding's videos (never in the editor)
+      films.splice(0).forEach(f => f.destroy()); const owner = !!(window.PGControl && ['couple', 'photographer', 'picgrades'].indexOf(PGControl.role()) > -1);
+      if (window.PGFilms) root.querySelectorAll('[data-films]').forEach(n => films.push(PGFilms.mount(n, data.films || [], { owner, scroller: opts.scroller, still: opts.still || opts.editing || lite })));
       inst.used = ctx.used.filter(Boolean);
     }
     const onClick = e => {
@@ -359,7 +367,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     root.addEventListener('click', onClick);
     let rz = 0; const onResize = () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth; if (Math.abs(W - lastW) > 2) draw(); }); };
     window.addEventListener('resize', onResize);
-    const inst = { root, used: [], redraw: draw, destroy() { window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); if (vio) vio.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
+    const inst = { root, used: [], redraw: draw, destroy() { films.splice(0).forEach(f => f.destroy()); window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); if (vio) vio.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
     draw();
     return inst;
   }

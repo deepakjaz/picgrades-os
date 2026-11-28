@@ -12765,6 +12765,87 @@
           }
         ]
       }
+    },
+    {
+      "id": "kit-extras",
+      "name": "Extras",
+      "group": "kit",
+      "hidden": true,
+      "blocks": [],
+      "idea": "Step 111: parts for any template's design kit (not a template of its own)",
+      "canvas": {
+        "v": 1,
+        "name": "Extras",
+        "colors": {
+          "bg": "#f6f0e6",
+          "ink": "#2b2420",
+          "acc": "#b08a4a",
+          "acc2": "#d9c4a0",
+          "card": "#ffffff"
+        },
+        "fonts": {
+          "head": "Cormorant Garamond",
+          "body": "Jost"
+        },
+        "sections": [
+          {
+            "id": "films",
+            "h": {
+              "p": 420,
+              "l": 640
+            },
+            "els": [
+              {
+                "id": "films-head",
+                "t": "text",
+                "p": {
+                  "x": 24,
+                  "y": 30,
+                  "w": 342,
+                  "h": 44
+                },
+                "l": {
+                  "x": 110,
+                  "y": 50,
+                  "w": 980,
+                  "h": 60
+                },
+                "s": {
+                  "font": "Cormorant Garamond",
+                  "size": 30,
+                  "italic": true,
+                  "align": "center"
+                },
+                "sl": {
+                  "size": 40
+                },
+                "text": "Our films",
+                "m": "fade"
+              },
+              {
+                "id": "films-tv",
+                "t": "films",
+                "p": {
+                  "x": 16,
+                  "y": 88,
+                  "w": 358,
+                  "h": 300
+                },
+                "l": {
+                  "x": 200,
+                  "y": 130,
+                  "w": 800,
+                  "h": 480
+                },
+                "s": {
+                  "radius": 16
+                },
+                "m": "rise"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }
