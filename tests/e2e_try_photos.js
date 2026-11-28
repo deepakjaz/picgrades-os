@@ -49,7 +49,9 @@ const srv = http.createServer((req, res) => {
     ok(await mp.evaluate(k => { const e = document.querySelector('.pgte-scroll .pgc-el[data-el="' + k + '"]'); return !e || e.offsetParent === null || getComputedStyle(e).display === 'none'; }, hideKey), 'Parts: hiding a part takes it off the template');
     await mp.evaluate(() => PGTemplateEditor.tab('words')); await mp.fill('.pgte-pane [data-text=names]', 'Mira & Dev'); await mp.dispatchEvent('.pgte-pane [data-text=names]', 'change'); await mp.waitForTimeout(300);
     await mp.evaluate(() => PGTemplateEditor.tab('more'));
-    ok(await mp.isVisible('.pgte-adv'), 'More offers the Advanced editor for a canvas template');
+    ok(!(await mp.$('.pgte-adv')), 'step 112: the Advanced editor is not offered until PicGrades turns it on for the wedding');
+    call('setAdvanced', { token: admin, g: G, on: true }); await mp.evaluate(() => { GALLERY.advanced = true; PGTemplateEditor.tab('photos'); PGTemplateEditor.tab('more'); });
+    ok(await mp.isVisible('.pgte-adv'), 'once it is on, More offers the Advanced editor for a canvas template');
     await mp.tap('.pgte-apply'); await mp.waitForFunction(() => !document.querySelector('.pgte'), null, { timeout: 10000 }); await mp.waitForTimeout(600);
     let g = gal();
     ok(g.layout === 'custom' && g.custom.base === 'canvas-quiet' && g.custom.story.kind === 'canvas' && !g.custom.story.doc && g.custom.story.photos[slot] === chosen, 'Apply keeps only the choices (photo, hidden part, names) — no copy of the design');

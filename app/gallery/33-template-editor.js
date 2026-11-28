@@ -115,7 +115,7 @@
       html = '<div class="pgte-group"><b>Motion</b><p class="pgte-note">' + (E.kind === 'canvas' ? 'Calm: parts only fade in — nothing keeps moving. ' : '') + 'Off keeps every part still (the page still opens as guests scroll).</p>' + seg('motion', t.motion === 'off' ? 'off' : t.motion === 'calm' ? 'calm' : 'on', E.kind === 'canvas' ? [['on', 'On'], ['calm', 'Calm'], ['off', 'Off']] : [['on', 'On'], ['off', 'Off']]) + '</div>' +
         filmsGroup() +
         '<div class="pgte-group"><b>Find me button</b><p class="pgte-note">Floats on the page while guests scroll.</p>' + seg('findme', t.findme || 'right', [['left', 'Left'], ['right', 'Right'], ['off', 'Off']]) + '</div>' +
-        (E.kind === 'canvas' && window.PGCanvasEditor ? '<div class="pgte-group"><b>Move things around</b><p class="pgte-note">The Advanced editor moves, resizes and adds parts. It keeps its own copy of this template.</p><button type="button" class="pgte-mini pgte-adv">Open the Advanced editor</button></div>' : '') +
+        (E.kind === 'canvas' && window.PGCanvasEditor && window.PGControl && PGControl.advanced() ? '<div class="pgte-group"><b>Move things around</b><p class="pgte-note">The Advanced editor moves, resizes and adds parts. It keeps its own copy of this template.</p><button type="button" class="pgte-mini pgte-adv">Open the Advanced editor</button></div>' : '') +
         '<div class="pgte-group"><b>Start again</b><p class="pgte-note">Back to the template as it was made (Undo brings your version back).</p><button type="button" class="pgte-mini pgte-reset">Start again</button></div>';
     }
     pane.innerHTML = html;

@@ -237,17 +237,20 @@
   // clean-up #5: ✕ in the editor comes back to the layout's preview (if it was opened from one), else to the layouts list
   const fromPanel = (pvId) => { window.pgEditorBack = () => { open('layout'); if (pvId) setTimeout(() => { const pn = document.querySelector('.pgcp-sheet .pgcp-layouts'); if (pn) preview({ layout: pvId }, pn.closest('.pgcp-pane').parentNode); }, 60); }; };
   // which editor designs this layout (null = none)
+  // step 112: the Advanced editor is PicGrades' own; a wedding's couple and photographer get it only when PicGrades turns it on
+  const advOK = () => ROLE === 'picgrades' || !!GALLERY.advanced;
+  const advOff = () => () => showToast('The Advanced editor is not on for this wedding — use Try your photos. PicGrades can turn it on.');
   function designer(id) {
     if (!id) return null;
     const cb = GALLERY.custom && GALLERY.custom.base, cl = cb && window.PGLayout && PGLayout.find(cb);
     if (id === 'custom' && cl && cl.story && window.PGTemplateEditor && PGTemplateEditor.handles(cl.story)) return () => PGTemplateEditor.open(cb);   // step 103: a template with the couple's choices
-    if (id === 'custom') return GALLERY.layout === 'custom' && window.PGCanvasEditor ? () => PGCanvasEditor.open('current') : () => PGHubEditor.open();   // step 97: "Our own Hub" opens in the one editor too
-    if (/^cv-/.test(id) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77: a layout from a collection
+    if (id === 'custom') return GALLERY.layout === 'custom' && window.PGCanvasEditor ? (advOK() ? () => PGCanvasEditor.open('current') : advOff()) : () => PGHubEditor.open();   // step 97: "Our own Hub" opens in the one editor too
+    if (/^cv-/.test(id) && window.PGCanvasEditor) return advOK() ? () => PGCanvasEditor.open(id) : advOff();   // step 77: a layout from a collection (step 112: Advanced editor)
     const l = window.PGLayout && PGLayout.find(id); if (!l) return null;
     // step 103: story and canvas templates open "Try your photos" (the real template; only the couple's choices are kept).
     // Canvas templates reach the Advanced editor from there (More); story templates have only this.
     if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);
-    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor
+    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return advOK() ? () => PGCanvasEditor.open(id) : null;   // step 77d: card layouts open in the free editor (step 112: Advanced editor)
     if (window.PGHubEditor) return () => PGHubEditor.open({ from: id });
     return null;
   }
@@ -420,6 +423,12 @@
       }
       row.appendChild(end); list.appendChild(row);
     });
+    if (canLock) {   // step 112: PicGrades' own switch — the Advanced editor for this wedding's couple and photographer
+      const row = h('div', 'pgf-row', '<div><b>Advanced editor</b><small>Lets this wedding’s couple and photographer move, resize and add parts freely. PicGrades always has it.</small></div>');
+      const sw = h('input', 'pgf-sw'); sw.type = 'checkbox'; sw.checked = !!GALLERY.advanced; sw.setAttribute('aria-label', 'Advanced editor for this wedding');
+      sw.addEventListener('change', () => pgApi('setAdvanced', { token: token(), on: sw.checked }).then(r => { GALLERY.advanced = !!r.advanced; showToast('Advanced editor ' + (r.advanced ? 'on' : 'off') + ' for this wedding'); }).catch(err => { sw.checked = !sw.checked; showToast(err.message); }));
+      const end = h('div', 'pgf-end'); end.appendChild(sw); row.appendChild(end); list.appendChild(row);
+    }
     p.appendChild(list);
     if (window.PGProtect) p.appendChild(PGProtect.pane(call));   // photo protection + watermark (27-protect.js)
     return p;
@@ -653,5 +662,5 @@
   // the Hub editor (23-editor.js) publishes through the same saving as the panel (couple link, login, or this phone in a demo)
   // called by an editor after its ✕ / back closed it (not after Apply)
   window.pgBackToPanel = () => { const f = window.pgEditorBack; window.pgEditorBack = null; if (f) setTimeout(f, 0); };
-  window.PGControl = { designLayout, role: () => ROLE, checked: () => checked, open, go: k => (document.querySelector('.pgcp-sheet') ? goTo(k) : open(k)), refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
+  window.PGControl = { advanced: () => advOK(), designLayout, role: () => ROLE, checked: () => checked, open, go: k => (document.querySelector('.pgcp-sheet') ? goTo(k) : open(k)), refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
 })();

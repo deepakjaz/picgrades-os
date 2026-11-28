@@ -144,6 +144,7 @@ var ADMIN_ROUTES = {
   addCredits: addCredits_,
   updateCompany: updateCompany_,
   setAllowed: setAllowed_,
+  setAdvanced: setAdvanced_,   // step 112: the Advanced editor for this wedding's couple and photographer (PicGrades only)
   setPlan: setPlan_,
   adminMakeWedding: adminMakeWedding_   // step 99: make a gallery for a client from a Drive link (no order needed)
 };
@@ -1330,7 +1331,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions', 'timeGroups', 'logo', 'couplePhotos', 'films'];   // logo (step 99d): the couple's own logo picture, a small data URL (PNG / WebP / JPEG, made at most 256 px on the phone)   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions', 'timeGroups', 'logo', 'couplePhotos', 'films', 'advanced'];   // logo (step 99d): the couple's own logo picture, a small data URL (PNG / WebP / JPEG, made at most 256 px on the phone)   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1599,6 +1600,7 @@ function getGallery_(p) {
   m.custom = customOf_(g.custom);
   m.logoUrl = logoUrlOf_(g.pages, g.logo);
   m.films = filmsOf_(g.films);   // step 111
+  m.advanced = String(g.advanced) === 'on';   // step 112
   var cpx = jsonObj_(g.couplePhotos); m.couplePhotos = { bride: (cpx.bride || []).slice(0, 24), groom: (cpx.groom || []).slice(0, 24), both: (cpx.both || []).slice(0, 12) };   // step 110   // step 99d: the couple's own logo (only when they chose 'Our logo')
   if (/^cv-/.test(m.layout)) { var cvx = canvasFor_(g, m.layout); if (cvx) m.canvas = { id: cvx.id, name: cvx.name, doc: cvx.doc, base: cvx.base }; else m.layout = ''; }   // step 77: a free-canvas layout from a collection
   m.story = picksOf_(g.storyPicks);
@@ -2493,6 +2495,13 @@ function coupleFeatures_(p) { return saveFeatures_(coupleGallery_(p), p.features
 /** Photographer (logged in, own studio only) or PicGrades staff: switch functions on or off. */
 function setFeatures_(p, user) { var x = staffGallery_(p.g, user); return saveFeatures_(x.g, p.features); }
 
+/** Step 112: PicGrades (admin) turns the Advanced editor on or off for a wedding's couple and photographer (off unless turned on). */
+function setAdvanced_(p, user) {
+  var g = findGallery_(p.g); if (!g) throw new Error('Gallery not found.');
+  var on = p.on === true || p.on === 'on' || p.on === 'true';
+  ensureTab_('Galleries', GALLERY_COLUMNS); updateRowByNumber_('Galleries', g._row, { advanced: on ? 'on' : '' });
+  return { ok: true, advanced: on };
+}
 /** PicGrades (admin): master switches by plan. A function set 'off' here is locked for the couple and the photographer. */
 function setAllowed_(p, user) {
   var g = findGallery_(p.g); if (!g) throw new Error('Gallery not found.');
