@@ -151,6 +151,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
 .pgc .pgc-cardhost>.pgl-b{width:100%;height:100%}
 .pgc-staynote{display:grid;place-items:center;font:600 12px var(--font-sans,system-ui);color:#3d8bff;background:repeating-linear-gradient(45deg,rgba(61,139,255,.07) 0 10px,transparent 10px 20px);border-top:1px dashed rgba(61,139,255,.5)}
 .pgc-cardnone{width:100%;height:100%;display:grid;place-items:center;border:1.5px dashed rgba(127,127,127,.5);border-radius:14px;font:600 12px var(--font-sans,system-ui);opacity:.7;text-align:center;padding:6px}
+.pgc-calm .pgc-e:not(.in){translate:0 0!important;scale:1!important;transform:none!important;filter:none!important;clip-path:none!important}.pgc-calm .pgc-e{transition-duration:.7s!important}.pgc-calm .pgc-e>.pgc-body{clip-path:none!important}.pgc-calm [class*="pgc-m-"]:not(.pgc-e),.pgc-calm [class*="pgc-m-"]:not(.pgc-e) img{animation:none!important}
 .pgc-still *,.pgc-still{animation:none!important;transition:none!important}.pgc-still .pgc-e,.pgc-still .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none;transform:none}
 @media (prefers-reduced-motion:reduce){.pgc *{animation:none!important;transition:none!important}.pgc .pgc-e,.pgc .pgc-stg .pgc-ev>button{opacity:1;translate:0 0;scale:1;filter:none;clip-path:none;transform:none}}`;
 
@@ -213,13 +214,19 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
   function body(el, k, doc, data, P, ctx, sp) {
     const s = ctx.mode === 'l' && el.sl ? Object.assign({}, el.s, el.sl) : el.s || {}, t = el.t, st = styleOf(s, k, doc, sp);   // sl: the laptop's own style changes
     const zm = Math.max(1, Math.min(4, num(s.zm, 1)));   // step 79: how close the photo sits in its frame (1 = fills it)
+    const autoPos = s.fx == null && s.fy == null ? ' data-auto="1"' : '';   // step 110: nobody framed it — the face helper may centre it on the faces
     const imgPos = 'object-position:' + num(s.fx, 50) + '% ' + num(s.fy, 30) + '%' + (zm > 1 ? ';scale:' + zm + ';transform-origin:' + num(s.fx, 50) + '% ' + num(s.fy, 30) + '%' : '');   // default keeps faces (top third) in frame
-    if (t === 'photo') { const id = P.of(el.src); ctx.used.push(id); return '<div class="pgc-body pgc-ph" style="' + st + '"><img alt="" loading="lazy" decoding="async" draggable="false" src="' + url(id, el.p && el.p.w > 250 ? 1400 : 800) + '" style="' + imgPos + '" data-photo="' + esc(id) + '"></div>'; }
+    if (t === 'photo') { const id = P.of(el.src); ctx.used.push(id); return '<div class="pgc-body pgc-ph" style="' + st + '"><img alt=""' + autoPos + ' loading="lazy" decoding="async" draggable="false" src="' + url(id, el.p && el.p.w > 250 ? 1400 : 800) + '" style="' + imgPos + '" data-photo="' + esc(id) + '"></div>'; }
     if (t === 'names') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || data.names || '') + '</div>';
     if (t === 'date') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || [data.date, data.place].filter(Boolean).join(' · ')) + '</div>';
     if (t === 'text') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || '') + '</div>';
     if (t === 'credit') { const stu = data.studio && data.studio !== 'Your photographer' && !(window.GALLERY && GALLERY.credit === false) ? data.studio : ''; return stu ? '<div class="pgc-body pgc-txt" style="' + st + '">' + esc((el.text || 'Photographed by') + ' ' + stu) + '</div>' : null; }
     if (t === 'shape') return '<div class="pgc-body" style="' + (st || 'background:currentColor') + '"></div>';
+    if (t === 'films') {   // step 111: the couple's films, one after another (56-films.js). Nothing to show a guest → the part is left out
+      const owner = !!(window.PGControl && ['couple', 'photographer', 'picgrades'].indexOf(PGControl.role()) > -1);
+      if (!(data.films || []).length && !owner && !(ctx && ctx.editing)) return null;
+      return '<div class="pgc-body pgc-films" data-films style="' + st + '"></div>';
+    }
     if (t === 'video') {   // step 97b: poster first; the player comes in when it is on screen (or on a tap)
       if (!vidOk(el.src)) return ctx.editing ? '<div class="pgc-body pgc-vid" style="' + st + '"><div class="pgc-vnone">Video · paste a YouTube or Drive link</div></div>' : null;
       const loop = el.v !== 'player' && el.src.k === 'yt', box = sp ? (num(sp.w, 100) / num(sp.h, 56)) : 16 / 9, vr = el.src.sh ? 9 / 16 : 16 / 9;
@@ -237,7 +244,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     if (t === 'strip') {
       const ids = (el.src && el.src.k === 'ev' ? (data.events[num(el.src.i, 0)] || {}).featured || [] : []).concat(P.pool).slice(0, 14);
       ids.forEach(id => ctx.used.push(id));
-      const imgs = ids.map(id => '<img alt="" loading="lazy" src="' + url(id, 500) + '" style="' + imgPos + '">').join('');
+      const imgs = ids.map(id => '<img alt=""' + autoPos + ' data-photo="' + esc(id) + '" loading="lazy" src="' + url(id, 500) + '" style="' + imgPos + '">').join('');
       return '<div class="pgc-body" style="' + st + '"><div class="pgc-strip" style="--gap:' + (8 * k).toFixed(1) + 'px;--dur:' + (ids.length * 4) + 's">' + imgs + imgs + '</div></div>';
     }
     if (t === 'action') {
@@ -257,12 +264,12 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     ensure(); opts = opts || {};
     const root = document.createElement('div'); root.className = 'pgc';
     box.appendChild(root);
-    let io = null, vio = null, lastW = 0, pars = [], sraf = 0;
+    let io = null, vio = null, lastW = 0, pars = [], sraf = 0; const films = [];
     function startVid(b) { if (!b || b.querySelector('iframe')) return; const [k, id] = b.dataset.vid.split(':'), f = document.createElement('div'); f.innerHTML = vidFrame({ k, id }, b.dataset.loop === '1'); const fr = f.firstChild; if (b.dataset.fit) fr.style.cssText = b.dataset.fit; const pl = b.querySelector('.pgc-vplay'); if (pl) pl.remove(); b.appendChild(fr); }
     // scroll depth (parallax): an element drifts a little slower or faster than the page
     const sc = opts.scroller || window;
     function onScroll() {
-      if (sraf || !pars.length || opts.still || document.documentElement.classList.contains('pg-lite') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;   // step 97: light mode keeps the page still (step 105: and reduced motion)
+      if (sraf || !pars.length || opts.still || opts.calm || document.documentElement.classList.contains('pg-lite') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;   // step 97: light mode keeps the page still (step 105: and reduced motion)
       sraf = requestAnimationFrame(() => { sraf = 0; const vh = opts.scroller ? opts.scroller.clientHeight : window.innerHeight, top0 = opts.scroller ? opts.scroller.getBoundingClientRect().top : 0;
         pars.forEach(x => { const r = x.getBoundingClientRect(), c = r.top - top0 + r.height / 2 - vh / 2, b = x.firstElementChild; if (!b) return;
           if (x.dataset.sc) { scApply(x, b, r, vh, top0); return; }   // step 105
@@ -333,6 +340,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
         });
       }
       if (opts.still) root.classList.add('pgc-still');
+      if (opts.calm) root.classList.add('pgc-calm');   // step 109: Calm — parts only fade in; nothing keeps moving or follows the scroll
       if (io) io.disconnect();
       io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: opts.scroller || null, threshold: .15 }) : null;
       root.querySelectorAll('.pgc-stg .pgc-ev>button').forEach((b, i) => b.style.setProperty('--i', i % 12));
@@ -345,6 +353,9 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
         vio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { startVid(e.target); vio.unobserve(e.target); } }), { root: opts.scroller || null, rootMargin: '200px 0px' });
         root.querySelectorAll('.pgc-vid[data-loop="1"]').forEach(x => vio.observe(x));
       }
+      // step 111: the films card plays the wedding's videos (never in the editor)
+      films.splice(0).forEach(f => f.destroy()); const owner = !!(window.PGControl && ['couple', 'photographer', 'picgrades'].indexOf(PGControl.role()) > -1);
+      if (window.PGFilms) root.querySelectorAll('[data-films]').forEach(n => films.push(PGFilms.mount(n, data.films || [], { owner, scroller: opts.scroller, still: opts.still || opts.editing || lite })));
       inst.used = ctx.used.filter(Boolean);
     }
     const onClick = e => {
@@ -356,7 +367,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     root.addEventListener('click', onClick);
     let rz = 0; const onResize = () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const W = (opts.width && opts.width()) || box.clientWidth || window.innerWidth; if (Math.abs(W - lastW) > 2) draw(); }); };
     window.addEventListener('resize', onResize);
-    const inst = { root, used: [], redraw: draw, destroy() { window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); if (vio) vio.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
+    const inst = { root, used: [], redraw: draw, destroy() { films.splice(0).forEach(f => f.destroy()); window.removeEventListener('resize', onResize); sc.removeEventListener('scroll', onScroll); if (io) io.disconnect(); if (vio) vio.disconnect(); root.removeEventListener('click', onClick); root.remove(); } };
     draw();
     return inst;
   }

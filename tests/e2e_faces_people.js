@@ -75,6 +75,11 @@ const srv = http.createServer((req, res) => {
   c = await circles();
   check(/^Rohan11 photos/.test(c[0]), 'the name shows under the circle, named people first: ' + c[0]);
   await shot(pg, 'people-3-named');
+  // step 110: mark him as the groom — his photos fill the couple's spots in templates
+  await pg.locator('#people .person').nth(0).click(); await pg.waitForSelector('#ppRole [data-role=groom]');
+  check(await pg.evaluate(() => [...document.querySelectorAll('#ppRole [data-role]')].map(b => b.textContent).join() === 'Bride,Groom,Someone else'), 'a person card asks: This is Bride / Groom / Someone else');
+  await pg.click('#ppRole [data-role=groom]'); await pg.waitForTimeout(400);
+  check(call('getGallery', { g: gid }).gallery.couplePhotos.groom.length === 11, 'Groom: his 11 photos are kept for the couple\'s spots (ids only)');
   // hide the brother
   await pg.locator('#people .person').nth(await idx(/^3 photos/)).click(); await pg.click('#ppHide'); await pg.waitForTimeout(300);
   check((await circles()).length === 2 && /Hidden \(1\)/.test(await pg.textContent('#hiddenSum')), 'hide: the person moves to "Hidden (1)"');

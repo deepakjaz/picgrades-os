@@ -20,4 +20,7 @@ st = save('story-living', { kind: 'living', texts: { 'psh-stream:0': 'Two famili
 ok(st.texts['psh-stream:0'] === 'Two families' && !st.texts.g_head && st.sections[0].k === 'psh-events-sec', 'Living Story keeps its own words and order (canvas-style keys are not)');
 const long = 'x'.repeat(500); st = save('canvas-night', { kind: 'canvas', texts: { g_head: long } });
 ok(st.texts.g_head.length === 120, 'words are at most 120 characters');
+st = save('canvas-night', { kind: 'canvas', fonts: { head: 'Parisienne', body: 'Comic Sans' }, add: [{ id: 'x1', from: 'canvas-quiet', sec: 'hero', after: 'days' }, { id: 'bad', from: 'x', sec: 'y' }, { id: 'x1', from: 'canvas-quiet', sec: 'still' }] });
+ok(st.fonts.head === 'Parisienne' && !st.fonts.body, 'step 108: a listed font is kept, an unknown one dropped');
+ok(st.add.length === 1 && st.add[0].from === 'canvas-quiet' && st.add[0].after === 'days', 'step 107: an added part is kept; bad or repeated ones are dropped');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all ok');

@@ -15,7 +15,7 @@
   const clone = o => JSON.parse(JSON.stringify(o));
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const handles = k => !!(window.PGTune && PGTune.handles(k));
-  const TABS = [['colours', 'Colours'], ['photos', 'Photos'], ['parts', 'Parts'], ['words', 'Words'], ['more', 'More']];
+  const TABS = [['colours', 'Look'], ['photos', 'Photos'], ['parts', 'Parts'], ['words', 'Words'], ['more', 'More']];
   let E = null;   // { id, l, el, tune, saved, undo, redo, inst, dark, tab }
 
   // the couple's saved version of this template, or the one in use, or a fresh start
@@ -82,7 +82,7 @@
       const mode = E.dark ? 'dark' : 'light', own = (t.colors || {})[mode] || {};
       html = '<p class="pgte-note">The template’s own colours. Guests on dark mode see the dark set.</p>' + seg('dark', mode, [['light', 'Light'], ['dark', 'Dark']]) +
         PGTune.colors(E.kind, E.dark, E.l.canvas).map(c => '<label class="pgte-col"><span>' + esc(c.name) + '</span><input type="color" data-col="' + c.k + '" value="' + esc(String(own[c.k] || c.value).slice(0, 7)) + '">' +
-          (own[c.k] ? '<button type="button" class="pgte-mini" data-uncol="' + c.k + '">Reset</button>' : '<em>original</em>') + '</label>').join('');
+          (own[c.k] ? '<button type="button" class="pgte-mini" data-uncol="' + c.k + '">Reset</button>' : '<em>original</em>') + '</label>').join('') + fontRows(t);
     } else if (E.tab === 'photos') {
       const S = E.inst.slots(), mine = t.photos || {}, seen = {}, total = {};
       S.forEach(s => { s.label = s.label.replace(/^(Event|Chapter|Stop|Fold|Sticker|Story page) · /, '').replace(/\s*\(.*\)$/, '').replace(/^Create · /, ''); total[s.label] = (total[s.label] || 0) + 1; });
@@ -95,8 +95,10 @@
       (t.sections || []).forEach(q => { if (q.on === false) hid.add(q.k); });
       if (E.inst.canOrder) {   // step 106: drag a part up or down by its handle (touch or mouse); hide the ones you don't want
         const ord = orderedParts(t);
-        html = '<p class="pgte-note">Drag ⠿ to move a part up or down. Hide anything you don’t want — it stays saved here.</p><div class="pgte-order">' +
-          ord.map(x => '<div class="pgte-layer pgte-orow' + (hid.has(x.key) ? ' off' : '') + '" data-okey="' + esc(x.key) + '"><button type="button" class="pgte-grip" aria-label="Drag to move ' + esc(x.name) + '">⠿</button><span>' + esc(x.name) + '</span><button type="button" data-layer="' + esc(x.key) + '" aria-pressed="' + !hid.has(x.key) + '">' + (hid.has(x.key) ? 'Hidden' : 'Shown') + '</button></div>').join('') + '</div>' +
+        html = '<p class="pgte-note">Drag ⠿ to move a part up or down. Hide anything you don’t want — it stays saved here.</p>' +
+          (E.inst.canKit ? '<button type="button" class="pgte-addkit">+ Add a part from another template</button>' : '') + '<div class="pgte-order">' +
+          ord.map(x => '<div class="pgte-layer pgte-orow' + (hid.has(x.key) ? ' off' : '') + (x.kit ? ' kit' : '') + '" data-okey="' + esc(x.key) + '"><button type="button" class="pgte-grip" aria-label="Drag to move ' + esc(x.name) + '">⠿</button><span>' + esc(x.name) + '</span>' +
+            (x.kit ? '<button type="button" data-unkit="' + esc(x.key) + '">Remove</button>' : '<button type="button" data-layer="' + esc(x.key) + '" aria-pressed="' + !hid.has(x.key) + '">' + (hid.has(x.key) ? 'Hidden' : 'Shown') + '</button>') + '</div>').join('') + '</div>' +
           (E.kind === 'canvas' ? '<details class="pgte-more-parts"><summary>Hide smaller things (a button, a photo…)</summary>' + E.inst.layers().filter(x => x.depth > 0).map(x => '<div class="pgte-layer' + (hid.has(x.key) ? ' off' : '') + '" style="padding-left:14px"><span>' + esc(x.name) + '</span><button type="button" data-layer="' + esc(x.key) + '" aria-pressed="' + !hid.has(x.key) + '">' + (hid.has(x.key) ? 'Hidden' : 'Shown') + '</button></div>').join('') + '</details>' : '');
       } else html = '<p class="pgte-note">Hide anything you don’t want. Hidden parts stay saved here, so you can bring them back.</p>' +
         E.inst.layers().map(x => '<div class="pgte-layer' + (hid.has(x.key) ? ' off' : '') + '" style="padding-left:' + (10 + x.depth * 16) + 'px"><span>' + esc(x.name) + '</span><button type="button" data-layer="' + x.key + '" aria-pressed="' + !hid.has(x.key) + '">' + (hid.has(x.key) ? 'Hidden' : 'Shown') + '</button></div>').join('');
@@ -110,9 +112,10 @@
       html += TX.map(x => (x.part !== lastPart ? '<div class="pgte-tpart">' + esc(lastPart = x.part) + '</div>' : '') +
         '<label class="pgte-text"><small>' + (x.button ? 'Button' : 'Words') + '</small>' + (String(x.text).length > 40 ? '<textarea rows="2" maxlength="120" data-tx="' + esc(x.key) + '" placeholder="' + esc(x.text) + '">' + esc(tx[x.key] || '') + '</textarea>' : '<input type="text" maxlength="120" data-tx="' + esc(x.key) + '" placeholder="' + esc(x.text) + '" value="' + esc(tx[x.key] || '') + '">') + '</label>').join('');
     } else {
-      html = '<div class="pgte-group"><b>Motion</b><p class="pgte-note">Off keeps every part still (the page still opens as guests scroll).</p>' + seg('motion', t.motion === 'off' ? 'off' : 'on', [['on', 'On'], ['off', 'Off']]) + '</div>' +
+      html = '<div class="pgte-group"><b>Motion</b><p class="pgte-note">' + (E.kind === 'canvas' ? 'Calm: parts only fade in — nothing keeps moving. ' : '') + 'Off keeps every part still (the page still opens as guests scroll).</p>' + seg('motion', t.motion === 'off' ? 'off' : t.motion === 'calm' ? 'calm' : 'on', E.kind === 'canvas' ? [['on', 'On'], ['calm', 'Calm'], ['off', 'Off']] : [['on', 'On'], ['off', 'Off']]) + '</div>' +
+        filmsGroup() +
         '<div class="pgte-group"><b>Find me button</b><p class="pgte-note">Floats on the page while guests scroll.</p>' + seg('findme', t.findme || 'right', [['left', 'Left'], ['right', 'Right'], ['off', 'Off']]) + '</div>' +
-        (E.kind === 'canvas' && window.PGCanvasEditor ? '<div class="pgte-group"><b>Move things around</b><p class="pgte-note">The Advanced editor moves, resizes and adds parts. It keeps its own copy of this template.</p><button type="button" class="pgte-mini pgte-adv">Open the Advanced editor</button></div>' : '') +
+        (E.kind === 'canvas' && window.PGCanvasEditor && window.PGControl && PGControl.advanced() ? '<div class="pgte-group"><b>Move things around</b><p class="pgte-note">The Advanced editor moves, resizes and adds parts. It keeps its own copy of this template.</p><button type="button" class="pgte-mini pgte-adv">Open the Advanced editor</button></div>' : '') +
         '<div class="pgte-group"><b>Start again</b><p class="pgte-note">Back to the template as it was made (Undo brings your version back).</p><button type="button" class="pgte-mini pgte-reset">Start again</button></div>';
     }
     pane.innerHTML = html;
@@ -128,12 +131,40 @@
     pane.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => change(t => { const s = new Set(t.hide || []), k = b.dataset.layer; (t.sections || []).forEach(q => { if (q.k === k && q.on === false) { q.on = true; s.add(k); } });
       if (s.has(k)) s.delete(k); else s.add(k); t.hide = [...s]; if (!t.hide.length) delete t.hide; })));
     pane.querySelectorAll('[data-tx]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(), k = inp.dataset.tx; t.texts = Object.assign({}, t.texts); if (v) t.texts[k] = v; else delete t.texts[k]; if (!Object.keys(t.texts).length) delete t.texts; })));
+    pane.querySelectorAll('.pgte-fontrow').forEach(d => d.addEventListener('toggle', () => { if (d.open) pane.querySelectorAll('.pgte-fontrow').forEach(o => { if (o !== d) o.open = false; }); }));   // one open at a time
+    pane.querySelectorAll('[data-font]').forEach(b => b.addEventListener('click', () => { const k = b.closest('[data-fk]').dataset.fk, f = b.dataset.font;
+      change(t => { t.fonts = Object.assign({}, t.fonts); if (f) t.fonts[k] = f; else delete t.fonts[k]; if (!Object.keys(t.fonts).length) delete t.fonts; }); }));
+    pane.querySelectorAll('[data-film-del]').forEach(b => b.addEventListener('click', () => { const F = (GALLERY.films || []).slice(); F.splice(+b.dataset.filmDel, 1); saveFilms(F); }));
+    const fa = pane.querySelector('[data-film-add]'); if (fa) fa.addEventListener('change', () => { const v = PGCanvas.videoFromLink(fa.value); if (!v) { showToast('That link is not a YouTube, Shorts or Google Drive video'); return; } if ((GALLERY.films || []).some(f => f.id === v.id)) { fa.value = ''; showToast('That video is already there'); return; } fa.value = ''; saveFilms((GALLERY.films || []).concat([v])); });
+    const ak = pane.querySelector('.pgte-addkit'); if (ak) ak.addEventListener('click', () => pickKit());   // step 107
+    pane.querySelectorAll('[data-unkit]').forEach(b => b.addEventListener('click', () => change(t => { const k = b.dataset.unkit, id = k.split('-')[0];
+      t.add = (t.add || []).filter(a => a.id !== id); if (!t.add.length) delete t.add; if (t.sections) { t.sections = t.sections.filter(q => q.k !== k); if (!t.sections.length) delete t.sections; } })));
     pane.querySelectorAll('.pgte-grip').forEach(g => g.addEventListener('pointerdown', ev => dragPart(ev, g.closest('.pgte-orow'))));
     pane.querySelectorAll('[data-text]').forEach(inp => inp.addEventListener('change', () => change(t => { const v = inp.value.replace(/[<>]/g, '').trim(); if (v) t[inp.dataset.text] = v; else delete t[inp.dataset.text]; })));
     const adv = pane.querySelector('.pgte-adv'); if (adv) adv.addEventListener('click', () => { const id = E.id; close(); if (!E) PGCanvasEditor.open(id); });
     const rs = pane.querySelector('.pgte-reset'); if (rs) rs.addEventListener('click', () => change(t => { Object.keys(t).forEach(k => { if (k !== 'kind') delete t[k]; }); }));
   }
 
+  // step 111: the wedding's films (YouTube, Shorts, Drive) — for the films card. They belong to the wedding, so they are saved at once.
+  function filmsGroup() {
+    if (E.kind !== 'canvas') return '';
+    const F = GALLERY.films || [], name = f => f.k === 'drive' ? 'Drive video' : f.sh ? 'YouTube Short' : 'YouTube video';
+    return '<div class="pgte-group"><b>Your videos</b><p class="pgte-note">They play one after another in the films card (Parts › Add a part › Extras).</p>' +
+      F.map((f, i) => '<div class="pgte-layer"><span>' + name(f) + ' · ' + esc(f.id.slice(0, 8)) + '…</span><button type="button" data-film-del="' + i + '">Remove</button></div>').join('') +
+      (F.length < 12 ? '<label class="pgte-text"><small>Add a link</small><input type="url" inputmode="url" data-film-add placeholder="YouTube, Shorts or Google Drive link"></label>' : '') + '</div>';
+  }
+  function saveFilms(list) {
+    return PGControl.save({ films: JSON.stringify(list) }).then(r => { GALLERY.films = r.films || list; draw(); panel(); showToast('Videos saved'); }).catch(e => showToast(e.message || 'Could not save'));
+  }
+  // step 108: fonts for a canvas template — closed rows; tap one to see the fonts, each written in itself
+  function fontRows(t) {
+    if (E.kind !== 'canvas' || !window.PGCanvas) return '';
+    const base = (E.l.canvas || {}).fonts || {}, own = t.fonts || {};
+    return '<div class="pgte-tpart">Fonts</div>' + [['head', 'Headings'], ['body', 'Other text']].map(([k, n]) => { const cur = own[k] || base[k] || 'Jost';
+      return '<details class="pgte-fontrow" data-fk="' + k + '"><summary><span>' + n + '</span><b style="font-family:\'' + esc(cur) + '\'">' + esc(cur) + '</b>' + (own[k] ? '' : '<em>original</em>') + '</summary><div class="pgte-fontlist">' +
+        PGCanvas.FONTS.map(f => '<button type="button" data-font="' + esc(f) + '" class="' + (f === cur ? 'on' : '') + '" style="font-family:\'' + esc(f) + '\'">' + esc(f) + '</button>').join('') +
+        (own[k] ? '<button type="button" data-font="" class="pgte-fontreset">Back to the template\'s font</button>' : '') + '</div></details>'; }).join('');
+  }
   // step 106: the parts in the couple's order (parts they never moved keep their place)
   function orderedParts(t) {
     const all = E.inst.order(), pos = {}; (t.sections || []).forEach((q, i) => { pos[q.k] = i; });
@@ -155,6 +186,42 @@
   }
   // tap words on the page → the Words tab opens at that box
   function pickText(key) { E.tab = 'words'; setDrawer(true); panel(); const i = E.el.querySelector('[data-tx="' + CSS.escape(key) + '"]'); if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); } }
+
+  // step 107: add a part from another template's design kit — the kits in a row, their parts drawn live with this wedding's photos,
+  // where to put it, then Add. Only the choice is kept (which part, from which template, after which part).
+  function pickKit() {
+    if (!E) return;
+    const kits = PGTune.kits(E.id); if (!kits.length) return;
+    const D = PGLayout.storyData(), order = orderedParts(E.tune);
+    let kit = kits[0].id, part = null, after = order.length ? order[order.length - 1].key : '';
+    const back = h('div', 'pgte-back'), sh = h('div', 'pgte-pick pgte-kitsheet'); sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-label', 'Add a part');
+    const insts = [];
+    const paint = () => {
+      insts.splice(0).forEach(i => { if (i && i.destroy) i.destroy(); });
+      const k = kits.find(x => x.id === kit);
+      sh.innerHTML = '<div class="pgte-pick-top"><b>Add a part</b><button type="button" class="pgte-x" aria-label="Close">✕</button></div>' +
+        '<div class="pgte-kitrow" role="tablist">' + kits.map(x => '<button type="button" role="tab" data-kit="' + esc(x.id) + '" class="' + (x.id === kit ? 'on' : '') + '" aria-selected="' + (x.id === kit) + '">' + esc(x.name) + '</button>').join('') + '</div>' +
+        '<div class="pgte-kitparts">' + k.parts.map(p => '<button type="button" data-part="' + esc(p.sec) + '" class="pgte-kitpart' + (p.sec === part ? ' on' : '') + '" aria-label="' + esc(p.name) + '"><div class="pgte-kitpv"><div class="pgte-kitin"></div></div><small>' + esc(p.name) + '</small></button>').join('') + '</div>' +
+        '<div class="pgte-kitafter"><small>Put it after</small><div class="pgte-kitrow">' + order.map(o => '<button type="button" data-after="' + esc(o.key) + '" class="' + (o.key === after ? 'on' : '') + '">' + esc(o.name) + '</button>').join('') + '</div></div>' +
+        '<button type="button" class="pgte-kitadd"' + (part ? '' : ' disabled') + '>' + (part ? 'Add this part' : 'Choose a part') + '</button>';
+      sh.querySelectorAll('.pgte-kitpart').forEach(b => { const inner = b.querySelector('.pgte-kitin'); inner.style.width = '390px'; inner.style.zoom = String(120 / 390);
+        try { insts.push(PGTune.drawPart(inner, kit, b.dataset.part, E.l.canvas, D)); } catch (e) {} });
+      sh.querySelector('.pgte-x').addEventListener('click', shut);
+      sh.querySelectorAll('[data-kit]').forEach(b => b.addEventListener('click', () => { kit = b.dataset.kit; part = null; paint(); const on = sh.querySelector('[data-kit].on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' }); }));
+      sh.querySelectorAll('[data-part]').forEach(b => b.addEventListener('click', () => { part = b.dataset.part; sh.querySelectorAll('[data-part]').forEach(x => x.classList.toggle('on', x === b)); const a = sh.querySelector('.pgte-kitadd'); a.disabled = false; a.textContent = 'Add this part'; }));
+      sh.querySelectorAll('[data-after]').forEach(b => b.addEventListener('click', () => { after = b.dataset.after; sh.querySelectorAll('[data-after]').forEach(x => x.classList.toggle('on', x === b)); }));
+      sh.querySelector('.pgte-kitadd').addEventListener('click', () => { if (!part) return; shut();
+        change(t => { const add = t.add || [], used = new Set(add.map(a => a.id)); let n = 1; while (used.has('x' + n)) n++; const id = 'x' + n;
+          t.add = add.concat([{ id, from: kit, sec: part, after }]);
+          const keys = orderedParts(t).map(o => o.key), off = new Set((t.sections || []).filter(q => q.on === false).map(q => q.k)), nk = id + '-' + part;
+          const rest = keys.filter(k => k !== nk), at = rest.indexOf(after); rest.splice(at < 0 ? rest.length : at + 1, 0, nk);
+          t.sections = rest.map(k => ({ k, on: !off.has(k) })); });
+        showToast('Part added — drag ⠿ to move it'); });
+    };
+    const shut = () => { insts.forEach(i => { if (i && i.destroy) i.destroy(); }); back.remove(); sh.remove(); };
+    back.addEventListener('click', shut);
+    E.el.append(back, sh); paint();
+  }
 
   // ---- choose a photo: the cover photos, the highlights, then each event ----
   function pickPhoto(slot) {

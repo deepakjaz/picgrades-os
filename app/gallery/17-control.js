@@ -74,11 +74,12 @@
     if ('pages' in body) d.pages = Object.assign({}, d.pages || {}, parse(body.pages));
     if ('features' in body) d.features = Object.assign({}, d.features || {}, parse(body.features));
     if ('custom' in body) d.custom = parse(body.custom);
+    if ('films' in body) d.films = parse(body.films) || [];   // step 111
     if ('logo' in body) d.logo = String(body.logo || '');   // step 99d
     if ('version' in body) { const v = parse(body.version); if (v && v.id) { d.versions = Object.assign({}, d.versions || {}); if (v.custom) d.versions[v.id] = v.custom; else delete d.versions[v.id]; } }   // step 76
     try { localStorage.setItem(pgDemoKey(), JSON.stringify(d)); } catch (e) {}
     const g = pgDemoMerge(Object.assign({}, GALLERY));
-    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {}, custom: g.custom || { blocks: [] }, versions: g.versions || {}, logoUrl: g.logoUrl || '' });
+    return Promise.resolve({ theme: g.theme || '', layout: g.layout || '', pages: g.pages || {}, features: g.features || {}, custom: g.custom || { blocks: [] }, versions: g.versions || {}, logoUrl: g.logoUrl || '', films: g.films || [] });
   }
   function showLook() {
     if (window.PGTheme) PGTheme.apply(GALLERY.theme || '');
@@ -196,7 +197,7 @@
         });
       }
       const copies = new Set(layouts.map(l => l.editor).filter(Boolean));   // step 101: the canvas copies of the story templates are not offered (one version of each template)
-      const rest = f => layouts.filter(l => !shownIds[l.id] && !copies.has(l.id) && f(l)).map(l => layoutRow(l, false, false));
+      const rest = f => layouts.filter(l => !shownIds[l.id] && !copies.has(l.id) && l.group !== 'kit' && f(l)).map(l => layoutRow(l, false, false));
       group('Stories', 'One long page that tells the wedding as a story while guests scroll.', rest(story));
       const storyNames = {}; layouts.filter(story).forEach(l => { storyNames[l.name] = 1; });
       group('Free canvas', 'Every part placed by hand, separately for phone and laptop.', rest(canvas).map(r => { const n = r.querySelector('b'); if (n && storyNames[n.textContent]) n.textContent += ' · canvas'; return r; }));   // same name as a story: tell them apart
@@ -236,17 +237,20 @@
   // clean-up #5: ✕ in the editor comes back to the layout's preview (if it was opened from one), else to the layouts list
   const fromPanel = (pvId) => { window.pgEditorBack = () => { open('layout'); if (pvId) setTimeout(() => { const pn = document.querySelector('.pgcp-sheet .pgcp-layouts'); if (pn) preview({ layout: pvId }, pn.closest('.pgcp-pane').parentNode); }, 60); }; };
   // which editor designs this layout (null = none)
+  // step 112: the Advanced editor is PicGrades' own; a wedding's couple and photographer get it only when PicGrades turns it on
+  const advOK = () => ROLE === 'picgrades' || !!GALLERY.advanced;
+  const advOff = () => () => showToast('The Advanced editor is not on for this wedding — use Try your photos. PicGrades can turn it on.');
   function designer(id) {
     if (!id) return null;
     const cb = GALLERY.custom && GALLERY.custom.base, cl = cb && window.PGLayout && PGLayout.find(cb);
     if (id === 'custom' && cl && cl.story && window.PGTemplateEditor && PGTemplateEditor.handles(cl.story)) return () => PGTemplateEditor.open(cb);   // step 103: a template with the couple's choices
-    if (id === 'custom') return GALLERY.layout === 'custom' && window.PGCanvasEditor ? () => PGCanvasEditor.open('current') : () => PGHubEditor.open();   // step 97: "Our own Hub" opens in the one editor too
-    if (/^cv-/.test(id) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77: a layout from a collection
+    if (id === 'custom') return GALLERY.layout === 'custom' && window.PGCanvasEditor ? (advOK() ? () => PGCanvasEditor.open('current') : advOff()) : () => PGHubEditor.open();   // step 97: "Our own Hub" opens in the one editor too
+    if (/^cv-/.test(id) && window.PGCanvasEditor) return advOK() ? () => PGCanvasEditor.open(id) : advOff();   // step 77: a layout from a collection (step 112: Advanced editor)
     const l = window.PGLayout && PGLayout.find(id); if (!l) return null;
     // step 103: story and canvas templates open "Try your photos" (the real template; only the couple's choices are kept).
     // Canvas templates reach the Advanced editor from there (More); story templates have only this.
     if (l.story && window.PGTemplateEditor && PGTemplateEditor.handles(l.story)) return () => PGTemplateEditor.open(id);
-    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return () => PGCanvasEditor.open(id);   // step 77d: card layouts open in the free editor
+    if ((l.canvas || (!l.story && (l.blocks || []).length)) && window.PGCanvasEditor) return advOK() ? () => PGCanvasEditor.open(id) : null;   // step 77d: card layouts open in the free editor (step 112: Advanced editor)
     if (window.PGHubEditor) return () => PGHubEditor.open({ from: id });
     return null;
   }
@@ -277,6 +281,8 @@
   let CVLIST = [];
   const ownCopy = id => CVLIST.find(x => x.base === id && x.scope === 'wedding' && x.galleryId === String(GALLERY.galleryId || ''));
   // step 103: every story and canvas template is drawn as itself (a story template no longer through its editor version)
+  // step 110: a wedding that has its photos sees templates with them; a new one (no photos yet) sees the demo wedding
+  const ownData = () => { if (ROLE === 'demo') return null; const D = window.PGLayout && PGLayout.storyData(); return D && (D.events || []).some(e => (e.photos || e.teaser || []).length) ? D : null; };
   const liveDoc = id => { const l = PGLayout.find(id); return l && l.story && window.PGTune && PGTune.handles(l.story) ? l : null; };
   const DEMO = (() => { const d = n => 'demo:' + n, r = (k, n) => Array.from({ length: n }, (_, i) => d(k + '-' + (i + 1)));
     const ev = (name, k, n) => ({ name, photos: r(k, n).map(id => ({ id })), teaser: r(k, n), featured: r(k, n).slice(0, 2) });
@@ -337,7 +343,7 @@
     if (clip) {   // step 102: the live template shows the demo wedding; their own photos are one tap away
       if (!ed.hidden) ed.textContent = 'Try your photos';
       else { ed.hidden = false; ed.textContent = 'See it with our photos'; ed.addEventListener('click', () => { clip = false; wrap.classList.remove('clip'); if (live && live.destroy) live.destroy(); if (vid) vid.remove(); vid = null; live = null; ed.hidden = true; load(); fit(); }, { once: true }); }
-      wrap.classList.add('clip'); wrap.querySelector('.pgcp-pv-note').textContent = 'Shown with sample wedding photos. Your own photos show when you use it.';
+      wrap.classList.add('clip'); wrap.querySelector('.pgcp-pv-note').textContent = (ownData() ? 'Shown with your photos.' : 'Shown with sample wedding photos. Your own photos show when you use it.');
     }
     const same = pk ? state.styles[pk] === curStyle(pk) : state.theme === (GALLERY.theme || '') && state.layout === (GALLERY.layout || '');
     const ap = wrap.querySelector('.pgcp-pv-apply');
@@ -367,7 +373,7 @@
       vid.innerHTML = '<div class="pgcp-pv-livein"></div>'; const inner = vid.firstChild; wait.hidden = true;
       inner.style.width = W + 'px'; inner.style.zoom = String((phone.clientWidth || W) / W);
       const l = liveDoc(state.layout);
-      try { live = PGTune.mount(l.story, inner, DEMO, () => {}, { mode: dev === 'phone' ? 'p' : 'l', width: () => W, scroller: vid, doc: l.canvas, tune: {} }); }
+      try { live = PGTune.mount(l.story, inner, ownData() || DEMO, () => {}, { mode: dev === 'phone' ? 'p' : 'l', width: () => W, scroller: vid, doc: l.canvas, tune: {} }); }
       catch (e) { console.warn('preview', e); }
     }
     const CLIPDEV = { phone: [390, 844], laptop: [1200, 760] };
@@ -417,6 +423,12 @@
       }
       row.appendChild(end); list.appendChild(row);
     });
+    if (canLock) {   // step 112: PicGrades' own switch — the Advanced editor for this wedding's couple and photographer
+      const row = h('div', 'pgf-row', '<div><b>Advanced editor</b><small>Lets this wedding’s couple and photographer move, resize and add parts freely. PicGrades always has it.</small></div>');
+      const sw = h('input', 'pgf-sw'); sw.type = 'checkbox'; sw.checked = !!GALLERY.advanced; sw.setAttribute('aria-label', 'Advanced editor for this wedding');
+      sw.addEventListener('change', () => pgApi('setAdvanced', { token: token(), on: sw.checked }).then(r => { GALLERY.advanced = !!r.advanced; showToast('Advanced editor ' + (r.advanced ? 'on' : 'off') + ' for this wedding'); }).catch(err => { sw.checked = !sw.checked; showToast(err.message); }));
+      const end = h('div', 'pgf-end'); end.appendChild(sw); row.appendChild(end); list.appendChild(row);
+    }
     p.appendChild(list);
     if (window.PGProtect) p.appendChild(PGProtect.pane(call));   // photo protection + watermark (27-protect.js)
     return p;
@@ -650,5 +662,5 @@
   // the Hub editor (23-editor.js) publishes through the same saving as the panel (couple link, login, or this phone in a demo)
   // called by an editor after its ✕ / back closed it (not after Apply)
   window.pgBackToPanel = () => { const f = window.pgEditorBack; window.pgEditorBack = null; if (f) setTimeout(f, 0); };
-  window.PGControl = { designLayout, role: () => ROLE, checked: () => checked, open, go: k => (document.querySelector('.pgcp-sheet') ? goTo(k) : open(k)), refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
+  window.PGControl = { advanced: () => advOK(), designLayout, role: () => ROLE, checked: () => checked, open, go: k => (document.querySelector('.pgcp-sheet') ? goTo(k) : open(k)), refresh: paintRole, save: body => call('coupleLook', 'setLook', body) };
 })();

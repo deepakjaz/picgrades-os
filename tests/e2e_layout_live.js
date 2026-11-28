@@ -39,16 +39,22 @@ const srv = http.createServer((req, res) => {
     await mp.evaluate(() => PGControl.go('layout')); await mp.waitForSelector('.pgcp-layout[data-layout="canvas-quiet"]');
     await mp.locator('.pgcp-layout[data-layout="canvas-quiet"]').scrollIntoViewIfNeeded(); await mp.tap('.pgcp-layout[data-layout="canvas-quiet"]');
     await mp.waitForSelector('.pgcp-pv.clip .pgcp-pv-live .pgc', { timeout: 8000 });
-    await mp.waitForFunction(() => [...document.querySelectorAll('.pgcp-pv-live img')].some(i => i.complete && i.naturalWidth > 0 && /demo-wedding/.test(i.currentSrc || i.src)), null, { timeout: 10000 });
+    await mp.waitForFunction(() => [...document.querySelectorAll('.pgcp-pv-live img')].some(i => i.complete && i.naturalWidth > 0), null, { timeout: 10000 });
     ok(!frames.length, 'choosing a layout does not open the whole app in a frame');
     ok(await mp.evaluate(() => !document.querySelector('.pgcp-pv video') && !!document.querySelector('.pgcp-pv-live .pgc-sec')), 'the template itself is drawn (no video)');
-    ok(await mp.evaluate(() => { const im = [...document.querySelectorAll('.pgcp-pv-live img')].filter(i => i.src); return im.length > 0 && im.every(i => /\/app\/demo-wedding\//.test(i.src)); }), 'its photos are PicGrades\' demo wedding photos, not the couple\'s or test pictures');
-    ok(await mp.evaluate(() => /Anika/.test(document.querySelector('.pgcp-pv-live').textContent)), 'the demo couple\'s names show');
+    // step 110 (changed from step 102, Deepak's decision): a wedding that has photos sees the template with its own photos
+    ok(await mp.evaluate(() => { const im = [...document.querySelectorAll('.pgcp-pv-live img')].filter(i => i.src && i.dataset.photo); return im.length > 0 && im.every(i => !/demo-wedding/.test(i.src)); }), 'a wedding with photos: the preview uses its own photos');
+    ok(await mp.evaluate(() => /Your photos|your photos/.test(document.querySelector('.pgcp-pv-note').textContent)), 'the note says it is shown with your photos');
     ok(await mp.evaluate(() => document.querySelector('.pgcp-pv-edit').textContent === 'Try your photos' && !document.querySelector('.pgcp-pv-edit').hidden), '"Try your photos" is offered next to Use this');
     ok(await mp.evaluate(() => [...document.querySelectorAll('.pgcp-pv-acts button,.pgcp-pv-top button')].filter(x => x.offsetParent).every(x => x.getBoundingClientRect().height >= 44)), 'the buttons are at least 44 px');
     const sc0 = await mp.evaluate(() => { const v = document.querySelector('.pgcp-pv-live'); v.scrollTop = 600; return v.scrollTop; }); await mp.waitForTimeout(900);
     ok(sc0 > 0, 'the preview scrolls like the real page');
     await mp.evaluate(() => { document.querySelector('.pgcp-pv-live').scrollTop = 0; }); await mp.waitForTimeout(1200); await mp.screenshot({ path: '/tmp/s102_live_phone.png' });
+    // a wedding with no photos yet sees the demo wedding
+    await mp.evaluate(() => { window.__ev = GALLERY.events; GALLERY.events = []; }); await mp.tap('.pgcp-pv-back'); await mp.waitForTimeout(400);
+    await mp.locator('.pgcp-layout[data-layout="canvas-quiet"]').scrollIntoViewIfNeeded(); await mp.tap('.pgcp-layout[data-layout="canvas-quiet"]'); await mp.waitForSelector('.pgcp-pv-live .pgc'); await mp.waitForTimeout(800);
+    ok(await mp.evaluate(() => { const im = [...document.querySelectorAll('.pgcp-pv-live img')].filter(i => i.src); return im.length > 0 && im.every(i => /\/app\/demo-wedding\//.test(i.src)) && /Anika/.test(document.querySelector('.pgcp-pv-live').textContent); }), 'no photos yet: PicGrades\' demo wedding photos and names');
+    await mp.evaluate(() => { GALLERY.events = window.__ev; });
     await mp.tap('.pgcp-pv-size'); await mp.waitForSelector('.pgcp-pv-live .pgc-sec'); await mp.waitForTimeout(1500);
     ok(await mp.evaluate(() => document.querySelector('.pgcp-pv-livein').style.width === '1200px' && document.querySelector('.pgcp-pv-livein').getBoundingClientRect().width <= document.querySelector('.pgcp-pv-phone').getBoundingClientRect().width + 2), 'Laptop draws the laptop design, fitted into the preview');
     await mp.screenshot({ path: '/tmp/s102_live_laptop.png' });

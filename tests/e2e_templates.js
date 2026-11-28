@@ -9,6 +9,7 @@ DRIVE.folders[W] = { name: W, access: 'ANYONE_WITH_LINK' };
 function login(email) { call('requestCode', { email }); const code = /code: (\d{6})/.exec(mail[mail.length - 1].subject)[1]; return call('verifyCode', { email, code }).token; }
 const admin = login('adcmediaa@gmail.com');
 const pub = call('setGallery', { token: admin, orderId: call('queue', { token: admin }).recentDone[0].orderId, folderUrl: W, title: 'Anika & Rohan', eventDate: '2026-12-14' });
+call('setAdvanced', { token: admin, g: pub.galleryId, on: true });   // step 112: this test uses the Advanced editor, which PicGrades turns on per wedding
 const ck = call('facesStatus', { token: admin, g: pub.galleryId }).gallery.coupleKey;
 const bytesOf = (id) => { const n = parseInt(String(id).replace(/\D/g, ''), 10) || 0; return fs.readFileSync(path.join(FX, files[n % files.length])); };
 global.__fetchBytes = bytesOf;

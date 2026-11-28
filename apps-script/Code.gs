@@ -144,6 +144,7 @@ var ADMIN_ROUTES = {
   addCredits: addCredits_,
   updateCompany: updateCompany_,
   setAllowed: setAllowed_,
+  setAdvanced: setAdvanced_,   // step 112: the Advanced editor for this wedding's couple and photographer (PicGrades only)
   setPlan: setPlan_,
   adminMakeWedding: adminMakeWedding_   // step 99: make a gallery for a client from a Drive link (no order needed)
 };
@@ -1330,7 +1331,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions', 'timeGroups', 'logo'];   // logo (step 99d): the couple's own logo picture, a small data URL (PNG / WebP / JPEG, made at most 256 px on the phone)   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions', 'timeGroups', 'logo', 'couplePhotos', 'films', 'advanced'];   // logo (step 99d): the couple's own logo picture, a small data URL (PNG / WebP / JPEG, made at most 256 px on the phone)   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1597,7 +1598,10 @@ function getGallery_(p) {
   m.features = featuresOf_(g);
   m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
   m.custom = customOf_(g.custom);
-  m.logoUrl = logoUrlOf_(g.pages, g.logo);   // step 99d: the couple's own logo (only when they chose 'Our logo')
+  m.logoUrl = logoUrlOf_(g.pages, g.logo);
+  m.films = filmsOf_(g.films);   // step 111
+  m.advanced = String(g.advanced) === 'on';   // step 112
+  var cpx = jsonObj_(g.couplePhotos); m.couplePhotos = { bride: (cpx.bride || []).slice(0, 24), groom: (cpx.groom || []).slice(0, 24), both: (cpx.both || []).slice(0, 12) };   // step 110   // step 99d: the couple's own logo (only when they chose 'Our logo')
   if (/^cv-/.test(m.layout)) { var cvx = canvasFor_(g, m.layout); if (cvx) m.canvas = { id: cvx.id, name: cvx.name, doc: cvx.doc, base: cvx.base }; else m.layout = ''; }   // step 77: a free-canvas layout from a collection
   m.story = picksOf_(g.storyPicks);
   m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
@@ -1898,13 +1902,30 @@ function savePeople_(p, user) {
       var id = String(q && q.id || '');
       if (!/^p[a-z0-9]{2,16}$/.test(id) || seenId[id]) { bad = 'People list looks wrong.'; return null; }
       seenId[id] = 1;
-      return { id: id, name: String(q.name || '').replace(/[<>]/g, '').trim().slice(0, 40), hide: !!q.hide, faces: keys(q.faces), out: keys(q.out) };
+      var role = ['bride', 'groom'].indexOf(String(q.role)) > -1 ? String(q.role) : '';   // step 110: this person is the bride / the groom
+      var rec = { id: id, name: String(q.name || '').replace(/[<>]/g, '').trim().slice(0, 40), hide: !!q.hide, faces: keys(q.faces), out: keys(q.out) }; if (role) rec.role = role; return rec;
     }).filter(function (q) { return q && (q.faces.length || q.out.length); });
     if (bad) return { ok: false, error: bad };
     if (total > PEOPLE_KEYS_MAX) return { ok: false, error: 'Too many faces in the people list.' };
+    var seenRole = {}; for (var i = clean.length - 1; i >= 0; i--) { var rl = clean[i].role; if (rl) { if (seenRole[rl]) delete clean[i].role; else seenRole[rl] = 1; } }   // one bride, one groom (the latest)
     var f = readFacesFile_(g); f.people = clean; writeFacesFile_(g, f);
+    updateRowByNumber_('Galleries', g._row, { couplePhotos: JSON.stringify(couplePhotosOf_(f)) });
     return { people: clean };
   } finally { lock.releaseLock(); }
+}
+/** Step 110: the bride's and the groom's photos (biggest face first) and the ones with both — for the couple's spots in templates. */
+function couplePhotosOf_(f) {
+  var out = { bride: [], groom: [], both: [] }, sizes = {};
+  ['bride', 'groom'].forEach(function (role) {
+    var p = (f.people || []).filter(function (q) { return q.role === role && !q.hide; })[0]; if (!p) return;
+    var list = [];
+    (p.faces || []).forEach(function (k) { if ((p.out || []).indexOf(k) >= 0) return; var i = k.lastIndexOf(':'), pid = k.slice(0, i), n = +k.slice(i + 1), ph = (f.photos || {})[pid]; if (!ph) return;
+      var b = ((ph.f || [])[n] || [])[0] || [0, 0, 0, 0]; list.push({ pid: pid, a: (b[2] || 0) * (b[3] || 0) }); });
+    list.sort(function (a, b) { return b.a - a.a; });
+    var seen = {}; list.forEach(function (x) { if (!seen[x.pid] && out[role].length < 24) { seen[x.pid] = 1; out[role].push(x.pid); } });
+  });
+  var g = {}; out.groom.forEach(function (pid) { g[pid] = 1; }); out.both = out.bride.filter(function (pid) { return g[pid]; }).slice(0, 12);
+  return out;
 }
 /** Photos of the hand-joined person a face ('photoId:n') belongs to; hidden people do not count. */
 function personPhotos_(f, key) {
@@ -2474,6 +2495,13 @@ function coupleFeatures_(p) { return saveFeatures_(coupleGallery_(p), p.features
 /** Photographer (logged in, own studio only) or PicGrades staff: switch functions on or off. */
 function setFeatures_(p, user) { var x = staffGallery_(p.g, user); return saveFeatures_(x.g, p.features); }
 
+/** Step 112: PicGrades (admin) turns the Advanced editor on or off for a wedding's couple and photographer (off unless turned on). */
+function setAdvanced_(p, user) {
+  var g = findGallery_(p.g); if (!g) throw new Error('Gallery not found.');
+  var on = p.on === true || p.on === 'on' || p.on === 'true';
+  ensureTab_('Galleries', GALLERY_COLUMNS); updateRowByNumber_('Galleries', g._row, { advanced: on ? 'on' : '' });
+  return { ok: true, advanced: on };
+}
 /** PicGrades (admin): master switches by plan. A function set 'off' here is locked for the couple and the photographer. */
 function setAllowed_(p, user) {
   var g = findGallery_(p.g); if (!g) throw new Error('Gallery not found.');
@@ -2503,18 +2531,25 @@ function saveLook_(g, p) {
     if (Object.keys(all).length > VERSIONS_MAX) return { ok: false, error: 'Too many saved layouts. Start one again to make room.' };
     out.hubVersions = JSON.stringify(all);
   }
+  if ('films' in p) out.films = JSON.stringify(filmsOf_(p.films));   // step 111: the couple's films (YouTube / Shorts / Drive), played one after another
   if ('logo' in p) {   // step 99d: the couple's own logo ('' = remove it)
     var lg = String(p.logo || '');
     if (lg && !/^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+\/=]+$/.test(lg)) return { ok: false, error: 'The logo must be a PNG, WebP or JPEG picture.' };
     if (lg.length > LOGO_MAX) return { ok: false, error: 'That logo is too big. Try a smaller picture.' };
     out.logo = lg;
   }
-  if (!('theme' in out) && !('layout' in out) && !('pages' in out) && !('custom' in out) && !('hubVersions' in out) && !('logo' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
+  if (!('theme' in out) && !('layout' in out) && !('pages' in out) && !('custom' in out) && !('hubVersions' in out) && !('logo' in out) && !('films' in out)) return { ok: false, error: 'Choose a theme, a layout or a page style.' };
   out.updatedAt = fmt_(new Date());
   ensureTab_('Galleries', GALLERY_COLUMNS);
   updateRowByNumber_('Galleries', g._row, out);
   return { theme: 'theme' in out ? out.theme : lookId_(g.theme), layout: 'layout' in out ? out.layout : lookId_(g.layout), pages: pagesOf_('pages' in out ? out.pages : g.pages), custom: customOf_('custom' in out ? out.custom : g.custom),
-    versions: versionsOf_('hubVersions' in out ? out.hubVersions : g.hubVersions), logoUrl: logoUrlOf_('pages' in out ? out.pages : g.pages, 'logo' in out ? out.logo : g.logo) };
+    versions: versionsOf_('hubVersions' in out ? out.hubVersions : g.hubVersions), films: filmsOf_('films' in out ? out.films : g.films), logoUrl: logoUrlOf_('pages' in out ? out.pages : g.pages, 'logo' in out ? out.logo : g.logo) };
+}
+/** Step 111: a clean list of films — at most 12, each { k: 'yt' | 'drive', id, sh: 1 for a Short }. */
+function filmsOf_(v) {
+  var a = v; if (typeof a === 'string') { try { a = JSON.parse(a || '[]'); } catch (e) { a = []; } }
+  return (Array.isArray(a) ? a : []).filter(function (f) { return f && (f.k === 'yt' && /^[A-Za-z0-9_-]{6,20}$/.test(String(f.id)) || f.k === 'drive' && /^[A-Za-z0-9_-]{20,80}$/.test(String(f.id))); })
+    .slice(0, 12).map(function (f) { var o = { k: f.k, id: String(f.id) }; if (f.k === 'yt' && f.sh) o.sh = 1; return o; });
 }
 var LOGO_MAX = 45000;   // a Sheet cell holds 50,000 characters
 /** The logo picture the app shows, or '' for initials / no logo. */
@@ -2628,6 +2663,12 @@ function customOf_(v) {
     out.story = { kind: st.kind, findme: ['left', 'right', 'off'].indexOf(st.findme) > -1 ? st.findme : 'right', bar: st.bar === 'on' ? 'on' : 'off', texts: texts,
       sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 40).filter(function (q) { return q && (isCv ? cvKey.test(String(q.k)) : key.test(String(q.k)) && String(q.k).indexOf(':') < 0); }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
     tplTune_(st, out.story);
+    if (isCv && st.fonts && typeof st.fonts === 'object') { var fo = {}; ['head', 'body'].forEach(function (k) { if (CANVAS_FONTS.indexOf(String(st.fonts[k])) > -1) fo[k] = String(st.fonts[k]); }); if (Object.keys(fo).length) out.story.fonts = fo; }   // step 108
+    if (isCv && Array.isArray(st.add)) {   // step 107: parts added from other templates' design kits (which part, from which template, after which part)
+      var seen = {}, add = st.add.slice(0, 8).filter(function (a) { return a && /^x\d{1,2}$/.test(String(a.id)) && !seen[a.id] && (seen[a.id] = 1) && lookId_(a.from) && cvKey.test(String(a.sec)) && (!a.after || cvKey.test(String(a.after))); })
+        .map(function (a) { return { id: String(a.id), from: lookId_(a.from), sec: String(a.sec), after: a.after ? String(a.after) : '' }; });
+      if (add.length) out.story.add = add;
+    }
     out.blocks = [];
   }
   return out;
@@ -2650,7 +2691,7 @@ function tplTune_(st, out) {
   if (Object.keys(colors).length) out.colors = colors;
   var hide = (Array.isArray(st.hide) ? st.hide : []).map(String).filter(function (k) { return PART.test(k); }).slice(0, 80);
   if (hide.length) out.hide = hide;
-  if (st.motion === 'off') out.motion = 'off';
+  if (st.motion === 'off' || (st.motion === 'calm' && out.kind === 'canvas')) out.motion = String(st.motion);   // step 109: Calm (canvas)
   var frame = {}, fn = 0;   // step 79: photos moved inside their holder / zoomed { slot: { fx, fy, z } }
   Object.keys(st.frame || {}).forEach(function (k) { var f = (st.frame || {})[k]; if (!SLOT.test(k) || !f || typeof f !== 'object' || fn >= 80) return;
     frame[k] = { fx: Math.max(0, Math.min(100, Math.round(+f.fx || 0))), fy: Math.max(0, Math.min(100, Math.round(+f.fy || 0))), z: Math.max(1, Math.min(3, Math.round((+f.z || 1) * 100) / 100)) }; fn++; });
@@ -3281,7 +3322,7 @@ function getStudio_(p) {
 // The layout format is drawn by app/gallery/34-canvas.js; canvasDoc_() keeps only what it knows.
 var CANVAS_SCFX = ['grow', 'shrink', 'grow-shrink', 'move', 'fade-in', 'fade-out', 'spin', 'tilt', 'blur', 'reveal', 'colour'];   // step 105
 var CANVAS_COLUMNS = ['id', 'kind', 'collection', 'name', 'note', 'scope', 'owner', 'galleryId', 'companyName', 'doc', 'order', 'updatedAt', 'status', 'base'];   // base (step 101): the template a wedding's copy came from — one copy per template per wedding
-var CANVAS_EL_TYPES = ['photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card', 'art', 'video'];   // art (step 97): a picture from the elements library; video (step 97b): YouTube or Drive   // card (step 77d): one of the app's own Hub cards
+var CANVAS_EL_TYPES = ['films', 'photo', 'names', 'date', 'text', 'events', 'strip', 'action', 'blessings', 'credit', 'shape', 'card', 'art', 'video'];   // art (step 97): a picture from the elements library; video (step 97b): YouTube or Drive   // card (step 77d): one of the app's own Hub cards
 var CANVAS_ACTS = ['findme', 'reel', 'post', 'memory', 'moments', 'notes'];
 var CANVAS_MOTIONS = ['fade', 'rise', 'drop', 'left', 'right', 'grow', 'blur', 'wipe', 'iris', 'unfold', 'shine', 'zoom', 'float',
   'spin', 'flip-x', 'flip-y', 'turn', 'bounce', 'zoom-out', 'glide', 'arc', 'reveal', 'shutters', 'pulse', 'swing', 'wobble', 'spin-slow', 'breathe', 'fade-on-scroll', 'grow-on-scroll'];   // step 97: the motion library

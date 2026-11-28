@@ -24,7 +24,7 @@ ok(call('coupleLook', { g: G, coupleKey: ck, logo: '' }).logoUrl === '', 'Remove
 // the Code.gs guards
 const code = fs.readFileSync(path.join(__dirname, '..', 'apps-script', 'Code.gs'), 'utf8');
 ok(/header: \['right', 'left', 'center'\], hdrmode: \['scroll', 'fixed', 'auto'\], logo: \['mono', 'image', 'none'\]/.test(code), 'PAGE_STYLES lists the header choices');
-ok(/'timeGroups', 'logo'\]/.test(code), 'the Galleries tab has a logo column at the end (old rows keep working)');
+ok(/'timeGroups', 'logo'[,\]]/.test(code), 'the Galleries tab has the logo column after the older ones (old rows keep working; later steps add columns after it)');
 const js = fs.readFileSync(path.join(__dirname, '..', 'app', 'gallery', '53-header.js'), 'utf8');
 ok(!/relay|cloudflare/i.test(js), 'no relay code in the header');
 if (fails) { console.error(fails + ' failed'); process.exit(1); } console.log('all ok');
