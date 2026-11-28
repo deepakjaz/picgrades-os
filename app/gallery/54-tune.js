@@ -13,8 +13,20 @@
   const darkApp = () => document.documentElement.getAttribute('data-tkg-theme') === 'dark';
 
   // ---- canvas ----
+  // step 107: a part added from another template's design kit — its ids get the add's key in front, so the couple's choices for it
+  // (photos, words, hide, order) stay separate from the template's own parts
+  function kitSection(a) {
+    const l = window.PGLayout && PGLayout.find(a.from), src = l && l.canvas && (l.canvas.sections || []).find(x => x.id === a.sec); if (!src) return null;
+    const s = clone(src), pre = a.id + '-'; s.id = pre + src.id; s.kit = { from: a.from, sec: a.sec, name: (l.name || '').replace(/\s*\(editor\)\s*$/i, '') };
+    (s.els || []).forEach(e => { e.id = pre + e.id; }); return s;
+  }
+  function withKit(doc, t) {
+    (t.add || []).forEach(a => { const s = kitSection(a); if (!s) return; const at = doc.sections.findIndex(x => x.id === a.after); if (at < 0) doc.sections.push(s); else doc.sections.splice(at + 1, 0, s); });
+    return doc;
+  }
   function overlayCanvas(doc, t, dark) {
     doc = clone(doc || { sections: [] }); t = t || {};
+    doc.sections = doc.sections || []; withKit(doc, t);
     const ph = t.photos || {}, hide = new Set(t.hide || []), fr = t.frame || {}, tx = t.texts || {};
     (t.sections || []).forEach(q => { if (q.on === false) hide.add(q.k); });
     if ((t.sections || []).length) {   // step 106: the couple's order of the parts (parts they never moved keep their place after)
@@ -44,12 +56,13 @@
     return D;
   }
   function sectionName(s, i) {
+    if (s.kit) return 'Added · ' + s.kit.name;
     const has = k => (s.els || []).some(e => e.t === k);
     return has('names') ? 'Opening' : has('card') ? 'Cards' : (s.els || []).some(e => e.t === 'action' && /reel|post/.test(e.act || '')) ? 'Make something' : 'Part ' + (i + 1);
   }
   function mountCanvas(box, D, act, o) {
-    const t = o.tune || {}, base = o.doc || (t.doc) || { sections: [] };
-    const doc = overlayCanvas(base, t, o.dark != null ? o.dark : darkApp());
+    const t = o.tune || {}, raw = o.doc || (t.doc) || { sections: [] }, base = withKit(clone(raw), t);   // base: the template + parts added from kits (for the lists)
+    const doc = overlayCanvas(raw, t, o.dark != null ? o.dark : darkApp());
     const inst = PGCanvas.render(box, doc, overlayWords(D, t), act || (() => {}), { scroller: o.scroller, still: t.motion === 'off', width: o.width, mode: o.mode });
     const shown = id => { const im = box.querySelector('.pgc-el[data-el="' + CSS.escape(id) + '"] img[data-photo]'); return im ? im.dataset.photo : ''; };
     const bgShown = id => { const im = box.querySelector('.pgc-sec[data-sec="' + CSS.escape(id) + '"] .pgc-bgimg'); return im ? im.dataset.photo : ''; };
@@ -84,7 +97,7 @@
           out.push({ key: e.id, part: sectionName(s, i), text: txt, button: e.t === 'action' }); }));
         return out;
       },
-      canOrder: true, order: () => (base.sections || []).map((s, i) => ({ key: s.id, name: sectionName(s, i) })),
+      canOrder: true, canKit: true, order: () => (base.sections || []).map((s, i) => ({ key: s.id, name: sectionName(s, i), kit: !!s.kit })),
       refresh() {}, destroy() { if (inst && inst.destroy) inst.destroy(); }
     };
   }
@@ -146,5 +159,14 @@
   function colors(kind, dark, doc) { return isStudio(kind) ? PGStoryStudio.colors(kind, dark) : kind === 'canvas' ? canvasColors(doc, dark) : []; }
   const canFrame = kind => isStudio(kind);   // Move & zoom on the page itself: the studio templates (canvas has it in the Advanced editor)
 
-  window.PGTune = { handles, mount, colors, canFrame, overlayCanvas, overlayStory, overlayWords };
+  // step 107: the design kits — every canvas template's parts, ready to add to another canvas template
+  function kits(exceptId) {
+    return (window.PGLayout ? PGLayout.list() : []).filter(l => l.canvas && l.id !== exceptId && (l.canvas.sections || []).length && (!l.hidden || /\(editor\)/i.test(l.name || '')))
+      .map(l => ({ id: l.id, name: (l.name || '').replace(/\s*\(editor\)\s*$/i, ''), parts: (l.canvas.sections || []).map((s, i) => ({ sec: s.id, name: sectionName(s, i) })) }));
+  }
+  function drawPart(box, kitId, secId, hostDoc, D) {   // one part, drawn live, for the list
+    const l = PGLayout.find(kitId), s = l && l.canvas && (l.canvas.sections || []).find(x => x.id === secId); if (!s) return null;
+    return PGCanvas.render(box, { name: 'kit', colors: Object.assign({}, (l.canvas || {}).colors, (hostDoc || {}).colors), fonts: (hostDoc || {}).fonts || (l.canvas || {}).fonts, sections: [clone(s)] }, D, () => {}, { still: true, mode: 'p' });
+  }
+  window.PGTune = { handles, mount, colors, canFrame, overlayCanvas, overlayStory, overlayWords, kits, drawPart };
 })();

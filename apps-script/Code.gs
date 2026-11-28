@@ -2628,6 +2628,11 @@ function customOf_(v) {
     out.story = { kind: st.kind, findme: ['left', 'right', 'off'].indexOf(st.findme) > -1 ? st.findme : 'right', bar: st.bar === 'on' ? 'on' : 'off', texts: texts,
       sections: (Array.isArray(st.sections) ? st.sections : []).slice(0, 40).filter(function (q) { return q && (isCv ? cvKey.test(String(q.k)) : key.test(String(q.k)) && String(q.k).indexOf(':') < 0); }).map(function (q) { return { k: String(q.k), on: q.on !== false }; }) };
     tplTune_(st, out.story);
+    if (isCv && Array.isArray(st.add)) {   // step 107: parts added from other templates' design kits (which part, from which template, after which part)
+      var seen = {}, add = st.add.slice(0, 8).filter(function (a) { return a && /^x\d{1,2}$/.test(String(a.id)) && !seen[a.id] && (seen[a.id] = 1) && lookId_(a.from) && cvKey.test(String(a.sec)) && (!a.after || cvKey.test(String(a.after))); })
+        .map(function (a) { return { id: String(a.id), from: lookId_(a.from), sec: String(a.sec), after: a.after ? String(a.after) : '' }; });
+      if (add.length) out.story.add = add;
+    }
     out.blocks = [];
   }
   return out;

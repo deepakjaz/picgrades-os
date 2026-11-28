@@ -58,6 +58,28 @@ const srv = http.createServer((req, res) => {
     await gp.goto(URL); await gp.waitForSelector('#pgStory .pgc', { timeout: 10000 }); await gp.waitForTimeout(600);
     ok(await gp.evaluate(([k, first]) => /Our forever begins/.test(document.querySelector('#pgStory').textContent) && document.querySelector('#pgStory .pgc-sec').dataset.sec === first, [word, before[1]]), 'guests see the new words and the new order');
     await gp.close();
+    // ---- step 107: add a part from another template's design kit ----
+    await mp.evaluate(() => PGControl.designLayout('custom')); await mp.waitForSelector('.pgte .pgte-scroll .pgc-sec', { timeout: 8000 });
+    await mp.evaluate(() => { PGTemplateEditor.tab('parts'); const e = document.querySelector('.pgte'); if (!e.classList.contains('pgte-drawer-open')) document.querySelector('.pgte-drawer-toggle').click(); }); await mp.waitForSelector('.pgte-addkit');
+    const nSec = await mp.evaluate(() => document.querySelectorAll('.pgte-scroll .pgc-sec').length);
+    await mp.evaluate(() => document.querySelector('.pgte-addkit').click()); await mp.waitForSelector('.pgte-kitsheet .pgte-kitpart .pgc-sec', { timeout: 8000 });
+    ok(await mp.evaluate(() => document.querySelectorAll('.pgte-kitsheet [data-kit]').length >= 5 && !document.querySelector('.pgte-kitsheet [data-kit="canvas-night"]')), 'the design kits list the other canvas templates (not this one)');
+    await mp.evaluate(() => { const k = document.querySelector('.pgte-kitsheet [data-kit="canvas-quiet"]'); if (k) k.click(); }); await mp.waitForSelector('.pgte-kitsheet .pgte-kitpart .pgc-sec'); await mp.waitForTimeout(400);
+    ok(await mp.evaluate(() => [...document.querySelectorAll('.pgte-kitsheet .pgte-kitpart img')].some(i => i.dataset.photo && !/demo:/.test(i.dataset.photo))), 'its parts are drawn live with this wedding\'s photos');
+    await mp.screenshot({ path: '/tmp/s107_kit.png' });
+    const kpart = await mp.evaluate(() => { const b = document.querySelectorAll('.pgte-kitsheet .pgte-kitpart')[1] || document.querySelector('.pgte-kitsheet .pgte-kitpart'); b.click(); return b.dataset.part; });
+    const afterK = await mp.evaluate(() => { const b = document.querySelector('.pgte-kitsheet [data-after]'); b.click(); return b.dataset.after; });
+    await mp.evaluate(() => document.querySelector('.pgte-kitadd').click()); await mp.waitForTimeout(700);
+    ok(await mp.evaluate(n => document.querySelectorAll('.pgte-scroll .pgc-sec').length === n + 1, nSec), 'Add puts the part into the template');
+    const order1 = await mp.evaluate(() => [...document.querySelectorAll('.pgte-scroll .pgc-sec')].map(s => s.dataset.sec));
+    ok(order1[1] === 'x1-' + kpart && order1[0] === afterK, 'it goes right after the part chosen (' + order1.slice(0, 3) + ')');
+    ok(await mp.evaluate(() => !!document.querySelector('.pgte-orow.kit [data-unkit]')), 'in Parts it shows as "Added · …" with Remove');
+    await mp.tap('.pgte-apply'); await mp.waitForFunction(() => !document.querySelector('.pgte'), null, { timeout: 10000 }); await mp.waitForTimeout(500);
+    g = gal(); ok(g.custom.story.add.length === 1 && g.custom.story.add[0].from === 'canvas-quiet' && !g.custom.story.doc, 'Apply keeps only the choice (which part, from where, after which) — no copy');
+    const gk = await ctx.newPage(); gk.on('pageerror', e => errors.push(e.message)); await route(gk);
+    await gk.goto(URL); await gk.waitForSelector('#pgStory .pgc', { timeout: 10000 }); await gk.waitForTimeout(500);
+    ok(await gk.evaluate(id => !!document.querySelector('#pgStory .pgc-sec[data-sec="' + id + '"]'), 'x1-' + kpart), 'guests see the added part');
+    await gk.close();
     // ---- Living Story: words and order ----
     await mp.evaluate(() => PGControl.designLayout('story-living')); await mp.waitForSelector('.pgte .pgte-scroll section', { timeout: 8000 }); await mp.waitForTimeout(700);
     await mp.evaluate(() => PGTemplateEditor.tab('words')); await mp.waitForSelector('.pgte-pane [data-tx]');
