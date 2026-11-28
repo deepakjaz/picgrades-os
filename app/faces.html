@@ -6,6 +6,7 @@
 <title>PicGrades · Face reading</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+.mini.on{background:#141110;color:#fff;border-color:#141110}   /* step 110 */
 :root{--bg:#0E0E10;--card:#17171A;--line:#26262B;--line2:#34343A;--chip:#222226;--text:#F3F0EA;--mute:#A8A49C;--gold:#E9B44C}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;padding:0 0 60px}
@@ -327,6 +328,8 @@ body.simple .tiles{grid-template-columns:repeat(3,1fr)}
     var wrap = document.createElement('div'); wrap.className = 'pp'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-label', 'Person');
     var card = document.createElement('div'); card.className = 'pp-card'; wrap.appendChild(card);
     card.innerHTML = '<div class="pp-head"><i></i><div style="flex:1"><input id="ppName" maxlength="40" placeholder="Name, e.g. Bride, Dadi" aria-label="Name"><p class="muted" style="margin:6px 0 0;font-size:13px" id="ppCount"></p></div></div>' +
+      '<div class="row" style="margin-top:12px;align-items:center" id="ppRole"><span class="muted" style="font-size:13px">This is</span><button class="mini" type="button" data-role="bride">Bride</button><button class="mini" type="button" data-role="groom">Groom</button><button class="mini" type="button" data-role="">Someone else</button></div>' +
+      '<p class="muted" style="margin:6px 0 0;font-size:12px">The bride’s and groom’s photos fill the couple’s spots in the Hub templates when the couple has not picked them.</p>' +
       '<div class="row" style="margin-top:14px"><button class="btn" type="button" id="ppSave">Save name</button><button class="mini" type="button" id="ppJoin">Same person as…</button>' +
       '<button class="mini" type="button" id="ppHide"></button><button class="mini hidden" type="button" id="ppSplit">Undo my changes</button><button class="mini" type="button" id="ppClose">Close</button></div>' +
       '<p class="muted" style="margin:16px 0 0;font-size:13px">Faces of this person. Tap × on any face that is someone else.</p><div class="pp-faces" id="ppFaces"></div>';
@@ -335,6 +338,8 @@ body.simple .tiles{grid-template-columns:repeat(3,1fr)}
     q('ppName').value = p.name || '';
     q('ppCount').textContent = p.photos.length + (p.photos.length === 1 ? ' photo' : ' photos') + (p.id ? ' · changed by hand' : '');
     q('ppHide').textContent = p.hide ? 'Show again' : 'Hide';
+    card.querySelectorAll('[data-role]').forEach(function (b) { var on = (p.role || '') === b.dataset.role; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);   // step 110
+      b.addEventListener('click', function () { var r = b.dataset.role; close(); storePeople(recordFor(p, function (x) { if (r) x.role = r; else delete x.role; if (!x.name && r) x.name = r === 'bride' ? 'Bride' : 'Groom'; }), r ? (r === 'bride' ? 'Marked as the bride' : 'Marked as the groom') : 'Not the couple'); }); });
     q('ppSplit').classList.toggle('hidden', !p.id);
     var close = function () { wrap.remove(); document.removeEventListener('keydown', esc); };
     var esc = function (e) { if (e.key === 'Escape') close(); };

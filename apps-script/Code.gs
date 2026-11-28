@@ -1330,7 +1330,7 @@ var GALLERY_COLUMNS = ['galleryId', 'orderId', 'companyName', 'title', 'eventDat
   'photoCount', 'rootCount', 'status', 'createdAt', 'updatedAt', 'createdBy',
   'facesFileId', 'facesStatus', 'faceCount', 'facesPhotos', 'facesAt', 'sentAt', 'sentTo', 'publishedAt', 'publishedBy',
   'coupleKey', 'thanksNote', 'guestFolderId', 'portfolio',
-  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions', 'timeGroups', 'logo'];   // logo (step 99d): the couple's own logo picture, a small data URL (PNG / WebP / JPEG, made at most 256 px on the phone)   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
+  'features', 'allowed', 'theme', 'layout', 'pages', 'demo', 'photographer', 'credit', 'custom', 'storyPicks', 'guestPhotos', 'plan', 'trialEnds', 'trialMail', 'slug', 'hubVersions', 'timeGroups', 'logo', 'couplePhotos'];   // logo (step 99d): the couple's own logo picture, a small data URL (PNG / WebP / JPEG, made at most 256 px on the phone)   // hubVersions (step 76): the couple's own version of each Hub layout they designed, JSON { layoutId: custom }   // slug (step 67): the wedding's own address, couple's names first — anika-rohan.picgrades.in   // trialMail (step 65d): 'warned' / 'ended' — the trial emails already sent   // plan / trialEnds (step 65b): a self-made wedding starts a 30-day trial   // guestPhotos (step 63b): 'findme' = guests see photos only after Find me · '' / 'open' = open gallery   // storyPicks: photos the couple / photographer chose for the story (JSON, step 56)   // custom: the wedding's own Hub from the Hub editor (JSON, step 44)
    // photographer: who photographed this wedding (JSON, step 42); credit: 'off' hides PicGrades' name
    // demo: 'yes' = a demo wedding where anyone can try the Control Panel (changes stay on their phone, step 39)
    // theme / layout: the wedding's look ('' = the original look); pages: style of each page, e.g. {"event":"collage"} (step 36) — all chosen in the app's Control Panel
@@ -1597,7 +1597,8 @@ function getGallery_(p) {
   m.features = featuresOf_(g);
   m.theme = lookId_(g.theme); m.layout = lookId_(g.layout); m.pages = pagesOf_(g.pages); m.demo = isDemo_(g);
   m.custom = customOf_(g.custom);
-  m.logoUrl = logoUrlOf_(g.pages, g.logo);   // step 99d: the couple's own logo (only when they chose 'Our logo')
+  m.logoUrl = logoUrlOf_(g.pages, g.logo);
+  var cpx = jsonObj_(g.couplePhotos); m.couplePhotos = { bride: (cpx.bride || []).slice(0, 24), groom: (cpx.groom || []).slice(0, 24), both: (cpx.both || []).slice(0, 12) };   // step 110   // step 99d: the couple's own logo (only when they chose 'Our logo')
   if (/^cv-/.test(m.layout)) { var cvx = canvasFor_(g, m.layout); if (cvx) m.canvas = { id: cvx.id, name: cvx.name, doc: cvx.doc, base: cvx.base }; else m.layout = ''; }   // step 77: a free-canvas layout from a collection
   m.story = picksOf_(g.storyPicks);
   m.photographer = photographerOf_(g.photographer); if (m.photographer.name) m.studio = m.photographer.name; m.credit = String(g.credit || '').toLowerCase() !== 'off';
@@ -1898,13 +1899,30 @@ function savePeople_(p, user) {
       var id = String(q && q.id || '');
       if (!/^p[a-z0-9]{2,16}$/.test(id) || seenId[id]) { bad = 'People list looks wrong.'; return null; }
       seenId[id] = 1;
-      return { id: id, name: String(q.name || '').replace(/[<>]/g, '').trim().slice(0, 40), hide: !!q.hide, faces: keys(q.faces), out: keys(q.out) };
+      var role = ['bride', 'groom'].indexOf(String(q.role)) > -1 ? String(q.role) : '';   // step 110: this person is the bride / the groom
+      var rec = { id: id, name: String(q.name || '').replace(/[<>]/g, '').trim().slice(0, 40), hide: !!q.hide, faces: keys(q.faces), out: keys(q.out) }; if (role) rec.role = role; return rec;
     }).filter(function (q) { return q && (q.faces.length || q.out.length); });
     if (bad) return { ok: false, error: bad };
     if (total > PEOPLE_KEYS_MAX) return { ok: false, error: 'Too many faces in the people list.' };
+    var seenRole = {}; for (var i = clean.length - 1; i >= 0; i--) { var rl = clean[i].role; if (rl) { if (seenRole[rl]) delete clean[i].role; else seenRole[rl] = 1; } }   // one bride, one groom (the latest)
     var f = readFacesFile_(g); f.people = clean; writeFacesFile_(g, f);
+    updateRowByNumber_('Galleries', g._row, { couplePhotos: JSON.stringify(couplePhotosOf_(f)) });
     return { people: clean };
   } finally { lock.releaseLock(); }
+}
+/** Step 110: the bride's and the groom's photos (biggest face first) and the ones with both — for the couple's spots in templates. */
+function couplePhotosOf_(f) {
+  var out = { bride: [], groom: [], both: [] }, sizes = {};
+  ['bride', 'groom'].forEach(function (role) {
+    var p = (f.people || []).filter(function (q) { return q.role === role && !q.hide; })[0]; if (!p) return;
+    var list = [];
+    (p.faces || []).forEach(function (k) { if ((p.out || []).indexOf(k) >= 0) return; var i = k.lastIndexOf(':'), pid = k.slice(0, i), n = +k.slice(i + 1), ph = (f.photos || {})[pid]; if (!ph) return;
+      var b = ((ph.f || [])[n] || [])[0] || [0, 0, 0, 0]; list.push({ pid: pid, a: (b[2] || 0) * (b[3] || 0) }); });
+    list.sort(function (a, b) { return b.a - a.a; });
+    var seen = {}; list.forEach(function (x) { if (!seen[x.pid] && out[role].length < 24) { seen[x.pid] = 1; out[role].push(x.pid); } });
+  });
+  var g = {}; out.groom.forEach(function (pid) { g[pid] = 1; }); out.both = out.bride.filter(function (pid) { return g[pid]; }).slice(0, 12);
+  return out;
 }
 /** Photos of the hand-joined person a face ('photoId:n') belongs to; hidden people do not count. */
 function personPhotos_(f, key) {

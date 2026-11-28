@@ -304,10 +304,13 @@
     // step 56: the photos come from the couple's / photographer's choice (Control Panel › Story); nothing is guessed
     const P = GALLERY.story || {}, hl = P.hl || {};
     const D0 = data(), evs = (GALLERY.events || []).map(e => ({ name: e.name, photos: (e.photos || []).map(p => ({ id: p.id })), teaser: (e.teaser || []).map(p => ({ id: p.id || p })), featured: hl[e.name] && hl[e.name].length ? hl[e.name].slice() : undefined }));
-    const couple = P.bride && P.groom ? { bride: P.bride, groom: P.groom } : undefined;   // both chosen, or the varmala part is left out
+    // step 110: when the couple has not picked, the photographer's tagged bride / groom photos fill the couple's spots
+    const CP = GALLERY.couplePhotos || {}, bride = P.bride || (CP.bride || [])[0], groom = P.groom || (CP.groom || []).find(x => x !== bride);
+    const couple = bride && groom ? { bride, groom } : undefined;   // both known, or the varmala part is left out
+    const autoCover = (CP.both || []).concat(CP.bride || [], CP.groom || []).filter((x, i, a) => a.indexOf(x) === i).slice(0, 6);
     const pool = [].concat(P.wh || [], (GALLERY.highlights || []).map(x => x.id || x), (GALLERY.pool || []).map(x => x.id || x));   // step 76: what a gated phone may show
     const can = { findme: visible('findme'), reel: visible('reel'), post: visible('post'), memory: visible('upload') };   // step 77: buttons for switched-off functions stay hidden (Find me goes once found)
-    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, pool, can, demo: !!GALLERY.demo, cover: (P.cover || []).length ? P.cover.slice() : undefined, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
+    return { names: D0.names, date: D0.date, place: D0.place, studio: D0.studio, events: evs, couple, pool, can, demo: !!GALLERY.demo, cover: (P.cover || []).length ? P.cover.slice() : autoCover.length ? autoCover : undefined, loved: D0.loved, notes: (D0.notes || []).map(n => ({ name: n.name, text: n.text, photoId: n.photoId })) };
   }
   function storyAct(a, x) {
     const run = k => { if (!visible(k)) return; const t = (window.PGRules && PGRules.act(k)) || ACT[k]; if (t) t[2](); };

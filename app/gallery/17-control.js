@@ -277,6 +277,8 @@
   let CVLIST = [];
   const ownCopy = id => CVLIST.find(x => x.base === id && x.scope === 'wedding' && x.galleryId === String(GALLERY.galleryId || ''));
   // step 103: every story and canvas template is drawn as itself (a story template no longer through its editor version)
+  // step 110: a wedding that has its photos sees templates with them; a new one (no photos yet) sees the demo wedding
+  const ownData = () => { if (ROLE === 'demo') return null; const D = window.PGLayout && PGLayout.storyData(); return D && (D.events || []).some(e => (e.photos || e.teaser || []).length) ? D : null; };
   const liveDoc = id => { const l = PGLayout.find(id); return l && l.story && window.PGTune && PGTune.handles(l.story) ? l : null; };
   const DEMO = (() => { const d = n => 'demo:' + n, r = (k, n) => Array.from({ length: n }, (_, i) => d(k + '-' + (i + 1)));
     const ev = (name, k, n) => ({ name, photos: r(k, n).map(id => ({ id })), teaser: r(k, n), featured: r(k, n).slice(0, 2) });
@@ -337,7 +339,7 @@
     if (clip) {   // step 102: the live template shows the demo wedding; their own photos are one tap away
       if (!ed.hidden) ed.textContent = 'Try your photos';
       else { ed.hidden = false; ed.textContent = 'See it with our photos'; ed.addEventListener('click', () => { clip = false; wrap.classList.remove('clip'); if (live && live.destroy) live.destroy(); if (vid) vid.remove(); vid = null; live = null; ed.hidden = true; load(); fit(); }, { once: true }); }
-      wrap.classList.add('clip'); wrap.querySelector('.pgcp-pv-note').textContent = 'Shown with sample wedding photos. Your own photos show when you use it.';
+      wrap.classList.add('clip'); wrap.querySelector('.pgcp-pv-note').textContent = (ownData() ? 'Shown with your photos.' : 'Shown with sample wedding photos. Your own photos show when you use it.');
     }
     const same = pk ? state.styles[pk] === curStyle(pk) : state.theme === (GALLERY.theme || '') && state.layout === (GALLERY.layout || '');
     const ap = wrap.querySelector('.pgcp-pv-apply');
@@ -367,7 +369,7 @@
       vid.innerHTML = '<div class="pgcp-pv-livein"></div>'; const inner = vid.firstChild; wait.hidden = true;
       inner.style.width = W + 'px'; inner.style.zoom = String((phone.clientWidth || W) / W);
       const l = liveDoc(state.layout);
-      try { live = PGTune.mount(l.story, inner, DEMO, () => {}, { mode: dev === 'phone' ? 'p' : 'l', width: () => W, scroller: vid, doc: l.canvas, tune: {} }); }
+      try { live = PGTune.mount(l.story, inner, ownData() || DEMO, () => {}, { mode: dev === 'phone' ? 'p' : 'l', width: () => W, scroller: vid, doc: l.canvas, tune: {} }); }
       catch (e) { console.warn('preview', e); }
     }
     const CLIPDEV = { phone: [390, 844], laptop: [1200, 760] };

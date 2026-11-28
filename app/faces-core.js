@@ -192,7 +192,7 @@
         if (seen[k] || outOf[i + '|' + k] || !byKey[k]) return; seen[k] = 1; faces.push(byKey[k]);
       });
       if (!faces.length) return;
-      var d = describe(faces); d.id = p.id; d.name = p.name || ''; d.hide = !!p.hide; d.out = (p.out || []).slice(); out.push(d);
+      var d = describe(faces); d.id = p.id; d.name = p.name || ''; d.role = p.role || ''; d.hide = !!p.hide; d.out = (p.out || []).slice(); out.push(d);
     });
     auto.forEach(function (faces) { var d = describe(faces); if (d.photos.length < (minPhotos || 2)) return; d.id = null; d.name = ''; d.hide = false; d.out = []; out.push(d); });
     return out.sort(function (a, b) { return (b.name ? 1 : 0) - (a.name ? 1 : 0) || b.photos.length - a.photos.length; });

@@ -214,8 +214,9 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
   function body(el, k, doc, data, P, ctx, sp) {
     const s = ctx.mode === 'l' && el.sl ? Object.assign({}, el.s, el.sl) : el.s || {}, t = el.t, st = styleOf(s, k, doc, sp);   // sl: the laptop's own style changes
     const zm = Math.max(1, Math.min(4, num(s.zm, 1)));   // step 79: how close the photo sits in its frame (1 = fills it)
+    const autoPos = s.fx == null && s.fy == null ? ' data-auto="1"' : '';   // step 110: nobody framed it — the face helper may centre it on the faces
     const imgPos = 'object-position:' + num(s.fx, 50) + '% ' + num(s.fy, 30) + '%' + (zm > 1 ? ';scale:' + zm + ';transform-origin:' + num(s.fx, 50) + '% ' + num(s.fy, 30) + '%' : '');   // default keeps faces (top third) in frame
-    if (t === 'photo') { const id = P.of(el.src); ctx.used.push(id); return '<div class="pgc-body pgc-ph" style="' + st + '"><img alt="" loading="lazy" decoding="async" draggable="false" src="' + url(id, el.p && el.p.w > 250 ? 1400 : 800) + '" style="' + imgPos + '" data-photo="' + esc(id) + '"></div>'; }
+    if (t === 'photo') { const id = P.of(el.src); ctx.used.push(id); return '<div class="pgc-body pgc-ph" style="' + st + '"><img alt=""' + autoPos + ' loading="lazy" decoding="async" draggable="false" src="' + url(id, el.p && el.p.w > 250 ? 1400 : 800) + '" style="' + imgPos + '" data-photo="' + esc(id) + '"></div>'; }
     if (t === 'names') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || data.names || '') + '</div>';
     if (t === 'date') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || [data.date, data.place].filter(Boolean).join(' · ')) + '</div>';
     if (t === 'text') return '<div class="pgc-body pgc-txt" style="' + st + '">' + esc(el.text || '') + '</div>';
@@ -238,7 +239,7 @@ html.pg-lite .pgc-m-zoom img,html.pg-lite .pgc-m-float,html.pg-lite .pgc-m-pulse
     if (t === 'strip') {
       const ids = (el.src && el.src.k === 'ev' ? (data.events[num(el.src.i, 0)] || {}).featured || [] : []).concat(P.pool).slice(0, 14);
       ids.forEach(id => ctx.used.push(id));
-      const imgs = ids.map(id => '<img alt="" loading="lazy" src="' + url(id, 500) + '" style="' + imgPos + '">').join('');
+      const imgs = ids.map(id => '<img alt=""' + autoPos + ' data-photo="' + esc(id) + '" loading="lazy" src="' + url(id, 500) + '" style="' + imgPos + '">').join('');
       return '<div class="pgc-body" style="' + st + '"><div class="pgc-strip" style="--gap:' + (8 * k).toFixed(1) + 'px;--dur:' + (ids.length * 4) + 's">' + imgs + imgs + '</div></div>';
     }
     if (t === 'action') {
